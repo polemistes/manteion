@@ -3,7 +3,9 @@
 /database/*.sqlite
 /database/*.sqlite-*
 /node_modules
-/public/build
+# Committed, not ignored: the shared-hosting deploy target has no Node/npm,
+# so compiled assets must travel via git pull rather than be built on the server.
+# Always run `npm run build` and commit the result before pushing a release.
 /public/fonts-manifest.dev.json
 /public/hot
 /public/storage
