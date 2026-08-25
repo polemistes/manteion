@@ -3,8 +3,11 @@ import { createI18n } from 'vue-i18n';
 import en from './lang/en.json';
 import nb from './lang/nb.json';
 import AppLayout from './layouts/AppLayout.vue';
+import { setupNativeShell } from './native';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+
+setupNativeShell();
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),

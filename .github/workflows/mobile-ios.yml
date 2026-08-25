@@ -1,0 +1,67 @@
+name: mobile-ios
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'ios/**'
+      - 'resources/**'
+      - 'capacitor.config.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/mobile-ios.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    # Xcode only runs on macOS — this is the one GitHub-hosted runner family
+    # that has it preinstalled, which is the whole reason this build lives
+    # in CI rather than locally.
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web assets
+        run: npm run build
+
+      - name: Sync Capacitor
+        run: npx cap sync ios
+
+      - name: Build for the iOS Simulator
+        working-directory: ios/App
+        # No code signing here on purpose: a real device / TestFlight build
+        # needs an Apple Developer account's signing certificate, which is a
+        # separate follow-up once that account exists. This produces a
+        # Simulator-runnable build to confirm the project actually compiles.
+        run: |
+          xcodebuild \
+            -project App.xcodeproj \
+            -scheme App \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Upload Simulator build
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: manteion-ios-simulator-build
+          path: ios/App/build/Build/Products/Debug-iphonesimulator/App.app
+          if-no-files-found: error

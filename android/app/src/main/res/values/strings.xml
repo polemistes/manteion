@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Manteion</string>
+    <string name="title_activity_main">Manteion</string>
+    <string name="package_name">no.manteion.app</string>
+    <string name="custom_url_scheme">no.manteion.app</string>
+</resources>
