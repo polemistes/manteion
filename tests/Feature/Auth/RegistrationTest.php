@@ -7,8 +7,8 @@ test('a user can register with a name, username, email and password', function (
         'name' => 'Ada Lovelace',
         'username' => 'ada',
         'email' => 'ada@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
+        'password' => 'correct horse battery',
+        'password_confirmation' => 'correct horse battery',
     ]);
 
     $this->assertAuthenticated();
@@ -26,8 +26,8 @@ test('registration requires a unique username', function () {
         'name' => 'Ada Lovelace',
         'username' => 'ada',
         'email' => 'ada2@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
+        'password' => 'correct horse battery',
+        'password_confirmation' => 'correct horse battery',
     ]);
 
     $response->assertInvalid(['username']);

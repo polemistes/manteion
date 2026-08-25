@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
+import AlphaBanner from '@/components/AlphaBanner.vue';
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
 
 const { t } = useI18n();
@@ -10,8 +11,12 @@ const { t } = useI18n();
     <Head :title="t('welcome.title')" />
 
     <div
-        class="flex min-h-screen flex-col items-center justify-center bg-white px-4 font-mono text-black"
+        class="relative flex min-h-screen flex-col items-center justify-center bg-white px-4 font-mono text-black"
     >
+        <div class="absolute inset-x-0 top-0">
+            <AlphaBanner />
+        </div>
+
         <div class="mb-6">
             <LanguageSwitcher />
         </div>

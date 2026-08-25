@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\ConversationParticipant;
+use App\Models\Follow;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -47,6 +48,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'unreadNotificationsCount' => $user?->unreadNotifications()->count() ?? 0,
             'unreadMessagesCount' => $user === null ? 0 : $this->unreadMessagesCount($user),
+            'pendingContactRequestsCount' => $user === null ? 0 : $this->pendingContactRequestsCount($user),
             'locale' => app()->getLocale(),
             'availableLocales' => config('app.supported_locales'),
         ];
@@ -64,5 +66,15 @@ class HandleInertiaRequests extends Middleware
             })
             ->distinct('conversation_participants.conversation_id')
             ->count('conversation_participants.conversation_id');
+    }
+
+    private function pendingContactRequestsCount(User $user): int
+    {
+        $pendingFollowerRequests = Follow::query()
+            ->where('followed_id', $user->id)
+            ->pending()
+            ->count();
+
+        return $user->pendingFriendRequests()->count() + $pendingFollowerRequests;
     }
 }

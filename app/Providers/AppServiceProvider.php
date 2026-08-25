@@ -37,14 +37,14 @@ class AppServiceProvider extends ServiceProvider
             app()->isProduction(),
         );
 
-        Password::defaults(fn (): ?Password => app()->isProduction()
-            ? Password::min(12)
-                ->mixedCase()
-                ->letters()
-                ->numbers()
-                ->symbols()
-                ->uncompromised()
-            : null,
+        // A long passphrase resists brute-force attacks better than a short
+        // password padded with mandatory character classes, without the
+        // usability cost — see NIST SP 800-63B. The breach check hits an
+        // external API, so it's skipped outside production to keep tests
+        // and local dev offline.
+        Password::defaults(fn (): Password => app()->isProduction()
+            ? Password::min(10)->uncompromised()
+            : Password::min(10),
         );
     }
 }

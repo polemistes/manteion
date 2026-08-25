@@ -2,6 +2,7 @@
 import { Form, Head } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import FieldError from '@/components/FieldError.vue';
+import PasswordField from '@/components/PasswordField.vue';
 import GuestLayout from '@/layouts/GuestLayout.vue';
 import { update } from '@/routes/password';
 
@@ -47,15 +48,16 @@ const { t } = useI18n();
             <label for="password" class="mb-1 block text-sm font-bold">{{
                 t('auth.resetPassword.newPassword')
             }}</label>
-            <input
+            <PasswordField
                 id="password"
-                type="password"
                 name="password"
                 required
                 autofocus
                 autocomplete="new-password"
-                class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
             />
+            <p class="mt-1 text-xs text-black/70">
+                {{ t('common.passphraseHint') }}
+            </p>
             <FieldError :message="errors.password" />
         </div>
 
@@ -65,13 +67,11 @@ const { t } = useI18n();
                 class="mb-1 block text-sm font-bold"
                 >{{ t('auth.resetPassword.confirmNewPassword') }}</label
             >
-            <input
+            <PasswordField
                 id="password_confirmation"
-                type="password"
                 name="password_confirmation"
                 required
                 autocomplete="new-password"
-                class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
             />
             <FieldError :message="errors.password_confirmation" />
         </div>

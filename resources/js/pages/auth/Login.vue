@@ -2,6 +2,7 @@
 import { Form, Head, Link } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import FieldError from '@/components/FieldError.vue';
+import PasswordField from '@/components/PasswordField.vue';
 import GuestLayout from '@/layouts/GuestLayout.vue';
 import { store } from '@/routes/login';
 import { request as requestPasswordReset } from '@/routes/password';
@@ -41,13 +42,11 @@ const { t } = useI18n();
             <label for="password" class="mb-1 block text-sm font-bold">{{
                 t('auth.login.password')
             }}</label>
-            <input
+            <PasswordField
                 id="password"
-                type="password"
                 name="password"
                 required
                 autocomplete="current-password"
-                class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
             />
             <FieldError :message="errors.password" />
         </div>

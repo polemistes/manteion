@@ -4,6 +4,7 @@ import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Avatar from '@/components/Avatar.vue';
 import FieldError from '@/components/FieldError.vue';
+import PasswordField from '@/components/PasswordField.vue';
 import { update as updatePassword } from '@/routes/user-password';
 import { update as updateProfileInformation } from '@/routes/user-profile-information';
 
@@ -196,13 +197,11 @@ function onAvatarChange(event: Event): void {
                     class="mb-1 block text-sm font-bold"
                     >{{ t('profile.currentPassword') }}</label
                 >
-                <input
+                <PasswordField
                     id="current_password"
-                    type="password"
                     name="current_password"
                     required
                     autocomplete="current-password"
-                    class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
                 />
                 <FieldError :message="errors.current_password" />
             </div>
@@ -211,14 +210,15 @@ function onAvatarChange(event: Event): void {
                 <label for="password" class="mb-1 block text-sm font-bold">{{
                     t('profile.newPassword')
                 }}</label>
-                <input
+                <PasswordField
                     id="password"
-                    type="password"
                     name="password"
                     required
                     autocomplete="new-password"
-                    class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
                 />
+                <p class="mt-1 text-xs text-black/70">
+                    {{ t('common.passphraseHint') }}
+                </p>
                 <FieldError :message="errors.password" />
             </div>
 
@@ -228,13 +228,11 @@ function onAvatarChange(event: Event): void {
                     class="mb-1 block text-sm font-bold"
                     >{{ t('profile.confirmNewPassword') }}</label
                 >
-                <input
+                <PasswordField
                     id="password_confirmation"
-                    type="password"
                     name="password_confirmation"
                     required
                     autocomplete="new-password"
-                    class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
                 />
                 <FieldError :message="errors.password_confirmation" />
             </div>

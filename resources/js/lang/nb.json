@@ -7,15 +7,17 @@
         "create": "Opprett",
         "add": "Legg til",
         "search": "Søk",
-        "message": "Melding"
+        "message": "Melding",
+        "showPassword": "Vis passord",
+        "hidePassword": "Skjul passord",
+        "passphraseHint": "Minst 10 tegn. Ingen spesielle krav — noen tilfeldige ord fungerer bra, f.eks. «korrekt hest batteri stift».",
+        "alphaNotice": "Alfatest — ting kan gå i stykker, og data kan bli slettet når som helst."
     },
     "nav": {
         "events": "Arrangementer",
         "messages": "Meldinger",
         "contacts": "Kontakter",
         "search": "Søk",
-        "alerts": "Varsler",
-        "profile": "Profil",
         "logOut": "Logg ut"
     },
     "welcome": {
@@ -173,6 +175,7 @@
             "friendGroupsLabel": "Vennegrupper",
             "followingGroupsLabel": "Følgegrupper",
             "noMatches": "Ingen arrangementer matcher filtrene dine ennå.",
+            "newNotifications": "Du har {count} ny oppdatering | Du har {count} nye oppdateringer",
             "by": "av",
             "you": "Deg:"
         },

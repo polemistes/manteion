@@ -7,15 +7,17 @@
         "create": "Create",
         "add": "Add",
         "search": "Search",
-        "message": "Message"
+        "message": "Message",
+        "showPassword": "Show password",
+        "hidePassword": "Hide password",
+        "passphraseHint": "At least 10 characters. No special requirements — a few random words works well, e.g. \"correct horse battery staple\".",
+        "alphaNotice": "Alpha test — things may break, and data may be deleted at any time."
     },
     "nav": {
         "events": "Events",
         "messages": "Messages",
         "contacts": "Contacts",
         "search": "Search",
-        "alerts": "Alerts",
-        "profile": "Profile",
         "logOut": "Log out"
     },
     "welcome": {
@@ -173,6 +175,7 @@
             "friendGroupsLabel": "Friend groups",
             "followingGroupsLabel": "Following groups",
             "noMatches": "No events match your filters yet.",
+            "newNotifications": "You have {count} new update | You have {count} new updates",
             "by": "by",
             "you": "You:"
         },

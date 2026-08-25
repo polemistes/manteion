@@ -2,6 +2,7 @@
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import AlphaBanner from '@/components/AlphaBanner.vue';
 import Avatar from '@/components/Avatar.vue';
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
 import { logout } from '@/routes';
@@ -11,7 +12,6 @@ import {
 } from '@/routes/contacts';
 import { index as eventsIndex } from '@/routes/events';
 import { index as messagesIndex } from '@/routes/messages';
-import { index as notificationsIndex } from '@/routes/notifications';
 import { edit as profileEdit } from '@/routes/profile';
 
 const { t } = useI18n();
@@ -22,25 +22,30 @@ const unreadNotificationsCount = computed(
     () => page.props.unreadNotificationsCount,
 );
 const unreadMessagesCount = computed(() => page.props.unreadMessagesCount);
+const pendingContactRequestsCount = computed(
+    () => page.props.pendingContactRequestsCount,
+);
 
 const navItems = computed(() => {
     const currentUrl = page.url;
 
     return [
-        { label: t('nav.events'), href: eventsIndex().url },
+        {
+            label: t('nav.events'),
+            href: eventsIndex().url,
+            badge: unreadNotificationsCount.value,
+        },
         {
             label: t('nav.messages'),
             href: messagesIndex().url,
             badge: unreadMessagesCount.value,
         },
-        { label: t('nav.contacts'), href: contactsIndex().url },
-        { label: t('nav.search'), href: contactsSearch().url },
         {
-            label: t('nav.alerts'),
-            href: notificationsIndex().url,
-            badge: unreadNotificationsCount.value,
+            label: t('nav.contacts'),
+            href: contactsIndex().url,
+            badge: pendingContactRequestsCount.value,
         },
-        { label: t('nav.profile'), href: profileEdit().url },
+        { label: t('nav.search'), href: contactsSearch().url },
     ].map((item) => ({
         ...item,
         active:
@@ -51,6 +56,8 @@ const navItems = computed(() => {
 
 <template>
     <div class="min-h-screen bg-white font-mono text-black">
+        <AlphaBanner />
+
         <div class="lg:flex">
             <aside
                 class="hidden lg:flex lg:w-64 lg:shrink-0 lg:flex-col lg:border-r-[3px] lg:border-black lg:p-6"
@@ -104,47 +111,50 @@ const navItems = computed(() => {
             </aside>
 
             <div class="flex min-h-screen flex-1 flex-col">
-                <header
-                    class="flex items-center justify-between border-b-[3px] border-black px-4 py-3 lg:hidden"
-                >
-                    <Link
-                        :href="eventsIndex().url"
-                        class="text-2xl font-bold tracking-tight"
+                <div class="sticky top-0 z-10 bg-white lg:hidden">
+                    <header
+                        class="flex items-center justify-between border-b-[3px] border-black px-4 py-3"
                     >
-                        Manteion
-                    </Link>
-                    <div class="flex items-center gap-3">
-                        <LanguageSwitcher />
                         <Link
-                            :href="profileEdit().url"
-                            class="flex items-center gap-2 text-xs text-black/70"
+                            :href="eventsIndex().url"
+                            class="text-2xl font-bold tracking-tight"
                         >
-                            <Avatar :url="user.avatar_url" :name="user.name" />
-                            @{{ user.username }}
+                            Manteion
                         </Link>
-                    </div>
-                </header>
+                        <div class="flex items-center gap-3">
+                            <LanguageSwitcher />
+                            <Link
+                                :href="profileEdit().url"
+                                class="flex items-center gap-2 text-xs text-black/70"
+                            >
+                                <Avatar
+                                    :url="user.avatar_url"
+                                    :name="user.name"
+                                />
+                                @{{ user.username }}
+                            </Link>
+                        </div>
+                    </header>
 
-                <main class="flex-1 px-4 py-6 pb-24 lg:px-10 lg:py-10 lg:pb-10">
+                    <nav class="grid grid-cols-4 border-b-[3px] border-black">
+                        <Link
+                            v-for="item in navItems"
+                            :key="item.label"
+                            :href="item.href"
+                            class="flex flex-col items-center gap-0.5 py-2 text-sm"
+                            :class="item.active ? 'bg-black text-white' : ''"
+                        >
+                            {{ item.label }}
+                            <span v-if="item.badge" class="text-xs">{{
+                                item.badge
+                            }}</span>
+                        </Link>
+                    </nav>
+                </div>
+
+                <main class="flex-1 px-4 py-6 lg:px-10 lg:py-10">
                     <slot />
                 </main>
-
-                <nav
-                    class="fixed inset-x-0 bottom-0 z-10 grid grid-cols-6 border-t-[3px] border-black bg-white lg:hidden"
-                >
-                    <Link
-                        v-for="item in navItems"
-                        :key="item.label"
-                        :href="item.href"
-                        class="flex flex-col items-center gap-0.5 py-2 text-[10px]"
-                        :class="item.active ? 'bg-black text-white' : ''"
-                    >
-                        {{ item.label }}
-                        <span v-if="item.badge" class="text-[9px]">{{
-                            item.badge
-                        }}</span>
-                    </Link>
-                </nav>
             </div>
         </div>
     </div>

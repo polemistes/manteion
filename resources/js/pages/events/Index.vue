@@ -1,11 +1,17 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PersonSummary from '@/components/PersonSummary.vue';
 import { index as eventsIndex, create as eventsCreate } from '@/routes/events';
+import { index as notificationsIndex } from '@/routes/notifications';
 
 const { t, locale } = useI18n();
+
+const page = usePage();
+const unreadNotificationsCount = computed(
+    () => page.props.unreadNotificationsCount,
+);
 
 const dateFnsLocales: Record<string, string> = {
     en: 'en-GB',
@@ -105,6 +111,21 @@ function statusLabel(status: string): string {
             {{ t('events.index.createEvent') }}
         </Link>
     </div>
+
+    <Link
+        v-if="unreadNotificationsCount"
+        :href="notificationsIndex().url"
+        class="mb-6 flex items-center justify-between border-[3px] border-black px-4 py-3 text-sm font-bold hover:bg-black hover:text-white"
+    >
+        {{
+            t(
+                'events.index.newNotifications',
+                { count: unreadNotificationsCount },
+                unreadNotificationsCount,
+            )
+        }}
+        <span>&rsaquo;</span>
+    </Link>
 
     <section class="mb-8 border-[3px] border-black p-4">
         <h2 class="mb-3 text-sm font-bold uppercase">

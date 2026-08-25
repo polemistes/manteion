@@ -21,6 +21,7 @@ declare module '@inertiajs/core' {
             sidebarOpen: boolean;
             unreadNotificationsCount: number;
             unreadMessagesCount: number;
+            pendingContactRequestsCount: number;
             locale: string;
             availableLocales: Record<string, string>;
             [key: string]: unknown;
