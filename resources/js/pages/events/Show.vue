@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form, Head, Link } from '@inertiajs/vue3';
+import { Form, Head, Link, usePoll } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import FieldError from '@/components/FieldError.vue';
 import PersonSummary from '@/components/PersonSummary.vue';
@@ -67,6 +67,11 @@ const props = defineProps<{
     comments: Comment[];
     inviteCandidates: Person[];
 }>();
+
+// myAttendance is deliberately excluded: its <select> elements are bound via
+// :value rather than v-model, so refreshing it mid-edit would silently
+// discard a selection the viewer hasn't submitted yet.
+usePoll(15000, { only: ['attendees', 'comments'] });
 
 function formatDate(value: string): string {
     return new Date(value).toLocaleString(

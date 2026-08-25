@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link, usePage } from '@inertiajs/vue3';
+import { Link, usePage, usePoll } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AlphaBanner from '@/components/AlphaBanner.vue';
@@ -25,6 +25,14 @@ const unreadMessagesCount = computed(() => page.props.unreadMessagesCount);
 const pendingContactRequestsCount = computed(
     () => page.props.pendingContactRequestsCount,
 );
+
+usePoll(20000, {
+    only: [
+        'unreadNotificationsCount',
+        'unreadMessagesCount',
+        'pendingContactRequestsCount',
+    ],
+});
 
 const navItems = computed(() => {
     const currentUrl = page.url;

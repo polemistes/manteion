@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form, Head, Link } from '@inertiajs/vue3';
+import { Form, Head, Link, usePoll } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PersonSummary from '@/components/PersonSummary.vue';
@@ -55,6 +55,20 @@ const props = defineProps<{
     followingGroups: GroupEntry[];
     tags: Tag[];
 }>();
+
+usePoll(20000, {
+    only: [
+        'friends',
+        'pendingFriendRequests',
+        'sentFriendRequests',
+        'following',
+        'pendingFollowRequestsSent',
+        'followers',
+        'pendingFollowerRequests',
+        'friendGroups',
+        'followingGroups',
+    ],
+});
 
 function availableFor(
     group: GroupEntry,

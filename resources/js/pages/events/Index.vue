@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, usePage, usePoll } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PersonSummary from '@/components/PersonSummary.vue';
@@ -12,6 +12,8 @@ const page = usePage();
 const unreadNotificationsCount = computed(
     () => page.props.unreadNotificationsCount,
 );
+
+usePoll(20000, { only: ['events'] });
 
 const dateFnsLocales: Record<string, string> = {
     en: 'en-GB',
