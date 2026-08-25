@@ -26,6 +26,13 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.5'
+          tools: composer:v2
+          coverage: none
+
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -36,6 +43,14 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+
+      - name: Install Composer dependencies
+        # The Vite build shells out to `artisan wayfinder:generate`, so the
+        # app needs to be bootable (vendor/ + .env + APP_KEY) before it runs.
+        run: |
+          composer install --no-interaction --prefer-dist --no-dev --optimize-autoloader
+          cp .env.example .env
+          php artisan key:generate
 
       - name: Install dependencies
         run: npm ci
