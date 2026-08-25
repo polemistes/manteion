@@ -1,0 +1,35 @@
+<?php
+
+namespace Database\Factories;
+
+use App\Enums\FollowStatus;
+use App\Models\Follow;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+/**
+ * @extends Factory<Follow>
+ */
+class FollowFactory extends Factory
+{
+    /**
+     * Define the model's default state.
+     *
+     * @return array<string, mixed>
+     */
+    public function definition(): array
+    {
+        return [
+            'follower_id' => User::factory(),
+            'followed_id' => User::factory(),
+            'status' => FollowStatus::Accepted,
+        ];
+    }
+
+    public function pending(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => FollowStatus::Pending,
+        ]);
+    }
+}

@@ -1,0 +1,91 @@
+<script setup lang="ts">
+import { Form, Head } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
+import FieldError from '@/components/FieldError.vue';
+import GuestLayout from '@/layouts/GuestLayout.vue';
+import { update } from '@/routes/password';
+
+defineOptions({ layout: GuestLayout });
+
+const props = defineProps<{
+    email: string;
+    token: string;
+}>();
+
+const { t } = useI18n();
+</script>
+
+<template>
+    <Head :title="t('auth.resetPassword.title')" />
+
+    <h1 class="mb-6 text-lg font-bold">{{ t('auth.resetPassword.title') }}</h1>
+
+    <Form
+        v-bind="update.form()"
+        #default="{ errors, processing }"
+        class="flex flex-col gap-4"
+    >
+        <input type="hidden" name="token" :value="props.token" />
+
+        <div>
+            <label for="email" class="mb-1 block text-sm font-bold">{{
+                t('auth.resetPassword.email')
+            }}</label>
+            <input
+                id="email"
+                type="email"
+                name="email"
+                required
+                :value="props.email"
+                autocomplete="username"
+                class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+            />
+            <FieldError :message="errors.email" />
+        </div>
+
+        <div>
+            <label for="password" class="mb-1 block text-sm font-bold">{{
+                t('auth.resetPassword.newPassword')
+            }}</label>
+            <input
+                id="password"
+                type="password"
+                name="password"
+                required
+                autofocus
+                autocomplete="new-password"
+                class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+            />
+            <FieldError :message="errors.password" />
+        </div>
+
+        <div>
+            <label
+                for="password_confirmation"
+                class="mb-1 block text-sm font-bold"
+                >{{ t('auth.resetPassword.confirmNewPassword') }}</label
+            >
+            <input
+                id="password_confirmation"
+                type="password"
+                name="password_confirmation"
+                required
+                autocomplete="new-password"
+                class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+            />
+            <FieldError :message="errors.password_confirmation" />
+        </div>
+
+        <button
+            type="submit"
+            :disabled="processing"
+            class="w-full border border-black bg-black px-3 py-2 text-sm font-bold text-white hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
+        >
+            {{
+                processing
+                    ? t('auth.resetPassword.submitting')
+                    : t('auth.resetPassword.submit')
+            }}
+        </button>
+    </Form>
+</template>

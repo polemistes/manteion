@@ -1,0 +1,151 @@
+<script setup lang="ts">
+import { Link, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import Avatar from '@/components/Avatar.vue';
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
+import { logout } from '@/routes';
+import {
+    index as contactsIndex,
+    search as contactsSearch,
+} from '@/routes/contacts';
+import { index as eventsIndex } from '@/routes/events';
+import { index as messagesIndex } from '@/routes/messages';
+import { index as notificationsIndex } from '@/routes/notifications';
+import { edit as profileEdit } from '@/routes/profile';
+
+const { t } = useI18n();
+
+const page = usePage();
+const user = computed(() => page.props.auth.user);
+const unreadNotificationsCount = computed(
+    () => page.props.unreadNotificationsCount,
+);
+const unreadMessagesCount = computed(() => page.props.unreadMessagesCount);
+
+const navItems = computed(() => {
+    const currentUrl = page.url;
+
+    return [
+        { label: t('nav.events'), href: eventsIndex().url },
+        {
+            label: t('nav.messages'),
+            href: messagesIndex().url,
+            badge: unreadMessagesCount.value,
+        },
+        { label: t('nav.contacts'), href: contactsIndex().url },
+        { label: t('nav.search'), href: contactsSearch().url },
+        {
+            label: t('nav.alerts'),
+            href: notificationsIndex().url,
+            badge: unreadNotificationsCount.value,
+        },
+        { label: t('nav.profile'), href: profileEdit().url },
+    ].map((item) => ({
+        ...item,
+        active:
+            currentUrl === item.href || currentUrl.startsWith(`${item.href}?`),
+    }));
+});
+</script>
+
+<template>
+    <div class="min-h-screen bg-white font-mono text-black">
+        <div class="lg:flex">
+            <aside
+                class="hidden lg:flex lg:w-64 lg:shrink-0 lg:flex-col lg:border-r-[3px] lg:border-black lg:p-6"
+            >
+                <Link
+                    :href="eventsIndex().url"
+                    class="mb-8 text-4xl font-bold tracking-tight"
+                >
+                    Manteion
+                </Link>
+
+                <div class="mb-6 border-b-[3px] border-black pb-4">
+                    <Link
+                        :href="profileEdit().url"
+                        class="mb-2 flex items-center gap-2"
+                    >
+                        <Avatar :url="user.avatar_url" :name="user.name" />
+                        <span class="truncate text-xs text-black/70">
+                            {{ user.name }} · @{{ user.username }}
+                        </span>
+                    </Link>
+                    <LanguageSwitcher class="mb-2 w-full" />
+                    <Link
+                        :href="logout().url"
+                        method="post"
+                        as="button"
+                        class="w-full rounded border border-black px-3 py-2 text-left text-sm hover:bg-black hover:text-white"
+                    >
+                        {{ t('nav.logOut') }}
+                    </Link>
+                </div>
+
+                <nav class="flex flex-col gap-1">
+                    <Link
+                        v-for="item in navItems"
+                        :key="item.label"
+                        :href="item.href"
+                        class="flex items-center justify-between rounded px-3 py-2 text-sm"
+                        :class="
+                            item.active
+                                ? 'bg-black text-white'
+                                : 'hover:bg-black hover:text-white'
+                        "
+                    >
+                        {{ item.label }}
+                        <span v-if="item.badge" class="text-xs">{{
+                            item.badge
+                        }}</span>
+                    </Link>
+                </nav>
+            </aside>
+
+            <div class="flex min-h-screen flex-1 flex-col">
+                <header
+                    class="flex items-center justify-between border-b-[3px] border-black px-4 py-3 lg:hidden"
+                >
+                    <Link
+                        :href="eventsIndex().url"
+                        class="text-2xl font-bold tracking-tight"
+                    >
+                        Manteion
+                    </Link>
+                    <div class="flex items-center gap-3">
+                        <LanguageSwitcher />
+                        <Link
+                            :href="profileEdit().url"
+                            class="flex items-center gap-2 text-xs text-black/70"
+                        >
+                            <Avatar :url="user.avatar_url" :name="user.name" />
+                            @{{ user.username }}
+                        </Link>
+                    </div>
+                </header>
+
+                <main class="flex-1 px-4 py-6 pb-24 lg:px-10 lg:py-10 lg:pb-10">
+                    <slot />
+                </main>
+
+                <nav
+                    class="fixed inset-x-0 bottom-0 z-10 grid grid-cols-6 border-t-[3px] border-black bg-white lg:hidden"
+                >
+                    <Link
+                        v-for="item in navItems"
+                        :key="item.label"
+                        :href="item.href"
+                        class="flex flex-col items-center gap-0.5 py-2 text-[10px]"
+                        :class="item.active ? 'bg-black text-white' : ''"
+                    >
+                        {{ item.label }}
+                        <span v-if="item.badge" class="text-[9px]">{{
+                            item.badge
+                        }}</span>
+                    </Link>
+                </nav>
+            </div>
+        </div>
+    </div>
+</template>

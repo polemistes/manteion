@@ -1,0 +1,185 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Enums\ContactGroupType;
+use App\Enums\FollowStatus;
+use App\Enums\FriendshipStatus;
+use App\Models\ContactGroup;
+use App\Models\ContactTagPreference;
+use App\Models\Follow;
+use App\Models\Friendship;
+use App\Models\Tag;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class ContactsController extends Controller
+{
+    public function index(Request $request): Response
+    {
+        $user = $request->user();
+
+        $preferencesByContact = ContactTagPreference::query()
+            ->where('user_id', $user->id)
+            ->get()
+            ->groupBy('contact_user_id')
+            ->map(fn (Collection $rows) => $rows->pluck('tag_id')->map(fn (int $tagId) => $tagId)->all());
+
+        return Inertia::render('contacts/Index', [
+            'friends' => $this->summarizeUsers($user->friends(), $preferencesByContact),
+            'pendingFriendRequests' => $this->summarizeFriendships($user->pendingFriendRequests()->with('requester')->get(), 'requester'),
+            'sentFriendRequests' => $this->summarizeFriendships($user->sentFriendRequests()->with('addressee')->get(), 'addressee'),
+            'following' => $this->summarizeFollows(
+                Follow::query()->where('follower_id', $user->id)->accepted()->with('followed')->get(),
+                'followed',
+                $preferencesByContact
+            ),
+            'pendingFollowRequestsSent' => $this->summarizeFollows(
+                Follow::query()->where('follower_id', $user->id)->pending()->with('followed')->get(),
+                'followed'
+            ),
+            'followers' => $this->summarizeFollows(
+                Follow::query()->where('followed_id', $user->id)->accepted()->with('follower')->get(),
+                'follower'
+            ),
+            'pendingFollowerRequests' => $this->summarizeFollows(
+                Follow::query()->where('followed_id', $user->id)->pending()->with('follower')->get(),
+                'follower'
+            ),
+            'friendGroups' => $this->summarizeGroups($user->contactGroups()->ofType(ContactGroupType::Friend)->with('members')->get()),
+            'followingGroups' => $this->summarizeGroups($user->contactGroups()->ofType(ContactGroupType::Following)->with('members')->get()),
+            'tags' => Tag::query()->orderBy('name')->get(['id', 'name', 'slug']),
+        ]);
+    }
+
+    public function search(Request $request): Response
+    {
+        $term = trim((string) $request->string('q'));
+        $viewer = $request->user();
+
+        $results = User::query()
+            ->whereKeyNot($viewer->getKey())
+            ->when($term !== '', fn ($query) => $query->where(
+                fn ($query) => $query->where('name', 'like', "%{$term}%")->orWhere('username', 'like', "%{$term}%")
+            ))
+            ->when($term === '', fn ($query) => $query->whereRaw('1 = 0'))
+            ->orderBy('name')
+            ->limit(20)
+            ->get(['id', 'name', 'username', 'avatar_path']);
+
+        $candidateIds = $results->pluck('id');
+
+        $friendships = Friendship::query()
+            ->where(fn ($query) => $query->where('requester_id', $viewer->getKey())->whereIn('addressee_id', $candidateIds))
+            ->orWhere(fn ($query) => $query->where('addressee_id', $viewer->getKey())->whereIn('requester_id', $candidateIds))
+            ->get();
+
+        $follows = Follow::query()
+            ->where('follower_id', $viewer->getKey())
+            ->whereIn('followed_id', $candidateIds)
+            ->get()
+            ->keyBy('followed_id');
+
+        return Inertia::render('contacts/Search', [
+            'q' => $term,
+            'results' => $results->map(function (User $candidate) use ($friendships, $follows, $viewer) {
+                $friendship = $friendships->first(
+                    fn (Friendship $f) => $f->requester_id === $candidate->id || $f->addressee_id === $candidate->id
+                );
+
+                $friendStatus = match (true) {
+                    $friendship === null => 'none',
+                    $friendship->status === FriendshipStatus::Accepted => 'friends',
+                    $friendship->requester_id === $viewer->getKey() => 'request_sent',
+                    default => 'request_received',
+                };
+
+                $follow = $follows->get($candidate->id);
+                $followStatus = match (true) {
+                    $follow === null => 'none',
+                    $follow->status === FollowStatus::Accepted => 'following',
+                    default => 'pending',
+                };
+
+                return [
+                    'id' => $candidate->id,
+                    'name' => $candidate->name,
+                    'username' => $candidate->username,
+                    'avatar_url' => $candidate->avatar_url,
+                    'friend_status' => $friendStatus,
+                    'friendship_id' => $friendship?->id,
+                    'follow_status' => $followStatus,
+                    'follow_id' => $follow?->id,
+                ];
+            })->values()->all(),
+        ]);
+    }
+
+    /**
+     * @param  Collection<int, User>  $users
+     * @param  Collection<int|string, array<int>>  $preferencesByContact
+     * @return array<int, array{id: int, name: string, username: string, avatar_url: string|null, tag_preference_ids?: array<int>}>
+     */
+    private function summarizeUsers(Collection $users, ?Collection $preferencesByContact = null): array
+    {
+        return $users->map(fn (User $user) => [
+            'id' => $user->id,
+            'name' => $user->name,
+            'username' => $user->username,
+            'avatar_url' => $user->avatar_url,
+            ...($preferencesByContact === null ? [] : ['tag_preference_ids' => $preferencesByContact->get($user->id, [])]),
+        ])->values()->all();
+    }
+
+    /**
+     * @param  Collection<int, Friendship>  $friendships
+     * @return array<int, array{friendship_id: int, user: array{id: int, name: string, username: string, avatar_url: string|null}}>
+     */
+    private function summarizeFriendships(Collection $friendships, string $relation): array
+    {
+        return $friendships->map(fn (Friendship $friendship) => [
+            'friendship_id' => $friendship->id,
+            'user' => [
+                'id' => $friendship->{$relation}->id,
+                'name' => $friendship->{$relation}->name,
+                'username' => $friendship->{$relation}->username,
+                'avatar_url' => $friendship->{$relation}->avatar_url,
+            ],
+        ])->values()->all();
+    }
+
+    /**
+     * @param  Collection<int, Follow>  $follows
+     * @param  Collection<int|string, array<int>>  $preferencesByContact
+     * @return array<int, array{follow_id: int, user: array{id: int, name: string, username: string, avatar_url: string|null}, tag_preference_ids?: array<int>}>
+     */
+    private function summarizeFollows(Collection $follows, string $relation, ?Collection $preferencesByContact = null): array
+    {
+        return $follows->map(fn (Follow $follow) => [
+            'follow_id' => $follow->id,
+            'user' => [
+                'id' => $follow->{$relation}->id,
+                'name' => $follow->{$relation}->name,
+                'username' => $follow->{$relation}->username,
+                'avatar_url' => $follow->{$relation}->avatar_url,
+            ],
+            ...($preferencesByContact === null ? [] : ['tag_preference_ids' => $preferencesByContact->get($follow->{$relation}->id, [])]),
+        ])->values()->all();
+    }
+
+    /**
+     * @param  Collection<int, ContactGroup>  $groups
+     * @return array<int, array{id: int, name: string, members: array<int, array{id: int, name: string, username: string}>}>
+     */
+    private function summarizeGroups(Collection $groups): array
+    {
+        return $groups->map(fn (ContactGroup $group) => [
+            'id' => $group->id,
+            'name' => $group->name,
+            'members' => $this->summarizeUsers($group->members),
+        ])->values()->all();
+    }
+}
