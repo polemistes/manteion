@@ -12,8 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('username', 32)->unique()->after('name');
+            // SQLite's ALTER TABLE ADD COLUMN rejects a NOT NULL column with no
+            // default, so this starts nullable and is tightened below — the table
+            // is always empty at this point in a fresh install, so nothing is lost.
+            $table->string('username', 32)->nullable()->unique()->after('name');
             $table->boolean('allow_public_follow')->default(true)->after('password');
+        });
+
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('username', 32)->nullable(false)->change();
         });
     }
 
