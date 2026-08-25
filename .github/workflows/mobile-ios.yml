@@ -1,16 +1,11 @@
 name: mobile-ios
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'ios/**'
-      - 'resources/**'
-      - 'capacitor.config.ts'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/mobile-ios.yml'
+  # No push trigger for now: iOS distribution is on hold until there's an
+  # Apple Developer account to sign a real build, and macOS runners cost
+  # 10x the Actions minutes of Linux ones — no point burning that on every
+  # push for a build nobody can install yet. Trigger by hand when wanted,
+  # or restore the push trigger from mobile-android.yml's when it's time.
   workflow_dispatch:
 
 permissions:
