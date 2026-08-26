@@ -176,8 +176,12 @@
             "followingGroupsLabel": "Following groups",
             "noMatches": "No events match your filters yet.",
             "newNotifications": "You have {count} new update | You have {count} new updates",
-            "by": "by",
-            "you": "You:"
+            "you": "You:",
+            "today": "Today",
+            "tomorrow": "Tomorrow",
+            "attendingCount": "{count} attending",
+            "interestedCount": "{count} interested",
+            "organizer": "Organizer"
         },
         "create": {
             "title": "Create an event",

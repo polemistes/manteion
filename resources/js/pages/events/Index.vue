@@ -2,11 +2,11 @@
 import { Head, Link, router, usePage, usePoll } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import PersonSummary from '@/components/PersonSummary.vue';
+import EventCard from '@/components/EventCard.vue';
 import { index as eventsIndex, create as eventsCreate } from '@/routes/events';
 import { index as notificationsIndex } from '@/routes/notifications';
 
-const { t, locale } = useI18n();
+const { t } = useI18n();
 
 const page = usePage();
 const unreadNotificationsCount = computed(
@@ -14,11 +14,6 @@ const unreadNotificationsCount = computed(
 );
 
 usePoll(20000, { only: ['events'] });
-
-const dateFnsLocales: Record<string, string> = {
-    en: 'en-GB',
-    nb: 'nb-NO',
-};
 
 interface TagOption {
     id: number;
@@ -47,6 +42,9 @@ interface EventSummary {
     owner: ContactOption;
     tags: TagOption[];
     my_status: string | null;
+    cover_image_url: string | null;
+    attending_count: number;
+    interested_count: number;
 }
 
 const props = defineProps<{
@@ -80,24 +78,6 @@ function applyFilters(): void {
         },
         { preserveState: true, replace: true },
     );
-}
-
-function formatDate(value: string): string {
-    return new Date(value).toLocaleString(
-        dateFnsLocales[locale.value] ?? locale.value,
-        { dateStyle: 'medium', timeStyle: 'short' },
-    );
-}
-
-const statusKeys: Record<string, string> = {
-    no_response: 'events.show.statusNoResponse',
-    attending: 'events.show.statusAttending',
-    interested: 'events.show.statusInterested',
-    not_attending: 'events.show.statusNotAttending',
-};
-
-function statusLabel(status: string): string {
-    return t(statusKeys[status] ?? status);
 }
 </script>
 
@@ -251,37 +231,8 @@ function statusLabel(status: string): string {
     </p>
 
     <ul class="flex flex-col gap-3">
-        <li
-            v-for="event in events"
-            :key="event.id"
-            class="border-[3px] border-black p-4"
-        >
-            <Link
-                :href="`/events/${event.id}`"
-                class="text-base font-bold underline"
-            >
-                {{ event.name }}
-            </Link>
-            <p class="text-sm text-black/70">
-                {{ formatDate(event.starts_at) }} · {{ event.place }}
-            </p>
-            <p class="mt-1 text-sm">
-                {{ t('events.index.by') }}
-                <PersonSummary v-bind="event.owner" />
-            </p>
-            <div class="mt-2 flex flex-wrap items-center gap-2">
-                <span
-                    v-for="tag in event.tags"
-                    :key="tag.id"
-                    class="border border-black px-2 py-0.5 text-xs"
-                >
-                    {{ tag.name }}
-                </span>
-                <span v-if="event.my_status" class="text-xs font-bold">
-                    {{ t('events.index.you') }}
-                    {{ statusLabel(event.my_status) }}
-                </span>
-            </div>
+        <li v-for="event in events" :key="event.id">
+            <EventCard :event="event" />
         </li>
     </ul>
 </template>

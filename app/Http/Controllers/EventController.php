@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AttendanceStatus;
 use App\Enums\ContactGroupType;
 use App\Enums\EventVisibility;
 use App\Enums\FollowStatus;
@@ -15,6 +16,7 @@ use App\Models\EventComment;
 use App\Models\Tag;
 use App\Models\User;
 use App\Notifications\FollowedUserPublishedEvent;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -81,12 +83,14 @@ class EventController extends Controller
         $tagFilter = $request->array('tags');
         $viewer = $request->user();
 
-        $events = Event::query()
-            ->where('visibility', EventVisibility::Searchable)
-            ->when($term !== '', fn ($query) => $query->where(
-                fn ($query) => $query->where('name', 'like', "%{$term}%")->orWhere('place', 'like', "%{$term}%")
-            ))
-            ->with(['owner', 'tags', 'attendees' => fn ($query) => $query->where('user_id', $viewer->id)])
+        $events = $this->withAttendanceCounts(
+            Event::query()
+                ->where('visibility', EventVisibility::Searchable)
+                ->when($term !== '', fn ($query) => $query->where(
+                    fn ($query) => $query->where('name', 'like', "%{$term}%")->orWhere('place', 'like', "%{$term}%")
+                ))
+                ->with(['owner', 'tags', 'images', 'attendees' => fn ($query) => $query->where('user_id', $viewer->id)])
+        )
             ->orderBy('starts_at')
             ->limit(50)
             ->get();
@@ -256,21 +260,24 @@ class EventController extends Controller
 
         $withAttendee = fn ($query) => $query->where('user_id', $user->id);
 
-        $owned = Event::query()
-            ->where('user_id', $user->id)
-            ->with(['owner', 'tags', 'attendees' => $withAttendee])
-            ->get();
+        $owned = $this->withAttendanceCounts(
+            Event::query()
+                ->where('user_id', $user->id)
+                ->with(['owner', 'tags', 'images', 'attendees' => $withAttendee])
+        )->get();
 
-        $invited = Event::query()
-            ->whereIn('id', $attendeeEventIds)
-            ->with(['owner', 'tags', 'attendees' => $withAttendee])
-            ->get();
+        $invited = $this->withAttendanceCounts(
+            Event::query()
+                ->whereIn('id', $attendeeEventIds)
+                ->with(['owner', 'tags', 'images', 'attendees' => $withAttendee])
+        )->get();
 
-        $followedPublic = Event::query()
-            ->whereIn('user_id', $followedIds)
-            ->whereIn('visibility', [EventVisibility::Public->value, EventVisibility::Searchable->value])
-            ->with(['owner', 'tags', 'attendees' => $withAttendee])
-            ->get()
+        $followedPublic = $this->withAttendanceCounts(
+            Event::query()
+                ->whereIn('user_id', $followedIds)
+                ->whereIn('visibility', [EventVisibility::Public->value, EventVisibility::Searchable->value])
+                ->with(['owner', 'tags', 'images', 'attendees' => $withAttendee])
+        )->get()
             ->filter(function (Event $event) use ($preferencesByContact) {
                 $allowedTagIds = $preferencesByContact->get($event->user_id);
 
@@ -295,7 +302,23 @@ class EventController extends Controller
             'owner' => ['id' => $event->owner->id, 'name' => $event->owner->name, 'username' => $event->owner->username, 'avatar_url' => $event->owner->avatar_url],
             'tags' => $event->tags->map(fn (Tag $tag) => ['id' => $tag->id, 'name' => $tag->name, 'slug' => $tag->slug])->values()->all(),
             'my_status' => $event->attendeeFor($viewer)?->status->value,
+            'cover_image_url' => $event->images->first() !== null
+                ? Storage::disk('public')->url($event->images->first()->path)
+                : null,
+            'attending_count' => $event->attending_count,
+            'interested_count' => $event->interested_count,
         ])->values()->all();
+    }
+
+    /**
+     * @param  Builder<Event>  $query
+     * @return Builder<Event>
+     */
+    private function withAttendanceCounts(Builder $query): Builder
+    {
+        return $query
+            ->withCount(['attendees as attending_count' => fn ($query) => $query->where('status', AttendanceStatus::Attending)])
+            ->withCount(['attendees as interested_count' => fn ($query) => $query->where('status', AttendanceStatus::Interested)]);
     }
 
     /**

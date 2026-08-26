@@ -176,8 +176,12 @@
             "followingGroupsLabel": "Følgegrupper",
             "noMatches": "Ingen arrangementer matcher filtrene dine ennå.",
             "newNotifications": "Du har {count} ny oppdatering | Du har {count} nye oppdateringer",
-            "by": "av",
-            "you": "Deg:"
+            "you": "Deg:",
+            "today": "I dag",
+            "tomorrow": "I morgen",
+            "attendingCount": "{count} deltar",
+            "interestedCount": "{count} interesserte",
+            "organizer": "Arrangør"
         },
         "create": {
             "title": "Opprett et arrangement",

@@ -26,6 +26,8 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $searchable_paid_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property-read int $attending_count
+ * @property-read int $interested_count
  */
 #[Fillable(['user_id', 'name', 'place', 'description', 'starts_at', 'ends_at', 'visibility', 'allow_invitee_invites', 'allow_invitee_comments', 'searchable_paid_at'])]
 class Event extends Model

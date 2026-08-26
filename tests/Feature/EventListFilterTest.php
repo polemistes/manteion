@@ -1,9 +1,11 @@
 <?php
 
+use App\Enums\AttendanceStatus;
 use App\Enums\AttendeeSource;
 use App\Models\ContactTagPreference;
 use App\Models\Event;
 use App\Models\EventAttendee;
+use App\Models\EventImage;
 use App\Models\Follow;
 use App\Models\Friendship;
 use App\Models\Tag;
@@ -114,4 +116,28 @@ test('the relation filter narrows the list to friends, following, or both', func
 
     $this->actingAs($viewer)->get('/events?relation=both')
         ->assertInertia(fn ($page) => $page->has('events', 2));
+});
+
+test('the list reports the cover image and attendance counts for each event', function () {
+    $owner = User::factory()->create();
+    $attending = User::factory()->create();
+    $interested = User::factory()->create();
+
+    $eventWithImage = Event::factory()->create(['user_id' => $owner->id, 'name' => 'Has A Photo', 'starts_at' => now()->addDay()]);
+    EventImage::factory()->create(['event_id' => $eventWithImage->id, 'path' => 'events/cover.jpg', 'position' => 0]);
+    EventAttendee::factory()->attending()->create(['event_id' => $eventWithImage->id, 'user_id' => $attending->id]);
+    EventAttendee::factory()->create(['event_id' => $eventWithImage->id, 'user_id' => $interested->id, 'status' => AttendanceStatus::Interested]);
+
+    $eventWithoutImage = Event::factory()->create(['user_id' => $owner->id, 'name' => 'No Photo Yet', 'starts_at' => now()->addDays(2)]);
+
+    $response = $this->actingAs($owner)->get('/events');
+
+    $response->assertInertia(fn ($page) => $page
+        ->has('events', 2)
+        ->where('events.0.cover_image_url', fn ($url) => str_contains($url, 'events/cover.jpg'))
+        ->where('events.0.attending_count', 1)
+        ->where('events.0.interested_count', 1)
+        ->where('events.1.cover_image_url', null)
+        ->where('events.1.attending_count', 0)
+        ->where('events.1.interested_count', 0));
 });
