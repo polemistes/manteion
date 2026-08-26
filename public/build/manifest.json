@@ -1,38 +1,53 @@
 {
-  "_DateTimeField-KgY--ytQ.js": {
-    "file": "assets/DateTimeField-KgY--ytQ.js",
-    "name": "DateTimeField",
-    "imports": [
-      "_wayfinder-BniJ7PPz.js"
-    ]
-  },
-  "_FieldError-Cfu52kcX.js": {
-    "file": "assets/FieldError-Cfu52kcX.js",
+  "_FieldError-DQkuuO4q.js": {
+    "file": "assets/FieldError-DQkuuO4q.js",
     "name": "FieldError",
     "imports": [
-      "_wayfinder-BniJ7PPz.js"
+      "_wayfinder-BVzKIFVO.js"
     ]
   },
-  "_GuestLayout-SxzUyQMu.js": {
-    "file": "assets/GuestLayout-SxzUyQMu.js",
+  "_GuestLayout-DdhD9Jzo.js": {
+    "file": "assets/GuestLayout-DdhD9Jzo.js",
     "name": "GuestLayout",
     "imports": [
-      "_wayfinder-BniJ7PPz.js",
+      "_wayfinder-BVzKIFVO.js",
       "resources/js/app.ts"
     ]
   },
-  "_PasswordField-D_icazrq.js": {
-    "file": "assets/PasswordField-D_icazrq.js",
-    "name": "PasswordField",
+  "_LocationPicker-1DTFk8zz.css": {
+    "file": "assets/LocationPicker-1DTFk8zz.css",
+    "src": "_LocationPicker-1DTFk8zz.css"
+  },
+  "_LocationPicker-B3ibtUuZ.js": {
+    "file": "assets/LocationPicker-B3ibtUuZ.js",
+    "name": "LocationPicker",
     "imports": [
-      "_wayfinder-BniJ7PPz.js"
+      "_wayfinder-BVzKIFVO.js",
+      "_useNominatimSearch-CzvcsdRi.js"
+    ],
+    "css": [
+      "assets/LocationPicker-1DTFk8zz.css"
+    ],
+    "assets": [
+      "assets/marker-icon-2x-_ZA0WGCc.png",
+      "assets/marker-icon-hN30_KVU.png",
+      "assets/marker-shadow-f7SaPCxT.png",
+      "assets/layers-BWBAp2CZ.png",
+      "assets/layers-2x-Bpkbi35X.png"
     ]
   },
-  "_PersonSummary-BkBoQ8Rm.js": {
-    "file": "assets/PersonSummary-BkBoQ8Rm.js",
+  "_PasswordField-B1OqUoxn.js": {
+    "file": "assets/PasswordField-B1OqUoxn.js",
+    "name": "PasswordField",
+    "imports": [
+      "_wayfinder-BVzKIFVO.js"
+    ]
+  },
+  "_PersonSummary-DpvMrUZ3.js": {
+    "file": "assets/PersonSummary-DpvMrUZ3.js",
     "name": "PersonSummary",
     "imports": [
-      "_wayfinder-BniJ7PPz.js",
+      "_wayfinder-BVzKIFVO.js",
       "resources/js/app.ts"
     ]
   },
@@ -40,11 +55,11 @@
     "file": "assets/fonts-C9MNnjVw.css",
     "src": "_fonts-C9MNnjVw.css"
   },
-  "_friendships-Be5TUdiy.js": {
-    "file": "assets/friendships-Be5TUdiy.js",
+  "_friendships-BT23BC1l.js": {
+    "file": "assets/friendships-BT23BC1l.js",
     "name": "friendships",
     "imports": [
-      "_wayfinder-BniJ7PPz.js"
+      "_wayfinder-BVzKIFVO.js"
     ]
   },
   "_instrument-sans-400-normal-D1W7dsQl.woff": {
@@ -71,33 +86,40 @@
     "file": "assets/instrument-sans-600-normal-B9e8oLYv.woff",
     "src": "_instrument-sans-600-normal-B9e8oLYv.woff"
   },
-  "_notifications-CrbyB-uv.js": {
-    "file": "assets/notifications-CrbyB-uv.js",
+  "_notifications-e4RFwVjE.js": {
+    "file": "assets/notifications-e4RFwVjE.js",
     "name": "notifications",
     "imports": [
-      "_wayfinder-BniJ7PPz.js"
+      "_wayfinder-BVzKIFVO.js"
     ]
   },
-  "_password-BoJzO1SC.js": {
-    "file": "assets/password-BoJzO1SC.js",
+  "_password-BVX-iis8.js": {
+    "file": "assets/password-BVX-iis8.js",
     "name": "password",
     "imports": [
-      "_wayfinder-BniJ7PPz.js"
+      "_wayfinder-BVzKIFVO.js"
     ]
   },
-  "_tag-preferences-DXBN1oxy.js": {
-    "file": "assets/tag-preferences-DXBN1oxy.js",
+  "_tag-preferences-2-40yWQE.js": {
+    "file": "assets/tag-preferences-2-40yWQE.js",
     "name": "tag-preferences",
     "imports": [
-      "_wayfinder-BniJ7PPz.js"
+      "_wayfinder-BVzKIFVO.js"
     ]
   },
-  "_wayfinder-BniJ7PPz.js": {
-    "file": "assets/wayfinder-BniJ7PPz.js",
+  "_useNominatimSearch-CzvcsdRi.js": {
+    "file": "assets/useNominatimSearch-CzvcsdRi.js",
+    "name": "useNominatimSearch",
+    "imports": [
+      "_wayfinder-BVzKIFVO.js"
+    ]
+  },
+  "_wayfinder-BVzKIFVO.js": {
+    "file": "assets/wayfinder-BVzKIFVO.js",
     "name": "wayfinder"
   },
   "node_modules/@capacitor/app/dist/esm/web.js": {
-    "file": "assets/web-DcU-92EJ.js",
+    "file": "assets/web-D7wChnGv.js",
     "name": "web",
     "src": "node_modules/@capacitor/app/dist/esm/web.js",
     "isDynamicEntry": true,
@@ -105,8 +127,28 @@
       "resources/js/app.ts"
     ]
   },
+  "node_modules/leaflet/dist/images/layers-2x.png": {
+    "file": "assets/layers-2x-Bpkbi35X.png",
+    "src": "node_modules/leaflet/dist/images/layers-2x.png"
+  },
+  "node_modules/leaflet/dist/images/layers.png": {
+    "file": "assets/layers-BWBAp2CZ.png",
+    "src": "node_modules/leaflet/dist/images/layers.png"
+  },
+  "node_modules/leaflet/dist/images/marker-icon-2x.png": {
+    "file": "assets/marker-icon-2x-_ZA0WGCc.png",
+    "src": "node_modules/leaflet/dist/images/marker-icon-2x.png"
+  },
+  "node_modules/leaflet/dist/images/marker-icon.png": {
+    "file": "assets/marker-icon-hN30_KVU.png",
+    "src": "node_modules/leaflet/dist/images/marker-icon.png"
+  },
+  "node_modules/leaflet/dist/images/marker-shadow.png": {
+    "file": "assets/marker-shadow-f7SaPCxT.png",
+    "src": "node_modules/leaflet/dist/images/marker-shadow.png"
+  },
   "resources/css/app.css": {
-    "file": "assets/app-CiX99ncp.css",
+    "file": "assets/app-C359v_Ws.css",
     "name": "app",
     "names": [
       "app.css"
@@ -115,13 +157,13 @@
     "isEntry": true
   },
   "resources/js/app.ts": {
-    "file": "assets/app-TNeLhboU.js",
+    "file": "assets/app-CuMlgQKh.js",
     "name": "app",
     "src": "resources/js/app.ts",
     "isEntry": true,
     "imports": [
-      "_wayfinder-BniJ7PPz.js",
-      "_tag-preferences-DXBN1oxy.js"
+      "_wayfinder-BVzKIFVO.js",
+      "_tag-preferences-2-40yWQE.js"
     ],
     "dynamicImports": [
       "node_modules/@capacitor/app/dist/esm/web.js",
@@ -146,212 +188,214 @@
     ]
   },
   "resources/js/pages/Welcome.vue": {
-    "file": "assets/Welcome-UWw8klgp.js",
+    "file": "assets/Welcome-BWqdqwHa.js",
     "name": "Welcome",
     "src": "resources/js/pages/Welcome.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_wayfinder-BniJ7PPz.js",
+      "_wayfinder-BVzKIFVO.js",
       "resources/js/app.ts"
     ]
   },
   "resources/js/pages/auth/ForgotPassword.vue": {
-    "file": "assets/ForgotPassword-DiCohy8S.js",
+    "file": "assets/ForgotPassword-B0RHVkk6.js",
     "name": "ForgotPassword",
     "src": "resources/js/pages/auth/ForgotPassword.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_wayfinder-BniJ7PPz.js",
-      "_FieldError-Cfu52kcX.js",
-      "_GuestLayout-SxzUyQMu.js",
-      "_password-BoJzO1SC.js"
+      "_wayfinder-BVzKIFVO.js",
+      "_FieldError-DQkuuO4q.js",
+      "_GuestLayout-DdhD9Jzo.js",
+      "_password-BVX-iis8.js"
     ]
   },
   "resources/js/pages/auth/Login.vue": {
-    "file": "assets/Login-CW2w7fmA.js",
+    "file": "assets/Login-C6zWzyHf.js",
     "name": "Login",
     "src": "resources/js/pages/auth/Login.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_wayfinder-BniJ7PPz.js",
-      "_FieldError-Cfu52kcX.js",
-      "_GuestLayout-SxzUyQMu.js",
-      "_password-BoJzO1SC.js",
-      "_PasswordField-D_icazrq.js"
+      "_wayfinder-BVzKIFVO.js",
+      "_FieldError-DQkuuO4q.js",
+      "_GuestLayout-DdhD9Jzo.js",
+      "_password-BVX-iis8.js",
+      "_PasswordField-B1OqUoxn.js"
     ]
   },
   "resources/js/pages/auth/Register.vue": {
-    "file": "assets/Register-C2cbb_rP.js",
+    "file": "assets/Register-CV5Ge6mV.js",
     "name": "Register",
     "src": "resources/js/pages/auth/Register.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_wayfinder-BniJ7PPz.js",
-      "_FieldError-Cfu52kcX.js",
-      "_GuestLayout-SxzUyQMu.js",
-      "_PasswordField-D_icazrq.js"
+      "_wayfinder-BVzKIFVO.js",
+      "_FieldError-DQkuuO4q.js",
+      "_GuestLayout-DdhD9Jzo.js",
+      "_PasswordField-B1OqUoxn.js"
     ]
   },
   "resources/js/pages/auth/ResetPassword.vue": {
-    "file": "assets/ResetPassword-DKOTUPDE.js",
+    "file": "assets/ResetPassword-CQZ9tFBz.js",
     "name": "ResetPassword",
     "src": "resources/js/pages/auth/ResetPassword.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_wayfinder-BniJ7PPz.js",
-      "_FieldError-Cfu52kcX.js",
-      "_GuestLayout-SxzUyQMu.js",
-      "_password-BoJzO1SC.js",
-      "_PasswordField-D_icazrq.js"
+      "_wayfinder-BVzKIFVO.js",
+      "_FieldError-DQkuuO4q.js",
+      "_GuestLayout-DdhD9Jzo.js",
+      "_password-BVX-iis8.js",
+      "_PasswordField-B1OqUoxn.js"
     ]
   },
   "resources/js/pages/contacts/Index.vue": {
-    "file": "assets/Index-D1l-9rgI.js",
+    "file": "assets/Index-0O305khD.js",
     "name": "Index",
     "src": "resources/js/pages/contacts/Index.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_wayfinder-BniJ7PPz.js",
-      "_tag-preferences-DXBN1oxy.js",
+      "_wayfinder-BVzKIFVO.js",
+      "_tag-preferences-2-40yWQE.js",
       "resources/js/app.ts",
-      "_PersonSummary-BkBoQ8Rm.js",
-      "_friendships-Be5TUdiy.js"
+      "_PersonSummary-DpvMrUZ3.js",
+      "_friendships-BT23BC1l.js"
     ]
   },
   "resources/js/pages/contacts/Search.vue": {
-    "file": "assets/Search-DNL3FHhm.js",
+    "file": "assets/Search-BukDGmT9.js",
     "name": "Search",
     "src": "resources/js/pages/contacts/Search.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_wayfinder-BniJ7PPz.js",
+      "_wayfinder-BVzKIFVO.js",
       "resources/js/app.ts",
-      "_PersonSummary-BkBoQ8Rm.js",
-      "_friendships-Be5TUdiy.js"
+      "_PersonSummary-DpvMrUZ3.js",
+      "_friendships-BT23BC1l.js"
     ]
   },
   "resources/js/pages/events/Create.vue": {
-    "file": "assets/Create-Ci0Z6Iva.js",
+    "file": "assets/Create-DUDOCWGn.js",
     "name": "Create",
     "src": "resources/js/pages/events/Create.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_wayfinder-BniJ7PPz.js",
+      "_LocationPicker-B3ibtUuZ.js",
+      "_wayfinder-BVzKIFVO.js",
       "resources/js/app.ts",
-      "_FieldError-Cfu52kcX.js",
-      "_DateTimeField-KgY--ytQ.js"
+      "_FieldError-DQkuuO4q.js"
     ]
   },
   "resources/js/pages/events/Edit.vue": {
-    "file": "assets/Edit-DVzAuF2I.js",
+    "file": "assets/Edit-Z2dgIYLA.js",
     "name": "Edit",
     "src": "resources/js/pages/events/Edit.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_wayfinder-BniJ7PPz.js",
+      "_LocationPicker-B3ibtUuZ.js",
+      "_wayfinder-BVzKIFVO.js",
       "resources/js/app.ts",
-      "_FieldError-Cfu52kcX.js",
-      "_DateTimeField-KgY--ytQ.js"
+      "_FieldError-DQkuuO4q.js"
     ]
   },
   "resources/js/pages/events/Index.vue": {
-    "file": "assets/Index-D_nC81WV.js",
+    "file": "assets/Index-c0yMN_Hj.js",
     "name": "Index",
     "src": "resources/js/pages/events/Index.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_wayfinder-BniJ7PPz.js",
+      "_wayfinder-BVzKIFVO.js",
       "resources/js/app.ts",
-      "_PersonSummary-BkBoQ8Rm.js",
-      "_notifications-CrbyB-uv.js"
+      "_PersonSummary-DpvMrUZ3.js",
+      "_useNominatimSearch-CzvcsdRi.js",
+      "_notifications-e4RFwVjE.js"
     ]
   },
   "resources/js/pages/events/Search.vue": {
-    "file": "assets/Search-Cb--idXr.js",
+    "file": "assets/Search-C3t-oRDz.js",
     "name": "Search",
     "src": "resources/js/pages/events/Search.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_wayfinder-BniJ7PPz.js",
+      "_wayfinder-BVzKIFVO.js",
       "resources/js/app.ts",
-      "_PersonSummary-BkBoQ8Rm.js"
+      "_PersonSummary-DpvMrUZ3.js",
+      "_useNominatimSearch-CzvcsdRi.js"
     ]
   },
   "resources/js/pages/events/Show.vue": {
-    "file": "assets/Show-BTH4Uxmu.js",
+    "file": "assets/Show-D_fXolTa.js",
     "name": "Show",
     "src": "resources/js/pages/events/Show.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_wayfinder-BniJ7PPz.js",
+      "_wayfinder-BVzKIFVO.js",
       "resources/js/app.ts",
-      "_FieldError-Cfu52kcX.js",
-      "_PersonSummary-BkBoQ8Rm.js"
+      "_FieldError-DQkuuO4q.js",
+      "_PersonSummary-DpvMrUZ3.js"
     ]
   },
   "resources/js/pages/messages/Create.vue": {
-    "file": "assets/Create-C3IdtZGQ.js",
+    "file": "assets/Create-B3crZWB8.js",
     "name": "Create",
     "src": "resources/js/pages/messages/Create.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_wayfinder-BniJ7PPz.js",
+      "_wayfinder-BVzKIFVO.js",
       "resources/js/app.ts",
-      "_FieldError-Cfu52kcX.js"
+      "_FieldError-DQkuuO4q.js"
     ]
   },
   "resources/js/pages/messages/Index.vue": {
-    "file": "assets/Index-B0lkR5ED.js",
+    "file": "assets/Index-DKeD-rA4.js",
     "name": "Index",
     "src": "resources/js/pages/messages/Index.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_wayfinder-BniJ7PPz.js",
+      "_wayfinder-BVzKIFVO.js",
       "resources/js/app.ts"
     ]
   },
   "resources/js/pages/messages/Show.vue": {
-    "file": "assets/Show-DoW06hRK.js",
+    "file": "assets/Show-B_vgHvib.js",
     "name": "Show",
     "src": "resources/js/pages/messages/Show.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_wayfinder-BniJ7PPz.js",
+      "_wayfinder-BVzKIFVO.js",
       "resources/js/app.ts",
-      "_FieldError-Cfu52kcX.js"
+      "_FieldError-DQkuuO4q.js"
     ]
   },
   "resources/js/pages/notifications/Index.vue": {
-    "file": "assets/Index-D7B_u8b-.js",
+    "file": "assets/Index-DBdYfbgL.js",
     "name": "Index",
     "src": "resources/js/pages/notifications/Index.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_wayfinder-BniJ7PPz.js",
-      "_notifications-CrbyB-uv.js"
+      "_wayfinder-BVzKIFVO.js",
+      "_notifications-e4RFwVjE.js"
     ]
   },
   "resources/js/pages/profile/Edit.vue": {
-    "file": "assets/Edit-CJCoo8AN.js",
+    "file": "assets/Edit-C82lV9vp.js",
     "name": "Edit",
     "src": "resources/js/pages/profile/Edit.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_wayfinder-BniJ7PPz.js",
+      "_wayfinder-BVzKIFVO.js",
       "resources/js/app.ts",
-      "_FieldError-Cfu52kcX.js",
-      "_PasswordField-D_icazrq.js"
+      "_FieldError-DQkuuO4q.js",
+      "_PasswordField-B1OqUoxn.js"
     ]
   },
   "resources/js/pages/users/Show.vue": {
-    "file": "assets/Show-ZIiHs9SX.js",
+    "file": "assets/Show-BJ_Kq8-E.js",
     "name": "Show",
     "src": "resources/js/pages/users/Show.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_wayfinder-BniJ7PPz.js",
+      "_wayfinder-BVzKIFVO.js",
       "resources/js/app.ts",
-      "_friendships-Be5TUdiy.js"
+      "_friendships-BT23BC1l.js"
     ]
   }
 }

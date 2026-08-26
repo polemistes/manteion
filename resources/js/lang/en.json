@@ -186,7 +186,7 @@
         "create": {
             "title": "Create an event",
             "name": "Name",
-            "place": "Place",
+            "placeOptional": "Place (optional)",
             "description": "Description",
             "starts": "Starts",
             "endsOptional": "Ends (optional)",
@@ -205,7 +205,7 @@
             "title": "Edit event",
             "remove": "Remove",
             "name": "Name",
-            "place": "Place",
+            "placeOptional": "Place (optional)",
             "description": "Description",
             "starts": "Starts",
             "endsOptional": "Ends (optional)",
@@ -318,5 +318,18 @@
     },
     "locale": {
         "label": "Language"
+    },
+    "location": {
+        "mapLocation": "Map location (optional)",
+        "searchPlaceholder": "Search for an address or place",
+        "searching": "Searching…",
+        "noResults": "No results",
+        "searchError": "Couldn't search right now. Try again.",
+        "clear": "Clear location",
+        "near": "Near",
+        "sortingByDistance": "Sorting by distance",
+        "useCurrentLocation": "Use my location",
+        "geolocationError": "Couldn't get your location.",
+        "distanceAway": "{distance} km away"
     }
 }

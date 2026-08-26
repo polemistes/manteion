@@ -3,6 +3,8 @@ import { Head, Link, router, usePage, usePoll } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import EventCard from '@/components/EventCard.vue';
+import { useNominatimSearch } from '@/composables/useNominatimSearch';
+import type { NominatimResult } from '@/composables/useNominatimSearch';
 import { index as eventsIndex, create as eventsCreate } from '@/routes/events';
 import { index as notificationsIndex } from '@/routes/notifications';
 
@@ -36,7 +38,9 @@ interface GroupOption {
 interface EventSummary {
     id: number;
     name: string;
-    place: string;
+    place: string | null;
+    city: string | null;
+    country: string | null;
     starts_at: string;
     visibility: string;
     owner: ContactOption;
@@ -45,6 +49,7 @@ interface EventSummary {
     cover_image_url: string | null;
     attending_count: number;
     interested_count: number;
+    distance_km: number | null;
 }
 
 const props = defineProps<{
@@ -59,6 +64,8 @@ const props = defineProps<{
         relation?: string;
         contact_id?: string;
         group_id?: string;
+        near_lat?: string;
+        near_lng?: string;
     };
 }>();
 
@@ -66,6 +73,21 @@ const selectedTags = ref<string[]>(props.filters.tags ?? []);
 const relation = ref(props.filters.relation ?? '');
 const contactId = ref(props.filters.contact_id ?? '');
 const groupId = ref(props.filters.group_id ?? '');
+const nearLat = ref<number | null>(
+    props.filters.near_lat ? parseFloat(props.filters.near_lat) : null,
+);
+const nearLng = ref<number | null>(
+    props.filters.near_lng ? parseFloat(props.filters.near_lng) : null,
+);
+const nearQuery = ref('');
+const geolocationErrorMessage = ref<string | null>(null);
+
+const {
+    results: nearResults,
+    error: nearSearchError,
+    search: searchNear,
+    clearResults: clearNearResults,
+} = useNominatimSearch();
 
 function applyFilters(): void {
     router.get(
@@ -75,9 +97,52 @@ function applyFilters(): void {
             relation: relation.value || undefined,
             contact_id: contactId.value || undefined,
             group_id: groupId.value || undefined,
+            near_lat: nearLat.value ?? undefined,
+            near_lng: nearLng.value ?? undefined,
         },
         { preserveState: true, replace: true },
     );
+}
+
+function onNearSearchInput(event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    nearQuery.value = value;
+    searchNear(value);
+}
+
+function selectNearResult(result: NominatimResult): void {
+    nearLat.value = parseFloat(result.lat);
+    nearLng.value = parseFloat(result.lon);
+    nearQuery.value = '';
+    clearNearResults();
+    applyFilters();
+}
+
+function useCurrentLocation(): void {
+    geolocationErrorMessage.value = null;
+
+    if (!navigator.geolocation) {
+        geolocationErrorMessage.value = t('location.geolocationError');
+
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            nearLat.value = position.coords.latitude;
+            nearLng.value = position.coords.longitude;
+            applyFilters();
+        },
+        () => {
+            geolocationErrorMessage.value = t('location.geolocationError');
+        },
+    );
+}
+
+function clearNear(): void {
+    nearLat.value = null;
+    nearLng.value = null;
+    applyFilters();
 }
 </script>
 
@@ -222,6 +287,66 @@ function applyFilters(): void {
                         </option>
                     </optgroup>
                 </select>
+            </div>
+
+            <div>
+                <p class="mb-1 text-xs font-bold">{{ t('location.near') }}</p>
+                <div
+                    v-if="nearLat !== null && nearLng !== null"
+                    class="flex items-center gap-2 text-sm"
+                >
+                    <span>{{ t('location.sortingByDistance') }}</span>
+                    <button type="button" class="underline" @click="clearNear">
+                        {{ t('location.clear') }}
+                    </button>
+                </div>
+                <div v-else class="relative">
+                    <div class="flex gap-2">
+                        <input
+                            type="text"
+                            :value="nearQuery"
+                            :placeholder="t('location.searchPlaceholder')"
+                            class="border border-black bg-white px-2 py-1 text-sm focus:ring-1 focus:ring-black focus:outline-none"
+                            @input="onNearSearchInput"
+                        />
+                        <button
+                            type="button"
+                            class="border border-black px-2 py-1 text-xs hover:bg-black hover:text-white"
+                            @click="useCurrentLocation"
+                        >
+                            {{ t('location.useCurrentLocation') }}
+                        </button>
+                    </div>
+                    <ul
+                        v-if="nearResults.length"
+                        class="absolute z-10 mt-1 w-full border border-black bg-white"
+                    >
+                        <li
+                            v-for="result in nearResults"
+                            :key="result.display_name"
+                        >
+                            <button
+                                type="button"
+                                class="block w-full px-3 py-2 text-left text-xs hover:bg-black hover:text-white"
+                                @click="selectNearResult(result)"
+                            >
+                                {{ result.display_name }}
+                            </button>
+                        </li>
+                    </ul>
+                    <p
+                        v-else-if="nearSearchError"
+                        class="mt-1 text-xs text-black/70"
+                    >
+                        {{ t('location.searchError') }}
+                    </p>
+                </div>
+                <p
+                    v-if="geolocationErrorMessage"
+                    class="mt-1 text-xs text-black/70"
+                >
+                    {{ geolocationErrorMessage }}
+                </p>
             </div>
         </div>
     </section>

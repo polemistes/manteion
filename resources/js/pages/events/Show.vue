@@ -47,7 +47,9 @@ const props = defineProps<{
     event: {
         id: number;
         name: string;
-        place: string;
+        place: string | null;
+        city: string | null;
+        country: string | null;
         description: string;
         starts_at: string;
         ends_at: string | null;
@@ -90,6 +92,11 @@ const statusKeys: Record<string, string> = {
 function statusLabel(status: string): string {
     return t(statusKeys[status] ?? status);
 }
+
+const locationLabel =
+    props.event.place ||
+    [props.event.city, props.event.country].filter(Boolean).join(', ') ||
+    null;
 </script>
 
 <template>
@@ -103,7 +110,7 @@ function statusLabel(status: string): string {
                 <template v-if="props.event.ends_at">
                     – {{ formatDate(props.event.ends_at) }}
                 </template>
-                · {{ props.event.place }}
+                <template v-if="locationLabel"> · {{ locationLabel }}</template>
             </p>
             <p class="mt-1 text-sm">
                 {{ t('events.show.by') }}

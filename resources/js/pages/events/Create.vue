@@ -4,6 +4,7 @@ import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import DateTimeField from '@/components/DateTimeField.vue';
 import FieldError from '@/components/FieldError.vue';
+import LocationPicker from '@/components/LocationPicker.vue';
 import { store } from '@/routes/events';
 
 const { t } = useI18n();
@@ -56,16 +57,20 @@ function removeTag(name: string): void {
 
         <div>
             <label for="place" class="mb-1 block text-sm font-bold">{{
-                t('events.create.place')
+                t('events.create.placeOptional')
             }}</label>
             <input
                 id="place"
                 type="text"
                 name="place"
-                required
                 class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
             />
             <FieldError :message="errors.place" />
+        </div>
+
+        <div>
+            <LocationPicker />
+            <FieldError :message="errors.latitude ?? errors.longitude" />
         </div>
 
         <div>

@@ -34,6 +34,60 @@ test('a user can create a private event with tags and images', function () {
     Storage::disk('public')->assertExists($event->images->first()->path);
 });
 
+test('a user can create an event with a map location', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->post('/events', [
+        'name' => 'Beach Cleanup',
+        'place' => 'Bygdøy beach',
+        'latitude' => 59.9022,
+        'longitude' => 10.6802,
+        'city' => 'Oslo',
+        'country' => 'Norway',
+        'description' => 'Bring gloves.',
+        'starts_at' => now()->addWeek()->toDateTimeString(),
+        'ends_at' => null,
+        'visibility' => 'private',
+        'allow_invitee_invites' => false,
+        'allow_invitee_comments' => true,
+    ]);
+
+    $event = Event::query()->where('name', 'Beach Cleanup')->firstOrFail();
+    $response->assertRedirect("/events/{$event->id}");
+
+    expect($event->latitude)->toBe(59.9022);
+    expect($event->longitude)->toBe(10.6802);
+    expect($event->city)->toBe('Oslo');
+    expect($event->country)->toBe('Norway');
+
+    $this->actingAs($user)->get("/events/{$event->id}")
+        ->assertInertia(fn ($page) => $page
+            ->where('event.latitude', 59.9022)
+            ->where('event.longitude', 10.6802)
+            ->where('event.city', 'Oslo')
+            ->where('event.country', 'Norway'));
+});
+
+test('a user can create an event without a place or map location', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->post('/events', [
+        'name' => 'Online Meetup',
+        'description' => 'Link shared beforehand.',
+        'starts_at' => now()->addWeek()->toDateTimeString(),
+        'ends_at' => null,
+        'visibility' => 'private',
+        'allow_invitee_invites' => false,
+        'allow_invitee_comments' => true,
+    ]);
+
+    $event = Event::query()->where('name', 'Online Meetup')->firstOrFail();
+    $response->assertRedirect("/events/{$event->id}");
+
+    expect($event->place)->toBeNull();
+    expect($event->latitude)->toBeNull();
+});
+
 test('a private event is only visible to its owner', function () {
     $owner = User::factory()->create();
     $stranger = User::factory()->create();

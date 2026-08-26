@@ -66,14 +66,20 @@ class EventController extends Controller
             }
         }
 
+        $nearPoint = $this->nearPointFrom($request);
+
+        if ($nearPoint !== null) {
+            $events = $this->sortByDistance($events, $nearPoint);
+        }
+
         return Inertia::render('events/Index', [
-            'events' => $this->summarizeEvents($events, $user),
+            'events' => $this->summarizeEvents($events, $user, $nearPoint),
             'tags' => Tag::query()->orderBy('name')->get(['id', 'name', 'slug']),
             'friends' => $user->friends()->map(fn (User $friend) => ['id' => $friend->id, 'name' => $friend->name, 'username' => $friend->username, 'avatar_url' => $friend->avatar_url])->values(),
             'following' => User::query()->whereIn('id', $followedIds)->orderBy('name')->get(['id', 'name', 'username', 'avatar_path']),
             'friendGroups' => $user->contactGroups()->ofType(ContactGroupType::Friend)->get(['id', 'name']),
             'followingGroups' => $user->contactGroups()->ofType(ContactGroupType::Following)->get(['id', 'name']),
-            'filters' => $request->only(['tags', 'relation', 'contact_id', 'group_id']),
+            'filters' => $request->only(['tags', 'relation', 'contact_id', 'group_id', 'near_lat', 'near_lng']),
         ]);
     }
 
@@ -82,6 +88,7 @@ class EventController extends Controller
         $term = trim((string) $request->string('q'));
         $tagFilter = $request->array('tags');
         $viewer = $request->user();
+        $nearPoint = $this->nearPointFrom($request);
 
         $events = $this->withAttendanceCounts(
             Event::query()
@@ -99,10 +106,15 @@ class EventController extends Controller
             $events = $events->filter(fn (Event $event) => $event->tags->pluck('slug')->intersect($tagFilter)->isNotEmpty());
         }
 
+        if ($nearPoint !== null) {
+            $events = $this->sortByDistance($events, $nearPoint);
+        }
+
         return Inertia::render('events/Search', [
             'q' => $term,
             'tags' => Tag::query()->orderBy('name')->get(['id', 'name', 'slug']),
-            'events' => $this->summarizeEvents($events, $viewer),
+            'events' => $this->summarizeEvents($events, $viewer, $nearPoint),
+            'filters' => $request->only(['near_lat', 'near_lng']),
         ]);
     }
 
@@ -118,7 +130,7 @@ class EventController extends Controller
     public function store(StoreEventRequest $request): RedirectResponse
     {
         $event = $request->user()->events()->create($request->safe()->only([
-            'name', 'place', 'description', 'starts_at', 'ends_at', 'visibility', 'allow_invitee_invites', 'allow_invitee_comments',
+            'name', 'place', 'latitude', 'longitude', 'city', 'country', 'description', 'starts_at', 'ends_at', 'visibility', 'allow_invitee_invites', 'allow_invitee_comments',
         ]));
 
         $this->syncTags($event, $request->input('tags', []));
@@ -146,6 +158,10 @@ class EventController extends Controller
                 'id' => $event->id,
                 'name' => $event->name,
                 'place' => $event->place,
+                'latitude' => $event->latitude,
+                'longitude' => $event->longitude,
+                'city' => $event->city,
+                'country' => $event->country,
                 'description' => $event->description,
                 'starts_at' => $event->starts_at->toIso8601String(),
                 'ends_at' => $event->ends_at?->toIso8601String(),
@@ -198,6 +214,10 @@ class EventController extends Controller
                 'id' => $event->id,
                 'name' => $event->name,
                 'place' => $event->place,
+                'latitude' => $event->latitude,
+                'longitude' => $event->longitude,
+                'city' => $event->city,
+                'country' => $event->country,
                 'description' => $event->description,
                 'starts_at' => $event->starts_at->toIso8601String(),
                 'ends_at' => $event->ends_at?->toIso8601String(),
@@ -220,7 +240,7 @@ class EventController extends Controller
         }
 
         $event->update([
-            ...$request->safe()->only(['name', 'place', 'description', 'starts_at', 'ends_at', 'allow_invitee_invites', 'allow_invitee_comments']),
+            ...$request->safe()->only(['name', 'place', 'latitude', 'longitude', 'city', 'country', 'description', 'starts_at', 'ends_at', 'allow_invitee_invites', 'allow_invitee_comments']),
             'visibility' => $visibility,
         ]);
 
@@ -289,14 +309,19 @@ class EventController extends Controller
 
     /**
      * @param  Collection<int, Event>  $events
+     * @param  array{0: float, 1: float}|null  $nearPoint
      * @return array<int, array<string, mixed>>
      */
-    private function summarizeEvents(Collection $events, User $viewer): array
+    private function summarizeEvents(Collection $events, User $viewer, ?array $nearPoint = null): array
     {
         return $events->map(fn (Event $event) => [
             'id' => $event->id,
             'name' => $event->name,
             'place' => $event->place,
+            'city' => $event->city,
+            'country' => $event->country,
+            'latitude' => $event->latitude,
+            'longitude' => $event->longitude,
             'starts_at' => $event->starts_at->toIso8601String(),
             'visibility' => $event->visibility->value,
             'owner' => ['id' => $event->owner->id, 'name' => $event->owner->name, 'username' => $event->owner->username, 'avatar_url' => $event->owner->avatar_url],
@@ -307,7 +332,55 @@ class EventController extends Controller
                 : null,
             'attending_count' => $event->attending_count,
             'interested_count' => $event->interested_count,
+            'distance_km' => $nearPoint !== null && $event->latitude !== null && $event->longitude !== null
+                ? round($this->haversineKm($nearPoint[0], $nearPoint[1], $event->latitude, $event->longitude), 1)
+                : null,
         ])->values()->all();
+    }
+
+    /**
+     * @return array{0: float, 1: float}|null
+     */
+    private function nearPointFrom(Request $request): ?array
+    {
+        if (! $request->filled('near_lat') || ! $request->filled('near_lng')) {
+            return null;
+        }
+
+        $lat = $request->float('near_lat');
+        $lng = $request->float('near_lng');
+
+        if ($lat < -90 || $lat > 90 || $lng < -180 || $lng > 180) {
+            return null;
+        }
+
+        return [$lat, $lng];
+    }
+
+    /**
+     * @param  Collection<int, Event>  $events
+     * @param  array{0: float, 1: float}  $nearPoint
+     * @return Collection<int, Event>
+     */
+    private function sortByDistance(Collection $events, array $nearPoint): Collection
+    {
+        return $events->sortBy(fn (Event $event) => $event->latitude === null || $event->longitude === null
+            ? PHP_FLOAT_MAX
+            : $this->haversineKm($nearPoint[0], $nearPoint[1], $event->latitude, $event->longitude))
+            ->values();
+    }
+
+    private function haversineKm(float $lat1, float $lng1, float $lat2, float $lng2): float
+    {
+        $earthRadiusKm = 6371.0;
+
+        $latDelta = deg2rad($lat2 - $lat1);
+        $lngDelta = deg2rad($lng2 - $lng1);
+
+        $a = sin($latDelta / 2) ** 2
+            + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($lngDelta / 2) ** 2;
+
+        return $earthRadiusKm * 2 * atan2(sqrt($a), sqrt(1 - $a));
     }
 
     /**

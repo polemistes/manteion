@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import EventThumbnail from '@/components/EventThumbnail.vue';
 import PersonSummary from '@/components/PersonSummary.vue';
@@ -20,7 +21,9 @@ interface ContactOption {
 interface EventSummary {
     id: number;
     name: string;
-    place: string;
+    place: string | null;
+    city: string | null;
+    country: string | null;
     starts_at: string;
     visibility: string;
     owner: ContactOption;
@@ -29,6 +32,7 @@ interface EventSummary {
     cover_image_url: string | null;
     attending_count: number;
     interested_count: number;
+    distance_km: number | null;
 }
 
 const props = defineProps<{
@@ -36,6 +40,13 @@ const props = defineProps<{
 }>();
 
 const { t, locale } = useI18n();
+
+const locationLabel = computed(
+    () =>
+        props.event.place ||
+        [props.event.city, props.event.country].filter(Boolean).join(', ') ||
+        null,
+);
 
 const dateFnsLocales: Record<string, string> = {
     en: 'en-GB',
@@ -100,8 +111,8 @@ function statusLabel(status: string): string {
             <p class="text-xs text-black/70">
                 {{ formatEventDateTime(props.event.starts_at) }}
             </p>
-            <p class="truncate text-xs text-black/70">
-                {{ props.event.place }}
+            <p v-if="locationLabel" class="truncate text-xs text-black/70">
+                {{ locationLabel }}
             </p>
             <EventThumbnail
                 :url="props.event.cover_image_url"
@@ -142,6 +153,16 @@ function statusLabel(status: string): string {
                 <span v-if="props.event.my_status" class="text-xs font-bold">
                     {{ t('events.index.you') }}
                     {{ statusLabel(props.event.my_status) }}
+                </span>
+                <span
+                    v-if="props.event.distance_km !== null"
+                    class="text-xs text-black/70"
+                >
+                    {{
+                        t('location.distanceAway', {
+                            distance: props.event.distance_km,
+                        })
+                    }}
                 </span>
             </div>
 

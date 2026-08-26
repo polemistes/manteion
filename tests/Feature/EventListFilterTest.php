@@ -141,3 +141,35 @@ test('the list reports the cover image and attendance counts for each event', fu
         ->where('events.1.attending_count', 0)
         ->where('events.1.interested_count', 0));
 });
+
+test('near_lat and near_lng sort events nearest-first and push events without coordinates to the end', function () {
+    $owner = User::factory()->create();
+
+    // Oslo, roughly 470km from the viewer's point below.
+    $near = Event::factory()->create(['user_id' => $owner->id, 'name' => 'Near Event', 'latitude' => 59.9139, 'longitude' => 10.7522, 'starts_at' => now()->addDay()]);
+    // Bergen, further away.
+    $far = Event::factory()->create(['user_id' => $owner->id, 'name' => 'Far Event', 'latitude' => 60.3913, 'longitude' => 5.3221, 'starts_at' => now()->addDays(2)]);
+    $noLocation = Event::factory()->create(['user_id' => $owner->id, 'name' => 'No Location Event', 'latitude' => null, 'longitude' => null, 'starts_at' => now()->addDays(3)]);
+
+    // Trondheim as the viewer's reference point — closer to Oslo than Bergen.
+    $response = $this->actingAs($owner)->get('/events?near_lat=63.4305&near_lng=10.3951');
+
+    $response->assertInertia(fn ($page) => $page
+        ->has('events', 3)
+        ->where('events.0.id', $near->id)
+        ->where('events.1.id', $far->id)
+        ->where('events.2.id', $noLocation->id)
+        ->where('events.2.distance_km', null)
+        ->where('events.0.distance_km', fn ($km) => $km > 0));
+});
+
+test('an out-of-range near_lat or near_lng is ignored rather than erroring', function () {
+    $owner = User::factory()->create();
+    Event::factory()->create(['user_id' => $owner->id, 'name' => 'Some Event']);
+
+    $response = $this->actingAs($owner)->get('/events?near_lat=999&near_lng=10');
+
+    $response->assertOk()->assertInertia(fn ($page) => $page
+        ->has('events', 1)
+        ->where('events.0.distance_km', null));
+});

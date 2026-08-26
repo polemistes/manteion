@@ -16,7 +16,11 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $user_id
  * @property string $name
- * @property string $place
+ * @property string|null $place
+ * @property float|null $latitude
+ * @property float|null $longitude
+ * @property string|null $city
+ * @property string|null $country
  * @property string $description
  * @property Carbon $starts_at
  * @property Carbon|null $ends_at
@@ -29,7 +33,7 @@ use Illuminate\Support\Carbon;
  * @property-read int $attending_count
  * @property-read int $interested_count
  */
-#[Fillable(['user_id', 'name', 'place', 'description', 'starts_at', 'ends_at', 'visibility', 'allow_invitee_invites', 'allow_invitee_comments', 'searchable_paid_at'])]
+#[Fillable(['user_id', 'name', 'place', 'latitude', 'longitude', 'city', 'country', 'description', 'starts_at', 'ends_at', 'visibility', 'allow_invitee_invites', 'allow_invitee_comments', 'searchable_paid_at'])]
 class Event extends Model
 {
     /** @use HasFactory<EventFactory> */
@@ -40,6 +44,8 @@ class Event extends Model
         return [
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
+            'latitude' => 'float',
+            'longitude' => 'float',
             'visibility' => EventVisibility::class,
             'allow_invitee_invites' => 'boolean',
             'allow_invitee_comments' => 'boolean',

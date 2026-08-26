@@ -4,6 +4,7 @@ import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import DateTimeField from '@/components/DateTimeField.vue';
 import FieldError from '@/components/FieldError.vue';
+import LocationPicker from '@/components/LocationPicker.vue';
 import { update } from '@/routes/events';
 import * as eventImages from '@/routes/events/images';
 
@@ -13,7 +14,11 @@ const props = defineProps<{
     event: {
         id: number;
         name: string;
-        place: string;
+        place: string | null;
+        latitude: number | null;
+        longitude: number | null;
+        city: string | null;
+        country: string | null;
         description: string;
         starts_at: string;
         ends_at: string | null;
@@ -98,17 +103,28 @@ function removeTag(name: string): void {
 
         <div>
             <label for="place" class="mb-1 block text-sm font-bold">{{
-                t('events.edit.place')
+                t('events.edit.placeOptional')
             }}</label>
             <input
                 id="place"
                 type="text"
                 name="place"
-                required
                 :value="props.event.place"
                 class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
             />
             <FieldError :message="errors.place" />
+        </div>
+
+        <div>
+            <LocationPicker
+                :initial-value="{
+                    latitude: props.event.latitude,
+                    longitude: props.event.longitude,
+                    city: props.event.city,
+                    country: props.event.country,
+                }"
+            />
+            <FieldError :message="errors.latitude ?? errors.longitude" />
         </div>
 
         <div>

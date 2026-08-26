@@ -186,7 +186,7 @@
         "create": {
             "title": "Opprett et arrangement",
             "name": "Navn",
-            "place": "Sted",
+            "placeOptional": "Sted (valgfritt)",
             "description": "Beskrivelse",
             "starts": "Starter",
             "endsOptional": "Slutter (valgfritt)",
@@ -205,7 +205,7 @@
             "title": "Rediger arrangement",
             "remove": "Fjern",
             "name": "Navn",
-            "place": "Sted",
+            "placeOptional": "Sted (valgfritt)",
             "description": "Beskrivelse",
             "starts": "Starter",
             "endsOptional": "Slutter (valgfritt)",
@@ -318,5 +318,18 @@
     },
     "locale": {
         "label": "Språk"
+    },
+    "location": {
+        "mapLocation": "Kartplassering (valgfritt)",
+        "searchPlaceholder": "Søk etter adresse eller sted",
+        "searching": "Søker…",
+        "noResults": "Ingen treff",
+        "searchError": "Kunne ikke søke akkurat nå. Prøv igjen.",
+        "clear": "Fjern plassering",
+        "near": "Nær",
+        "sortingByDistance": "Sorterer etter avstand",
+        "useCurrentLocation": "Bruk min posisjon",
+        "geolocationError": "Kunne ikke hente posisjonen din.",
+        "distanceAway": "{distance} km unna"
     }
 }
