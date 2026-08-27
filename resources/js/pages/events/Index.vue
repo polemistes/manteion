@@ -2,6 +2,7 @@
 import { Head, Link, router, usePage, usePoll } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import CategoryFilterList from '@/components/CategoryFilterList.vue';
 import EventCard from '@/components/EventCard.vue';
 import { useNominatimSearch } from '@/composables/useNominatimSearch';
 import type { NominatimResult } from '@/composables/useNominatimSearch';
@@ -21,6 +22,13 @@ interface TagOption {
     id: number;
     name: string;
     slug: string;
+}
+
+interface CategoryOption {
+    id: number;
+    name: string;
+    slug: string;
+    children: TagOption[];
 }
 
 interface ContactOption {
@@ -54,7 +62,7 @@ interface EventSummary {
 
 const props = defineProps<{
     events: EventSummary[];
-    tags: TagOption[];
+    categories: CategoryOption[];
     friends: ContactOption[];
     following: ContactOption[];
     friendGroups: GroupOption[];
@@ -82,6 +90,20 @@ const nearLng = ref<number | null>(
 const nearQuery = ref('');
 const geolocationErrorMessage = ref<string | null>(null);
 
+// Start expanded if a filter is already applied (e.g. from a shared link or
+// a previous visit), so it isn't hidden behind a closed panel.
+const filtersOpen = ref(
+    selectedTags.value.length > 0 ||
+        relation.value !== '' ||
+        contactId.value !== '' ||
+        groupId.value !== '' ||
+        nearLat.value !== null,
+);
+
+function toggleFilters(): void {
+    filtersOpen.value = !filtersOpen.value;
+}
+
 const {
     results: nearResults,
     error: nearSearchError,
@@ -102,6 +124,11 @@ function applyFilters(): void {
         },
         { preserveState: true, replace: true },
     );
+}
+
+function onCategoriesChange(value: string[]): void {
+    selectedTags.value = value;
+    applyFilters();
 }
 
 function onNearSearchInput(event: Event): void {
@@ -175,34 +202,24 @@ function clearNear(): void {
     </Link>
 
     <section class="mb-8 border-[3px] border-black p-4">
-        <h2 class="mb-3 text-sm font-bold uppercase">
+        <button
+            type="button"
+            class="flex w-full items-center justify-between text-sm font-bold uppercase"
+            :class="{ 'mb-3': filtersOpen }"
+            @click="toggleFilters"
+        >
             {{ t('events.index.filters') }}
-        </h2>
+            <span>{{ filtersOpen ? '▲' : '▼' }}</span>
+        </button>
 
-        <div class="mb-3">
-            <p class="mb-1 text-xs font-bold">{{ t('events.index.tags') }}</p>
-            <div class="flex flex-wrap gap-3">
-                <label
-                    v-for="tag in tags"
-                    :key="tag.id"
-                    class="flex items-center gap-1 text-sm"
-                >
-                    <input
-                        v-model="selectedTags"
-                        type="checkbox"
-                        :value="tag.slug"
-                        class="border border-black"
-                        @change="applyFilters"
-                    />
-                    {{ tag.name }}
-                </label>
-                <span v-if="!tags.length" class="text-xs text-black/70">{{
-                    t('events.index.noTags')
-                }}</span>
-            </div>
-        </div>
+        <div v-if="filtersOpen" class="flex flex-wrap gap-6">
+            <CategoryFilterList
+                v-if="categories.length"
+                :categories="categories"
+                :model-value="selectedTags"
+                @update:model-value="onCategoriesChange"
+            />
 
-        <div class="mb-3 flex flex-wrap gap-6">
             <div>
                 <p class="mb-1 text-xs font-bold">
                     {{ t('events.index.ownedBy') }}

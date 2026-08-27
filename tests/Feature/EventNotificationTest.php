@@ -33,7 +33,7 @@ test('a follower with a tag preference is only notified when the event matches',
     $follower = User::factory()->create();
     Follow::factory()->create(['follower_id' => $follower->id, 'followed_id' => $owner->id]);
     $music = Tag::factory()->create(['name' => 'music']);
-    Tag::factory()->create(['name' => 'sports']);
+    $sports = Tag::factory()->create(['name' => 'sports']);
     ContactTagPreference::factory()->create(['user_id' => $follower->id, 'contact_user_id' => $owner->id, 'tag_id' => $music->id]);
 
     $this->actingAs($owner)->post('/events', [
@@ -44,7 +44,7 @@ test('a follower with a tag preference is only notified when the event matches',
         'visibility' => 'public',
         'allow_invitee_invites' => false,
         'allow_invitee_comments' => true,
-        'tags' => ['sports'],
+        'tag_ids' => [$sports->id],
     ])->assertRedirect();
 
     Notification::assertNothingSentTo($follower);

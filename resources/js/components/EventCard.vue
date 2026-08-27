@@ -39,7 +39,7 @@ const props = defineProps<{
     event: EventSummary;
 }>();
 
-const { t, locale } = useI18n();
+const { t, te, locale } = useI18n();
 
 const locationLabel = computed(
     () =>
@@ -47,6 +47,12 @@ const locationLabel = computed(
         [props.event.city, props.event.country].filter(Boolean).join(', ') ||
         null,
 );
+
+function categoryLabel(tag: TagOption): string {
+    const key = `categories.${tag.slug}`;
+
+    return te(key) ? t(key) : tag.name;
+}
 
 const dateFnsLocales: Record<string, string> = {
     en: 'en-GB',
@@ -134,7 +140,7 @@ function statusLabel(status: string): string {
                     :key="tag.id"
                     class="border border-black px-2 py-0.5 text-xs"
                 >
-                    {{ tag.name }}
+                    {{ categoryLabel(tag) }}
                 </span>
                 <span class="text-xs text-black/70">
                     {{

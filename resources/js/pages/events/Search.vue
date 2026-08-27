@@ -2,12 +2,13 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import CategoryFilterList from '@/components/CategoryFilterList.vue';
 import PersonSummary from '@/components/PersonSummary.vue';
 import { useNominatimSearch } from '@/composables/useNominatimSearch';
 import type { NominatimResult } from '@/composables/useNominatimSearch';
 import { search } from '@/routes/events';
 
-const { t, locale } = useI18n();
+const { t, te, locale } = useI18n();
 
 const dateFnsLocales: Record<string, string> = {
     en: 'en-GB',
@@ -18,6 +19,13 @@ interface TagOption {
     id: number;
     name: string;
     slug: string;
+}
+
+interface CategoryOption {
+    id: number;
+    name: string;
+    slug: string;
+    children: TagOption[];
 }
 
 interface EventSummary {
@@ -39,15 +47,17 @@ interface EventSummary {
 
 const props = defineProps<{
     q: string;
-    tags: TagOption[];
+    categories: CategoryOption[];
     events: EventSummary[];
     filters: {
+        tags?: string[];
         near_lat?: string;
         near_lng?: string;
     };
 }>();
 
 const query = ref(props.q);
+const selectedTags = ref<string[]>(props.filters.tags ?? []);
 const nearLat = ref<number | null>(
     props.filters.near_lat ? parseFloat(props.filters.near_lat) : null,
 );
@@ -69,11 +79,23 @@ function submit(): void {
         search().url,
         {
             q: query.value,
+            tags: selectedTags.value,
             near_lat: nearLat.value ?? undefined,
             near_lng: nearLng.value ?? undefined,
         },
         { preserveState: true, replace: true },
     );
+}
+
+function onCategoriesChange(value: string[]): void {
+    selectedTags.value = value;
+    submit();
+}
+
+function categoryLabel(tag: TagOption): string {
+    const key = `categories.${tag.slug}`;
+
+    return te(key) ? t(key) : tag.name;
 }
 
 function locationLabel(event: EventSummary): string | null {
@@ -153,6 +175,14 @@ function formatDate(value: string): string {
             {{ t('events.search.search') }}
         </button>
     </form>
+
+    <div v-if="categories.length" class="mb-6">
+        <CategoryFilterList
+            :categories="categories"
+            :model-value="selectedTags"
+            @update:model-value="onCategoriesChange"
+        />
+    </div>
 
     <div class="mb-6">
         <p class="mb-1 text-xs font-bold">{{ t('location.near') }}</p>
@@ -245,7 +275,7 @@ function formatDate(value: string): string {
                     :key="tag.id"
                     class="border border-black px-2 py-0.5 text-xs"
                 >
-                    {{ tag.name }}
+                    {{ categoryLabel(tag) }}
                 </span>
             </div>
         </li>

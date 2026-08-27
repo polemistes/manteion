@@ -3,13 +3,15 @@
 use App\Enums\EventVisibility;
 use App\Models\Event;
 use App\Models\Follow;
+use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
-test('a user can create a private event with tags and images', function () {
+test('a user can create a private event with categories and images', function () {
     Storage::fake('public');
     $user = User::factory()->create();
+    $games = Tag::query()->where('slug', 'games')->firstOrFail();
 
     $response = $this->actingAs($user)->post('/events', [
         'name' => 'Board Game Night',
@@ -20,8 +22,8 @@ test('a user can create a private event with tags and images', function () {
         'visibility' => 'private',
         'allow_invitee_invites' => false,
         'allow_invitee_comments' => true,
-        'tags' => ['games', 'social'],
-        'images' => [UploadedFile::fake()->create('photo.jpg', 50, 'image/jpeg')],
+        'tag_ids' => [$games->id],
+        'image' => UploadedFile::fake()->image('photo.jpg'),
     ]);
 
     $event = Event::query()->where('name', 'Board Game Night')->firstOrFail();
@@ -29,8 +31,34 @@ test('a user can create a private event with tags and images', function () {
 
     expect($event->user_id)->toBe($user->id);
     expect($event->visibility)->toBe(EventVisibility::Private);
-    expect($event->tags()->pluck('name')->sort()->values()->all())->toBe(['games', 'social']);
+    // Selecting the "Games" subcategory should also attach its "Social" parent category.
+    expect($event->tags()->pluck('slug')->sort()->values()->all())->toBe(['games', 'social']);
     expect($event->images)->toHaveCount(1);
+    Storage::disk('public')->assertExists($event->images->first()->path);
+});
+
+test('uploading a new event image replaces and deletes the old one', function () {
+    Storage::fake('public');
+    $user = User::factory()->create();
+    $event = Event::factory()->create(['user_id' => $user->id]);
+    $event->images()->create(['path' => 'events/1/old.jpg', 'position' => 0]);
+    Storage::disk('public')->put('events/1/old.jpg', 'fake-content');
+
+    $this->actingAs($user)->put("/events/{$event->id}", [
+        'name' => $event->name,
+        'place' => $event->place,
+        'description' => $event->description,
+        'starts_at' => $event->starts_at->toDateTimeString(),
+        'visibility' => 'private',
+        'allow_invitee_invites' => false,
+        'allow_invitee_comments' => true,
+        'image' => UploadedFile::fake()->image('new.jpg'),
+    ])->assertRedirect();
+
+    $event->refresh();
+    expect($event->images)->toHaveCount(1);
+    expect($event->images->first()->path)->not->toBe('events/1/old.jpg');
+    Storage::disk('public')->assertMissing('events/1/old.jpg');
     Storage::disk('public')->assertExists($event->images->first()->path);
 });
 

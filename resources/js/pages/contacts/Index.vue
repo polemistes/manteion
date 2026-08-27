@@ -12,10 +12,11 @@ import { store as startConversation } from '@/routes/messages';
 
 const { t } = useI18n();
 
-interface Tag {
+interface CategoryOption {
     id: number;
     name: string;
     slug: string;
+    children: { id: number; name: string; slug: string }[];
 }
 
 interface ContactSummary {
@@ -53,7 +54,7 @@ const props = defineProps<{
     pendingFollowerRequests: FollowEntry[];
     friendGroups: GroupEntry[];
     followingGroups: GroupEntry[];
-    tags: Tag[];
+    categories: CategoryOption[];
 }>();
 
 usePoll(20000, {
@@ -199,7 +200,7 @@ const followingUsers = computed(() =>
                 </div>
                 <TagPreferencePicker
                     :contact-id="friend.id"
-                    :tags="tags"
+                    :categories="categories"
                     :selected-tag-ids="friend.tag_preference_ids ?? []"
                 />
             </li>
@@ -257,7 +258,7 @@ const followingUsers = computed(() =>
                 </div>
                 <TagPreferencePicker
                     :contact-id="entry.user.id"
-                    :tags="tags"
+                    :categories="categories"
                     :selected-tag-ids="entry.tag_preference_ids ?? []"
                 />
             </li>

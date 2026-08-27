@@ -1,12 +1,20 @@
 <script setup lang="ts">
 import { Form, Head, Link } from '@inertiajs/vue3';
-import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import CategoryPicker from '@/components/CategoryPicker.vue';
 import DateTimeField from '@/components/DateTimeField.vue';
 import FieldError from '@/components/FieldError.vue';
+import ImageCropper from '@/components/ImageCropper.vue';
 import LocationPicker from '@/components/LocationPicker.vue';
 import { update } from '@/routes/events';
 import * as eventImages from '@/routes/events/images';
+
+interface CategoryOption {
+    id: number;
+    name: string;
+    slug: string;
+    children: { id: number; name: string; slug: string }[];
+}
 
 const { t } = useI18n();
 
@@ -26,27 +34,11 @@ const props = defineProps<{
         is_searchable: boolean;
         allow_invitee_invites: boolean;
         allow_invitee_comments: boolean;
-        tags: string[];
-        images: { id: number; url: string }[];
+        tag_ids: number[];
+        image: { id: number; url: string } | null;
     };
+    categories: CategoryOption[];
 }>();
-
-const selectedTags = ref<string[]>([...props.event.tags]);
-const tagInput = ref('');
-
-function addTag(name: string): void {
-    const trimmed = name.trim();
-
-    if (trimmed !== '' && !selectedTags.value.includes(trimmed)) {
-        selectedTags.value.push(trimmed);
-    }
-
-    tagInput.value = '';
-}
-
-function removeTag(name: string): void {
-    selectedTags.value = selectedTags.value.filter((tag) => tag !== name);
-}
 </script>
 
 <template>
@@ -54,31 +46,26 @@ function removeTag(name: string): void {
 
     <h1 class="mb-6 text-xl font-bold">{{ t('events.edit.title') }}</h1>
 
-    <div v-if="props.event.images.length" class="mb-6 flex flex-wrap gap-3">
-        <div
-            v-for="image in props.event.images"
-            :key="image.id"
-            class="flex flex-col items-center gap-1"
+    <div v-if="props.event.image" class="mb-6 flex flex-col items-start gap-1">
+        <img
+            :src="props.event.image.url"
+            class="h-32 border border-black object-cover"
+            style="aspect-ratio: 1.5"
+            alt=""
+        />
+        <Link
+            :href="
+                eventImages.destroy({
+                    event: props.event.id,
+                    image: props.event.image.id,
+                }).url
+            "
+            method="delete"
+            as="button"
+            class="text-xs underline"
         >
-            <img
-                :src="image.url"
-                class="h-24 w-24 border border-black object-cover"
-                alt=""
-            />
-            <Link
-                :href="
-                    eventImages.destroy({
-                        event: props.event.id,
-                        image: image.id,
-                    }).url
-                "
-                method="delete"
-                as="button"
-                class="text-xs underline"
-            >
-                {{ t('events.edit.remove') }}
-            </Link>
-        </div>
+            {{ t('events.edit.remove') }}
+        </Link>
     </div>
 
     <Form
@@ -165,46 +152,24 @@ function removeTag(name: string): void {
 
         <div>
             <p class="mb-1 text-sm font-bold">{{ t('events.edit.tags') }}</p>
-            <div class="mb-2 flex flex-wrap gap-2">
-                <span
-                    v-for="tag in selectedTags"
-                    :key="tag"
-                    class="flex items-center gap-1 border border-black px-2 py-0.5 text-xs"
-                >
-                    <input type="hidden" name="tags[]" :value="tag" />
-                    {{ tag }}
-                    <button
-                        type="button"
-                        class="font-bold"
-                        @click="removeTag(tag)"
-                    >
-                        ×
-                    </button>
-                </span>
-            </div>
-            <input
-                v-model="tagInput"
-                type="text"
-                :placeholder="t('events.edit.tagInputPlaceholder')"
-                class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
-                @keydown.enter.prevent="addTag(tagInput)"
+            <CategoryPicker
+                :categories="props.categories"
+                :initial-selected-ids="props.event.tag_ids"
             />
-            <FieldError :message="errors.tags" />
+            <FieldError :message="errors.tag_ids" />
         </div>
 
         <div>
-            <label for="images" class="mb-1 block text-sm font-bold">{{
-                t('events.edit.addMoreImages')
-            }}</label>
-            <input
-                id="images"
-                type="file"
-                name="images[]"
-                multiple
-                accept="image/*"
-                class="w-full border border-black bg-white px-3 py-2 font-sans text-sm"
+            <p class="mb-1 text-sm font-bold">
+                {{ t('events.edit.replaceImage') }}
+            </p>
+            <ImageCropper
+                name="image"
+                :aspect-ratio="1.5"
+                :output-width="1200"
+                :output-height="800"
             />
-            <FieldError :message="errors.images" />
+            <FieldError :message="errors.image" />
         </div>
 
         <fieldset class="border-[3px] border-black p-3">

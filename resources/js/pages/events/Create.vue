@@ -1,34 +1,25 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
-import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import CategoryPicker from '@/components/CategoryPicker.vue';
 import DateTimeField from '@/components/DateTimeField.vue';
 import FieldError from '@/components/FieldError.vue';
+import ImageCropper from '@/components/ImageCropper.vue';
 import LocationPicker from '@/components/LocationPicker.vue';
 import { store } from '@/routes/events';
+
+interface CategoryOption {
+    id: number;
+    name: string;
+    slug: string;
+    children: { id: number; name: string; slug: string }[];
+}
 
 const { t } = useI18n();
 
 const props = defineProps<{
-    tagSuggestions: string[];
+    categories: CategoryOption[];
 }>();
-
-const selectedTags = ref<string[]>([]);
-const tagInput = ref('');
-
-function addTag(name: string): void {
-    const trimmed = name.trim();
-
-    if (trimmed !== '' && !selectedTags.value.includes(trimmed)) {
-        selectedTags.value.push(trimmed);
-    }
-
-    tagInput.value = '';
-}
-
-function removeTag(name: string): void {
-    selectedTags.value = selectedTags.value.filter((tag) => tag !== name);
-}
 </script>
 
 <template>
@@ -105,60 +96,21 @@ function removeTag(name: string): void {
 
         <div>
             <p class="mb-1 text-sm font-bold">{{ t('events.create.tags') }}</p>
-            <div class="mb-2 flex flex-wrap gap-2">
-                <span
-                    v-for="tag in selectedTags"
-                    :key="tag"
-                    class="flex items-center gap-1 border border-black px-2 py-0.5 text-xs"
-                >
-                    <input type="hidden" name="tags[]" :value="tag" />
-                    {{ tag }}
-                    <button
-                        type="button"
-                        class="font-bold"
-                        @click="removeTag(tag)"
-                    >
-                        ×
-                    </button>
-                </span>
-            </div>
-            <input
-                v-model="tagInput"
-                type="text"
-                :placeholder="t('events.create.tagInputPlaceholder')"
-                class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
-                @keydown.enter.prevent="addTag(tagInput)"
-            />
-            <div
-                v-if="props.tagSuggestions.length"
-                class="mt-2 flex flex-wrap gap-2"
-            >
-                <button
-                    v-for="suggestion in props.tagSuggestions"
-                    :key="suggestion"
-                    type="button"
-                    class="border border-black px-2 py-0.5 text-xs hover:bg-black hover:text-white"
-                    @click="addTag(suggestion)"
-                >
-                    + {{ suggestion }}
-                </button>
-            </div>
-            <FieldError :message="errors.tags" />
+            <CategoryPicker :categories="props.categories" />
+            <FieldError :message="errors.tag_ids" />
         </div>
 
         <div>
-            <label for="images" class="mb-1 block text-sm font-bold">{{
-                t('events.create.imagesOptional')
-            }}</label>
-            <input
-                id="images"
-                type="file"
-                name="images[]"
-                multiple
-                accept="image/*"
-                class="w-full border border-black bg-white px-3 py-2 font-sans text-sm"
+            <p class="mb-1 text-sm font-bold">
+                {{ t('events.create.imageOptional') }}
+            </p>
+            <ImageCropper
+                name="image"
+                :aspect-ratio="1.5"
+                :output-width="1200"
+                :output-height="800"
             />
-            <FieldError :message="errors.images" />
+            <FieldError :message="errors.image" />
         </div>
 
         <fieldset class="border-[3px] border-black p-3">

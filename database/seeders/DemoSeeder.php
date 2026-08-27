@@ -18,7 +18,6 @@ use App\Models\Friendship;
 use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 /**
  * Seeds a set of test contacts and events around a single real account, so
@@ -46,14 +45,25 @@ class DemoSeeder extends Seeder
     }
 
     /**
+     * Looks up specific tags from the fixed category taxonomy (seeded by
+     * CategorySeeder, which always runs before this seeder). Keys here are
+     * this seeder's own shorthand, not slugs — kept stable so the rest of
+     * this file doesn't need to change if the taxonomy's wording does.
+     *
      * @return array<string, Tag>
      */
     private function seedTags(): array
     {
-        $names = ['games', 'music', 'volunteering', 'sports', 'reading'];
+        $slugsByKey = [
+            'games' => 'games',
+            'music' => 'concert',
+            'volunteering' => 'volunteering',
+            'sports' => 'sport',
+            'reading' => 'literature',
+        ];
 
-        return collect($names)
-            ->mapWithKeys(fn (string $name) => [$name => Tag::query()->firstOrCreate(['slug' => Str::slug($name)], ['name' => $name])])
+        return collect($slugsByKey)
+            ->map(fn (string $slug) => Tag::query()->where('slug', $slug)->firstOrFail())
             ->all();
     }
 

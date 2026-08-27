@@ -16,6 +16,7 @@ use App\Models\EventComment;
 use App\Models\Tag;
 use App\Models\User;
 use App\Notifications\FollowedUserPublishedEvent;
+use App\Services\ImageProcessor;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,12 +24,13 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class EventController extends Controller
 {
+    public function __construct(private ImageProcessor $imageProcessor) {}
+
     public function index(Request $request): Response
     {
         $user = $request->user();
@@ -74,7 +76,7 @@ class EventController extends Controller
 
         return Inertia::render('events/Index', [
             'events' => $this->summarizeEvents($events, $user, $nearPoint),
-            'tags' => Tag::query()->orderBy('name')->get(['id', 'name', 'slug']),
+            'categories' => $this->categoriesTree(),
             'friends' => $user->friends()->map(fn (User $friend) => ['id' => $friend->id, 'name' => $friend->name, 'username' => $friend->username, 'avatar_url' => $friend->avatar_url])->values(),
             'following' => User::query()->whereIn('id', $followedIds)->orderBy('name')->get(['id', 'name', 'username', 'avatar_path']),
             'friendGroups' => $user->contactGroups()->ofType(ContactGroupType::Friend)->get(['id', 'name']),
@@ -112,9 +114,9 @@ class EventController extends Controller
 
         return Inertia::render('events/Search', [
             'q' => $term,
-            'tags' => Tag::query()->orderBy('name')->get(['id', 'name', 'slug']),
+            'categories' => $this->categoriesTree(),
             'events' => $this->summarizeEvents($events, $viewer, $nearPoint),
-            'filters' => $request->only(['near_lat', 'near_lng']),
+            'filters' => $request->only(['tags', 'near_lat', 'near_lng']),
         ]);
     }
 
@@ -123,7 +125,7 @@ class EventController extends Controller
         Gate::authorize('create', Event::class);
 
         return Inertia::render('events/Create', [
-            'tagSuggestions' => Tag::query()->orderBy('name')->pluck('name'),
+            'categories' => $this->categoriesTree(),
         ]);
     }
 
@@ -133,8 +135,8 @@ class EventController extends Controller
             'name', 'place', 'latitude', 'longitude', 'city', 'country', 'description', 'starts_at', 'ends_at', 'visibility', 'allow_invitee_invites', 'allow_invitee_comments',
         ]));
 
-        $this->syncTags($event, $request->input('tags', []));
-        $this->storeImages($event, $request->file('images') ?? []);
+        $this->syncTags($event, $request->input('tag_ids', []));
+        $this->storeImage($event, $request->file('image'));
 
         if ($event->visibility !== EventVisibility::Private) {
             $this->notifyFollowers($event);
@@ -225,9 +227,12 @@ class EventController extends Controller
                 'is_searchable' => $event->visibility === EventVisibility::Searchable,
                 'allow_invitee_invites' => $event->allow_invitee_invites,
                 'allow_invitee_comments' => $event->allow_invitee_comments,
-                'tags' => $event->tags->pluck('name')->values(),
-                'images' => $event->images->map(fn ($image) => ['id' => $image->id, 'url' => Storage::disk('public')->url($image->path)])->values(),
+                'tag_ids' => $event->tags->pluck('id')->values(),
+                'image' => $event->images->first() !== null
+                    ? ['id' => $event->images->first()->id, 'url' => Storage::disk('public')->url($event->images->first()->path)]
+                    : null,
             ],
+            'categories' => $this->categoriesTree(),
         ]);
     }
 
@@ -244,8 +249,8 @@ class EventController extends Controller
             'visibility' => $visibility,
         ]);
 
-        $this->syncTags($event, $request->input('tags', []));
-        $this->storeImages($event, $request->file('images') ?? [], $event->images()->count());
+        $this->syncTags($event, $request->input('tag_ids', []));
+        $this->storeImage($event, $request->file('image'));
 
         return redirect()->route('events.show', $event);
     }
@@ -395,32 +400,53 @@ class EventController extends Controller
     }
 
     /**
-     * @param  array<string>  $tagNames
+     * @param  array<int>  $tagIds
      */
-    private function syncTags(Event $event, array $tagNames): void
+    private function syncTags(Event $event, array $tagIds): void
     {
-        $tagIds = collect($tagNames)
-            ->map(fn (string $name) => trim($name))
-            ->filter()
-            ->unique()
-            ->map(fn (string $name) => Tag::query()->firstOrCreate(
-                ['slug' => Str::slug($name)],
-                ['name' => $name]
-            )->id);
+        $tagIds = collect($tagIds)->unique();
 
-        $event->tags()->sync($tagIds);
+        $parentIds = Tag::query()->whereIn('id', $tagIds)->whereNotNull('parent_id')->pluck('parent_id');
+
+        $event->tags()->sync($tagIds->merge($parentIds)->unique());
     }
 
     /**
-     * @param  array<UploadedFile>  $files
+     * @return array<int, array{id: int, name: string, slug: string, children: array<int, array{id: int, name: string, slug: string}>}>
      */
-    private function storeImages(Event $event, array $files, int $startingPosition = 0): void
+    private function categoriesTree(): array
     {
-        foreach (array_values($files) as $index => $file) {
-            $path = $file->store("events/{$event->id}", 'public');
+        return Tag::query()
+            ->whereNull('parent_id')
+            ->with(['children' => fn ($query) => $query->orderBy('position')])
+            ->orderBy('position')
+            ->get()
+            ->map(fn (Tag $category) => [
+                'id' => $category->id,
+                'name' => $category->name,
+                'slug' => $category->slug,
+                'children' => $category->children->map(fn (Tag $child) => [
+                    'id' => $child->id,
+                    'name' => $child->name,
+                    'slug' => $child->slug,
+                ])->values()->all(),
+            ])->values()->all();
+    }
 
-            $event->images()->create(['path' => $path, 'position' => $startingPosition + $index]);
+    private function storeImage(Event $event, ?UploadedFile $file): void
+    {
+        if ($file === null) {
+            return;
         }
+
+        foreach ($event->images as $existingImage) {
+            Storage::disk('public')->delete($existingImage->path);
+            $existingImage->delete();
+        }
+
+        $path = $this->imageProcessor->store($file, "events/{$event->id}");
+
+        $event->images()->create(['path' => $path, 'position' => 0]);
     }
 
     private function notifyFollowers(Event $event): void

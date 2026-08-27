@@ -32,10 +32,9 @@ class StoreEventRequest extends FormRequest
             'visibility' => ['required', Rule::in([EventVisibility::Private->value, EventVisibility::Public->value])],
             'allow_invitee_invites' => ['required', 'boolean'],
             'allow_invitee_comments' => ['required', 'boolean'],
-            'tags' => ['array', 'max:10'],
-            'tags.*' => ['string', 'max:50'],
-            'images' => ['array', 'max:6'],
-            'images.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'tag_ids' => ['array', 'max:50'],
+            'tag_ids.*' => ['integer', 'exists:tags,id'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ];
     }
 }

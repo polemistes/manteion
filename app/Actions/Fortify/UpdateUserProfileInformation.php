@@ -3,6 +3,7 @@
 namespace App\Actions\Fortify;
 
 use App\Models\User;
+use App\Services\ImageProcessor;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -13,6 +14,8 @@ use Laravel\Fortify\Contracts\UpdatesUserProfileInformation;
 
 class UpdateUserProfileInformation implements UpdatesUserProfileInformation
 {
+    public function __construct(private ImageProcessor $imageProcessor) {}
+
     /**
      * Validate and update the given user's profile information.
      *
@@ -89,9 +92,7 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
                 Storage::disk('public')->delete($user->avatar_path);
             }
 
-            $storedPath = $input['avatar']->store('avatars', 'public');
-
-            return $storedPath !== false ? $storedPath : null;
+            return $this->imageProcessor->store($input['avatar'], 'avatars');
         }
 
         if (! empty($input['remove_avatar'])) {

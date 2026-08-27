@@ -9,7 +9,7 @@ import * as eventComments from '@/routes/events/comments';
 import * as eventInvitations from '@/routes/events/invitations';
 import * as eventSearchable from '@/routes/events/searchable';
 
-const { t, locale } = useI18n();
+const { t, te, locale } = useI18n();
 
 const dateFnsLocales: Record<string, string> = {
     en: 'en-GB',
@@ -93,6 +93,12 @@ function statusLabel(status: string): string {
     return t(statusKeys[status] ?? status);
 }
 
+function categoryLabel(tag: Tag): string {
+    const key = `categories.${tag.slug}`;
+
+    return te(key) ? t(key) : tag.name;
+}
+
 const locationLabel =
     props.event.place ||
     [props.event.city, props.event.country].filter(Boolean).join(', ') ||
@@ -142,7 +148,7 @@ const locationLabel =
             :key="tag.id"
             class="border border-black px-2 py-0.5 text-xs"
         >
-            {{ tag.name }}
+            {{ categoryLabel(tag) }}
         </span>
         <span
             class="border border-black px-2 py-0.5 text-xs font-bold uppercase"

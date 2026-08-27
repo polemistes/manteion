@@ -2,8 +2,8 @@
 import { Form, Head } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import Avatar from '@/components/Avatar.vue';
 import FieldError from '@/components/FieldError.vue';
+import ImageCropper from '@/components/ImageCropper.vue';
 import PasswordField from '@/components/PasswordField.vue';
 import { update as updatePassword } from '@/routes/user-password';
 import { update as updateProfileInformation } from '@/routes/user-profile-information';
@@ -22,17 +22,7 @@ const props = defineProps<{
     };
 }>();
 
-const avatarPreview = ref<string | null>(null);
 const removeAvatar = ref(false);
-
-function onAvatarChange(event: Event): void {
-    const file = (event.target as HTMLInputElement).files?.[0];
-
-    if (file) {
-        avatarPreview.value = URL.createObjectURL(file);
-        removeAvatar.value = false;
-    }
-}
 </script>
 
 <template>
@@ -55,39 +45,26 @@ function onAvatarChange(event: Event): void {
                 <span class="mb-1 block text-sm font-bold">{{
                     t('profile.photo')
                 }}</span>
-                <div class="flex items-center gap-4">
-                    <Avatar
-                        :url="
-                            removeAvatar
-                                ? null
-                                : (avatarPreview ?? props.user.avatar_url)
-                        "
-                        :name="props.user.name"
-                        size="md"
+                <ImageCropper
+                    name="avatar"
+                    :aspect-ratio="1"
+                    :output-width="512"
+                    :output-height="512"
+                    :existing-url="removeAvatar ? null : props.user.avatar_url"
+                />
+                <label
+                    v-if="props.user.avatar_url"
+                    class="mt-2 flex items-center gap-2 text-xs"
+                >
+                    <input
+                        v-model="removeAvatar"
+                        type="checkbox"
+                        name="remove_avatar"
+                        value="1"
+                        class="border border-black"
                     />
-                    <div class="flex flex-col gap-2">
-                        <input
-                            type="file"
-                            name="avatar"
-                            accept="image/*"
-                            class="text-sm"
-                            @change="onAvatarChange"
-                        />
-                        <label
-                            v-if="props.user.avatar_url"
-                            class="flex items-center gap-2 text-xs"
-                        >
-                            <input
-                                v-model="removeAvatar"
-                                type="checkbox"
-                                name="remove_avatar"
-                                value="1"
-                                class="border border-black"
-                            />
-                            {{ t('profile.removePhoto') }}
-                        </label>
-                    </div>
-                </div>
+                    {{ t('profile.removePhoto') }}
+                </label>
                 <FieldError :message="errors.avatar" />
             </div>
 

@@ -51,7 +51,7 @@ class ContactsController extends Controller
             ),
             'friendGroups' => $this->summarizeGroups($user->contactGroups()->ofType(ContactGroupType::Friend)->with('members')->get()),
             'followingGroups' => $this->summarizeGroups($user->contactGroups()->ofType(ContactGroupType::Following)->with('members')->get()),
-            'tags' => Tag::query()->orderBy('name')->get(['id', 'name', 'slug']),
+            'categories' => $this->categoriesTree(),
         ]);
     }
 
@@ -181,5 +181,27 @@ class ContactsController extends Controller
             'name' => $group->name,
             'members' => $this->summarizeUsers($group->members),
         ])->values()->all();
+    }
+
+    /**
+     * @return array<int, array{id: int, name: string, slug: string, children: array<int, array{id: int, name: string, slug: string}>}>
+     */
+    private function categoriesTree(): array
+    {
+        return Tag::query()
+            ->whereNull('parent_id')
+            ->with(['children' => fn ($query) => $query->orderBy('position')])
+            ->orderBy('position')
+            ->get()
+            ->map(fn (Tag $category) => [
+                'id' => $category->id,
+                'name' => $category->name,
+                'slug' => $category->slug,
+                'children' => $category->children->map(fn (Tag $child) => [
+                    'id' => $child->id,
+                    'name' => $child->name,
+                    'slug' => $child->slug,
+                ])->values()->all(),
+            ])->values()->all();
     }
 }

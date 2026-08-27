@@ -44,7 +44,7 @@ test('a user can upload an avatar and set a bio', function () {
         'email' => $user->email,
         'allow_public_follow' => '1',
         'bio' => 'Hello, I like board games.',
-        'avatar' => UploadedFile::fake()->create('avatar.jpg', 50, 'image/jpeg'),
+        'avatar' => UploadedFile::fake()->image('avatar.jpg'),
     ]);
 
     $response->assertRedirect();
@@ -65,7 +65,7 @@ test('uploading a new avatar replaces and deletes the old one', function () {
         'username' => $user->username,
         'email' => $user->email,
         'allow_public_follow' => '1',
-        'avatar' => UploadedFile::fake()->create('new.jpg', 50, 'image/jpeg'),
+        'avatar' => UploadedFile::fake()->image('new.jpg'),
     ])->assertRedirect();
 
     $user->refresh();
