@@ -45,18 +45,22 @@ class EventController extends Controller
         $friendIds = $user->friends()->pluck('id');
         $followedIds = $user->following()->wherePivot('status', FollowStatus::Accepted->value)->pluck('users.id');
 
-        $relation = $request->string('relation')->value();
-        if (in_array($relation, ['friends', 'following', 'both'], true)) {
-            $allowedOwnerIds = match ($relation) {
-                'friends' => $friendIds,
-                'following' => $followedIds,
-                'both' => $friendIds->merge($followedIds)->unique(),
-            };
-            $events = $events->filter(fn (Event $event) => $allowedOwnerIds->contains($event->user_id));
-        }
+        $ownerFilter = $request->array('owner_filter');
+        if ($ownerFilter !== []) {
+            $allowedOwnerIds = collect();
 
-        if ($request->filled('contact_id')) {
-            $events = $events->where('user_id', $request->integer('contact_id'));
+            if (in_array('friends', $ownerFilter, true)) {
+                $allowedOwnerIds = $allowedOwnerIds->merge($friendIds);
+            }
+
+            if (in_array('following', $ownerFilter, true)) {
+                $allowedOwnerIds = $allowedOwnerIds->merge($followedIds);
+            }
+
+            $specificIds = collect($ownerFilter)->filter(fn ($value) => is_numeric($value))->map(fn ($value) => (int) $value);
+            $allowedOwnerIds = $allowedOwnerIds->merge($specificIds)->unique();
+
+            $events = $events->filter(fn (Event $event) => $allowedOwnerIds->contains($event->user_id));
         }
 
         if ($request->filled('group_id')) {
@@ -81,7 +85,7 @@ class EventController extends Controller
             'following' => User::query()->whereIn('id', $followedIds)->orderBy('name')->get(['id', 'name', 'username', 'avatar_path']),
             'friendGroups' => $user->contactGroups()->ofType(ContactGroupType::Friend)->get(['id', 'name']),
             'followingGroups' => $user->contactGroups()->ofType(ContactGroupType::Following)->get(['id', 'name']),
-            'filters' => $request->only(['tags', 'relation', 'contact_id', 'group_id', 'near_lat', 'near_lng']),
+            'filters' => $request->only(['tags', 'owner_filter', 'group_id', 'near_lat', 'near_lng']),
         ]);
     }
 
@@ -332,6 +336,7 @@ class EventController extends Controller
             'owner' => ['id' => $event->owner->id, 'name' => $event->owner->name, 'username' => $event->owner->username, 'avatar_url' => $event->owner->avatar_url],
             'tags' => $event->tags->map(fn (Tag $tag) => ['id' => $tag->id, 'name' => $tag->name, 'slug' => $tag->slug])->values()->all(),
             'my_status' => $event->attendeeFor($viewer)?->status->value,
+            'my_attendance_visibility' => $event->attendeeFor($viewer)?->attendance_visibility->value,
             'cover_image_url' => $event->images->first() !== null
                 ? Storage::disk('public')->url($event->images->first()->path)
                 : null,

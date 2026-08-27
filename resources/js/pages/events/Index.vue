@@ -4,6 +4,7 @@ import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import CategoryFilterList from '@/components/CategoryFilterList.vue';
 import EventCard from '@/components/EventCard.vue';
+import OrganizerFilter from '@/components/OrganizerFilter.vue';
 import { useNominatimSearch } from '@/composables/useNominatimSearch';
 import type { NominatimResult } from '@/composables/useNominatimSearch';
 import { index as eventsIndex, create as eventsCreate } from '@/routes/events';
@@ -54,6 +55,7 @@ interface EventSummary {
     owner: ContactOption;
     tags: TagOption[];
     my_status: string | null;
+    my_attendance_visibility: string | null;
     cover_image_url: string | null;
     attending_count: number;
     interested_count: number;
@@ -69,8 +71,7 @@ const props = defineProps<{
     followingGroups: GroupOption[];
     filters: {
         tags?: string[];
-        relation?: string;
-        contact_id?: string;
+        owner_filter?: string[];
         group_id?: string;
         near_lat?: string;
         near_lng?: string;
@@ -78,8 +79,7 @@ const props = defineProps<{
 }>();
 
 const selectedTags = ref<string[]>(props.filters.tags ?? []);
-const relation = ref(props.filters.relation ?? '');
-const contactId = ref(props.filters.contact_id ?? '');
+const ownerFilter = ref<string[]>(props.filters.owner_filter ?? []);
 const groupId = ref(props.filters.group_id ?? '');
 const nearLat = ref<number | null>(
     props.filters.near_lat ? parseFloat(props.filters.near_lat) : null,
@@ -94,8 +94,7 @@ const geolocationErrorMessage = ref<string | null>(null);
 // a previous visit), so it isn't hidden behind a closed panel.
 const filtersOpen = ref(
     selectedTags.value.length > 0 ||
-        relation.value !== '' ||
-        contactId.value !== '' ||
+        ownerFilter.value.length > 0 ||
         groupId.value !== '' ||
         nearLat.value !== null,
 );
@@ -116,8 +115,7 @@ function applyFilters(): void {
         eventsIndex().url,
         {
             tags: selectedTags.value,
-            relation: relation.value || undefined,
-            contact_id: contactId.value || undefined,
+            owner_filter: ownerFilter.value,
             group_id: groupId.value || undefined,
             near_lat: nearLat.value ?? undefined,
             near_lng: nearLng.value ?? undefined,
@@ -128,6 +126,11 @@ function applyFilters(): void {
 
 function onCategoriesChange(value: string[]): void {
     selectedTags.value = value;
+    applyFilters();
+}
+
+function onOwnerFilterChange(value: string[]): void {
+    ownerFilter.value = value;
     applyFilters();
 }
 
@@ -220,60 +223,12 @@ function clearNear(): void {
                 @update:model-value="onCategoriesChange"
             />
 
-            <div>
-                <p class="mb-1 text-xs font-bold">
-                    {{ t('events.index.ownedBy') }}
-                </p>
-                <select
-                    v-model="relation"
-                    class="border border-black bg-white px-2 py-1 text-sm"
-                    @change="applyFilters"
-                >
-                    <option value="">
-                        {{ t('events.index.ownedByAnyone') }}
-                    </option>
-                    <option value="friends">
-                        {{ t('events.index.ownedByFriends') }}
-                    </option>
-                    <option value="following">
-                        {{ t('events.index.ownedByFollowing') }}
-                    </option>
-                    <option value="both">
-                        {{ t('events.index.ownedByBoth') }}
-                    </option>
-                </select>
-            </div>
-
-            <div>
-                <p class="mb-1 text-xs font-bold">
-                    {{ t('events.index.specificPerson') }}
-                </p>
-                <select
-                    v-model="contactId"
-                    class="border border-black bg-white px-2 py-1 text-sm"
-                    @change="applyFilters"
-                >
-                    <option value="">{{ t('events.index.anyone') }}</option>
-                    <optgroup :label="t('events.index.friendsGroupLabel')">
-                        <option
-                            v-for="friend in friends"
-                            :key="friend.id"
-                            :value="String(friend.id)"
-                        >
-                            {{ friend.name }}
-                        </option>
-                    </optgroup>
-                    <optgroup :label="t('events.index.followingGroupLabel')">
-                        <option
-                            v-for="contact in following"
-                            :key="contact.id"
-                            :value="String(contact.id)"
-                        >
-                            {{ contact.name }}
-                        </option>
-                    </optgroup>
-                </select>
-            </div>
+            <OrganizerFilter
+                :friends="friends"
+                :following="following"
+                :model-value="ownerFilter"
+                @update:model-value="onOwnerFilterChange"
+            />
 
             <div>
                 <p class="mb-1 text-xs font-bold">
@@ -372,8 +327,8 @@ function clearNear(): void {
         {{ t('events.index.noMatches') }}
     </p>
 
-    <ul class="flex flex-col gap-3">
-        <li v-for="event in events" :key="event.id">
+    <ul class="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+        <li v-for="event in events" :key="event.id" class="h-full">
             <EventCard :event="event" />
         </li>
     </ul>

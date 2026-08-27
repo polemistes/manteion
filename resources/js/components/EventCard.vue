@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import EventThumbnail from '@/components/EventThumbnail.vue';
 import PersonSummary from '@/components/PersonSummary.vue';
+import { update as updateAttendance } from '@/routes/events/attendance';
 
 interface TagOption {
     id: number;
@@ -29,6 +30,7 @@ interface EventSummary {
     owner: ContactOption;
     tags: TagOption[];
     my_status: string | null;
+    my_attendance_visibility: string | null;
     cover_image_url: string | null;
     attending_count: number;
     interested_count: number;
@@ -106,76 +108,212 @@ const statusKeys: Record<string, string> = {
 function statusLabel(status: string): string {
     return t(statusKeys[status] ?? status);
 }
+
+function saveAttendance(status: string, attendanceVisibility: string): void {
+    router.put(
+        updateAttendance(props.event.id).url,
+        { status, attendance_visibility: attendanceVisibility },
+        { preserveState: true, preserveScroll: true },
+    );
+}
+
+function onStatusChange(event: Event): void {
+    saveAttendance(
+        (event.target as HTMLSelectElement).value,
+        props.event.my_attendance_visibility ?? 'everyone',
+    );
+}
+
+function onVisibilityChange(event: Event): void {
+    saveAttendance(
+        props.event.my_status ?? 'no_response',
+        (event.target as HTMLSelectElement).value,
+    );
+}
 </script>
 
 <template>
-    <div class="flex gap-3 border-[3px] border-black p-3">
+    <div class="event-card h-full border-[3px] border-black p-3">
         <Link
             :href="`/events/${props.event.id}`"
-            class="flex w-32 shrink-0 flex-col gap-1"
+            class="event-card__image block h-full w-full"
         >
-            <p class="text-xs text-black/70">
-                {{ formatEventDateTime(props.event.starts_at) }}
-            </p>
-            <p v-if="locationLabel" class="truncate text-xs text-black/70">
-                {{ locationLabel }}
-            </p>
-            <EventThumbnail
-                :url="props.event.cover_image_url"
-                :alt="props.event.name"
-            />
+            <div class="md:hidden">
+                <EventThumbnail
+                    :url="props.event.cover_image_url"
+                    :alt="props.event.name"
+                />
+            </div>
+            <div class="hidden h-full md:block">
+                <img
+                    v-if="props.event.cover_image_url"
+                    :src="props.event.cover_image_url"
+                    :alt="props.event.name"
+                    class="h-full w-full object-cover"
+                />
+                <div v-else class="h-full w-full bg-gray-200"></div>
+            </div>
         </Link>
 
-        <div class="flex min-w-0 flex-1 flex-col gap-1">
-            <Link
-                :href="`/events/${props.event.id}`"
-                class="truncate text-base font-bold underline"
+        <p class="event-card__meta truncate text-xs text-black/70">
+            {{ formatEventDateTime(props.event.starts_at) }}
+            <template v-if="locationLabel">: {{ locationLabel }}</template>
+        </p>
+
+        <Link
+            :href="`/events/${props.event.id}`"
+            class="event-card__title overflow-hidden text-base font-bold text-ellipsis whitespace-nowrap md:line-clamp-2 md:text-2xl md:text-clip md:whitespace-normal"
+        >
+            {{ props.event.name }}
+        </Link>
+
+        <div class="event-card__categories flex flex-wrap gap-2">
+            <span
+                v-for="tag in props.event.tags"
+                :key="tag.id"
+                class="border border-black px-2 py-0.5 text-xs"
             >
-                {{ props.event.name }}
-            </Link>
+                {{ categoryLabel(tag) }}
+            </span>
+        </div>
 
-            <div class="flex flex-wrap items-center gap-2">
-                <span
-                    v-for="tag in props.event.tags"
-                    :key="tag.id"
-                    class="border border-black px-2 py-0.5 text-xs"
-                >
-                    {{ categoryLabel(tag) }}
-                </span>
-                <span class="text-xs text-black/70">
-                    {{
-                        t('events.index.attendingCount', {
-                            count: props.event.attending_count,
-                        })
-                    }}
-                </span>
-                <span class="text-xs text-black/70">
-                    {{
-                        t('events.index.interestedCount', {
-                            count: props.event.interested_count,
-                        })
-                    }}
-                </span>
-                <span v-if="props.event.my_status" class="text-xs font-bold">
-                    {{ t('events.index.you') }}
-                    {{ statusLabel(props.event.my_status) }}
-                </span>
-                <span
-                    v-if="props.event.distance_km !== null"
-                    class="text-xs text-black/70"
-                >
-                    {{
-                        t('location.distanceAway', {
-                            distance: props.event.distance_km,
-                        })
-                    }}
-                </span>
-            </div>
+        <div class="event-card__response flex flex-wrap items-center gap-2">
+            <select
+                class="w-fit border border-black bg-white px-2 py-1 text-xs"
+                :value="props.event.my_status ?? 'no_response'"
+                @change="onStatusChange"
+            >
+                <option value="no_response">
+                    {{ t('events.show.statusNoResponse') }}
+                </option>
+                <option value="attending">
+                    {{ t('events.show.statusAttending') }}
+                </option>
+                <option value="interested">
+                    {{ t('events.show.statusInterested') }}
+                </option>
+                <option value="not_attending">
+                    {{ t('events.show.statusNotAttending') }}
+                </option>
+            </select>
 
-            <div class="mt-auto flex items-center gap-1 text-xs text-black/70">
-                <span>{{ t('events.index.organizer') }}</span>
-                <PersonSummary v-bind="props.event.owner" />
-            </div>
+            <select
+                class="w-fit border border-black bg-white px-2 py-1 text-xs"
+                :value="props.event.my_attendance_visibility ?? 'everyone'"
+                @change="onVisibilityChange"
+            >
+                <option value="everyone">
+                    {{ t('events.show.visibilityEveryone') }}
+                </option>
+                <option value="friends">
+                    {{ t('events.show.visibilityFriends') }}
+                </option>
+                <option value="none">
+                    {{ t('events.show.visibilityNone') }}
+                </option>
+            </select>
+        </div>
+
+        <div
+            class="event-card__counts flex flex-wrap items-center gap-2 text-xs text-black/70"
+        >
+            <span>
+                {{
+                    t('events.index.attendingCount', {
+                        count: props.event.attending_count,
+                    })
+                }}
+            </span>
+            <span>
+                {{
+                    t('events.index.interestedCount', {
+                        count: props.event.interested_count,
+                    })
+                }}
+            </span>
+            <span v-if="props.event.my_status" class="font-bold text-black">
+                {{ t('events.index.you') }}
+                {{ statusLabel(props.event.my_status) }}
+            </span>
+            <span v-if="props.event.distance_km !== null">
+                {{
+                    t('location.distanceAway', {
+                        distance: props.event.distance_km,
+                    })
+                }}
+            </span>
+        </div>
+
+        <div class="event-card__organizer flex items-center text-xs">
+            <PersonSummary v-bind="props.event.owner" />
         </div>
     </div>
 </template>
+
+<style scoped>
+/*
+ * The mobile and desktop layouts don't just resize — they reorder content
+ * (e.g. attendance counts sit before the image on mobile but after it on
+ * desktop, and the image goes from one row to spanning the full card
+ * height). Tailwind's utility classes can't express "same elements,
+ * different relative order per breakpoint" without either duplicating
+ * markup or fighting arbitrary-value syntax for a multi-row
+ * grid-template-areas string, so this is a plain CSS grid instead.
+ */
+.event-card {
+    display: grid;
+    gap: 0.5rem;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+        'meta'
+        'title'
+        'counts'
+        'image'
+        'categories'
+        'response'
+        'organizer';
+}
+
+.event-card__image {
+    grid-area: image;
+}
+
+.event-card__meta {
+    grid-area: meta;
+}
+
+.event-card__title {
+    grid-area: title;
+}
+
+.event-card__categories {
+    grid-area: categories;
+}
+
+.event-card__response {
+    grid-area: response;
+}
+
+.event-card__counts {
+    grid-area: counts;
+}
+
+.event-card__organizer {
+    grid-area: organizer;
+}
+
+@media (min-width: 768px) {
+    .event-card {
+        grid-template-columns: 16rem 1fr;
+        grid-template-rows: auto auto 1fr auto auto auto;
+        column-gap: 1rem;
+        grid-template-areas:
+            'image meta'
+            'image title'
+            'image categories'
+            'image response'
+            'image counts'
+            'image organizer';
+    }
+}
+</style>

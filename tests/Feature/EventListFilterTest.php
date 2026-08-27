@@ -95,7 +95,7 @@ test('a followed users public events are filtered by the viewers tag preference 
         ->where('events.0.name', 'Music Night'));
 });
 
-test('the relation filter narrows the list to friends, following, or both', function () {
+test('the owner filter narrows the list to friends, followed contacts, or a specific person', function () {
     $viewer = User::factory()->create();
     $friend = User::factory()->create();
     $followed = User::factory()->create();
@@ -108,14 +108,17 @@ test('the relation filter narrows the list to friends, following, or both', func
 
     $followedEvent = Event::factory()->public()->create(['user_id' => $followed->id]);
 
-    $this->actingAs($viewer)->get('/events?relation=friends')
+    $this->actingAs($viewer)->get('/events?owner_filter[]=friends')
         ->assertInertia(fn ($page) => $page->has('events', 1)->where('events.0.id', $friendEvent->id));
 
-    $this->actingAs($viewer)->get('/events?relation=following')
+    $this->actingAs($viewer)->get('/events?owner_filter[]=following')
         ->assertInertia(fn ($page) => $page->has('events', 1)->where('events.0.id', $followedEvent->id));
 
-    $this->actingAs($viewer)->get('/events?relation=both')
+    $this->actingAs($viewer)->get('/events?owner_filter[]=friends&owner_filter[]=following')
         ->assertInertia(fn ($page) => $page->has('events', 2));
+
+    $this->actingAs($viewer)->get('/events?owner_filter[]='.$friend->id)
+        ->assertInertia(fn ($page) => $page->has('events', 1)->where('events.0.id', $friendEvent->id));
 });
 
 test('the list reports the cover image and attendance counts for each event', function () {
