@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
+import { Form, Head, Link } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import FieldError from '@/components/FieldError.vue';
 import ImageCropper from '@/components/ImageCropper.vue';
 import PasswordField from '@/components/PasswordField.vue';
+import { logout } from '@/routes';
 import { update as updatePassword } from '@/routes/user-password';
 import { update as updateProfileInformation } from '@/routes/user-profile-information';
 
@@ -230,5 +231,16 @@ const removeAvatar = ref(false);
                 {{ t('profile.passwordUpdated') }}
             </p>
         </Form>
+    </section>
+
+    <section class="max-w-md">
+        <Link
+            :href="logout().url"
+            method="post"
+            as="button"
+            class="w-fit border border-black px-4 py-2 text-sm font-bold hover:bg-black hover:text-white"
+        >
+            {{ t('nav.logOut') }}
+        </Link>
     </section>
 </template>
