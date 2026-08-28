@@ -55,6 +55,7 @@ const { t } = useI18n();
             <input
                 type="checkbox"
                 name="remember"
+                checked
                 class="border border-black"
             />
             {{ t('auth.login.remember') }}

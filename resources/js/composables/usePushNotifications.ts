@@ -40,28 +40,47 @@ async function subscribe(vapidPublicKey: string): Promise<boolean> {
         return false;
     }
 
-    await navigator.serviceWorker.register('/sw.js');
-    const registration = await navigator.serviceWorker.ready;
+    try {
+        await navigator.serviceWorker.register('/sw.js');
+        const registration = await navigator.serviceWorker.ready;
 
-    const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
-    });
+        const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+        });
 
-    const json = subscription.toJSON();
+        const json = subscription.toJSON();
 
-    router.post(
-        '/push-subscriptions',
-        {
-            endpoint: json.endpoint,
-            key: json.keys?.p256dh ?? null,
-            token: json.keys?.auth ?? null,
-            content_encoding: contentEncoding(),
-        },
-        { preserveScroll: true, preserveState: true },
-    );
+        router.post(
+            '/push-subscriptions',
+            {
+                endpoint: json.endpoint,
+                key: json.keys?.p256dh ?? null,
+                token: json.keys?.auth ?? null,
+                content_encoding: contentEncoding(),
+            },
+            { preserveScroll: true, preserveState: true },
+        );
 
-    return true;
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+async function hasActiveSubscription(): Promise<boolean> {
+    if (!isSupported() || Notification.permission !== 'granted') {
+        return false;
+    }
+
+    try {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.getSubscription();
+
+        return !!subscription;
+    } catch {
+        return false;
+    }
 }
 
 async function unsubscribe(): Promise<void> {
@@ -69,23 +88,28 @@ async function unsubscribe(): Promise<void> {
         return;
     }
 
-    const registration = await navigator.serviceWorker.ready.catch(() => null);
-    const subscription = await registration?.pushManager.getSubscription();
+    try {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.getSubscription();
 
-    if (!subscription) {
-        return;
+        if (!subscription) {
+            return;
+        }
+
+        const endpoint = subscription.endpoint;
+        await subscription.unsubscribe();
+
+        router.delete('/push-subscriptions', {
+            data: { endpoint },
+            preserveScroll: true,
+            preserveState: true,
+        });
+    } catch {
+        // Browser-side push state couldn't be read or cleared; nothing
+        // further to do client-side.
     }
-
-    const endpoint = subscription.endpoint;
-    await subscription.unsubscribe();
-
-    router.delete('/push-subscriptions', {
-        data: { endpoint },
-        preserveScroll: true,
-        preserveState: true,
-    });
 }
 
 export function usePushNotifications() {
-    return { isSupported, subscribe, unsubscribe };
+    return { isSupported, hasActiveSubscription, subscribe, unsubscribe };
 }

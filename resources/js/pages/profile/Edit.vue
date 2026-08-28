@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, Link, usePage } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import FieldError from '@/components/FieldError.vue';
 import ImageCropper from '@/components/ImageCropper.vue';
@@ -38,8 +38,15 @@ const removeAvatar = ref(false);
 const deleteAccountDialogOpen = ref(false);
 
 const page = usePage();
-const { subscribe, unsubscribe } = usePushNotifications();
-const pushEnabled = ref(props.user.push_notifications_enabled);
+const { hasActiveSubscription, subscribe, unsubscribe } =
+    usePushNotifications();
+const pushEnabled = ref(false);
+
+onMounted(async () => {
+    pushEnabled.value =
+        props.user.push_notifications_enabled &&
+        (await hasActiveSubscription());
+});
 
 async function onPushToggle(): Promise<void> {
     if (pushEnabled.value) {
