@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -28,12 +29,13 @@ use Illuminate\Support\Carbon;
  * @property bool $allow_invitee_invites
  * @property bool $allow_invitee_comments
  * @property Carbon|null $searchable_paid_at
+ * @property bool $is_deleted
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read int $attending_count
  * @property-read int $interested_count
  */
-#[Fillable(['user_id', 'name', 'place', 'latitude', 'longitude', 'city', 'country', 'description', 'starts_at', 'ends_at', 'visibility', 'allow_invitee_invites', 'allow_invitee_comments', 'searchable_paid_at'])]
+#[Fillable(['user_id', 'name', 'place', 'latitude', 'longitude', 'city', 'country', 'description', 'starts_at', 'ends_at', 'visibility', 'allow_invitee_invites', 'allow_invitee_comments', 'searchable_paid_at', 'is_deleted'])]
 class Event extends Model
 {
     /** @use HasFactory<EventFactory> */
@@ -50,6 +52,7 @@ class Event extends Model
             'allow_invitee_invites' => 'boolean',
             'allow_invitee_comments' => 'boolean',
             'searchable_paid_at' => 'datetime',
+            'is_deleted' => 'boolean',
         ];
     }
 
@@ -91,6 +94,14 @@ class Event extends Model
     public function comments(): HasMany
     {
         return $this->hasMany(EventComment::class);
+    }
+
+    /**
+     * @return MorphMany<Report, $this>
+     */
+    public function reports(): MorphMany
+    {
+        return $this->morphMany(Report::class, 'reportable');
     }
 
     public function attendeeFor(User $user): ?EventAttendee

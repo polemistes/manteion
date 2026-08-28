@@ -6,6 +6,7 @@ use App\Enums\AttendanceStatus;
 use App\Enums\ContactGroupType;
 use App\Enums\EventVisibility;
 use App\Enums\FollowStatus;
+use App\Enums\ReportStatus;
 use App\Http\Requests\StoreEventRequest;
 use App\Http\Requests\UpdateEventRequest;
 use App\Models\ContactGroup;
@@ -113,6 +114,7 @@ class EventController extends Controller
         $events = $this->withAttendanceCounts(
             Event::query()
                 ->where('visibility', EventVisibility::Searchable)
+                ->where('is_deleted', false)
                 ->when($term !== '', fn ($query) => $query->where(
                     fn ($query) => $query->where('name', 'like', "%{$term}%")->orWhere('place', 'like', "%{$term}%")
                 ))
@@ -193,8 +195,11 @@ class EventController extends Controller
                 'tags' => $event->tags->map(fn (Tag $tag) => ['id' => $tag->id, 'name' => $tag->name, 'slug' => $tag->slug])->values(),
                 'images' => $event->images->map(fn ($image) => Storage::disk('public')->url($image->path))->values(),
                 'is_owner' => $isOwner,
+                'is_deleted' => $event->is_deleted,
                 'can_invite' => Gate::allows('invite', $event),
                 'can_comment' => Gate::allows('comment', $event),
+                'can_delete' => Gate::allows('delete', $event),
+                'can_report' => ! $event->is_deleted && Gate::allows('view', $event) && ! $viewer->is($event->owner),
             ],
             'myAttendance' => $attendee === null ? null : [
                 'status' => $attendee->status->value,
@@ -212,9 +217,11 @@ class EventController extends Controller
             'comments' => $event->comments->map(fn (EventComment $comment) => [
                 'id' => $comment->id,
                 'body' => $comment->body,
+                'is_deleted' => $comment->is_deleted,
                 'created_at' => $comment->created_at->toIso8601String(),
                 'user' => ['id' => $comment->user->id, 'name' => $comment->user->name, 'username' => $comment->user->username, 'avatar_url' => $comment->user->avatar_url],
                 'can_delete' => $viewer->can('delete', $comment),
+                'can_report' => ! $comment->is_deleted && $viewer->can('view', $comment) && ! $viewer->is($comment->user),
             ])->values(),
             'inviteCandidates' => $viewer->friends()
                 ->reject(fn (User $friend) => $event->attendeeFor($friend) !== null)
@@ -273,13 +280,31 @@ class EventController extends Controller
         return redirect()->route('events.show', $event);
     }
 
-    public function destroy(Event $event): RedirectResponse
+    public function destroy(Request $request, Event $event): RedirectResponse
     {
         Gate::authorize('delete', $event);
+
+        if ($request->user()->isStaff() && $request->boolean('leave_placeholder')) {
+            $event->update(['description' => __('messages.moderation.deleted_placeholder'), 'is_deleted' => true]);
+
+            $event->reports()->where('status', ReportStatus::Pending)->update([
+                'status' => ReportStatus::Resolved,
+                'resolved_by' => $request->user()->id,
+                'resolved_at' => now(),
+            ]);
+
+            return redirect()->route('events.index');
+        }
 
         foreach ($event->images as $image) {
             Storage::disk('public')->delete($image->path);
         }
+
+        $event->reports()->where('status', ReportStatus::Pending)->update([
+            'status' => ReportStatus::Resolved,
+            'resolved_by' => $request->user()->id,
+            'resolved_at' => now(),
+        ]);
 
         $event->delete();
 
@@ -306,12 +331,14 @@ class EventController extends Controller
         $owned = $this->withAttendanceCounts(
             Event::query()
                 ->where('user_id', $user->id)
+                ->where('is_deleted', false)
                 ->with(['owner', 'tags', 'images', 'attendees' => $withAttendee])
         )->get();
 
         $invited = $this->withAttendanceCounts(
             Event::query()
                 ->whereIn('id', $attendeeEventIds)
+                ->where('is_deleted', false)
                 ->with(['owner', 'tags', 'images', 'attendees' => $withAttendee])
         )->get();
 
@@ -319,6 +346,7 @@ class EventController extends Controller
             Event::query()
                 ->whereIn('user_id', $followedIds)
                 ->whereIn('visibility', [EventVisibility::Public->value, EventVisibility::Searchable->value])
+                ->where('is_deleted', false)
                 ->with(['owner', 'tags', 'images', 'attendees' => $withAttendee])
         )->get()
             ->filter(function (Event $event) use ($preferencesByContact) {

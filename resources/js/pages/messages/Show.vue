@@ -3,7 +3,9 @@ import { Form, Head, Link, router, usePoll } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import Avatar from '@/components/Avatar.vue';
 import FieldError from '@/components/FieldError.vue';
+import ReportButton from '@/components/ReportButton.vue';
 import { confirmAction } from '@/composables/useConfirm';
+import { staffDelete } from '@/composables/useStaffDelete';
 import { send } from '@/routes/messages';
 import * as conversationMessages from '@/routes/messages/messages';
 import * as conversationParticipants from '@/routes/messages/participants';
@@ -33,6 +35,8 @@ interface MessageItem {
     created_at: string;
     sender: Person;
     is_mine: boolean;
+    can_delete: boolean;
+    can_report: boolean;
 }
 
 const props = defineProps<{
@@ -57,7 +61,28 @@ function formatTime(value: string): string {
     );
 }
 
-async function deleteMessage(messageId: number): Promise<void> {
+async function deleteMessage(message: MessageItem): Promise<void> {
+    if (!message.is_mine) {
+        const choice = await staffDelete({
+            message: t('moderation.confirmDeleteContent'),
+        });
+
+        if (choice === null) {
+            return;
+        }
+
+        router.delete(
+            conversationMessages.destroy([props.conversation.id, message.id])
+                .url,
+            {
+                preserveScroll: true,
+                data: { leave_placeholder: choice === 'placeholder' },
+            },
+        );
+
+        return;
+    }
+
     const confirmed = await confirmAction({
         message: t('messages.show.confirmDeleteMessage'),
     });
@@ -67,7 +92,7 @@ async function deleteMessage(messageId: number): Promise<void> {
     }
 
     router.delete(
-        conversationMessages.destroy([props.conversation.id, messageId]).url,
+        conversationMessages.destroy([props.conversation.id, message.id]).url,
         { preserveScroll: true },
     );
 }
@@ -152,11 +177,16 @@ async function deleteMessage(messageId: number): Promise<void> {
                 <span class="text-xs text-black/70">{{
                     formatTime(message.created_at)
                 }}</span>
+                <ReportButton
+                    v-if="message.can_report"
+                    reportable-type="message"
+                    :reportable-id="message.id"
+                />
                 <button
-                    v-if="message.is_mine && !message.is_deleted"
+                    v-if="message.can_delete"
                     type="button"
                     class="text-xs text-black/50 hover:underline"
-                    @click="deleteMessage(message.id)"
+                    @click="deleteMessage(message)"
                 >
                     {{ t('messages.show.delete') }}
                 </button>
@@ -166,7 +196,7 @@ async function deleteMessage(messageId: number): Promise<void> {
                 :class="{ 'text-black/50 italic': message.is_deleted }"
             >
                 {{
-                    message.is_deleted
+                    message.is_deleted && !message.body
                         ? t('messages.show.deleted')
                         : message.body
                 }}

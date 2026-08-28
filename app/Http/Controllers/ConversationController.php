@@ -77,7 +77,7 @@ class ConversationController extends Controller
         $targetIds = collect($request->array('user_ids'))->map(fn ($id) => (int) $id)->unique()->values();
 
         $conversation = $targetIds->count() === 1
-            ? $this->findOrCreateDirectConversation($creator, $targetIds->first())
+            ? Conversation::findOrCreateDirect($creator, User::findOrFail($targetIds->first()))
             : $this->createGroupConversation($creator, $targetIds, $request->string('name')->value() ?: null);
 
         return redirect()->route('messages.show', $conversation);
@@ -113,7 +113,10 @@ class ConversationController extends Controller
             ])->values(),
             'messages' => $conversation->messages->sortBy('created_at')->values()->map(fn (Message $message) => [
                 'id' => $message->id,
-                'body' => $message->is_deleted ? null : $message->body,
+                // A wiped, non-placeholder delete keeps sending null (the
+                // original text is never sent once deleted); a moderator
+                // placeholder is meant to be shown, so it passes through.
+                'body' => $message->is_deleted && $message->body === '' ? null : $message->body,
                 'is_deleted' => $message->is_deleted,
                 'created_at' => $message->created_at->toIso8601String(),
                 'sender' => [
@@ -123,6 +126,8 @@ class ConversationController extends Controller
                     'avatar_url' => $message->sender->avatar_url,
                 ],
                 'is_mine' => $message->user_id === $user->id,
+                'can_delete' => ! $message->is_deleted && Gate::allows('delete', $message),
+                'can_report' => ! $message->is_deleted && $message->user_id !== $user->id,
             ])->values(),
             'canAddParticipant' => Gate::allows('addParticipant', $conversation),
             'canLeave' => Gate::allows('leave', $conversation),
@@ -131,31 +136,6 @@ class ConversationController extends Controller
                 ->map(fn (User $friend) => ['id' => $friend->id, 'name' => $friend->name, 'username' => $friend->username, 'avatar_url' => $friend->avatar_url])
                 ->values(),
         ]);
-    }
-
-    private function findOrCreateDirectConversation(User $creator, int $targetId): Conversation
-    {
-        $existing = Conversation::query()
-            ->where('type', ConversationType::Direct)
-            ->whereHas('participants', fn ($query) => $query->where('user_id', $creator->id))
-            ->whereHas('participants', fn ($query) => $query->where('user_id', $targetId))
-            ->first();
-
-        if ($existing !== null) {
-            return $existing;
-        }
-
-        $conversation = Conversation::create([
-            'type' => ConversationType::Direct,
-            'creator_id' => $creator->id,
-        ]);
-
-        $conversation->participants()->createMany([
-            ['user_id' => $creator->id],
-            ['user_id' => $targetId],
-        ]);
-
-        return $conversation;
     }
 
     /**

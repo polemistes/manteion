@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ReportStatus;
 use App\Http\Requests\StoreMessageRequest;
 use App\Models\Conversation;
 use App\Models\ConversationParticipant;
 use App\Models\Message;
 use App\Notifications\NewMessageReceived;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 class ConversationMessageController extends Controller
@@ -30,11 +32,21 @@ class ConversationMessageController extends Controller
         return back();
     }
 
-    public function destroy(Conversation $conversation, Message $message): RedirectResponse
+    public function destroy(Request $request, Conversation $conversation, Message $message): RedirectResponse
     {
         Gate::authorize('delete', $message);
 
-        $message->update(['body' => '', 'is_deleted' => true]);
+        $body = $request->user()->isStaff() && $request->boolean('leave_placeholder')
+            ? __('messages.moderation.deleted_placeholder')
+            : '';
+
+        $message->update(['body' => $body, 'is_deleted' => true]);
+
+        $message->reports()->where('status', ReportStatus::Pending)->update([
+            'status' => ReportStatus::Resolved,
+            'resolved_by' => $request->user()->id,
+            'resolved_at' => now(),
+        ]);
 
         return back();
     }

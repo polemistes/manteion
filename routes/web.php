@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\ContactGroupController;
 use App\Http\Controllers\ContactGroupMemberController;
 use App\Http\Controllers\ContactsController;
@@ -16,9 +17,12 @@ use App\Http\Controllers\EventSearchabilityController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\FriendshipController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\Moderation\ReportController as ModerationReportController;
+use App\Http\Controllers\Moderation\StaffConversationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PushSubscriptionController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserProfileController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -90,4 +94,30 @@ Route::middleware('auth')->group(function () {
         ->scopeBindings();
     Route::post('/messages/{conversation}/participants', [ConversationParticipantController::class, 'store'])->name('messages.participants.store');
     Route::delete('/messages/{conversation}/participants', [ConversationParticipantController::class, 'destroy'])->name('messages.participants.destroy');
+
+    Route::post('/reports', [ReportController::class, 'store'])->name('reports.store');
+
+    // Reachable only while impersonating (see RestrictImpersonatedRequests) —
+    // the acting guard user at that point is the impersonated member, not an
+    // administrator, so this must sit outside the `administrator` group.
+    Route::post('/admin/impersonate/exit', [AdminUserController::class, 'stopImpersonating'])->name('admin.impersonate.exit');
+
+    Route::middleware('staff')->prefix('admin/users/{user}')->name('admin.users.')->group(function () {
+        Route::post('/suspension', [AdminUserController::class, 'suspend'])->name('suspend');
+        Route::delete('/suspension', [AdminUserController::class, 'unsuspend'])->name('unsuspend');
+    });
+
+    Route::middleware('staff')->prefix('moderation')->name('moderation.')->group(function () {
+        Route::get('/reports', [ModerationReportController::class, 'index'])->name('reports.index');
+        Route::patch('/reports/{report}', [ModerationReportController::class, 'update'])->name('reports.update');
+        Route::post('/users/{user}/message', [StaffConversationController::class, 'store'])->name('users.message');
+    });
+
+    Route::middleware('administrator')->prefix('admin/users')->name('admin.users.')->group(function () {
+        Route::get('/', [AdminUserController::class, 'index'])->name('index');
+        Route::patch('/{user}/role', [AdminUserController::class, 'updateRole'])->name('role.update');
+        Route::post('/{user}/email', [AdminUserController::class, 'sendEmail'])->name('email.store');
+        Route::post('/{user}/impersonate', [AdminUserController::class, 'impersonate'])->name('impersonate');
+        Route::delete('/{user}', [AdminUserController::class, 'destroy'])->name('destroy');
+    });
 });

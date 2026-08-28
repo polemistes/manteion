@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { Form, Head, Link, router, usePoll } from '@inertiajs/vue3';
+import { Form, Head, Link, router, usePage, usePoll } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import FieldError from '@/components/FieldError.vue';
 import PersonSummary from '@/components/PersonSummary.vue';
+import ReportButton from '@/components/ReportButton.vue';
 import { confirmAction } from '@/composables/useConfirm';
+import { staffDelete } from '@/composables/useStaffDelete';
 import { destroy as destroyEvent, edit as editEvent } from '@/routes/events';
 import * as eventAttendance from '@/routes/events/attendance';
 import * as eventComments from '@/routes/events/comments';
@@ -39,9 +42,11 @@ interface Attendee {
 interface Comment {
     id: number;
     body: string;
+    is_deleted: boolean;
     created_at: string;
     user: Person;
     can_delete: boolean;
+    can_report: boolean;
 }
 
 const props = defineProps<{
@@ -62,8 +67,11 @@ const props = defineProps<{
         tags: Tag[];
         images: string[];
         is_owner: boolean;
+        is_deleted: boolean;
         can_invite: boolean;
         can_comment: boolean;
+        can_delete: boolean;
+        can_report: boolean;
     };
     myAttendance: { status: string; attendance_visibility: string } | null;
     attendees: Attendee[];
@@ -100,7 +108,13 @@ function categoryLabel(tag: Tag): string {
     return te(key) ? t(key) : tag.name;
 }
 
+const page = usePage();
+const authUserId = computed(() => page.props.auth.user.id);
+
 async function deleteEvent(): Promise<void> {
+    // Events don't offer the "leave a placeholder" choice (unlike comments
+    // and messages) — deleting one, whether as the owner or as staff, just
+    // deletes it.
     const confirmed = await confirmAction({
         message: t('events.show.confirmDeleteEvent'),
     });
@@ -110,6 +124,43 @@ async function deleteEvent(): Promise<void> {
     }
 
     router.delete(destroyEvent(props.event.id).url);
+}
+
+async function deleteComment(comment: Comment): Promise<void> {
+    if (comment.user.id !== authUserId.value) {
+        const choice = await staffDelete({
+            message: t('moderation.confirmDeleteContent'),
+        });
+
+        if (choice === null) {
+            return;
+        }
+
+        router.delete(
+            eventComments.destroy({
+                event: props.event.id,
+                comment: comment.id,
+            }).url,
+            { data: { leave_placeholder: choice === 'placeholder' } },
+        );
+
+        return;
+    }
+
+    const confirmed = await confirmAction({
+        message: t('events.show.confirmDeleteComment'),
+    });
+
+    if (!confirmed) {
+        return;
+    }
+
+    router.delete(
+        eventComments.destroy({
+            event: props.event.id,
+            comment: comment.id,
+        }).url,
+    );
 }
 
 const locationLabel =
@@ -137,20 +188,34 @@ const locationLabel =
             </p>
         </div>
 
-        <div v-if="props.event.is_owner" class="flex shrink-0 gap-2">
+        <div
+            v-if="
+                props.event.is_owner ||
+                props.event.can_delete ||
+                props.event.can_report
+            "
+            class="flex shrink-0 gap-2"
+        >
             <Link
+                v-if="props.event.is_owner"
                 :href="editEvent(props.event.id).url"
                 class="border border-black px-3 py-2 text-sm hover:bg-black hover:text-white"
             >
                 {{ t('events.show.edit') }}
             </Link>
             <button
+                v-if="props.event.can_delete"
                 type="button"
                 class="border border-black px-3 py-2 text-sm hover:bg-black hover:text-white"
                 @click="deleteEvent"
             >
                 {{ t('events.show.delete') }}
             </button>
+            <ReportButton
+                v-if="props.event.can_report"
+                reportable-type="event"
+                :reportable-id="props.event.id"
+            />
         </div>
     </div>
 
@@ -183,7 +248,10 @@ const locationLabel =
         />
     </div>
 
-    <p class="mb-8 max-w-prose font-sans text-sm whitespace-pre-line">
+    <p
+        class="mb-8 max-w-prose font-sans text-sm whitespace-pre-line"
+        :class="{ 'text-black/50 italic': props.event.is_deleted }"
+    >
         {{ props.event.description }}
     </p>
 
@@ -367,24 +435,28 @@ const locationLabel =
                 :key="comment.id"
                 class="border-[3px] border-black p-3"
             >
-                <div class="mb-1 flex items-center justify-between">
+                <div class="mb-1 flex items-center justify-between gap-2">
                     <PersonSummary v-bind="comment.user" />
-                    <Link
-                        v-if="comment.can_delete"
-                        :href="
-                            eventComments.destroy({
-                                event: props.event.id,
-                                comment: comment.id,
-                            }).url
-                        "
-                        method="delete"
-                        as="button"
-                        class="text-xs underline"
-                    >
-                        {{ t('events.show.deleteComment') }}
-                    </Link>
+                    <div class="flex items-center gap-2">
+                        <ReportButton
+                            v-if="comment.can_report"
+                            reportable-type="comment"
+                            :reportable-id="comment.id"
+                        />
+                        <button
+                            v-if="comment.can_delete && !comment.is_deleted"
+                            type="button"
+                            class="text-xs underline"
+                            @click="deleteComment(comment)"
+                        >
+                            {{ t('events.show.deleteComment') }}
+                        </button>
+                    </div>
                 </div>
-                <p class="font-sans text-sm whitespace-pre-line">
+                <p
+                    class="font-sans text-sm whitespace-pre-line"
+                    :class="{ 'text-black/50 italic': comment.is_deleted }"
+                >
                     {{ comment.body }}
                 </p>
                 <p class="mt-1 text-xs text-black/70">

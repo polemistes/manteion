@@ -30,6 +30,10 @@ return [
         'friends_only' => 'Du kan bare legge til dine egne venner.',
     ],
 
+    'moderation' => [
+        'deleted_placeholder' => 'Slettet av en moderator',
+    ],
+
     'push_notification' => [
         'event_invite_title' => 'Arrangementsinvitasjon',
         'event_invite_body' => ':name inviterte deg til ":event"',

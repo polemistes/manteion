@@ -30,6 +30,10 @@ return [
         'friends_only' => 'You can only add your own friends.',
     ],
 
+    'moderation' => [
+        'deleted_placeholder' => 'Deleted by a moderator',
+    ],
+
     'push_notification' => [
         'event_invite_title' => 'Event invitation',
         'event_invite_body' => ':name invited you to ":event"',

@@ -2,8 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\Event;
+use App\Models\EventComment;
+use App\Models\Message;
 use Carbon\CarbonImmutable;
 use GuzzleHttp\Psr7\HttpFactory;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -30,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureWebPushLogger();
+        $this->configureMorphMap();
     }
 
     /**
@@ -90,5 +95,21 @@ class AppServiceProvider extends ServiceProvider
                     ->setReuseVAPIDHeaders(true)
                     ->setAutomaticPadding($config['automatic_padding']);
             });
+    }
+
+    /**
+     * Store short, stable discriminators for reportable models instead of
+     * raw class names, both in the `reports` table and in the client-facing
+     * API — never trust a client-supplied FQCN. Not `enforceMorphMap()`:
+     * Laravel's own notifiable morph relation already uses raw class names
+     * for unrelated models (e.g. `User`), and enforcing would break those.
+     */
+    protected function configureMorphMap(): void
+    {
+        Relation::morphMap([
+            'message' => Message::class,
+            'event' => Event::class,
+            'comment' => EventComment::class,
+        ]);
     }
 }

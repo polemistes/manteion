@@ -4,11 +4,13 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\FollowStatus;
+use App\Enums\UserRole;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -25,6 +27,7 @@ use NotificationChannels\WebPush\HasPushSubscriptions;
  * @property string $email
  * @property Carbon|null $email_verified_at
  * @property string $password
+ * @property UserRole $role
  * @property bool $allow_public_follow
  * @property bool $show_friends_list
  * @property bool $appear_in_friends_lists
@@ -37,12 +40,15 @@ use NotificationChannels\WebPush\HasPushSubscriptions;
  * @property string|null $avatar_path
  * @property string|null $bio
  * @property string|null $locale
+ * @property Carbon|null $suspended_at
+ * @property string|null $suspended_reason
+ * @property int|null $suspended_by
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read string|null $avatar_url
  */
-#[Fillable(['name', 'username', 'email', 'password', 'allow_public_follow', 'show_friends_list', 'appear_in_friends_lists', 'searchable', 'push_notifications_enabled', 'notify_event_invites', 'notify_messages', 'notify_friend_requests', 'notify_follow_requests', 'avatar_path', 'bio', 'locale'])]
+#[Fillable(['name', 'username', 'email', 'password', 'role', 'allow_public_follow', 'show_friends_list', 'appear_in_friends_lists', 'searchable', 'push_notifications_enabled', 'notify_event_invites', 'notify_messages', 'notify_friend_requests', 'notify_follow_requests', 'avatar_path', 'bio', 'locale', 'suspended_at', 'suspended_reason', 'suspended_by'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -64,6 +70,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'role' => UserRole::class,
             'allow_public_follow' => 'boolean',
             'show_friends_list' => 'boolean',
             'appear_in_friends_lists' => 'boolean',
@@ -73,7 +80,36 @@ class User extends Authenticatable
             'notify_messages' => 'boolean',
             'notify_friend_requests' => 'boolean',
             'notify_follow_requests' => 'boolean',
+            'suspended_at' => 'datetime',
         ];
+    }
+
+    public function isModerator(): bool
+    {
+        return $this->role === UserRole::Moderator;
+    }
+
+    public function isAdministrator(): bool
+    {
+        return $this->role === UserRole::Administrator;
+    }
+
+    public function isStaff(): bool
+    {
+        return $this->isModerator() || $this->isAdministrator();
+    }
+
+    public function isSuspended(): bool
+    {
+        return $this->suspended_at !== null;
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function suspendedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'suspended_by');
     }
 
     /**

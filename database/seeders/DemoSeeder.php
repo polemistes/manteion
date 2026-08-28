@@ -5,11 +5,13 @@ namespace Database\Seeders;
 use App\Enums\AttendanceStatus;
 use App\Enums\AttendeeSource;
 use App\Enums\ContactGroupType;
+use App\Enums\ConversationType;
 use App\Enums\EventVisibility;
 use App\Enums\FollowStatus;
 use App\Enums\FriendshipStatus;
 use App\Models\ContactGroup;
 use App\Models\ContactTagPreference;
+use App\Models\Conversation;
 use App\Models\Event;
 use App\Models\EventAttendee;
 use App\Models\EventComment;
@@ -18,6 +20,7 @@ use App\Models\Friendship;
 use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
 
 /**
  * Seeds a set of test contacts and events around a single real account, so
@@ -41,7 +44,9 @@ class DemoSeeder extends Seeder
         $this->seedFollows($people);
         $this->seedContactGroups($people);
         $this->seedEvents($people, $tags);
+        $this->seedMyOwnEvent($people, $tags);
         $this->seedTagPreference($people, $tags);
+        $this->seedConversations($people);
     }
 
     /**
@@ -112,6 +117,18 @@ class DemoSeeder extends Seeder
                 ['status' => FriendshipStatus::Accepted]
             );
         }
+
+        // A request someone else sent me, still waiting on my response.
+        Friendship::query()->firstOrCreate(
+            ['requester_id' => $people['stranger']->id, 'addressee_id' => $this->me->id],
+            ['status' => FriendshipStatus::Pending]
+        );
+
+        // A request I sent that's still waiting on theirs.
+        Friendship::query()->firstOrCreate(
+            ['requester_id' => $this->me->id, 'addressee_id' => $people['gunnar']->id],
+            ['status' => FriendshipStatus::Pending]
+        );
     }
 
     /**
@@ -191,6 +208,8 @@ class DemoSeeder extends Seeder
             'allow_invitee_comments' => true,
         ], []);
         $this->inviteMe($cabinWeekend, $people['bjorn'], AttendanceStatus::Attending);
+        $this->comment($cabinWeekend, $this->me, 'Counting the days! Should I bring the board games too?');
+        $this->comment($cabinWeekend, $people['bjorn'], 'Good idea, always room for those.');
 
         $birthdayDinner = $this->makeEvent($people['camilla'], [
             'name' => 'Birthday Dinner',
@@ -203,15 +222,17 @@ class DemoSeeder extends Seeder
         ], []);
         $this->inviteMe($birthdayDinner, $people['camilla'], AttendanceStatus::Interested);
 
-        $this->makeEvent($people['henrik'], [
+        $communityCleanup = $this->makeEvent($people['henrik'], [
             'name' => 'Community Cleanup',
             'place' => 'Riverside Park',
             'description' => 'Bring gloves. We supply bags and tools.',
             'starts_at' => now()->addDays(7)->setTime(10, 0),
             'visibility' => EventVisibility::Public,
         ], [$tags['volunteering']]);
+        $this->comment($communityCleanup, $people['erik'], "I'll bring my own gloves and an extra pair to share.");
+        $this->comment($communityCleanup, $people['frida'], 'Count me in, see you all there!');
 
-        $this->makeEvent($people['ingrid'], [
+        $openMicNight = $this->makeEvent($people['ingrid'], [
             'name' => 'Open Mic Night',
             'place' => 'Cafe Sørhus',
             'description' => 'Sign up at the door. All instruments welcome.',
@@ -219,6 +240,7 @@ class DemoSeeder extends Seeder
             'visibility' => EventVisibility::Searchable,
             'searchable_paid_at' => now(),
         ], [$tags['music']]);
+        $this->comment($openMicNight, $this->me, "Wouldn't miss it, see you there!");
 
         $this->makeEvent($people['ingrid'], [
             'name' => 'Book Club Meetup',
@@ -228,7 +250,7 @@ class DemoSeeder extends Seeder
             'visibility' => EventVisibility::Public,
         ], [$tags['reading']]);
 
-        $this->makeEvent($people['stranger'], [
+        $cityMarathon = $this->makeEvent($people['stranger'], [
             'name' => 'City Marathon',
             'place' => 'City center start line',
             'description' => 'Annual marathon, half marathon, and 10k routes.',
@@ -236,6 +258,48 @@ class DemoSeeder extends Seeder
             'visibility' => EventVisibility::Searchable,
             'searchable_paid_at' => now(),
         ], [$tags['sports']]);
+        $this->comment($cityMarathon, $people['bjorn'], 'Signed up for the half marathon, who else is running?');
+    }
+
+    /**
+     * An event I organize myself, so other people's RSVPs and comments show
+     * up on my own content too (useful for exercising moderation flows
+     * against content I own, not just content I'm invited to).
+     *
+     * @param  array<string, User>  $people
+     * @param  array<string, Tag>  $tags
+     */
+    private function seedMyOwnEvent(array $people, array $tags): void
+    {
+        $housewarming = Event::query()->firstOrCreate(
+            ['user_id' => $this->me->id, 'name' => 'Housewarming Party'],
+            [
+                'place' => 'My place',
+                'description' => 'Finally settled in, come see the new apartment. Drinks and snacks provided.',
+                'starts_at' => now()->addDays(6)->setTime(18, 0),
+                'visibility' => EventVisibility::Public,
+                'allow_invitee_invites' => false,
+                'allow_invitee_comments' => true,
+            ]
+        );
+        $housewarming->tags()->syncWithoutDetaching([$tags['games']->id]);
+
+        $this->attend($housewarming, $people['alice'], AttendanceStatus::Attending, AttendeeSource::Follower);
+        $this->attend($housewarming, $people['bjorn'], AttendanceStatus::Attending, AttendeeSource::Follower);
+        $this->attend($housewarming, $people['frida'], AttendanceStatus::Interested, AttendeeSource::Follower);
+        $this->attend($housewarming, $people['gunnar'], AttendanceStatus::NotAttending, AttendeeSource::Follower);
+
+        $this->comment($housewarming, $people['alice'], "Can't wait to see the place!");
+        $this->comment($housewarming, $people['frida'], 'Should I bring anything?');
+        $this->comment($housewarming, $this->me, "Just yourselves, I've got it covered!");
+    }
+
+    private function attend(Event $event, User $user, AttendanceStatus $status, AttendeeSource $source): void
+    {
+        EventAttendee::query()->firstOrCreate(
+            ['event_id' => $event->id, 'user_id' => $user->id],
+            ['status' => $status, 'source' => $source]
+        );
     }
 
     /**
@@ -292,5 +356,69 @@ class DemoSeeder extends Seeder
             'contact_user_id' => $people['ingrid']->id,
             'tag_id' => $tags['music']->id,
         ]);
+    }
+
+    /**
+     * @param  array<string, User>  $people
+     */
+    private function seedConversations(array $people): void
+    {
+        // Messages are given explicit, strictly increasing timestamps
+        // (rather than relying on wall-clock time during seeding) so the
+        // read/unread state below is deterministic.
+        $ago = fn (int $minutes) => Carbon::now()->subMinutes($minutes);
+
+        $withAlice = Conversation::findOrCreateDirect($this->me, $people['alice']);
+        $this->message($withAlice, $this->me, 'Hey, are you still hosting board game night this week?', $ago(90));
+        $this->message($withAlice, $people['alice'], 'Yes! Same time as always. Bring Catan if you still have it.', $ago(85));
+        $this->message($withAlice, $this->me, 'Will do, see you then.', $ago(80));
+        // Alice's last reply is left unread on my side, so the inbox badge
+        // has something to show.
+        $this->message($withAlice, $people['alice'], 'Actually, could you also bring some snacks?', $ago(10));
+        $this->markRead($withAlice, $this->me, $ago(80));
+        $this->markRead($withAlice, $people['alice'], $ago(10));
+
+        $withBjorn = Conversation::findOrCreateDirect($this->me, $people['bjorn']);
+        $this->message($withBjorn, $people['bjorn'], "Cabin's booked for the weekend. Need anything from the shop on the way up?", $ago(120));
+        $this->message($withBjorn, $this->me, 'Just firewood if the cabin\'s low. Otherwise we\'re set.', $ago(115));
+        $this->message($withBjorn, $people['bjorn'], 'Noted, see you Friday.', $ago(110));
+        $this->markRead($withBjorn, $this->me, $ago(110));
+        $this->markRead($withBjorn, $people['bjorn'], $ago(110));
+
+        $withErik = Conversation::findOrCreateDirect($this->me, $people['erik']);
+        $this->message($withErik, $people['erik'], 'Hey, I started following your events. Nice picnic idea last month!', $ago(200));
+        $this->message($withErik, $this->me, 'Thanks! More coming up soon.', $ago(195));
+        $this->markRead($withErik, $this->me, $ago(195));
+        $this->markRead($withErik, $people['erik'], $ago(195));
+
+        $cabinCrew = Conversation::query()->firstOrCreate(
+            ['type' => ConversationType::Group, 'creator_id' => $people['bjorn']->id, 'name' => 'Cabin Weekend Crew'],
+        );
+        foreach ([$this->me, $people['bjorn'], $people['camilla']] as $participant) {
+            $cabinCrew->participants()->firstOrCreate(['user_id' => $participant->id]);
+        }
+        $this->message($cabinCrew, $people['bjorn'], "Group chat for cabin weekend logistics. Camilla, you're driving?", $ago(130));
+        $this->message($cabinCrew, $people['camilla'], 'Yep, I can take two more in the car.', $ago(125));
+        $this->message($cabinCrew, $this->me, "I'll grab a seat, thanks Camilla!", $ago(120));
+        $this->markRead($cabinCrew, $this->me, $ago(120));
+        $this->markRead($cabinCrew, $people['bjorn'], $ago(120));
+        $this->markRead($cabinCrew, $people['camilla'], $ago(120));
+    }
+
+    private function message(Conversation $conversation, User $author, string $body, Carbon $at): void
+    {
+        $message = $conversation->messages()->firstOrCreate([
+            'user_id' => $author->id,
+            'body' => $body,
+        ]);
+
+        $message->forceFill(['created_at' => $at, 'updated_at' => $at])->save();
+    }
+
+    private function markRead(Conversation $conversation, User $user, Carbon $at): void
+    {
+        $conversation->participants()
+            ->where('user_id', $user->id)
+            ->update(['last_read_at' => $at]);
     }
 }

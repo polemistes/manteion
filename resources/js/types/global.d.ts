@@ -25,6 +25,7 @@ declare module '@inertiajs/core' {
             locale: string;
             availableLocales: Record<string, string>;
             vapidPublicKey: string | null;
+            impersonating: boolean;
             [key: string]: unknown;
         };
     }

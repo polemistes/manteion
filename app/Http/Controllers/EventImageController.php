@@ -12,7 +12,7 @@ class EventImageController extends Controller
 {
     public function destroy(Event $event, EventImage $image): RedirectResponse
     {
-        Gate::authorize('update', $event);
+        Gate::authorize('delete', $image);
 
         Storage::disk('public')->delete($image->path);
         $image->delete();

@@ -1,6 +1,10 @@
 <?php
 
+use App\Http\Middleware\EnsureUserIsAdministrator;
+use App\Http\Middleware\EnsureUserIsNotSuspended;
+use App\Http\Middleware\EnsureUserIsStaff;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\RestrictImpersonatedRequests;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -21,8 +25,15 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [
             SetLocale::class,
+            EnsureUserIsNotSuspended::class,
+            RestrictImpersonatedRequests::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
+        ]);
+
+        $middleware->alias([
+            'staff' => EnsureUserIsStaff::class,
+            'administrator' => EnsureUserIsAdministrator::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -52,6 +52,7 @@ class HandleInertiaRequests extends Middleware
             'locale' => app()->getLocale(),
             'availableLocales' => config('app.supported_locales'),
             'vapidPublicKey' => config('webpush.vapid.public_key'),
+            'impersonating' => $request->session()->has('impersonator_id'),
         ];
     }
 
