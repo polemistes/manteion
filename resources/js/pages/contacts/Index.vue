@@ -725,12 +725,15 @@ const filteredFollowers = computed(() =>
  * On mobile, "find new contacts" and the groups panel are collapsed
  * toggles stacked above the filter field and the main list — find comes
  * first since it's the more common reason to open the page, and its
- * results appear inline within its own toggle. On desktop, "find new
- * contacts" sits beside the filter field instead (both search boxes at
- * the top), and its results appear in the main column under their own
- * "Search results" heading rather than in the find column. That's a
- * genuine reorder, not just a resize, so this mirrors EventCard.vue's
- * use of grid-template-areas instead of pure utility classes.
+ * results appear inline within its own toggle. On desktop, three equal
+ * columns: "search" and "find" sit side by side directly above "main"
+ * (together spanning the same width as "main", so each is half of it),
+ * while "groups" spans the full height of its own column with nothing
+ * above it. Find's results appear in the main column under their own
+ * "Search results" heading rather than in the find column itself.
+ * That's a genuine reorder, not just a resize, so this mirrors
+ * EventCard.vue's use of grid-template-areas instead of pure utility
+ * classes.
  */
 .contacts-layout {
     display: grid;
@@ -760,11 +763,11 @@ const filteredFollowers = computed(() =>
 
 @media (min-width: 1024px) {
     .contacts-layout {
-        grid-template-columns: 2fr 1fr;
+        grid-template-columns: 1fr 1fr 1fr;
         align-items: start;
         grid-template-areas:
-            'search find'
-            'main groups';
+            'search find groups'
+            'main main groups';
     }
 }
 </style>
