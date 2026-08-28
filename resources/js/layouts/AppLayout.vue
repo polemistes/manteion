@@ -4,6 +4,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AlphaBanner from '@/components/AlphaBanner.vue';
 import Avatar from '@/components/Avatar.vue';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
 import { logout } from '@/routes';
 import {
@@ -165,5 +166,7 @@ const navItems = computed(() => {
                 </main>
             </div>
         </div>
+
+        <ConfirmDialog />
     </div>
 </template>

@@ -1,29 +1,38 @@
 <script setup lang="ts">
-import { Form } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { router } from '@inertiajs/vue3';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { update } from '@/routes/contacts/tag-preferences';
+
+interface TagOption {
+    id: number;
+    name: string;
+    slug: string;
+}
 
 interface CategoryOption {
     id: number;
     name: string;
     slug: string;
-    children: { id: number; name: string; slug: string }[];
+    children: TagOption[];
 }
 
 const props = defineProps<{
     contactId: number;
     categories: CategoryOption[];
-    selectedTagIds: number[];
+    excludedTagIds: number[];
+    muteAll: boolean;
 }>();
 
 const { t, te } = useI18n();
 
-const selectedIds = ref<Set<number>>(new Set(props.selectedTagIds));
-const activeCategoryId = ref<number | null>(null);
+const excludedIds = ref<Set<number>>(new Set(props.excludedTagIds));
+const muteAll = ref(props.muteAll);
+const isOpen = ref(false);
+const root = ref<HTMLDivElement | null>(null);
 
 const tagsById = computed(() => {
-    const map = new Map<number, { name: string; slug: string }>();
+    const map = new Map<number, TagOption>();
 
     props.categories.forEach((category) => {
         map.set(category.id, category);
@@ -33,135 +42,233 @@ const tagsById = computed(() => {
     return map;
 });
 
-const activeCategory = computed(() =>
-    props.categories.find((category) => category.id === activeCategoryId.value),
-);
-
-function categoryLabel(tag: { slug: string; name: string }): string {
+function categoryLabel(tag: TagOption): string {
     const key = `categories.${tag.slug}`;
 
     return te(key) ? t(key) : tag.name;
 }
 
-function toggle(id: number, checked: boolean): void {
+const summaryLabel = computed(() => {
+    if (muteAll.value) {
+        return t('contacts.tagPreferences.notifyNone');
+    }
+
+    if (excludedIds.value.size === 0) {
+        return t('contacts.tagPreferences.notifyAll');
+    }
+
+    if (excludedIds.value.size === 1) {
+        const [id] = excludedIds.value;
+        const tag = tagsById.value.get(id);
+
+        return t('contacts.tagPreferences.notifyAllExceptOne', {
+            category: tag ? categoryLabel(tag) : String(id),
+        });
+    }
+
+    return t('contacts.tagPreferences.notifyAllExceptCount', {
+        count: excludedIds.value.size,
+    });
+});
+
+// A category has two effective states: broadly excluded (its own id alone
+// in excludedIds — mutes any event under it, subcategory or not) or
+// narrowed to specific subcategories (their ids, category id removed —
+// mutes only those, even if that happens to be every subcategory). The
+// category checkbox reflects/controls only the "broad" state, so it's
+// unchecked and disabled while narrowed — muting one subcategory (the
+// common case) shouldn't require first unchecking every other one. Backing
+// out of the last checked subcategory falls back to the broad state rather
+// than leaving nothing muted for this category. Mirrors the events list
+// filter's CategoryFilterList.vue.
+function checkedChildIds(category: CategoryOption): Set<number> {
+    return new Set(
+        category.children
+            .filter((child) => excludedIds.value.has(child.id))
+            .map((child) => child.id),
+    );
+}
+
+function isCategoryDisabled(category: CategoryOption): boolean {
+    return checkedChildIds(category).size > 0;
+}
+
+function isExpanded(category: CategoryOption): boolean {
+    return (
+        excludedIds.value.has(category.id) || checkedChildIds(category).size > 0
+    );
+}
+
+function withoutCategory(category: CategoryOption): Set<number> {
+    const next = new Set(excludedIds.value);
+    next.delete(category.id);
+    category.children.forEach((child) => next.delete(child.id));
+
+    return next;
+}
+
+function save(next: Set<number>): void {
+    excludedIds.value = next;
+
+    router.put(
+        update(props.contactId).url,
+        { tag_ids: [...next], mute_all: muteAll.value },
+        { preserveScroll: true, preserveState: true },
+    );
+}
+
+function toggleMuteAll(checked: boolean): void {
+    muteAll.value = checked;
+    save(new Set());
+}
+
+function toggleCategory(category: CategoryOption, checked: boolean): void {
+    const next = withoutCategory(category);
+
     if (checked) {
-        selectedIds.value.add(id);
+        next.add(category.id);
+    }
+
+    save(next);
+}
+
+function toggleChild(
+    category: CategoryOption,
+    child: TagOption,
+    checked: boolean,
+): void {
+    const childIds = checkedChildIds(category);
+
+    if (checked) {
+        childIds.add(child.id);
     } else {
-        selectedIds.value.delete(id);
+        childIds.delete(child.id);
+    }
+
+    const next = withoutCategory(category);
+
+    if (childIds.size === 0) {
+        next.add(category.id);
+    } else {
+        childIds.forEach((id) => next.add(id));
+    }
+
+    save(next);
+}
+
+function toggleOpen(): void {
+    isOpen.value = !isOpen.value;
+}
+
+function close(): void {
+    isOpen.value = false;
+}
+
+function onDocumentClick(event: MouseEvent): void {
+    if (
+        isOpen.value &&
+        root.value &&
+        !root.value.contains(event.target as Node)
+    ) {
+        isOpen.value = false;
     }
 }
 
-function remove(id: number): void {
-    selectedIds.value.delete(id);
-}
-
-function onCategorySelect(event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
-    activeCategoryId.value = value ? Number(value) : null;
-}
+onMounted(() => document.addEventListener('click', onDocumentClick));
+onUnmounted(() => document.removeEventListener('click', onDocumentClick));
 </script>
 
 <template>
-    <Form
-        v-bind="update.form(props.contactId)"
-        #default="{ processing }"
-        class="mt-2 flex flex-col gap-2"
-    >
-        <input
-            v-for="id in selectedIds"
-            :key="id"
-            type="hidden"
-            name="tag_ids[]"
-            :value="id"
-        />
-
-        <div class="flex flex-wrap items-center gap-2">
-            <span class="text-xs text-black/70">{{
-                t('contacts.tagPreferences.notifyMeAbout')
-            }}</span>
-            <span
-                v-for="id in selectedIds"
-                :key="id"
-                class="flex items-center gap-1 border border-black px-2 py-0.5 text-xs"
-            >
-                {{ tagsById.get(id) ? categoryLabel(tagsById.get(id)!) : id }}
-                <button type="button" class="font-bold" @click="remove(id)">
-                    ×
-                </button>
-            </span>
-            <span
-                v-if="!props.categories.length"
-                class="text-xs text-black/70"
-                >{{ t('contacts.tagPreferences.noTags') }}</span
-            >
-        </div>
+    <div v-if="props.categories.length" ref="root" class="relative">
+        <button
+            type="button"
+            class="border border-black bg-white px-2 py-1 text-left text-xs"
+            @click="toggleOpen"
+        >
+            {{ summaryLabel }}
+        </button>
 
         <div
-            v-if="props.categories.length"
-            class="flex flex-wrap items-center gap-2"
+            v-if="isOpen"
+            class="absolute z-20 mt-1 max-h-96 w-64 overflow-y-auto border border-black bg-white p-2"
         >
-            <select
-                :value="activeCategoryId ?? ''"
-                class="border border-black bg-white px-2 py-1 text-xs"
-                @change="onCategorySelect"
+            <p class="mb-2 text-xs font-bold uppercase">
+                {{ t('contacts.tagPreferences.excludeHeading') }}
+            </p>
+            <div
+                v-for="category in props.categories"
+                :key="category.id"
+                class="mb-2"
             >
-                <option value="">
-                    {{ t('contacts.tagPreferences.chooseCategory') }}
-                </option>
-                <option
-                    v-for="category in props.categories"
-                    :key="category.id"
-                    :value="category.id"
+                <label
+                    class="flex items-center gap-2 text-sm"
+                    :class="{
+                        'opacity-50': isCategoryDisabled(category) || muteAll,
+                    }"
                 >
+                    <input
+                        type="checkbox"
+                        :checked="isExpanded(category)"
+                        :disabled="isCategoryDisabled(category) || muteAll"
+                        class="border border-black"
+                        @change="
+                            toggleCategory(
+                                category,
+                                ($event.target as HTMLInputElement).checked,
+                            )
+                        "
+                    />
                     {{ categoryLabel(category) }}
-                </option>
-            </select>
+                </label>
+                <div
+                    v-if="isExpanded(category) && category.children.length"
+                    class="mt-1 flex flex-col gap-1 pl-6"
+                >
+                    <label
+                        v-for="child in category.children"
+                        :key="child.id"
+                        class="flex items-center gap-2 text-xs"
+                    >
+                        <input
+                            type="checkbox"
+                            :checked="excludedIds.has(child.id)"
+                            class="border border-black"
+                            @change="
+                                toggleChild(
+                                    category,
+                                    child,
+                                    ($event.target as HTMLInputElement).checked,
+                                )
+                            "
+                        />
+                        {{ categoryLabel(child) }}
+                    </label>
+                </div>
+            </div>
+
+            <div class="mb-2 border-t border-black pt-2">
+                <label class="flex items-center gap-2 text-sm font-bold">
+                    <input
+                        type="checkbox"
+                        :checked="muteAll"
+                        class="border border-black"
+                        @change="
+                            toggleMuteAll(
+                                ($event.target as HTMLInputElement).checked,
+                            )
+                        "
+                    />
+                    {{ t('contacts.tagPreferences.everything') }}
+                </label>
+            </div>
 
             <button
-                type="submit"
-                :disabled="processing"
-                class="border border-black px-2 py-0.5 text-xs hover:bg-black hover:text-white"
+                type="button"
+                class="mt-1 w-full border border-black bg-black px-2 py-1 text-xs font-bold text-white hover:bg-white hover:text-black"
+                @click="close"
             >
-                {{ t('contacts.tagPreferences.save') }}
+                {{ t('categoryPicker.done') }}
             </button>
         </div>
-
-        <div
-            v-if="activeCategory"
-            class="flex flex-wrap items-center gap-3 border border-black p-2"
-        >
-            <label class="flex items-center gap-1 text-xs font-bold">
-                <input
-                    type="checkbox"
-                    :checked="selectedIds.has(activeCategory.id)"
-                    class="border border-black"
-                    @change="
-                        toggle(
-                            activeCategory.id,
-                            ($event.target as HTMLInputElement).checked,
-                        )
-                    "
-                />
-                {{ categoryLabel(activeCategory) }}
-            </label>
-            <label
-                v-for="child in activeCategory.children"
-                :key="child.id"
-                class="flex items-center gap-1 text-xs"
-            >
-                <input
-                    type="checkbox"
-                    :checked="selectedIds.has(child.id)"
-                    class="border border-black"
-                    @change="
-                        toggle(
-                            child.id,
-                            ($event.target as HTMLInputElement).checked,
-                        )
-                    "
-                />
-                {{ categoryLabel(child) }}
-            </label>
-        </div>
-    </Form>
+    </div>
 </template>

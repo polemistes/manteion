@@ -13,11 +13,38 @@ test('a user can update their profile information and privacy setting', function
         'username' => $user->username,
         'email' => $user->email,
         'allow_public_follow' => '0',
+        'show_friends_list' => '1',
+        'appear_in_friends_lists' => '1',
+        'searchable' => '1',
     ]);
 
     $response->assertRedirect();
     expect($user->fresh()->name)->toBe('New Name');
     expect($user->fresh()->allow_public_follow)->toBeFalse();
+});
+
+test('a user can update their friends-list and search privacy settings', function () {
+    $user = User::factory()->create([
+        'show_friends_list' => true,
+        'appear_in_friends_lists' => true,
+        'searchable' => true,
+    ]);
+
+    $response = $this->actingAs($user)->put('/user/profile-information', [
+        'name' => $user->name,
+        'username' => $user->username,
+        'email' => $user->email,
+        'allow_public_follow' => '1',
+        'show_friends_list' => '0',
+        'appear_in_friends_lists' => '0',
+        'searchable' => '0',
+    ]);
+
+    $response->assertRedirect();
+    $user->refresh();
+    expect($user->show_friends_list)->toBeFalse();
+    expect($user->appear_in_friends_lists)->toBeFalse();
+    expect($user->searchable)->toBeFalse();
 });
 
 test('a user cannot take an existing username', function () {
@@ -29,6 +56,9 @@ test('a user cannot take an existing username', function () {
         'username' => 'taken',
         'email' => $user->email,
         'allow_public_follow' => '1',
+        'show_friends_list' => '1',
+        'appear_in_friends_lists' => '1',
+        'searchable' => '1',
     ]);
 
     $response->assertSessionHasErrorsIn('updateProfileInformation', ['username']);
@@ -43,6 +73,9 @@ test('a user can upload an avatar and set a bio', function () {
         'username' => $user->username,
         'email' => $user->email,
         'allow_public_follow' => '1',
+        'show_friends_list' => '1',
+        'appear_in_friends_lists' => '1',
+        'searchable' => '1',
         'bio' => 'Hello, I like board games.',
         'avatar' => UploadedFile::fake()->image('avatar.jpg'),
     ]);
@@ -65,6 +98,9 @@ test('uploading a new avatar replaces and deletes the old one', function () {
         'username' => $user->username,
         'email' => $user->email,
         'allow_public_follow' => '1',
+        'show_friends_list' => '1',
+        'appear_in_friends_lists' => '1',
+        'searchable' => '1',
         'avatar' => UploadedFile::fake()->image('new.jpg'),
     ])->assertRedirect();
 
@@ -84,6 +120,9 @@ test('a user can remove their avatar', function () {
         'username' => $user->username,
         'email' => $user->email,
         'allow_public_follow' => '1',
+        'show_friends_list' => '1',
+        'appear_in_friends_lists' => '1',
+        'searchable' => '1',
         'remove_avatar' => '1',
     ])->assertRedirect();
 

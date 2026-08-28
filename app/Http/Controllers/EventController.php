@@ -72,6 +72,16 @@ class EventController extends Controller
             }
         }
 
+        $startDateFilter = $request->has('start_date') ? $request->string('start_date')->toString() : now()->toDateString();
+        if ($startDateFilter !== '') {
+            $events = $events->filter(fn (Event $event) => $event->starts_at->toDateString() >= $startDateFilter);
+        }
+
+        if ($request->filled('end_date')) {
+            $endDateFilter = $request->string('end_date')->toString();
+            $events = $events->filter(fn (Event $event) => $event->starts_at->toDateString() <= $endDateFilter);
+        }
+
         $nearPoint = $this->nearPointFrom($request);
 
         if ($nearPoint !== null) {
@@ -85,7 +95,11 @@ class EventController extends Controller
             'following' => User::query()->whereIn('id', $followedIds)->orderBy('name')->get(['id', 'name', 'username', 'avatar_path']),
             'friendGroups' => $user->contactGroups()->ofType(ContactGroupType::Friend)->get(['id', 'name']),
             'followingGroups' => $user->contactGroups()->ofType(ContactGroupType::Following)->get(['id', 'name']),
-            'filters' => $request->only(['tags', 'owner_filter', 'group_id', 'near_lat', 'near_lng']),
+            'filters' => [
+                ...$request->only(['tags', 'owner_filter', 'group_id', 'near_lat', 'near_lng']),
+                'start_date' => $startDateFilter,
+                'end_date' => $request->filled('end_date') ? $request->string('end_date')->toString() : '',
+            ],
         ]);
     }
 
@@ -308,9 +322,13 @@ class EventController extends Controller
                 ->with(['owner', 'tags', 'images', 'attendees' => $withAttendee])
         )->get()
             ->filter(function (Event $event) use ($preferencesByContact) {
-                $allowedTagIds = $preferencesByContact->get($event->user_id);
+                $mutedTagIds = $preferencesByContact->get($event->user_id);
 
-                return $allowedTagIds === null || $event->tags->pluck('id')->intersect($allowedTagIds)->isNotEmpty();
+                if ($mutedTagIds !== null && $mutedTagIds->contains(null)) {
+                    return false;
+                }
+
+                return $mutedTagIds === null || $event->tags->pluck('id')->intersect($mutedTagIds)->isEmpty();
             });
 
         return $owned->merge($invited)->merge($followedPublic)->unique('id')->sortBy('starts_at')->values();
@@ -461,12 +479,16 @@ class EventController extends Controller
         $followers = $event->owner->followers()->wherePivot('status', FollowStatus::Accepted->value)->get();
 
         foreach ($followers as $follower) {
-            $allowedTagIds = ContactTagPreference::query()
+            $mutedTagIds = ContactTagPreference::query()
                 ->where('user_id', $follower->id)
                 ->where('contact_user_id', $event->user_id)
                 ->pluck('tag_id');
 
-            if ($allowedTagIds->isEmpty() || $allowedTagIds->intersect($tagIds)->isNotEmpty()) {
+            if ($mutedTagIds->contains(null)) {
+                continue;
+            }
+
+            if ($mutedTagIds->isEmpty() || $mutedTagIds->intersect($tagIds)->isEmpty()) {
                 $follower->notify(new FollowedUserPublishedEvent($event));
             }
         }

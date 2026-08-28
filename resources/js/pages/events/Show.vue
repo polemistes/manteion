@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { Form, Head, Link, usePoll } from '@inertiajs/vue3';
+import { Form, Head, Link, router, usePoll } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import FieldError from '@/components/FieldError.vue';
 import PersonSummary from '@/components/PersonSummary.vue';
+import { confirmAction } from '@/composables/useConfirm';
 import { destroy as destroyEvent, edit as editEvent } from '@/routes/events';
 import * as eventAttendance from '@/routes/events/attendance';
 import * as eventComments from '@/routes/events/comments';
@@ -99,6 +100,18 @@ function categoryLabel(tag: Tag): string {
     return te(key) ? t(key) : tag.name;
 }
 
+async function deleteEvent(): Promise<void> {
+    const confirmed = await confirmAction({
+        message: t('events.show.confirmDeleteEvent'),
+    });
+
+    if (!confirmed) {
+        return;
+    }
+
+    router.delete(destroyEvent(props.event.id).url);
+}
+
 const locationLabel =
     props.event.place ||
     [props.event.city, props.event.country].filter(Boolean).join(', ') ||
@@ -131,14 +144,13 @@ const locationLabel =
             >
                 {{ t('events.show.edit') }}
             </Link>
-            <Link
-                :href="destroyEvent(props.event.id).url"
-                method="delete"
-                as="button"
+            <button
+                type="button"
                 class="border border-black px-3 py-2 text-sm hover:bg-black hover:text-white"
+                @click="deleteEvent"
             >
                 {{ t('events.show.delete') }}
-            </Link>
+            </button>
         </div>
     </div>
 

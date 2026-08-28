@@ -24,6 +24,7 @@ class UpdateContactTagPreferenceRequest extends FormRequest
         return [
             'tag_ids' => ['array'],
             'tag_ids.*' => ['integer', 'exists:tags,id'],
+            'mute_all' => ['sometimes', 'boolean'],
         ];
     }
 }

@@ -13,7 +13,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $user_id
  * @property int $contact_user_id
- * @property int $tag_id
+ * @property int|null $tag_id A null row means "mute this contact entirely."
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */

@@ -4,8 +4,10 @@ import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import FieldError from '@/components/FieldError.vue';
 import ImageCropper from '@/components/ImageCropper.vue';
+import Modal from '@/components/Modal.vue';
 import PasswordField from '@/components/PasswordField.vue';
 import { logout } from '@/routes';
+import { destroy as destroyProfile } from '@/routes/profile';
 import { update as updatePassword } from '@/routes/user-password';
 import { update as updateProfileInformation } from '@/routes/user-profile-information';
 
@@ -18,12 +20,16 @@ const props = defineProps<{
         username: string;
         email: string;
         allow_public_follow: boolean;
+        show_friends_list: boolean;
+        appear_in_friends_lists: boolean;
+        searchable: boolean;
         avatar_url: string | null;
         bio: string | null;
     };
 }>();
 
 const removeAvatar = ref(false);
+const deleteAccountDialogOpen = ref(false);
 </script>
 
 <template>
@@ -130,18 +136,67 @@ const removeAvatar = ref(false);
                 <FieldError :message="errors.bio" />
             </div>
 
-            <label class="flex items-start gap-2 text-sm">
-                <input type="hidden" name="allow_public_follow" value="0" />
-                <input
-                    type="checkbox"
-                    name="allow_public_follow"
-                    value="1"
-                    :checked="props.user.allow_public_follow"
-                    class="mt-0.5 border border-black"
-                />
-                <span>{{ t('profile.allowPublicFollow') }}</span>
-            </label>
-            <FieldError :message="errors.allow_public_follow" />
+            <div>
+                <span class="mb-1 block text-sm font-bold">{{
+                    t('profile.privacyHeading')
+                }}</span>
+
+                <label class="flex items-start gap-2 text-sm">
+                    <input type="hidden" name="allow_public_follow" value="0" />
+                    <input
+                        type="checkbox"
+                        name="allow_public_follow"
+                        value="1"
+                        :checked="props.user.allow_public_follow"
+                        class="mt-0.5 border border-black"
+                    />
+                    <span>{{ t('profile.allowPublicFollow') }}</span>
+                </label>
+                <FieldError :message="errors.allow_public_follow" />
+
+                <label class="mt-2 flex items-start gap-2 text-sm">
+                    <input type="hidden" name="show_friends_list" value="0" />
+                    <input
+                        type="checkbox"
+                        name="show_friends_list"
+                        value="1"
+                        :checked="props.user.show_friends_list"
+                        class="mt-0.5 border border-black"
+                    />
+                    <span>{{ t('profile.showFriendsList') }}</span>
+                </label>
+                <FieldError :message="errors.show_friends_list" />
+
+                <label class="mt-2 flex items-start gap-2 text-sm">
+                    <input
+                        type="hidden"
+                        name="appear_in_friends_lists"
+                        value="0"
+                    />
+                    <input
+                        type="checkbox"
+                        name="appear_in_friends_lists"
+                        value="1"
+                        :checked="props.user.appear_in_friends_lists"
+                        class="mt-0.5 border border-black"
+                    />
+                    <span>{{ t('profile.appearInFriendsLists') }}</span>
+                </label>
+                <FieldError :message="errors.appear_in_friends_lists" />
+
+                <label class="mt-2 flex items-start gap-2 text-sm">
+                    <input type="hidden" name="searchable" value="0" />
+                    <input
+                        type="checkbox"
+                        name="searchable"
+                        value="1"
+                        :checked="props.user.searchable"
+                        class="mt-0.5 border border-black"
+                    />
+                    <span>{{ t('profile.searchable') }}</span>
+                </label>
+                <FieldError :message="errors.searchable" />
+            </div>
 
             <button
                 type="submit"
@@ -157,7 +212,7 @@ const removeAvatar = ref(false);
         </Form>
     </section>
 
-    <section class="max-w-md">
+    <section class="mb-10 max-w-md">
         <h2 class="mb-4 text-sm font-bold uppercase">
             {{ t('profile.passwordHeading') }}
         </h2>
@@ -233,7 +288,7 @@ const removeAvatar = ref(false);
         </Form>
     </section>
 
-    <section class="max-w-md">
+    <section class="flex flex-wrap gap-2">
         <Link
             :href="logout().url"
             method="post"
@@ -242,5 +297,57 @@ const removeAvatar = ref(false);
         >
             {{ t('nav.logOut') }}
         </Link>
+        <button
+            type="button"
+            class="w-fit border border-black px-4 py-2 text-sm font-bold hover:bg-black hover:text-white"
+            @click="deleteAccountDialogOpen = true"
+        >
+            {{ t('profile.deleteAccount') }}
+        </button>
     </section>
+
+    <Modal v-model:open="deleteAccountDialogOpen">
+        <h2 class="mb-2 text-sm font-bold uppercase">
+            {{ t('profile.deleteAccount') }}
+        </h2>
+        <p class="mb-4 text-sm">{{ t('profile.confirmDeleteAccount') }}</p>
+
+        <Form
+            v-bind="destroyProfile.form()"
+            #default="{ errors, processing }"
+            class="flex flex-col gap-4"
+        >
+            <div>
+                <label
+                    for="delete_account_password"
+                    class="mb-1 block text-sm font-bold"
+                    >{{ t('profile.currentPassword') }}</label
+                >
+                <PasswordField
+                    id="delete_account_password"
+                    name="password"
+                    required
+                    autocomplete="current-password"
+                />
+                <FieldError :message="errors.password" />
+            </div>
+
+            <div class="flex justify-end gap-2">
+                <button
+                    type="button"
+                    class="border border-black px-3 py-2 text-sm hover:bg-black hover:text-white"
+                    @click="deleteAccountDialogOpen = false"
+                >
+                    {{ t('common.cancel') }}
+                </button>
+                <button
+                    type="submit"
+                    :disabled="processing"
+                    class="border border-black bg-black px-3 py-2 text-sm text-white hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                    {{ t('profile.deleteAccount') }}
+                </button>
+            </div>
+        </Form>
+    </Modal>
 </template>

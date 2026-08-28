@@ -35,6 +35,7 @@ Route::put('/locale', [LocaleController::class, 'update'])->name('locale.update'
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::get('/users/{user}', [UserProfileController::class, 'show'])->name('users.show');
 
     Route::get('/contacts', [ContactsController::class, 'index'])->name('contacts.index');
@@ -81,6 +82,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/messages', [ConversationController::class, 'store'])->name('messages.store');
     Route::get('/messages/{conversation}', [ConversationController::class, 'show'])->name('messages.show');
     Route::post('/messages/{conversation}/send', [ConversationMessageController::class, 'store'])->name('messages.send');
+    Route::delete('/messages/{conversation}/messages/{message}', [ConversationMessageController::class, 'destroy'])
+        ->name('messages.messages.destroy')
+        ->scopeBindings();
     Route::post('/messages/{conversation}/participants', [ConversationParticipantController::class, 'store'])->name('messages.participants.store');
     Route::delete('/messages/{conversation}/participants', [ConversationParticipantController::class, 'destroy'])->name('messages.participants.destroy');
 });

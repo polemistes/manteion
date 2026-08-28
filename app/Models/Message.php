@@ -14,14 +14,25 @@ use Illuminate\Support\Carbon;
  * @property int $conversation_id
  * @property int $user_id
  * @property string $body
+ * @property bool $is_deleted
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['conversation_id', 'user_id', 'body'])]
+#[Fillable(['conversation_id', 'user_id', 'body', 'is_deleted'])]
 class Message extends Model
 {
     /** @use HasFactory<MessageFactory> */
     use HasFactory;
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'is_deleted' => 'boolean',
+        ];
+    }
 
     /**
      * @return BelongsTo<Conversation, $this>

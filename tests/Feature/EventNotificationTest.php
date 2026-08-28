@@ -27,7 +27,30 @@ test('followers are notified when a followed user publishes a public event', fun
     Notification::assertSentTo($follower, FollowedUserPublishedEvent::class);
 });
 
-test('a follower with a tag preference is only notified when the event matches', function () {
+test('a follower who muted a tag is not notified when the event matches it', function () {
+    Notification::fake();
+    $owner = User::factory()->create();
+    $follower = User::factory()->create();
+    Follow::factory()->create(['follower_id' => $follower->id, 'followed_id' => $owner->id]);
+    $music = Tag::factory()->create(['name' => 'music']);
+    $sports = Tag::factory()->create(['name' => 'sports']);
+    ContactTagPreference::factory()->create(['user_id' => $follower->id, 'contact_user_id' => $owner->id, 'tag_id' => $music->id]);
+
+    $this->actingAs($owner)->post('/events', [
+        'name' => 'Concert Night',
+        'place' => 'Arena',
+        'description' => 'Live music!',
+        'starts_at' => now()->addWeek()->toDateTimeString(),
+        'visibility' => 'public',
+        'allow_invitee_invites' => false,
+        'allow_invitee_comments' => true,
+        'tag_ids' => [$music->id],
+    ])->assertRedirect();
+
+    Notification::assertNothingSentTo($follower);
+});
+
+test('a follower who muted a tag is still notified about events that do not match it', function () {
     Notification::fake();
     $owner = User::factory()->create();
     $follower = User::factory()->create();
@@ -45,6 +68,26 @@ test('a follower with a tag preference is only notified when the event matches',
         'allow_invitee_invites' => false,
         'allow_invitee_comments' => true,
         'tag_ids' => [$sports->id],
+    ])->assertRedirect();
+
+    Notification::assertSentTo($follower, FollowedUserPublishedEvent::class);
+});
+
+test('a follower who fully muted an owner is never notified', function () {
+    Notification::fake();
+    $owner = User::factory()->create();
+    $follower = User::factory()->create();
+    Follow::factory()->create(['follower_id' => $follower->id, 'followed_id' => $owner->id]);
+    ContactTagPreference::factory()->create(['user_id' => $follower->id, 'contact_user_id' => $owner->id, 'tag_id' => null]);
+
+    $this->actingAs($owner)->post('/events', [
+        'name' => 'Quiet Gathering',
+        'place' => 'Park',
+        'description' => 'No particular topic.',
+        'starts_at' => now()->addWeek()->toDateTimeString(),
+        'visibility' => 'public',
+        'allow_invitee_invites' => false,
+        'allow_invitee_comments' => true,
     ])->assertRedirect();
 
     Notification::assertNothingSentTo($follower);

@@ -18,6 +18,16 @@ class ContactTagPreferenceController extends Controller
             ->where('contact_user_id', $contact->id)
             ->delete();
 
+        if ($request->boolean('mute_all')) {
+            ContactTagPreference::query()->create([
+                'user_id' => $owner->id,
+                'contact_user_id' => $contact->id,
+                'tag_id' => null,
+            ]);
+
+            return back();
+        }
+
         $rows = collect($request->array('tag_ids'))->map(fn (int $tagId) => [
             'user_id' => $owner->id,
             'contact_user_id' => $contact->id,

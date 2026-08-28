@@ -77,6 +77,10 @@
         "bio": "Om deg",
         "bioPlaceholder": "Noen ord om deg selv…",
         "allowPublicFollow": "Hvem som helst kan følge meg uten min godkjenning. Hvis avkrysset av, må nye følgere godkjennes av deg.",
+        "privacyHeading": "Personvern",
+        "showFriendsList": "Vis vennelisten min på profilen min",
+        "appearInFriendsLists": "Vis meg i vennenes venneliste",
+        "searchable": "La profilen min bli funnet i søk",
         "save": "Lagre endringer",
         "saving": "Lagrer…",
         "saved": "Lagret.",
@@ -86,20 +90,25 @@
         "confirmNewPassword": "Bekreft nytt passord",
         "updatePassword": "Oppdater passord",
         "updating": "Oppdaterer…",
-        "passwordUpdated": "Passord oppdatert."
+        "passwordUpdated": "Passord oppdatert.",
+        "deleteAccount": "Slett konto",
+        "confirmDeleteAccount": "Er du sikker på at du vil slette kontoen din? Dette kan ikke angres."
     },
     "userProfile": {
         "noBio": "Denne personen har ikke skrevet en biografi ennå.",
+        "friendsHeading": "Venner",
+        "showFriends": "Vis venner",
+        "hideFriends": "Skjul venner",
         "addFriend": "Legg til venn",
         "friendRequestSent": "Venneforespørsel sendt",
         "cancel": "Avbryt",
         "acceptFriendRequest": "Godta venneforespørsel",
         "decline": "Avslå",
-        "friends": "Venner",
+        "unfriend": "Fjern venn",
+        "confirmUnfriend": "Er du sikker på at du vil fjerne denne vennen?",
         "message": "Melding",
         "follow": "Følg",
         "followRequested": "Følgeforespørsel sendt",
-        "following": "Følger",
         "unfollow": "Slutt å følge"
     },
     "contacts": {
@@ -113,6 +122,8 @@
             "reject": "Avvis",
             "friends": "Venner",
             "noFriends": "Ingen venner ennå. Prøv å søke etter folk du kjenner.",
+            "filterPlaceholder": "Søk blant venner, følgere og de du følger",
+            "noMatches": "Ingen treff på søket ditt.",
             "message": "Melding",
             "requestsSent": "Sendte forespørsler",
             "cancel": "Avbryt",
@@ -123,6 +134,7 @@
             "followers": "Følgere",
             "noFollowers": "Ingen følger deg ennå.",
             "remove": "Fjern",
+            "groupsHeading": "Grupper",
             "friendGroups": "Vennegrupper",
             "friendGroupsDescription": "Grupper vennene dine slik at du kan filtrere arrangementer etter dem senere.",
             "followingGroups": "Følgegrupper",
@@ -130,7 +142,8 @@
             "newGroupName": "Nytt gruppenavn",
             "create": "Opprett",
             "deleteGroup": "Slett gruppe",
-            "add": "Legg til"
+            "addToGroup": "Legg til i gruppe …",
+            "noMoreGroups": "Ingen flere grupper"
         },
         "search": {
             "title": "Søk etter folk",
@@ -149,10 +162,12 @@
             "unfollow": "Slutt å følge"
         },
         "tagPreferences": {
-            "notifyMeAbout": "Varsle meg om:",
-            "noTags": "Ingen kategorier ennå.",
-            "chooseCategory": "Velg en kategori…",
-            "save": "Lagre"
+            "excludeHeading": "Ekskluder arrangementskategorier",
+            "notifyAll": "Få vite om: alt",
+            "notifyAllExceptOne": "Få vite om: alt unntatt {category}",
+            "notifyAllExceptCount": "Få vite om: alt unntatt {count} kategorier",
+            "notifyNone": "Få vite om: ingenting",
+            "everything": "Alt"
         }
     },
     "events": {
@@ -161,6 +176,7 @@
             "createEvent": "Opprett arrangement",
             "filters": "Filtre",
             "category": "Kategori",
+            "searchOnlyFor": "Søk bare etter",
             "anyCategory": "Alle kategorier",
             "anyone": "Hvem som helst",
             "friendsGroupLabel": "Venner",
@@ -174,6 +190,8 @@
             "you": "Deg:",
             "today": "I dag",
             "tomorrow": "I morgen",
+            "startDate": "Startdato",
+            "endDate": "Sluttdato",
             "attendingCount": "{count} deltar",
             "interestedCount": "{count} interesserte",
             "organizer": "Arrangør"
@@ -217,6 +235,7 @@
         "show": {
             "edit": "Rediger",
             "delete": "Slett",
+            "confirmDeleteEvent": "Er du sikker på at du vil slette dette arrangementet? Dette kan ikke angres.",
             "visibilityLabelPrivate": "Privat",
             "visibilityLabelPublic": "Offentlig",
             "ownerTools": "Eierverktøy",
@@ -284,7 +303,10 @@
             "noMessagesYet": "Ingen meldinger ennå. Si hei!",
             "messagePlaceholder": "Skriv en melding…",
             "send": "Send",
-            "sending": "Sender…"
+            "sending": "Sender…",
+            "delete": "Slett",
+            "deleted": "Melding slettet",
+            "confirmDeleteMessage": "Er du sikker på at du vil slette denne meldingen?"
         }
     },
     "notifications": {

@@ -172,6 +172,9 @@ onUnmounted(() => document.removeEventListener('click', onDocumentClick));
             v-if="isOpen"
             class="absolute z-20 mt-1 max-h-96 w-64 overflow-y-auto border border-black bg-white p-2"
         >
+            <p class="mb-2 text-xs font-bold uppercase">
+                {{ t('events.index.searchOnlyFor') }}
+            </p>
             <div
                 v-for="category in props.categories"
                 :key="category.id"
@@ -183,7 +186,7 @@ onUnmounted(() => document.removeEventListener('click', onDocumentClick));
                 >
                     <input
                         type="checkbox"
-                        :checked="isSelected(category.slug)"
+                        :checked="isExpanded(category)"
                         :disabled="isCategoryDisabled(category)"
                         class="border border-black"
                         @change="

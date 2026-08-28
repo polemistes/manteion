@@ -45,6 +45,9 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
             ],
 
             'allow_public_follow' => ['required', 'boolean'],
+            'show_friends_list' => ['required', 'boolean'],
+            'appear_in_friends_lists' => ['required', 'boolean'],
+            'searchable' => ['required', 'boolean'],
             'bio' => ['nullable', 'string', 'max:1000'],
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'remove_avatar' => ['nullable', 'boolean'],
@@ -55,6 +58,9 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
             'username' => $input['username'],
             'email' => $input['email'],
             'allow_public_follow' => $input['allow_public_follow'],
+            'show_friends_list' => $input['show_friends_list'],
+            'appear_in_friends_lists' => $input['appear_in_friends_lists'],
+            'searchable' => $input['searchable'],
             'bio' => $input['bio'] ?? null,
             'avatar_path' => $this->resolveAvatarPath($user, $input),
         ];

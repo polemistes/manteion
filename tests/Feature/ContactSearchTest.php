@@ -32,6 +32,15 @@ test('search results reflect friendship and follow status', function () {
         ->where('results.0.follow_status', 'following'));
 });
 
+test('search excludes users who opted out of being searchable', function () {
+    $viewer = User::factory()->create();
+    User::factory()->unsearchable()->create(['name' => 'Grace Hopper', 'username' => 'grace']);
+
+    $response = $this->actingAs($viewer)->get('/contacts/search?q=grace');
+
+    $response->assertInertia(fn ($page) => $page->has('results', 0));
+});
+
 test('an empty query returns no results', function () {
     $viewer = User::factory()->create();
     User::factory()->create();

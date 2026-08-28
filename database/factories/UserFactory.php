@@ -31,6 +31,9 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'allow_public_follow' => true,
+            'show_friends_list' => true,
+            'appear_in_friends_lists' => true,
+            'searchable' => true,
             'remember_token' => Str::random(10),
         ];
     }
@@ -52,6 +55,36 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'allow_public_follow' => false,
+        ]);
+    }
+
+    /**
+     * Indicate that the model should not show its friends list on its profile.
+     */
+    public function hideFriendsList(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'show_friends_list' => false,
+        ]);
+    }
+
+    /**
+     * Indicate that the model should not appear in its friends' friends lists.
+     */
+    public function hideFromFriendsLists(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'appear_in_friends_lists' => false,
+        ]);
+    }
+
+    /**
+     * Indicate that the model should not be found via contacts search.
+     */
+    public function unsearchable(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'searchable' => false,
         ]);
     }
 }

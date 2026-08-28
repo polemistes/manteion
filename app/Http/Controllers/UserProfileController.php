@@ -40,6 +40,11 @@ class UserProfileController extends Controller
             default => 'pending',
         };
 
+        $showFriends = $viewer->is($user) || $user->show_friends_list;
+        $friends = $showFriends
+            ? $user->friends()->filter(fn (User $friend) => $friend->appear_in_friends_lists)->values()
+            : collect();
+
         return Inertia::render('users/Show', [
             'profile' => [
                 'id' => $user->id,
@@ -53,6 +58,12 @@ class UserProfileController extends Controller
             'friendship_id' => $friendship?->id,
             'follow_status' => $followStatus,
             'follow_id' => $follow?->id,
+            'friends' => $friends->map(fn (User $friend) => [
+                'id' => $friend->id,
+                'name' => $friend->name,
+                'username' => $friend->username,
+                'avatar_url' => $friend->avatar_url,
+            ])->all(),
         ]);
     }
 }

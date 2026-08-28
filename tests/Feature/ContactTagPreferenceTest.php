@@ -46,3 +46,21 @@ test('a user can set a tag preference for someone they follow', function () {
         ->put("/contacts/{$followed->id}/tag-preferences", ['tag_ids' => [$tag->id]])
         ->assertRedirect();
 });
+
+test('a user can mute a friend entirely, stored as a null tag_id row', function () {
+    $user = User::factory()->create();
+    $friend = User::factory()->create();
+    Friendship::factory()->accepted()->create(['requester_id' => $user->id, 'addressee_id' => $friend->id]);
+    $music = Tag::factory()->create();
+
+    $this->actingAs($user)
+        ->put("/contacts/{$friend->id}/tag-preferences", ['tag_ids' => [$music->id]])
+        ->assertRedirect();
+
+    $this->actingAs($user)
+        ->put("/contacts/{$friend->id}/tag-preferences", ['mute_all' => true])
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('contact_tag_preferences', ['user_id' => $user->id, 'contact_user_id' => $friend->id, 'tag_id' => null]);
+    $this->assertDatabaseMissing('contact_tag_preferences', ['user_id' => $user->id, 'contact_user_id' => $friend->id, 'tag_id' => $music->id]);
+});

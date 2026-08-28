@@ -25,6 +25,9 @@ use Illuminate\Support\Facades\Storage;
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property bool $allow_public_follow
+ * @property bool $show_friends_list
+ * @property bool $appear_in_friends_lists
+ * @property bool $searchable
  * @property string|null $avatar_path
  * @property string|null $bio
  * @property string|null $locale
@@ -33,7 +36,7 @@ use Illuminate\Support\Facades\Storage;
  * @property Carbon|null $updated_at
  * @property-read string|null $avatar_url
  */
-#[Fillable(['name', 'username', 'email', 'password', 'allow_public_follow', 'avatar_path', 'bio', 'locale'])]
+#[Fillable(['name', 'username', 'email', 'password', 'allow_public_follow', 'show_friends_list', 'appear_in_friends_lists', 'searchable', 'avatar_path', 'bio', 'locale'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -56,6 +59,9 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'allow_public_follow' => 'boolean',
+            'show_friends_list' => 'boolean',
+            'appear_in_friends_lists' => 'boolean',
+            'searchable' => 'boolean',
         ];
     }
 

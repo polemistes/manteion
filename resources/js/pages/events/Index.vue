@@ -3,6 +3,7 @@ import { Head, Link, router, usePage, usePoll } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import CategoryFilterList from '@/components/CategoryFilterList.vue';
+import DateFilterButton from '@/components/DateFilterButton.vue';
 import EventCard from '@/components/EventCard.vue';
 import OrganizerFilter from '@/components/OrganizerFilter.vue';
 import { useNominatimSearch } from '@/composables/useNominatimSearch';
@@ -75,12 +76,25 @@ const props = defineProps<{
         group_id?: string;
         near_lat?: string;
         near_lng?: string;
+        start_date?: string;
+        end_date?: string;
     };
 }>();
+
+function todayIso(): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+}
 
 const selectedTags = ref<string[]>(props.filters.tags ?? []);
 const ownerFilter = ref<string[]>(props.filters.owner_filter ?? []);
 const groupId = ref(props.filters.group_id ?? '');
+const startDate = ref<string | null>(props.filters.start_date || null);
+const endDate = ref<string | null>(props.filters.end_date || null);
 const nearLat = ref<number | null>(
     props.filters.near_lat ? parseFloat(props.filters.near_lat) : null,
 );
@@ -96,7 +110,9 @@ const filtersOpen = ref(
     selectedTags.value.length > 0 ||
         ownerFilter.value.length > 0 ||
         groupId.value !== '' ||
-        nearLat.value !== null,
+        nearLat.value !== null ||
+        endDate.value !== null ||
+        (startDate.value !== null && startDate.value !== todayIso()),
 );
 
 function toggleFilters(): void {
@@ -119,6 +135,8 @@ function applyFilters(): void {
             group_id: groupId.value || undefined,
             near_lat: nearLat.value ?? undefined,
             near_lng: nearLng.value ?? undefined,
+            start_date: startDate.value ?? '',
+            end_date: endDate.value ?? '',
         },
         { preserveState: true, replace: true },
     );
@@ -131,6 +149,16 @@ function onCategoriesChange(value: string[]): void {
 
 function onOwnerFilterChange(value: string[]): void {
     ownerFilter.value = value;
+    applyFilters();
+}
+
+function onStartDateChange(value: string | null): void {
+    startDate.value = value;
+    applyFilters();
+}
+
+function onEndDateChange(value: string | null): void {
+    endDate.value = value;
     applyFilters();
 }
 
@@ -228,6 +256,18 @@ function clearNear(): void {
                 :following="following"
                 :model-value="ownerFilter"
                 @update:model-value="onOwnerFilterChange"
+            />
+
+            <DateFilterButton
+                :label="t('events.index.startDate')"
+                :model-value="startDate"
+                @update:model-value="onStartDateChange"
+            />
+
+            <DateFilterButton
+                :label="t('events.index.endDate')"
+                :model-value="endDate"
+                @update:model-value="onEndDateChange"
             />
 
             <div>

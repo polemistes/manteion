@@ -113,7 +113,8 @@ class ConversationController extends Controller
             ])->values(),
             'messages' => $conversation->messages->sortBy('created_at')->values()->map(fn (Message $message) => [
                 'id' => $message->id,
-                'body' => $message->body,
+                'body' => $message->is_deleted ? null : $message->body,
+                'is_deleted' => $message->is_deleted,
                 'created_at' => $message->created_at->toIso8601String(),
                 'sender' => [
                     'id' => $message->sender->id,

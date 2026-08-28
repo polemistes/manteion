@@ -22,20 +22,28 @@ class ContactsController extends Controller
     {
         $user = $request->user();
 
-        $preferencesByContact = ContactTagPreference::query()
+        $tagPreferenceRows = ContactTagPreference::query()
             ->where('user_id', $user->id)
             ->get()
-            ->groupBy('contact_user_id')
-            ->map(fn (Collection $rows) => $rows->pluck('tag_id')->map(fn (int $tagId) => $tagId)->all());
+            ->groupBy('contact_user_id');
+
+        $preferencesByContact = $tagPreferenceRows->map(
+            fn (Collection $rows) => $rows->pluck('tag_id')->filter()->map(fn (mixed $tagId) => (int) $tagId)->values()->all()
+        );
+
+        $mutedContactIds = $tagPreferenceRows->filter(
+            fn (Collection $rows) => $rows->contains(fn (ContactTagPreference $row) => $row->tag_id === null)
+        )->keys();
 
         return Inertia::render('contacts/Index', [
-            'friends' => $this->summarizeUsers($user->friends(), $preferencesByContact),
+            'friends' => $this->summarizeUsers($user->friends(), $preferencesByContact, $mutedContactIds),
             'pendingFriendRequests' => $this->summarizeFriendships($user->pendingFriendRequests()->with('requester')->get(), 'requester'),
             'sentFriendRequests' => $this->summarizeFriendships($user->sentFriendRequests()->with('addressee')->get(), 'addressee'),
             'following' => $this->summarizeFollows(
                 Follow::query()->where('follower_id', $user->id)->accepted()->with('followed')->get(),
                 'followed',
-                $preferencesByContact
+                $preferencesByContact,
+                $mutedContactIds
             ),
             'pendingFollowRequestsSent' => $this->summarizeFollows(
                 Follow::query()->where('follower_id', $user->id)->pending()->with('followed')->get(),
@@ -62,6 +70,7 @@ class ContactsController extends Controller
 
         $results = User::query()
             ->whereKeyNot($viewer->getKey())
+            ->where('searchable', true)
             ->when($term !== '', fn ($query) => $query->where(
                 fn ($query) => $query->where('name', 'like', "%{$term}%")->orWhere('username', 'like', "%{$term}%")
             ))
@@ -120,17 +129,21 @@ class ContactsController extends Controller
 
     /**
      * @param  Collection<int, User>  $users
-     * @param  Collection<int|string, array<int>>  $preferencesByContact
-     * @return array<int, array{id: int, name: string, username: string, avatar_url: string|null, tag_preference_ids?: array<int>}>
+     * @param  Collection<int|string, array<int, int>>|null  $preferencesByContact
+     * @param  Collection<int, int>|null  $mutedContactIds
+     * @return array<int, array{id: int, name: string, username: string, avatar_url: string|null, tag_preference_ids?: array<int>, muted?: bool}>
      */
-    private function summarizeUsers(Collection $users, ?Collection $preferencesByContact = null): array
+    private function summarizeUsers(Collection $users, ?Collection $preferencesByContact = null, ?Collection $mutedContactIds = null): array
     {
         return $users->map(fn (User $user) => [
             'id' => $user->id,
             'name' => $user->name,
             'username' => $user->username,
             'avatar_url' => $user->avatar_url,
-            ...($preferencesByContact === null ? [] : ['tag_preference_ids' => $preferencesByContact->get($user->id, [])]),
+            ...($preferencesByContact === null ? [] : [
+                'tag_preference_ids' => $preferencesByContact->get($user->id, []),
+                'muted' => $mutedContactIds !== null && $mutedContactIds->contains($user->id),
+            ]),
         ])->values()->all();
     }
 
@@ -153,10 +166,11 @@ class ContactsController extends Controller
 
     /**
      * @param  Collection<int, Follow>  $follows
-     * @param  Collection<int|string, array<int>>  $preferencesByContact
-     * @return array<int, array{follow_id: int, user: array{id: int, name: string, username: string, avatar_url: string|null}, tag_preference_ids?: array<int>}>
+     * @param  Collection<int|string, array<int, int>>|null  $preferencesByContact
+     * @param  Collection<int, int>|null  $mutedContactIds
+     * @return array<int, array{follow_id: int, user: array{id: int, name: string, username: string, avatar_url: string|null}, tag_preference_ids?: array<int>, muted?: bool}>
      */
-    private function summarizeFollows(Collection $follows, string $relation, ?Collection $preferencesByContact = null): array
+    private function summarizeFollows(Collection $follows, string $relation, ?Collection $preferencesByContact = null, ?Collection $mutedContactIds = null): array
     {
         return $follows->map(fn (Follow $follow) => [
             'follow_id' => $follow->id,
@@ -166,7 +180,10 @@ class ContactsController extends Controller
                 'username' => $follow->{$relation}->username,
                 'avatar_url' => $follow->{$relation}->avatar_url,
             ],
-            ...($preferencesByContact === null ? [] : ['tag_preference_ids' => $preferencesByContact->get($follow->{$relation}->id, [])]),
+            ...($preferencesByContact === null ? [] : [
+                'tag_preference_ids' => $preferencesByContact->get($follow->{$relation}->id, []),
+                'muted' => $mutedContactIds !== null && $mutedContactIds->contains($follow->{$relation}->id),
+            ]),
         ])->values()->all();
     }
 

@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { Form, Head, Link, usePoll } from '@inertiajs/vue3';
+import { Form, Head, Link, router, usePoll } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import Avatar from '@/components/Avatar.vue';
 import FieldError from '@/components/FieldError.vue';
+import { confirmAction } from '@/composables/useConfirm';
 import { send } from '@/routes/messages';
+import * as conversationMessages from '@/routes/messages/messages';
 import * as conversationParticipants from '@/routes/messages/participants';
 
 const { t, locale } = useI18n();
@@ -26,7 +28,8 @@ interface Participant extends Person {
 
 interface MessageItem {
     id: number;
-    body: string;
+    body: string | null;
+    is_deleted: boolean;
     created_at: string;
     sender: Person;
     is_mine: boolean;
@@ -51,6 +54,21 @@ function formatTime(value: string): string {
     return new Date(value).toLocaleString(
         dateFnsLocales[locale.value] ?? locale.value,
         { dateStyle: 'medium', timeStyle: 'short' },
+    );
+}
+
+async function deleteMessage(messageId: number): Promise<void> {
+    const confirmed = await confirmAction({
+        message: t('messages.show.confirmDeleteMessage'),
+    });
+
+    if (!confirmed) {
+        return;
+    }
+
+    router.delete(
+        conversationMessages.destroy([props.conversation.id, messageId]).url,
+        { preserveScroll: true },
     );
 }
 </script>
@@ -134,9 +152,24 @@ function formatTime(value: string): string {
                 <span class="text-xs text-black/70">{{
                     formatTime(message.created_at)
                 }}</span>
+                <button
+                    v-if="message.is_mine && !message.is_deleted"
+                    type="button"
+                    class="text-xs text-black/50 hover:underline"
+                    @click="deleteMessage(message.id)"
+                >
+                    {{ t('messages.show.delete') }}
+                </button>
             </div>
-            <p class="ml-10 font-sans text-sm whitespace-pre-line">
-                {{ message.body }}
+            <p
+                class="ml-10 font-sans text-sm whitespace-pre-line"
+                :class="{ 'text-black/50 italic': message.is_deleted }"
+            >
+                {{
+                    message.is_deleted
+                        ? t('messages.show.deleted')
+                        : message.body
+                }}
             </p>
         </li>
         <li v-if="!props.messages.length" class="text-sm text-black/70">

@@ -77,6 +77,10 @@
         "bio": "About you",
         "bioPlaceholder": "A few words about yourself…",
         "allowPublicFollow": "Anyone can follow me without my approval. If unchecked, new followers need your approval.",
+        "privacyHeading": "Privacy",
+        "showFriendsList": "Show my friends list on my profile",
+        "appearInFriendsLists": "Show me in my friends' friends lists",
+        "searchable": "Let my profile be found in search",
         "save": "Save changes",
         "saving": "Saving…",
         "saved": "Saved.",
@@ -86,20 +90,25 @@
         "confirmNewPassword": "Confirm new password",
         "updatePassword": "Update password",
         "updating": "Updating…",
-        "passwordUpdated": "Password updated."
+        "passwordUpdated": "Password updated.",
+        "deleteAccount": "Delete account",
+        "confirmDeleteAccount": "Are you sure you want to delete your account? This cannot be undone."
     },
     "userProfile": {
         "noBio": "This person hasn't written a bio yet.",
+        "friendsHeading": "Friends",
+        "showFriends": "Show friends",
+        "hideFriends": "Hide friends",
         "addFriend": "Add friend",
         "friendRequestSent": "Friend request sent",
         "cancel": "Cancel",
         "acceptFriendRequest": "Accept friend request",
         "decline": "Decline",
-        "friends": "Friends",
+        "unfriend": "Unfriend",
+        "confirmUnfriend": "Are you sure you want to remove this friend?",
         "message": "Message",
         "follow": "Follow",
         "followRequested": "Follow requested",
-        "following": "Following",
         "unfollow": "Unfollow"
     },
     "contacts": {
@@ -113,6 +122,8 @@
             "reject": "Reject",
             "friends": "Friends",
             "noFriends": "No friends yet. Try searching for people you know.",
+            "filterPlaceholder": "Search your friends, following, and followers",
+            "noMatches": "No one matches your search.",
             "message": "Message",
             "requestsSent": "Requests sent",
             "cancel": "Cancel",
@@ -123,6 +134,7 @@
             "followers": "Followers",
             "noFollowers": "No one is following you yet.",
             "remove": "Remove",
+            "groupsHeading": "Groups",
             "friendGroups": "Friend groups",
             "friendGroupsDescription": "Group your friends so you can filter events by them later.",
             "followingGroups": "Following groups",
@@ -130,7 +142,8 @@
             "newGroupName": "New group name",
             "create": "Create",
             "deleteGroup": "Delete group",
-            "add": "Add"
+            "addToGroup": "Add to group…",
+            "noMoreGroups": "No more groups"
         },
         "search": {
             "title": "Search people",
@@ -149,10 +162,12 @@
             "unfollow": "Unfollow"
         },
         "tagPreferences": {
-            "notifyMeAbout": "Notify me about:",
-            "noTags": "No categories yet.",
-            "chooseCategory": "Choose a category…",
-            "save": "Save"
+            "excludeHeading": "Exclude event categories",
+            "notifyAll": "Notify: everything",
+            "notifyAllExceptOne": "Notify: all except {category}",
+            "notifyAllExceptCount": "Notify: all except {count} categories",
+            "notifyNone": "Notify: nothing",
+            "everything": "Everything"
         }
     },
     "events": {
@@ -161,6 +176,7 @@
             "createEvent": "Create event",
             "filters": "Filters",
             "category": "Category",
+            "searchOnlyFor": "Search only for",
             "anyCategory": "Any category",
             "anyone": "Anyone",
             "friendsGroupLabel": "Friends",
@@ -174,6 +190,8 @@
             "you": "You:",
             "today": "Today",
             "tomorrow": "Tomorrow",
+            "startDate": "Start date",
+            "endDate": "End date",
             "attendingCount": "{count} attending",
             "interestedCount": "{count} interested",
             "organizer": "Organizer"
@@ -217,6 +235,7 @@
         "show": {
             "edit": "Edit",
             "delete": "Delete",
+            "confirmDeleteEvent": "Are you sure you want to delete this event? This cannot be undone.",
             "visibilityLabelPrivate": "Private",
             "visibilityLabelPublic": "Public",
             "ownerTools": "Owner tools",
@@ -284,7 +303,10 @@
             "noMessagesYet": "No messages yet. Say hello!",
             "messagePlaceholder": "Write a message…",
             "send": "Send",
-            "sending": "Sending…"
+            "sending": "Sending…",
+            "delete": "Delete",
+            "deleted": "Message deleted",
+            "confirmDeleteMessage": "Are you sure you want to delete this message?"
         }
     },
     "notifications": {
