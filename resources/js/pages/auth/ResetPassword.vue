@@ -9,7 +9,7 @@ import { update } from '@/routes/password';
 defineOptions({ layout: GuestLayout });
 
 const props = defineProps<{
-    email: string;
+    username: string | null;
     token: string;
 }>();
 
@@ -21,28 +21,23 @@ const { t } = useI18n();
 
     <h1 class="mb-6 text-lg font-bold">{{ t('auth.resetPassword.title') }}</h1>
 
+    <p class="mb-6 text-sm">
+        {{
+            props.username
+                ? t('auth.resetPassword.forAccount', {
+                      username: `@${props.username}`,
+                  })
+                : t('auth.resetPassword.linkMayBeInvalid')
+        }}
+    </p>
+
     <Form
         v-bind="update.form()"
         #default="{ errors, processing }"
         class="flex flex-col gap-4"
     >
         <input type="hidden" name="token" :value="props.token" />
-
-        <div>
-            <label for="email" class="mb-1 block text-sm font-bold">{{
-                t('auth.resetPassword.email')
-            }}</label>
-            <input
-                id="email"
-                type="email"
-                name="email"
-                required
-                :value="props.email"
-                autocomplete="username"
-                class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
-            />
-            <FieldError :message="errors.email" />
-        </div>
+        <FieldError :message="errors.token" />
 
         <div>
             <label for="password" class="mb-1 block text-sm font-bold">{{

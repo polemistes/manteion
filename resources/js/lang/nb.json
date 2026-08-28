@@ -31,7 +31,7 @@
     "auth": {
         "login": {
             "title": "Logg inn",
-            "email": "E-post",
+            "username": "Brukernavn",
             "password": "Passord",
             "remember": "Husk meg",
             "submit": "Logg inn",
@@ -61,7 +61,8 @@
         },
         "resetPassword": {
             "title": "Tilbakestill passord",
-            "email": "E-post",
+            "forAccount": "Tilbakestiller passord for {username}",
+            "linkMayBeInvalid": "Denne lenken er kanskje ikke lenger gyldig. Du kan fortsatt prøve, eller be om en ny.",
             "newPassword": "Nytt passord",
             "confirmNewPassword": "Bekreft nytt passord",
             "submit": "Tilbakestill passord",

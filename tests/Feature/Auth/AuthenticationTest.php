@@ -7,7 +7,7 @@ test('a user can log in with correct credentials', function () {
     $user = User::factory()->create();
 
     $response = $this->post('/login', [
-        'email' => $user->email,
+        'username' => $user->username,
         'password' => 'password',
     ]);
 
@@ -19,7 +19,7 @@ test('logging in with remember me issues a long-lived remember cookie', function
     $user = User::factory()->create();
 
     $response = $this->post('/login', [
-        'email' => $user->email,
+        'username' => $user->username,
         'password' => 'password',
         'remember' => 'on',
     ]);
@@ -33,12 +33,25 @@ test('a user cannot log in with an incorrect password', function () {
     $user = User::factory()->create();
 
     $response = $this->post('/login', [
-        'email' => $user->email,
+        'username' => $user->username,
         'password' => 'wrong-password',
     ]);
 
     $this->assertGuest();
-    $response->assertInvalid(['email']);
+    $response->assertInvalid(['username']);
+});
+
+test('two accounts sharing an email can each log in with their own username', function () {
+    $first = User::factory()->create(['email' => 'shared@example.com', 'username' => 'first_account']);
+    $second = User::factory()->create(['email' => 'shared@example.com', 'username' => 'second_account']);
+
+    $this->post('/login', ['username' => 'first_account', 'password' => 'password']);
+    $this->assertAuthenticatedAs($first);
+
+    $this->post('/logout');
+
+    $this->post('/login', ['username' => 'second_account', 'password' => 'password']);
+    $this->assertAuthenticatedAs($second);
 });
 
 test('a user can log out', function () {

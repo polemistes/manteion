@@ -45,7 +45,9 @@ return [
     |
     */
 
-    'username' => 'email',
+    // Accounts may share an email (it's no longer unique), so email can't
+    // identify a single account — username is the login identifier.
+    'username' => 'username',
 
     'email' => 'email',
 
@@ -60,7 +62,11 @@ return [
     |
     */
 
-    'lowercase_usernames' => true,
+    // Off: usernames aren't lowercased anywhere else in this app (existing
+    // accounts already have mixed-case usernames), so turning this on would
+    // need a data migration and a canonicalization pipe on login for no
+    // real benefit.
+    'lowercase_usernames' => false,
 
     /*
     |--------------------------------------------------------------------------
@@ -161,9 +167,15 @@ return [
 
     'features' => [
         Features::registration(),
-        Features::resetPasswords(),
+        // Password reset is handled by our own controllers/routes
+        // (app/Http/Controllers/Auth/) instead — Fortify's stock flow
+        // resolves a single user by email, which no longer identifies one
+        // account. See PasswordResetLinkController / NewPasswordController.
         Features::updateProfileInformation(),
-        Features::updatePasswords(),
+        // Also handled by our own controller/route: Fortify's stock
+        // PasswordController unconditionally deletes a token from the
+        // password_reset_tokens table after a successful update, which no
+        // longer exists. See Auth/UserPasswordController.
     ],
 
 ];

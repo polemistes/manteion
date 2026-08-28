@@ -23,19 +23,19 @@ const { t } = useI18n();
         class="flex flex-col gap-4"
     >
         <div>
-            <label for="email" class="mb-1 block text-sm font-bold">{{
-                t('auth.login.email')
+            <label for="username" class="mb-1 block text-sm font-bold">{{
+                t('auth.login.username')
             }}</label>
             <input
-                id="email"
-                type="email"
-                name="email"
+                id="username"
+                type="text"
+                name="username"
                 required
                 autofocus
                 autocomplete="username"
                 class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
             />
-            <FieldError :message="errors.email" />
+            <FieldError :message="errors.username" />
         </div>
 
         <div>
