@@ -9,14 +9,12 @@ import ImpersonationBanner from '@/components/ImpersonationBanner.vue';
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
 import StaffDeleteDialog from '@/components/StaffDeleteDialog.vue';
 import { logout } from '@/routes';
-import { index as adminUsersIndex } from '@/routes/admin/users';
 import {
     index as contactsIndex,
     search as contactsSearch,
 } from '@/routes/contacts';
 import { index as eventsIndex } from '@/routes/events';
 import { index as messagesIndex } from '@/routes/messages';
-import { index as moderationReportsIndex } from '@/routes/moderation/reports';
 import { edit as profileEdit } from '@/routes/profile';
 
 const { t } = useI18n();
@@ -39,10 +37,6 @@ usePoll(20000, {
     ],
 });
 
-const isStaff = computed(() =>
-    ['moderator', 'administrator'].includes(user.value.role),
-);
-const isAdministrator = computed(() => user.value.role === 'administrator');
 const isImpersonating = computed(() => page.props.impersonating);
 
 const navItems = computed(() => {
@@ -65,17 +59,6 @@ const navItems = computed(() => {
             badge: pendingContactRequestsCount.value,
         },
         { label: t('nav.search'), href: contactsSearch().url },
-        ...(isStaff.value
-            ? [
-                  {
-                      label: t('nav.moderation'),
-                      href: moderationReportsIndex().url,
-                  },
-              ]
-            : []),
-        ...(isAdministrator.value
-            ? [{ label: t('nav.admin'), href: adminUsersIndex().url }]
-            : []),
     ].map((item) => ({
         ...item,
         active:
@@ -167,12 +150,7 @@ const navItems = computed(() => {
                         </div>
                     </header>
 
-                    <nav
-                        class="grid border-b-[3px] border-black"
-                        :style="{
-                            gridTemplateColumns: `repeat(${navItems.length}, minmax(0, 1fr))`,
-                        }"
-                    >
+                    <nav class="grid grid-cols-4 border-b-[3px] border-black">
                         <Link
                             v-for="item in navItems"
                             :key="item.label"

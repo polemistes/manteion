@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, Link, usePage } from '@inertiajs/vue3';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import FieldError from '@/components/FieldError.vue';
 import ImageCropper from '@/components/ImageCropper.vue';
@@ -8,6 +8,8 @@ import Modal from '@/components/Modal.vue';
 import PasswordField from '@/components/PasswordField.vue';
 import { usePushNotifications } from '@/composables/usePushNotifications';
 import { logout } from '@/routes';
+import { index as adminUsersIndex } from '@/routes/admin/users';
+import { index as moderationReportsIndex } from '@/routes/moderation/reports';
 import { destroy as destroyProfile } from '@/routes/profile';
 import { update as updatePassword } from '@/routes/user-password';
 import { update as updateProfileInformation } from '@/routes/user-profile-information';
@@ -20,6 +22,7 @@ const props = defineProps<{
         name: string;
         username: string;
         email: string;
+        role: 'member' | 'moderator' | 'administrator';
         allow_public_follow: boolean;
         show_friends_list: boolean;
         appear_in_friends_lists: boolean;
@@ -36,6 +39,11 @@ const props = defineProps<{
 
 const removeAvatar = ref(false);
 const deleteAccountDialogOpen = ref(false);
+
+const isStaff = computed(() =>
+    ['moderator', 'administrator'].includes(props.user.role),
+);
+const isAdministrator = computed(() => props.user.role === 'administrator');
 
 const page = usePage();
 const { hasActiveSubscription, subscribe, unsubscribe } =
@@ -341,6 +349,28 @@ async function onPushToggle(): Promise<void> {
                 {{ t('profile.saved') }}
             </p>
         </Form>
+    </section>
+
+    <section v-if="isStaff" class="mb-10 max-w-md">
+        <h2 class="mb-4 text-sm font-bold uppercase">
+            {{ t('profile.staffHeading') }}
+        </h2>
+
+        <div class="flex flex-wrap gap-2">
+            <Link
+                v-if="isAdministrator"
+                :href="adminUsersIndex().url"
+                class="w-fit border border-black px-4 py-2 text-sm font-bold hover:bg-black hover:text-white"
+            >
+                {{ t('profile.adminPanel') }}
+            </Link>
+            <Link
+                :href="moderationReportsIndex().url"
+                class="w-fit border border-black px-4 py-2 text-sm font-bold hover:bg-black hover:text-white"
+            >
+                {{ t('profile.moderationQueue') }}
+            </Link>
+        </div>
     </section>
 
     <section class="mb-10 max-w-md">
