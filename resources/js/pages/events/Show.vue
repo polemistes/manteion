@@ -112,22 +112,9 @@ const page = usePage();
 const authUserId = computed(() => page.props.auth.user.id);
 
 async function deleteEvent(): Promise<void> {
-    if (!props.event.is_owner) {
-        const choice = await staffDelete({
-            message: t('moderation.confirmDeleteContent'),
-        });
-
-        if (choice === null) {
-            return;
-        }
-
-        router.delete(destroyEvent(props.event.id).url, {
-            data: { leave_placeholder: choice === 'placeholder' },
-        });
-
-        return;
-    }
-
+    // Events don't offer the "leave a placeholder" choice (unlike comments
+    // and messages) — deleting one, whether as the owner or as staff, just
+    // deletes it.
     const confirmed = await confirmAction({
         message: t('events.show.confirmDeleteEvent'),
     });
@@ -202,7 +189,11 @@ const locationLabel =
         </div>
 
         <div
-            v-if="props.event.is_owner || props.event.can_delete"
+            v-if="
+                props.event.is_owner ||
+                props.event.can_delete ||
+                props.event.can_report
+            "
             class="flex shrink-0 gap-2"
         >
             <Link

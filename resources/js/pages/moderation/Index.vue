@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
+import { confirmAction } from '@/composables/useConfirm';
 import { staffDelete } from '@/composables/useStaffDelete';
 import { suspend as adminUsersSuspend } from '@/routes/admin/users';
 import { update as dismissReport } from '@/routes/moderation/reports';
@@ -56,6 +57,22 @@ function dismiss(report: ModerationReport): void {
 }
 
 async function deleteContent(report: ModerationReport): Promise<void> {
+    // Events don't offer the "leave a placeholder" choice (unlike comments
+    // and messages) — just confirm and delete.
+    if (report.reportable.type === 'event') {
+        const confirmed = await confirmAction({
+            message: t('events.show.confirmDeleteEvent'),
+        });
+
+        if (confirmed) {
+            router.delete(report.reportable.delete_url, {
+                preserveScroll: true,
+            });
+        }
+
+        return;
+    }
+
     const choice = await staffDelete({
         message: t('moderation.confirmDeleteContent'),
     });
