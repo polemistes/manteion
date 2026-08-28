@@ -15,7 +15,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property ConversationType $type
  * @property string|null $name
- * @property int $creator_id
+ * @property int|null $creator_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
