@@ -89,8 +89,11 @@ const navItems = computed(() => {
                         class="mb-2 flex items-center gap-2"
                     >
                         <Avatar :url="user.avatar_url" :name="user.name" />
-                        <span class="truncate text-xs text-black/70">
-                            {{ user.name }} · @{{ user.username }}
+                        <span
+                            class="truncate text-xs text-black/70"
+                            :title="user.name"
+                        >
+                            @{{ user.username }}
                         </span>
                     </Link>
                     <LanguageSwitcher class="mb-2 w-full" />
