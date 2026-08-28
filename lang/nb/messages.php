@@ -34,6 +34,15 @@ return [
         'deleted_placeholder' => 'Slettet av en moderator',
     ],
 
+    'password_reset' => [
+        'subject' => 'Tilbakestill passordet ditt',
+        'intro' => 'Vi mottok en forespørsel om å tilbakestille passordet for kontoen som bruker denne e-postadressen.',
+        'multiple_intro' => 'Vi mottok en forespørsel om å tilbakestille passordet for kontoene som bruker denne e-postadressen. Velg den du vil tilbakestille:',
+        'account_line' => 'Konto: :username',
+        'button' => 'Tilbakestill passord',
+        'ignore' => 'Hvis du ikke ba om dette, kan du trygt ignorere denne e-posten.',
+    ],
+
     'push_notification' => [
         'event_invite_title' => 'Arrangementsinvitasjon',
         'event_invite_body' => ':name inviterte deg til ":event"',

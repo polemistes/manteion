@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Laravel\Fortify\Fortify;
 use Symfony\Component\HttpFoundation\Response;
 
 class EnsureUserIsNotSuspended
@@ -24,7 +25,7 @@ class EnsureUserIsNotSuspended
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect()->route('login')->withErrors(['email' => __('auth.suspended')]);
+            return redirect()->route('login')->withErrors([Fortify::username() => __('auth.suspended')]);
         }
 
         return $next($request);

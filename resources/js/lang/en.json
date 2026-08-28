@@ -31,7 +31,7 @@
     "auth": {
         "login": {
             "title": "Log in",
-            "email": "Email",
+            "username": "Username",
             "password": "Password",
             "remember": "Remember me",
             "submit": "Log in",
@@ -61,7 +61,8 @@
         },
         "resetPassword": {
             "title": "Reset password",
-            "email": "Email",
+            "forAccount": "Resetting password for {username}",
+            "linkMayBeInvalid": "This link may no longer be valid. You can still try, or request a new one.",
             "newPassword": "New password",
             "confirmNewPassword": "Confirm new password",
             "submit": "Reset password",

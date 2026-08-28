@@ -28,9 +28,9 @@ test('an administrator can lift a suspension', function () {
 test('a suspended user cannot log in', function () {
     $user = User::factory()->create(['suspended_at' => now()]);
 
-    $response = $this->post('/login', ['email' => $user->email, 'password' => 'password']);
+    $response = $this->post('/login', ['username' => $user->username, 'password' => 'password']);
 
-    $response->assertSessionHasErrors(['email']);
+    $response->assertSessionHasErrors(['username']);
     $this->assertGuest();
 });
 

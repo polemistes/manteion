@@ -34,6 +34,15 @@ return [
         'deleted_placeholder' => 'Deleted by a moderator',
     ],
 
+    'password_reset' => [
+        'subject' => 'Reset your password',
+        'intro' => 'We received a request to reset the password for the account using this email address.',
+        'multiple_intro' => 'We received a request to reset the password for the accounts using this email address. Choose the one you want to reset:',
+        'account_line' => 'Account: :username',
+        'button' => 'Reset password',
+        'ignore' => "If you didn't request this, you can safely ignore this email.",
+    ],
+
     'push_notification' => [
         'event_invite_title' => 'Event invitation',
         'event_invite_body' => ':name invited you to ":event"',

@@ -41,7 +41,6 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
                 'string',
                 'email',
                 'max:255',
-                Rule::unique('users')->ignore($user->id),
             ],
 
             'allow_public_follow' => ['required', 'boolean'],

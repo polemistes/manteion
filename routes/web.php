@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\UserPasswordController;
 use App\Http\Controllers\ContactGroupController;
 use App\Http\Controllers\ContactGroupMemberController;
 use App\Http\Controllers\ContactsController;
@@ -38,7 +41,21 @@ Route::get('/', function (Request $request) {
 
 Route::put('/locale', [LocaleController::class, 'update'])->name('locale.update');
 
+// Password reset (replaces Fortify's own, disabled in config/fortify.php —
+// see app/Http/Controllers/Auth/ for why: email no longer identifies a
+// single account).
+Route::middleware('guest:web')->group(function () {
+    Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
+    Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])
+        ->middleware('throttle:password-email')
+        ->name('password.email');
+    Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
+    Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.update');
+});
+
 Route::middleware('auth')->group(function () {
+    Route::put('/user/password', [UserPasswordController::class, 'update'])->name('user-password.update');
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/push-subscriptions', [PushSubscriptionController::class, 'store'])->name('push-subscriptions.store');
