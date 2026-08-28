@@ -6,6 +6,8 @@ use App\Models\Event;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
+use NotificationChannels\WebPush\WebPushChannel;
+use NotificationChannels\WebPush\WebPushMessage;
 
 class InvitedToEvent extends Notification
 {
@@ -19,9 +21,15 @@ class InvitedToEvent extends Notification
     /**
      * @return array<int, string>
      */
-    public function via(object $notifiable): array
+    public function via(User $notifiable): array
     {
-        return ['database'];
+        $channels = ['database'];
+
+        if ($notifiable->push_notifications_enabled && $notifiable->notify_event_invites) {
+            $channels[] = WebPushChannel::class;
+        }
+
+        return $channels;
     }
 
     /**
@@ -35,5 +43,16 @@ class InvitedToEvent extends Notification
             'invited_by_user_id' => $this->invitedBy->id,
             'invited_by_name' => $this->invitedBy->name,
         ];
+    }
+
+    public function toWebPush(object $notifiable, self $notification): WebPushMessage
+    {
+        return (new WebPushMessage)
+            ->title(__('messages.push_notification.event_invite_title'))
+            ->body(__('messages.push_notification.event_invite_body', [
+                'name' => $this->invitedBy->name,
+                'event' => $this->event->name,
+            ]))
+            ->data(['url' => "/events/{$this->event->id}"]);
     }
 }

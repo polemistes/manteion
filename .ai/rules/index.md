@@ -6,4 +6,5 @@ Before planning or editing, find the row whose globs match the file's path and r
 | --- | --- |
 | database/factories/UserFactory.php | .ai/rules/factories.md |
 | lang/** | .ai/rules/lang.md |
+| app/Providers/AppServiceProvider.php | .ai/rules/providers.md |
 | tests/** | .ai/rules/tests.md |

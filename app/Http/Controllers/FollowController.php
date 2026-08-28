@@ -6,6 +6,7 @@ use App\Enums\FollowStatus;
 use App\Http\Requests\StoreFollowRequest;
 use App\Models\Follow;
 use App\Models\User;
+use App\Notifications\NewFollower;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 
@@ -15,11 +16,13 @@ class FollowController extends Controller
     {
         $target = User::findOrFail($request->integer('user_id'));
 
-        Follow::create([
+        $follow = Follow::create([
             'follower_id' => $request->user()->getKey(),
             'followed_id' => $target->getKey(),
             'status' => $target->allow_public_follow ? FollowStatus::Accepted : FollowStatus::Pending,
         ]);
+
+        $target->notify((new NewFollower($follow))->locale($target->locale ?? 'en'));
 
         return back();
     }

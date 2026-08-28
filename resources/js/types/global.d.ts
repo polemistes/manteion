@@ -24,6 +24,7 @@ declare module '@inertiajs/core' {
             pendingContactRequestsCount: number;
             locale: string;
             availableLocales: Record<string, string>;
+            vapidPublicKey: string | null;
             [key: string]: unknown;
         };
     }

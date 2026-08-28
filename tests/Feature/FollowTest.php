@@ -3,6 +3,18 @@
 use App\Enums\FollowStatus;
 use App\Models\Follow;
 use App\Models\User;
+use App\Notifications\NewFollower;
+use Illuminate\Support\Facades\Notification;
+
+test('following someone notifies them', function () {
+    Notification::fake();
+    $follower = User::factory()->create();
+    $target = User::factory()->create(['allow_public_follow' => true]);
+
+    $this->actingAs($follower)->post('/follows', ['user_id' => $target->id])->assertRedirect();
+
+    Notification::assertSentTo($target, NewFollower::class);
+});
 
 test('following an open user is accepted immediately', function () {
     $follower = User::factory()->create();

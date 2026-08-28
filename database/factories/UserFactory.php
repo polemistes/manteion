@@ -34,6 +34,11 @@ class UserFactory extends Factory
             'show_friends_list' => true,
             'appear_in_friends_lists' => true,
             'searchable' => true,
+            'push_notifications_enabled' => true,
+            'notify_event_invites' => true,
+            'notify_messages' => true,
+            'notify_friend_requests' => true,
+            'notify_follow_requests' => true,
             'remember_token' => Str::random(10),
         ];
     }
@@ -85,6 +90,16 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'searchable' => false,
+        ]);
+    }
+
+    /**
+     * Indicate that the model has push notifications turned off entirely.
+     */
+    public function pushNotificationsDisabled(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'push_notifications_enabled' => false,
         ]);
     }
 }

@@ -16,6 +16,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
+use NotificationChannels\WebPush\HasPushSubscriptions;
 
 /**
  * @property int $id
@@ -28,6 +29,11 @@ use Illuminate\Support\Facades\Storage;
  * @property bool $show_friends_list
  * @property bool $appear_in_friends_lists
  * @property bool $searchable
+ * @property bool $push_notifications_enabled
+ * @property bool $notify_event_invites
+ * @property bool $notify_messages
+ * @property bool $notify_friend_requests
+ * @property bool $notify_follow_requests
  * @property string|null $avatar_path
  * @property string|null $bio
  * @property string|null $locale
@@ -36,12 +42,12 @@ use Illuminate\Support\Facades\Storage;
  * @property Carbon|null $updated_at
  * @property-read string|null $avatar_url
  */
-#[Fillable(['name', 'username', 'email', 'password', 'allow_public_follow', 'show_friends_list', 'appear_in_friends_lists', 'searchable', 'avatar_path', 'bio', 'locale'])]
+#[Fillable(['name', 'username', 'email', 'password', 'allow_public_follow', 'show_friends_list', 'appear_in_friends_lists', 'searchable', 'push_notifications_enabled', 'notify_event_invites', 'notify_messages', 'notify_friend_requests', 'notify_follow_requests', 'avatar_path', 'bio', 'locale'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, HasPushSubscriptions, Notifiable;
 
     /**
      * @var list<string>
@@ -62,6 +68,11 @@ class User extends Authenticatable
             'show_friends_list' => 'boolean',
             'appear_in_friends_lists' => 'boolean',
             'searchable' => 'boolean',
+            'push_notifications_enabled' => 'boolean',
+            'notify_event_invites' => 'boolean',
+            'notify_messages' => 'boolean',
+            'notify_friend_requests' => 'boolean',
+            'notify_follow_requests' => 'boolean',
         ];
     }
 

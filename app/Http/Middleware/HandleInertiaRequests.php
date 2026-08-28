@@ -51,6 +51,7 @@ class HandleInertiaRequests extends Middleware
             'pendingContactRequestsCount' => $user === null ? 0 : $this->pendingContactRequestsCount($user),
             'locale' => app()->getLocale(),
             'availableLocales' => config('app.supported_locales'),
+            'vapidPublicKey' => config('webpush.vapid.public_key'),
         ];
     }
 

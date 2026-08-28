@@ -16,6 +16,11 @@ test('a user can update their profile information and privacy setting', function
         'show_friends_list' => '1',
         'appear_in_friends_lists' => '1',
         'searchable' => '1',
+        'push_notifications_enabled' => '1',
+        'notify_event_invites' => '1',
+        'notify_messages' => '1',
+        'notify_friend_requests' => '1',
+        'notify_follow_requests' => '1',
     ]);
 
     $response->assertRedirect();
@@ -38,6 +43,11 @@ test('a user can update their friends-list and search privacy settings', functio
         'show_friends_list' => '0',
         'appear_in_friends_lists' => '0',
         'searchable' => '0',
+        'push_notifications_enabled' => '1',
+        'notify_event_invites' => '1',
+        'notify_messages' => '1',
+        'notify_friend_requests' => '1',
+        'notify_follow_requests' => '1',
     ]);
 
     $response->assertRedirect();
@@ -45,6 +55,39 @@ test('a user can update their friends-list and search privacy settings', functio
     expect($user->show_friends_list)->toBeFalse();
     expect($user->appear_in_friends_lists)->toBeFalse();
     expect($user->searchable)->toBeFalse();
+});
+
+test('a user can update their push notification preferences', function () {
+    $user = User::factory()->create([
+        'push_notifications_enabled' => true,
+        'notify_event_invites' => true,
+        'notify_messages' => true,
+        'notify_friend_requests' => true,
+        'notify_follow_requests' => true,
+    ]);
+
+    $response = $this->actingAs($user)->put('/user/profile-information', [
+        'name' => $user->name,
+        'username' => $user->username,
+        'email' => $user->email,
+        'allow_public_follow' => '1',
+        'show_friends_list' => '1',
+        'appear_in_friends_lists' => '1',
+        'searchable' => '1',
+        'push_notifications_enabled' => '0',
+        'notify_event_invites' => '0',
+        'notify_messages' => '0',
+        'notify_friend_requests' => '0',
+        'notify_follow_requests' => '0',
+    ]);
+
+    $response->assertRedirect();
+    $user->refresh();
+    expect($user->push_notifications_enabled)->toBeFalse();
+    expect($user->notify_event_invites)->toBeFalse();
+    expect($user->notify_messages)->toBeFalse();
+    expect($user->notify_friend_requests)->toBeFalse();
+    expect($user->notify_follow_requests)->toBeFalse();
 });
 
 test('a user cannot take an existing username', function () {
@@ -59,6 +102,11 @@ test('a user cannot take an existing username', function () {
         'show_friends_list' => '1',
         'appear_in_friends_lists' => '1',
         'searchable' => '1',
+        'push_notifications_enabled' => '1',
+        'notify_event_invites' => '1',
+        'notify_messages' => '1',
+        'notify_friend_requests' => '1',
+        'notify_follow_requests' => '1',
     ]);
 
     $response->assertSessionHasErrorsIn('updateProfileInformation', ['username']);
@@ -76,6 +124,11 @@ test('a user can upload an avatar and set a bio', function () {
         'show_friends_list' => '1',
         'appear_in_friends_lists' => '1',
         'searchable' => '1',
+        'push_notifications_enabled' => '1',
+        'notify_event_invites' => '1',
+        'notify_messages' => '1',
+        'notify_friend_requests' => '1',
+        'notify_follow_requests' => '1',
         'bio' => 'Hello, I like board games.',
         'avatar' => UploadedFile::fake()->image('avatar.jpg'),
     ]);
@@ -101,6 +154,11 @@ test('uploading a new avatar replaces and deletes the old one', function () {
         'show_friends_list' => '1',
         'appear_in_friends_lists' => '1',
         'searchable' => '1',
+        'push_notifications_enabled' => '1',
+        'notify_event_invites' => '1',
+        'notify_messages' => '1',
+        'notify_friend_requests' => '1',
+        'notify_follow_requests' => '1',
         'avatar' => UploadedFile::fake()->image('new.jpg'),
     ])->assertRedirect();
 
@@ -123,6 +181,11 @@ test('a user can remove their avatar', function () {
         'show_friends_list' => '1',
         'appear_in_friends_lists' => '1',
         'searchable' => '1',
+        'push_notifications_enabled' => '1',
+        'notify_event_invites' => '1',
+        'notify_messages' => '1',
+        'notify_friend_requests' => '1',
+        'notify_follow_requests' => '1',
         'remove_avatar' => '1',
     ])->assertRedirect();
 

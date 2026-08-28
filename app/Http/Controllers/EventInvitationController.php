@@ -22,7 +22,9 @@ class EventInvitationController extends Controller
             );
 
             if ($attendee->wasRecentlyCreated) {
-                $attendee->user->notify(new InvitedToEvent($event, $inviter));
+                $attendee->user->notify(
+                    (new InvitedToEvent($event, $inviter))->locale($attendee->user->locale ?? 'en')
+                );
             }
         }
 

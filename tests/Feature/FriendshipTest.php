@@ -3,6 +3,8 @@
 use App\Enums\FriendshipStatus;
 use App\Models\Friendship;
 use App\Models\User;
+use App\Notifications\FriendRequestReceived;
+use Illuminate\Support\Facades\Notification;
 
 test('a user can send a friend request', function () {
     $sender = User::factory()->create();
@@ -16,6 +18,16 @@ test('a user can send a friend request', function () {
         'addressee_id' => $recipient->id,
         'status' => FriendshipStatus::Pending->value,
     ]);
+});
+
+test('sending a friend request notifies the recipient', function () {
+    Notification::fake();
+    $sender = User::factory()->create();
+    $recipient = User::factory()->create();
+
+    $this->actingAs($sender)->post('/friendships', ['user_id' => $recipient->id])->assertRedirect();
+
+    Notification::assertSentTo($recipient, FriendRequestReceived::class);
 });
 
 test('a user cannot send a friend request to themselves', function () {

@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { Form, Head, Link } from '@inertiajs/vue3';
+import { Form, Head, Link, usePage } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import FieldError from '@/components/FieldError.vue';
 import ImageCropper from '@/components/ImageCropper.vue';
 import Modal from '@/components/Modal.vue';
 import PasswordField from '@/components/PasswordField.vue';
+import { usePushNotifications } from '@/composables/usePushNotifications';
 import { logout } from '@/routes';
 import { destroy as destroyProfile } from '@/routes/profile';
 import { update as updatePassword } from '@/routes/user-password';
@@ -23,6 +24,11 @@ const props = defineProps<{
         show_friends_list: boolean;
         appear_in_friends_lists: boolean;
         searchable: boolean;
+        push_notifications_enabled: boolean;
+        notify_event_invites: boolean;
+        notify_messages: boolean;
+        notify_friend_requests: boolean;
+        notify_follow_requests: boolean;
         avatar_url: string | null;
         bio: string | null;
     };
@@ -30,6 +36,25 @@ const props = defineProps<{
 
 const removeAvatar = ref(false);
 const deleteAccountDialogOpen = ref(false);
+
+const page = usePage();
+const { subscribe, unsubscribe } = usePushNotifications();
+const pushEnabled = ref(props.user.push_notifications_enabled);
+
+async function onPushToggle(): Promise<void> {
+    if (pushEnabled.value) {
+        const vapidPublicKey = page.props.vapidPublicKey;
+        const granted = vapidPublicKey
+            ? await subscribe(vapidPublicKey)
+            : false;
+
+        if (!granted) {
+            pushEnabled.value = false;
+        }
+    } else {
+        await unsubscribe();
+    }
+}
 </script>
 
 <template>
@@ -196,6 +221,105 @@ const deleteAccountDialogOpen = ref(false);
                     <span>{{ t('profile.searchable') }}</span>
                 </label>
                 <FieldError :message="errors.searchable" />
+            </div>
+
+            <div>
+                <span class="mb-1 block text-sm font-bold">{{
+                    t('profile.notificationsHeading')
+                }}</span>
+
+                <label class="flex items-start gap-2 text-sm">
+                    <input
+                        v-model="pushEnabled"
+                        type="checkbox"
+                        name="push_notifications_enabled"
+                        value="1"
+                        class="mt-0.5 border border-black"
+                        @change="onPushToggle"
+                    />
+                    <span>{{ t('profile.pushNotificationsEnabled') }}</span>
+                </label>
+                <FieldError :message="errors.push_notifications_enabled" />
+
+                <label
+                    class="mt-2 flex items-start gap-2 text-sm"
+                    :class="{ 'opacity-50': !pushEnabled }"
+                >
+                    <input
+                        type="hidden"
+                        name="notify_event_invites"
+                        value="0"
+                    />
+                    <input
+                        type="checkbox"
+                        name="notify_event_invites"
+                        value="1"
+                        :checked="props.user.notify_event_invites"
+                        :disabled="!pushEnabled"
+                        class="mt-0.5 border border-black"
+                    />
+                    <span>{{ t('profile.notifyEventInvites') }}</span>
+                </label>
+                <FieldError :message="errors.notify_event_invites" />
+
+                <label
+                    class="mt-2 flex items-start gap-2 text-sm"
+                    :class="{ 'opacity-50': !pushEnabled }"
+                >
+                    <input type="hidden" name="notify_messages" value="0" />
+                    <input
+                        type="checkbox"
+                        name="notify_messages"
+                        value="1"
+                        :checked="props.user.notify_messages"
+                        :disabled="!pushEnabled"
+                        class="mt-0.5 border border-black"
+                    />
+                    <span>{{ t('profile.notifyMessages') }}</span>
+                </label>
+                <FieldError :message="errors.notify_messages" />
+
+                <label
+                    class="mt-2 flex items-start gap-2 text-sm"
+                    :class="{ 'opacity-50': !pushEnabled }"
+                >
+                    <input
+                        type="hidden"
+                        name="notify_friend_requests"
+                        value="0"
+                    />
+                    <input
+                        type="checkbox"
+                        name="notify_friend_requests"
+                        value="1"
+                        :checked="props.user.notify_friend_requests"
+                        :disabled="!pushEnabled"
+                        class="mt-0.5 border border-black"
+                    />
+                    <span>{{ t('profile.notifyFriendRequests') }}</span>
+                </label>
+                <FieldError :message="errors.notify_friend_requests" />
+
+                <label
+                    class="mt-2 flex items-start gap-2 text-sm"
+                    :class="{ 'opacity-50': !pushEnabled }"
+                >
+                    <input
+                        type="hidden"
+                        name="notify_follow_requests"
+                        value="0"
+                    />
+                    <input
+                        type="checkbox"
+                        name="notify_follow_requests"
+                        value="1"
+                        :checked="props.user.notify_follow_requests"
+                        :disabled="!pushEnabled"
+                        class="mt-0.5 border border-black"
+                    />
+                    <span>{{ t('profile.notifyFollowRequests') }}</span>
+                </label>
+                <FieldError :message="errors.notify_follow_requests" />
             </div>
 
             <button

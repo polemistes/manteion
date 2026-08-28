@@ -4,10 +4,12 @@ import en from './lang/en.json';
 import nb from './lang/nb.json';
 import AppLayout from './layouts/AppLayout.vue';
 import { setupNativeShell } from './native';
+import { setupPushNotifications } from './push';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 setupNativeShell();
+setupPushNotifications();
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
