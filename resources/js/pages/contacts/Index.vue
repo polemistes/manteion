@@ -119,15 +119,206 @@ const filteredFollowers = computed(() =>
 
     <h1 class="mb-6 text-xl font-bold">{{ t('contacts.index.title') }}</h1>
 
-    <input
-        v-model="contactsQuery"
-        type="text"
-        :placeholder="t('contacts.index.filterPlaceholder')"
-        class="mb-8 w-full max-w-xs border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
-    />
+    <div class="contacts-layout">
+        <aside class="contacts-layout__groups lg:sticky lg:top-6">
+            <button
+                type="button"
+                class="mb-3 flex w-full items-center justify-between text-sm font-bold uppercase lg:hidden"
+                @click="groupsOpen = !groupsOpen"
+            >
+                {{ t('contacts.index.groupsHeading') }}
+                <span>{{ groupsOpen ? '▲' : '▼' }}</span>
+            </button>
 
-    <div class="lg:grid lg:grid-cols-3 lg:items-start lg:gap-8">
-        <div class="lg:col-span-2">
+            <div :class="groupsOpen ? '' : 'hidden lg:block'">
+                <section class="mb-10">
+                    <h2 class="mb-3 text-sm font-bold uppercase">
+                        {{ t('contacts.index.friendGroups') }}
+                    </h2>
+                    <p class="mb-3 text-xs text-black/70">
+                        {{ t('contacts.index.friendGroupsDescription') }}
+                    </p>
+
+                    <Form
+                        v-bind="contactGroups.store.form()"
+                        #default="{ errors, processing }"
+                        class="mb-4 flex items-end gap-2"
+                    >
+                        <input type="hidden" name="type" value="friend" />
+                        <div class="flex-1">
+                            <label
+                                for="friend_group_name"
+                                class="mb-1 block text-xs font-bold"
+                                >{{ t('contacts.index.newGroupName') }}</label
+                            >
+                            <input
+                                id="friend_group_name"
+                                type="text"
+                                name="name"
+                                required
+                                class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+                            />
+                            <p
+                                v-if="errors.name"
+                                class="mt-1 text-xs font-bold"
+                            >
+                                ! {{ errors.name }}
+                            </p>
+                        </div>
+                        <button
+                            type="submit"
+                            :disabled="processing"
+                            class="border border-black px-3 py-2 text-sm hover:bg-black hover:text-white"
+                        >
+                            {{ t('contacts.index.create') }}
+                        </button>
+                    </Form>
+
+                    <div
+                        v-for="group in friendGroups"
+                        :key="group.id"
+                        class="mb-4 border-[3px] border-black p-3"
+                    >
+                        <div class="mb-2 flex items-center justify-between">
+                            <span class="text-sm font-bold">{{
+                                group.name
+                            }}</span>
+                            <Link
+                                :href="contactGroups.destroy(group.id).url"
+                                method="delete"
+                                as="button"
+                                preserve-scroll
+                                class="text-xs underline"
+                            >
+                                {{ t('contacts.index.deleteGroup') }}
+                            </Link>
+                        </div>
+
+                        <ul class="mb-2 flex flex-col gap-1">
+                            <li
+                                v-for="member in group.members"
+                                :key="member.id"
+                                class="flex items-center justify-between text-sm"
+                            >
+                                <PersonSummary v-bind="member" />
+                                <Link
+                                    :href="
+                                        contactGroupMembers.destroy({
+                                            contact_group: group.id,
+                                            member: member.id,
+                                        }).url
+                                    "
+                                    method="delete"
+                                    as="button"
+                                    preserve-scroll
+                                    class="text-xs underline"
+                                >
+                                    {{ t('contacts.index.remove') }}
+                                </Link>
+                            </li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section>
+                    <h2 class="mb-3 text-sm font-bold uppercase">
+                        {{ t('contacts.index.followingGroups') }}
+                    </h2>
+                    <p class="mb-3 text-xs text-black/70">
+                        {{ t('contacts.index.followingGroupsDescription') }}
+                    </p>
+
+                    <Form
+                        v-bind="contactGroups.store.form()"
+                        #default="{ errors, processing }"
+                        class="mb-4 flex items-end gap-2"
+                    >
+                        <input type="hidden" name="type" value="following" />
+                        <div class="flex-1">
+                            <label
+                                for="following_group_name"
+                                class="mb-1 block text-xs font-bold"
+                                >{{ t('contacts.index.newGroupName') }}</label
+                            >
+                            <input
+                                id="following_group_name"
+                                type="text"
+                                name="name"
+                                required
+                                class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+                            />
+                            <p
+                                v-if="errors.name"
+                                class="mt-1 text-xs font-bold"
+                            >
+                                ! {{ errors.name }}
+                            </p>
+                        </div>
+                        <button
+                            type="submit"
+                            :disabled="processing"
+                            class="border border-black px-3 py-2 text-sm hover:bg-black hover:text-white"
+                        >
+                            {{ t('contacts.index.create') }}
+                        </button>
+                    </Form>
+
+                    <div
+                        v-for="group in followingGroups"
+                        :key="group.id"
+                        class="mb-4 border-[3px] border-black p-3"
+                    >
+                        <div class="mb-2 flex items-center justify-between">
+                            <span class="text-sm font-bold">{{
+                                group.name
+                            }}</span>
+                            <Link
+                                :href="contactGroups.destroy(group.id).url"
+                                method="delete"
+                                as="button"
+                                preserve-scroll
+                                class="text-xs underline"
+                            >
+                                {{ t('contacts.index.deleteGroup') }}
+                            </Link>
+                        </div>
+
+                        <ul class="mb-2 flex flex-col gap-1">
+                            <li
+                                v-for="member in group.members"
+                                :key="member.id"
+                                class="flex items-center justify-between text-sm"
+                            >
+                                <PersonSummary v-bind="member" />
+                                <Link
+                                    :href="
+                                        contactGroupMembers.destroy({
+                                            contact_group: group.id,
+                                            member: member.id,
+                                        }).url
+                                    "
+                                    method="delete"
+                                    as="button"
+                                    preserve-scroll
+                                    class="text-xs underline"
+                                >
+                                    {{ t('contacts.index.remove') }}
+                                </Link>
+                            </li>
+                        </ul>
+                    </div>
+                </section>
+            </div>
+        </aside>
+
+        <input
+            v-model="contactsQuery"
+            type="text"
+            :placeholder="t('contacts.index.filterPlaceholder')"
+            class="contacts-layout__search w-full max-w-xs border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+        />
+
+        <div class="contacts-layout__main">
             <section v-if="pendingFriendRequests.length" class="mb-10">
                 <h2 class="mb-3 text-sm font-bold uppercase">
                     {{ t('contacts.index.friendRequests') }}
@@ -421,196 +612,46 @@ const filteredFollowers = computed(() =>
                 </template>
             </section>
         </div>
-
-        <aside class="lg:sticky lg:top-6">
-            <button
-                type="button"
-                class="mb-3 flex w-full items-center justify-between text-sm font-bold uppercase lg:hidden"
-                @click="groupsOpen = !groupsOpen"
-            >
-                {{ t('contacts.index.groupsHeading') }}
-                <span>{{ groupsOpen ? '▲' : '▼' }}</span>
-            </button>
-
-            <div :class="groupsOpen ? '' : 'hidden lg:block'">
-                <section class="mb-10">
-                    <h2 class="mb-3 text-sm font-bold uppercase">
-                        {{ t('contacts.index.friendGroups') }}
-                    </h2>
-                    <p class="mb-3 text-xs text-black/70">
-                        {{ t('contacts.index.friendGroupsDescription') }}
-                    </p>
-
-                    <Form
-                        v-bind="contactGroups.store.form()"
-                        #default="{ errors, processing }"
-                        class="mb-4 flex items-end gap-2"
-                    >
-                        <input type="hidden" name="type" value="friend" />
-                        <div class="flex-1">
-                            <label
-                                for="friend_group_name"
-                                class="mb-1 block text-xs font-bold"
-                                >{{ t('contacts.index.newGroupName') }}</label
-                            >
-                            <input
-                                id="friend_group_name"
-                                type="text"
-                                name="name"
-                                required
-                                class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
-                            />
-                            <p
-                                v-if="errors.name"
-                                class="mt-1 text-xs font-bold"
-                            >
-                                ! {{ errors.name }}
-                            </p>
-                        </div>
-                        <button
-                            type="submit"
-                            :disabled="processing"
-                            class="border border-black px-3 py-2 text-sm hover:bg-black hover:text-white"
-                        >
-                            {{ t('contacts.index.create') }}
-                        </button>
-                    </Form>
-
-                    <div
-                        v-for="group in friendGroups"
-                        :key="group.id"
-                        class="mb-4 border-[3px] border-black p-3"
-                    >
-                        <div class="mb-2 flex items-center justify-between">
-                            <span class="text-sm font-bold">{{
-                                group.name
-                            }}</span>
-                            <Link
-                                :href="contactGroups.destroy(group.id).url"
-                                method="delete"
-                                as="button"
-                                preserve-scroll
-                                class="text-xs underline"
-                            >
-                                {{ t('contacts.index.deleteGroup') }}
-                            </Link>
-                        </div>
-
-                        <ul class="mb-2 flex flex-col gap-1">
-                            <li
-                                v-for="member in group.members"
-                                :key="member.id"
-                                class="flex items-center justify-between text-sm"
-                            >
-                                <PersonSummary v-bind="member" />
-                                <Link
-                                    :href="
-                                        contactGroupMembers.destroy({
-                                            contact_group: group.id,
-                                            member: member.id,
-                                        }).url
-                                    "
-                                    method="delete"
-                                    as="button"
-                                    preserve-scroll
-                                    class="text-xs underline"
-                                >
-                                    {{ t('contacts.index.remove') }}
-                                </Link>
-                            </li>
-                        </ul>
-                    </div>
-                </section>
-
-                <section>
-                    <h2 class="mb-3 text-sm font-bold uppercase">
-                        {{ t('contacts.index.followingGroups') }}
-                    </h2>
-                    <p class="mb-3 text-xs text-black/70">
-                        {{ t('contacts.index.followingGroupsDescription') }}
-                    </p>
-
-                    <Form
-                        v-bind="contactGroups.store.form()"
-                        #default="{ errors, processing }"
-                        class="mb-4 flex items-end gap-2"
-                    >
-                        <input type="hidden" name="type" value="following" />
-                        <div class="flex-1">
-                            <label
-                                for="following_group_name"
-                                class="mb-1 block text-xs font-bold"
-                                >{{ t('contacts.index.newGroupName') }}</label
-                            >
-                            <input
-                                id="following_group_name"
-                                type="text"
-                                name="name"
-                                required
-                                class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
-                            />
-                            <p
-                                v-if="errors.name"
-                                class="mt-1 text-xs font-bold"
-                            >
-                                ! {{ errors.name }}
-                            </p>
-                        </div>
-                        <button
-                            type="submit"
-                            :disabled="processing"
-                            class="border border-black px-3 py-2 text-sm hover:bg-black hover:text-white"
-                        >
-                            {{ t('contacts.index.create') }}
-                        </button>
-                    </Form>
-
-                    <div
-                        v-for="group in followingGroups"
-                        :key="group.id"
-                        class="mb-4 border-[3px] border-black p-3"
-                    >
-                        <div class="mb-2 flex items-center justify-between">
-                            <span class="text-sm font-bold">{{
-                                group.name
-                            }}</span>
-                            <Link
-                                :href="contactGroups.destroy(group.id).url"
-                                method="delete"
-                                as="button"
-                                preserve-scroll
-                                class="text-xs underline"
-                            >
-                                {{ t('contacts.index.deleteGroup') }}
-                            </Link>
-                        </div>
-
-                        <ul class="mb-2 flex flex-col gap-1">
-                            <li
-                                v-for="member in group.members"
-                                :key="member.id"
-                                class="flex items-center justify-between text-sm"
-                            >
-                                <PersonSummary v-bind="member" />
-                                <Link
-                                    :href="
-                                        contactGroupMembers.destroy({
-                                            contact_group: group.id,
-                                            member: member.id,
-                                        }).url
-                                    "
-                                    method="delete"
-                                    as="button"
-                                    preserve-scroll
-                                    class="text-xs underline"
-                                >
-                                    {{ t('contacts.index.remove') }}
-                                </Link>
-                            </li>
-                        </ul>
-                    </div>
-                </section>
-            </div>
-        </aside>
     </div>
 </template>
+
+<style scoped>
+/*
+ * On mobile the groups panel must come before the search field (a plain
+ * collapsed toggle, so it's cheap to show first); on desktop the search
+ * field spans the top and the groups panel sits as a sticky sidebar next
+ * to the main list. That's a genuine reorder, not just a resize, so this
+ * mirrors EventCard.vue's use of grid-template-areas instead of pure
+ * utility classes.
+ */
+.contacts-layout {
+    display: grid;
+    gap: 2rem;
+    grid-template-areas:
+        'groups'
+        'search'
+        'main';
+}
+
+.contacts-layout__groups {
+    grid-area: groups;
+}
+
+.contacts-layout__search {
+    grid-area: search;
+}
+
+.contacts-layout__main {
+    grid-area: main;
+}
+
+@media (min-width: 1024px) {
+    .contacts-layout {
+        grid-template-columns: 2fr 1fr;
+        align-items: start;
+        grid-template-areas:
+            'search search'
+            'main groups';
+    }
+}
+</style>
