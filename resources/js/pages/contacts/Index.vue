@@ -179,22 +179,26 @@ const filteredFollowers = computed(() =>
                     </button>
                 </form>
 
-                <p
-                    v-if="findQuery && !findResults.length"
-                    class="text-sm text-black/70"
-                >
-                    {{
-                        t('contacts.index.findNoResults', { query: findQuery })
-                    }}
-                </p>
+                <div class="lg:hidden">
+                    <p
+                        v-if="findQuery && !findResults.length"
+                        class="text-sm text-black/70"
+                    >
+                        {{
+                            t('contacts.index.findNoResults', {
+                                query: findQuery,
+                            })
+                        }}
+                    </p>
 
-                <ul v-else class="flex flex-col gap-2">
-                    <ContactSearchResult
-                        v-for="result in findResults"
-                        :key="result.id"
-                        :result="result"
-                    />
-                </ul>
+                    <ul v-else class="flex flex-col gap-2">
+                        <ContactSearchResult
+                            v-for="result in findResults"
+                            :key="result.id"
+                            :result="result"
+                        />
+                    </ul>
+                </div>
             </div>
         </aside>
 
@@ -389,14 +393,37 @@ const filteredFollowers = computed(() =>
             </div>
         </aside>
 
-        <input
-            v-model="contactsQuery"
-            type="text"
-            :placeholder="t('contacts.index.filterPlaceholder')"
-            class="contacts-layout__search w-full max-w-xs border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
-        />
+        <div class="contacts-layout__search">
+            <h2 class="mb-3 text-sm font-bold uppercase">
+                {{ t('contacts.index.filterHeading') }}
+            </h2>
+            <input
+                v-model="contactsQuery"
+                type="text"
+                :placeholder="t('contacts.index.filterPlaceholder')"
+                class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+            />
+        </div>
 
         <div class="contacts-layout__main">
+            <section v-if="findQuery" class="mb-10 hidden lg:block">
+                <h2 class="mb-3 text-sm font-bold uppercase">
+                    {{ t('contacts.index.searchResultsHeading') }}
+                </h2>
+                <p v-if="!findResults.length" class="text-sm text-black/70">
+                    {{
+                        t('contacts.index.findNoResults', { query: findQuery })
+                    }}
+                </p>
+                <ul v-else class="flex flex-col gap-2">
+                    <ContactSearchResult
+                        v-for="result in findResults"
+                        :key="result.id"
+                        :result="result"
+                    />
+                </ul>
+            </section>
+
             <section v-if="pendingFriendRequests.length" class="mb-10">
                 <h2 class="mb-3 text-sm font-bold uppercase">
                     {{ t('contacts.index.friendRequests') }}
@@ -697,11 +724,13 @@ const filteredFollowers = computed(() =>
 /*
  * On mobile, "find new contacts" and the groups panel are collapsed
  * toggles stacked above the filter field and the main list — find comes
- * first since it's the more common reason to open the page. On desktop,
- * the filter field spans the top and find/groups become two sticky
- * sidebar columns flanking the main list. That's a genuine reorder, not
- * just a resize, so this mirrors EventCard.vue's use of
- * grid-template-areas instead of pure utility classes.
+ * first since it's the more common reason to open the page, and its
+ * results appear inline within its own toggle. On desktop, "find new
+ * contacts" sits beside the filter field instead (both search boxes at
+ * the top), and its results appear in the main column under their own
+ * "Search results" heading rather than in the find column. That's a
+ * genuine reorder, not just a resize, so this mirrors EventCard.vue's
+ * use of grid-template-areas instead of pure utility classes.
  */
 .contacts-layout {
     display: grid;
@@ -731,11 +760,11 @@ const filteredFollowers = computed(() =>
 
 @media (min-width: 1024px) {
     .contacts-layout {
-        grid-template-columns: 2fr 1fr 1fr;
+        grid-template-columns: 2fr 1fr;
         align-items: start;
         grid-template-areas:
-            'search search search'
-            'main find groups';
+            'search find'
+            'main groups';
     }
 }
 </style>
