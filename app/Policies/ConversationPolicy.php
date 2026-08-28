@@ -10,7 +10,10 @@ class ConversationPolicy
 {
     public function view(User $user, Conversation $conversation): bool
     {
-        return $conversation->isVisibleTo($user);
+        // Staff need to be able to open a conversation from the moderation
+        // queue to investigate a reported message, even though they aren't
+        // a participant.
+        return $conversation->isVisibleTo($user) || $user->isStaff();
     }
 
     public function create(User $user): bool

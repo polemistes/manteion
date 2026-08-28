@@ -18,6 +18,8 @@
         "messages": "Messages",
         "contacts": "Contacts",
         "search": "Search",
+        "moderation": "Moderation",
+        "admin": "Admin",
         "logOut": "Log out"
     },
     "welcome": {
@@ -269,6 +271,7 @@
             "noOneYet": "No one yet.",
             "comments": "Comments",
             "deleteComment": "Delete",
+            "confirmDeleteComment": "Are you sure you want to delete this comment?",
             "noComments": "No comments yet.",
             "commentPlaceholder": "Write a comment…",
             "postComment": "Post comment",
@@ -412,5 +415,65 @@
     "imageCropper": {
         "zoom": "Zoom",
         "usePhoto": "Use this photo"
+    },
+    "admin": {
+        "users": {
+            "title": "Administration",
+            "searchPlaceholder": "Search by name, username, or email",
+            "name": "Name",
+            "email": "Email",
+            "role": "Role",
+            "status": "Status",
+            "actions": "Actions",
+            "roleMember": "Member",
+            "roleModerator": "Moderator",
+            "roleAdministrator": "Administrator",
+            "suspended": "Suspended",
+            "active": "Active",
+            "impersonate": "View as",
+            "confirmImpersonate": "View the app as {name}? You'll be able to see everything they see and delete their content, but not post or change anything as them.",
+            "message": "Message",
+            "unsuspend": "Unsuspend",
+            "confirmUnsuspend": "Lift the suspension on {name}'s account?",
+            "suspend": "Suspend",
+            "suspendTitle": "Suspend {name}",
+            "suspendReasonPlaceholder": "Reason (optional, shown to other staff)",
+            "emailTitle": "Email {name}",
+            "emailSubjectPlaceholder": "Subject",
+            "emailBodyPlaceholder": "Message",
+            "sendEmail": "Send",
+            "deleteAccount": "Delete account",
+            "deleteAccountTitle": "Delete {name}'s account",
+            "deleteAccountWarning": "This permanently deletes the account and everything they own. This cannot be undone.",
+            "yourPassword": "Your password"
+        }
+    },
+    "moderation": {
+        "title": "Moderation queue",
+        "noReports": "No pending reports.",
+        "type": {
+            "message": "Message",
+            "event": "Event",
+            "comment": "Comment"
+        },
+        "viewInContext": "View in context",
+        "alreadyDeleted": "This content has already been removed.",
+        "byAuthor": "By {name}",
+        "reportedByReason": "Reported by {name}: {reason}",
+        "noReasonGiven": "no reason given",
+        "deleteContent": "Delete",
+        "dismiss": "Dismiss report",
+        "messageReporter": "Message reporter",
+        "messageReportedUser": "Message reported user",
+        "suspendUser": "Suspend user",
+        "report": "Report",
+        "reportTitle": "Report this content",
+        "reportReasonPlaceholder": "Why are you reporting this? (optional)",
+        "reported": "Reported",
+        "deleteWithPlaceholder": "Delete and leave \"Deleted by a moderator\"",
+        "deleteWithoutPlaceholder": "Delete completely",
+        "confirmDeleteContent": "Delete this content, or delete it and leave a placeholder in its place?",
+        "viewingAs": "Viewing as {name} — you can browse and delete content, but not post or change anything.",
+        "returnToAdmin": "Return to admin"
     }
 }

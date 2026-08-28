@@ -1,0 +1,27 @@
+<script setup lang="ts">
+import { Link, usePage } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
+import { exit as exitImpersonation } from '@/routes/admin/impersonate';
+
+const { t } = useI18n();
+
+const page = usePage();
+</script>
+
+<template>
+    <div
+        class="flex items-center justify-between gap-4 border-b-[3px] border-black bg-yellow-200 px-4 py-2 text-sm"
+    >
+        <span>{{
+            t('moderation.viewingAs', { name: page.props.auth.user.name })
+        }}</span>
+        <Link
+            :href="exitImpersonation().url"
+            method="post"
+            as="button"
+            class="border border-black bg-white px-3 py-1 text-xs font-bold hover:bg-black hover:text-white"
+        >
+            {{ t('moderation.returnToAdmin') }}
+        </Link>
+    </div>
+</template>

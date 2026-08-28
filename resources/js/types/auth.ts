@@ -1,8 +1,11 @@
+export type UserRole = 'member' | 'moderator' | 'administrator';
+
 export type User = {
     id: number;
     name: string;
     username: string;
     email: string;
+    role: UserRole;
     allow_public_follow: boolean;
     avatar_url: string | null;
     bio: string | null;

@@ -5,14 +5,18 @@ import { useI18n } from 'vue-i18n';
 import AlphaBanner from '@/components/AlphaBanner.vue';
 import Avatar from '@/components/Avatar.vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
+import ImpersonationBanner from '@/components/ImpersonationBanner.vue';
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
+import StaffDeleteDialog from '@/components/StaffDeleteDialog.vue';
 import { logout } from '@/routes';
+import { index as adminUsersIndex } from '@/routes/admin/users';
 import {
     index as contactsIndex,
     search as contactsSearch,
 } from '@/routes/contacts';
 import { index as eventsIndex } from '@/routes/events';
 import { index as messagesIndex } from '@/routes/messages';
+import { index as moderationReportsIndex } from '@/routes/moderation/reports';
 import { edit as profileEdit } from '@/routes/profile';
 
 const { t } = useI18n();
@@ -35,6 +39,12 @@ usePoll(20000, {
     ],
 });
 
+const isStaff = computed(() =>
+    ['moderator', 'administrator'].includes(user.value.role),
+);
+const isAdministrator = computed(() => user.value.role === 'administrator');
+const isImpersonating = computed(() => page.props.impersonating);
+
 const navItems = computed(() => {
     const currentUrl = page.url;
 
@@ -55,6 +65,17 @@ const navItems = computed(() => {
             badge: pendingContactRequestsCount.value,
         },
         { label: t('nav.search'), href: contactsSearch().url },
+        ...(isStaff.value
+            ? [
+                  {
+                      label: t('nav.moderation'),
+                      href: moderationReportsIndex().url,
+                  },
+              ]
+            : []),
+        ...(isAdministrator.value
+            ? [{ label: t('nav.admin'), href: adminUsersIndex().url }]
+            : []),
     ].map((item) => ({
         ...item,
         active:
@@ -66,6 +87,7 @@ const navItems = computed(() => {
 <template>
     <div class="min-h-screen bg-white font-mono text-black">
         <AlphaBanner />
+        <ImpersonationBanner v-if="isImpersonating" />
 
         <div class="lg:flex">
             <aside
@@ -145,7 +167,12 @@ const navItems = computed(() => {
                         </div>
                     </header>
 
-                    <nav class="grid grid-cols-4 border-b-[3px] border-black">
+                    <nav
+                        class="grid border-b-[3px] border-black"
+                        :style="{
+                            gridTemplateColumns: `repeat(${navItems.length}, minmax(0, 1fr))`,
+                        }"
+                    >
                         <Link
                             v-for="item in navItems"
                             :key="item.label"
@@ -168,5 +195,6 @@ const navItems = computed(() => {
         </div>
 
         <ConfirmDialog />
+        <StaffDeleteDialog />
     </div>
 </template>

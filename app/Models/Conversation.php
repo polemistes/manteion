@@ -65,4 +65,34 @@ class Conversation extends Model
     {
         return $this->participantFor($user) !== null;
     }
+
+    /**
+     * Find the existing direct conversation between two users, or start a
+     * new one. Shared by user-initiated messaging (`ConversationController`)
+     * and staff-initiated messaging from the admin/moderator panels.
+     */
+    public static function findOrCreateDirect(User $a, User $b): self
+    {
+        $existing = self::query()
+            ->where('type', ConversationType::Direct)
+            ->whereHas('participants', fn ($query) => $query->where('user_id', $a->id))
+            ->whereHas('participants', fn ($query) => $query->where('user_id', $b->id))
+            ->first();
+
+        if ($existing !== null) {
+            return $existing;
+        }
+
+        $conversation = self::create([
+            'type' => ConversationType::Direct,
+            'creator_id' => $a->id,
+        ]);
+
+        $conversation->participants()->createMany([
+            ['user_id' => $a->id],
+            ['user_id' => $b->id],
+        ]);
+
+        return $conversation;
+    }
 }

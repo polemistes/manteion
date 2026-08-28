@@ -18,6 +18,8 @@
         "messages": "Meldinger",
         "contacts": "Kontakter",
         "search": "Søk",
+        "moderation": "Moderering",
+        "admin": "Admin",
         "logOut": "Logg ut"
     },
     "welcome": {
@@ -269,6 +271,7 @@
             "noOneYet": "Ingen ennå.",
             "comments": "Kommentarer",
             "deleteComment": "Slett",
+            "confirmDeleteComment": "Er du sikker på at du vil slette denne kommentaren?",
             "noComments": "Ingen kommentarer ennå.",
             "commentPlaceholder": "Skriv en kommentar…",
             "postComment": "Legg ut kommentar",
@@ -412,5 +415,65 @@
     "imageCropper": {
         "zoom": "Zoom",
         "usePhoto": "Bruk dette bildet"
+    },
+    "admin": {
+        "users": {
+            "title": "Administrasjon",
+            "searchPlaceholder": "Søk på navn, brukernavn eller e-post",
+            "name": "Navn",
+            "email": "E-post",
+            "role": "Rolle",
+            "status": "Status",
+            "actions": "Handlinger",
+            "roleMember": "Medlem",
+            "roleModerator": "Moderator",
+            "roleAdministrator": "Administrator",
+            "suspended": "Suspendert",
+            "active": "Aktiv",
+            "impersonate": "Vis som",
+            "confirmImpersonate": "Vis appen som {name}? Du vil se alt de ser og kan slette innholdet deres, men ikke poste eller endre noe som dem.",
+            "message": "Melding",
+            "unsuspend": "Opphev suspensjon",
+            "confirmUnsuspend": "Oppheve suspensjonen av {name} sin konto?",
+            "suspend": "Suspender",
+            "suspendTitle": "Suspender {name}",
+            "suspendReasonPlaceholder": "Årsak (valgfritt, vises til annet personale)",
+            "emailTitle": "Send e-post til {name}",
+            "emailSubjectPlaceholder": "Emne",
+            "emailBodyPlaceholder": "Melding",
+            "sendEmail": "Send",
+            "deleteAccount": "Slett konto",
+            "deleteAccountTitle": "Slett {name} sin konto",
+            "deleteAccountWarning": "Dette sletter kontoen og alt de eier permanent. Dette kan ikke angres.",
+            "yourPassword": "Ditt passord"
+        }
+    },
+    "moderation": {
+        "title": "Modereringskø",
+        "noReports": "Ingen ventende rapporter.",
+        "type": {
+            "message": "Melding",
+            "event": "Arrangement",
+            "comment": "Kommentar"
+        },
+        "viewInContext": "Vis i sammenheng",
+        "alreadyDeleted": "Dette innholdet er allerede fjernet.",
+        "byAuthor": "Av {name}",
+        "reportedByReason": "Rapportert av {name}: {reason}",
+        "noReasonGiven": "ingen årsak oppgitt",
+        "deleteContent": "Slett",
+        "dismiss": "Avvis rapport",
+        "messageReporter": "Send melding til rapportør",
+        "messageReportedUser": "Send melding til rapportert bruker",
+        "suspendUser": "Suspender bruker",
+        "report": "Rapporter",
+        "reportTitle": "Rapporter dette innholdet",
+        "reportReasonPlaceholder": "Hvorfor rapporterer du dette? (valgfritt)",
+        "reported": "Rapportert",
+        "deleteWithPlaceholder": "Slett og la stå «Slettet av en moderator»",
+        "deleteWithoutPlaceholder": "Slett helt",
+        "confirmDeleteContent": "Slett dette innholdet, eller slett det og la stå en plassholdertekst i stedet?",
+        "viewingAs": "Viser som {name} — du kan bla gjennom og slette innhold, men ikke poste eller endre noe.",
+        "returnToAdmin": "Tilbake til admin"
     }
 }
