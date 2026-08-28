@@ -17,9 +17,6 @@
         "events": "Arrangementer",
         "messages": "Meldinger",
         "contacts": "Kontakter",
-        "search": "Søk",
-        "moderation": "Moderering",
-        "admin": "Admin",
         "logOut": "Logg ut"
     },
     "welcome": {
@@ -155,23 +152,15 @@
             "create": "Opprett",
             "deleteGroup": "Slett gruppe",
             "addToGroup": "Legg til i gruppe …",
-            "noMoreGroups": "Ingen flere grupper"
-        },
-        "search": {
-            "title": "Søk etter folk",
-            "placeholder": "Søk etter navn eller brukernavn",
-            "search": "Søk",
-            "noResults": "Fant ingen for «{query}».",
+            "noMoreGroups": "Ingen flere grupper",
+            "findHeading": "Finn nye kontakter",
+            "findPlaceholder": "Søk etter navn eller brukernavn",
+            "find": "Søk",
+            "findNoResults": "Fant ingen for «{query}».",
             "addFriend": "Legg til venn",
             "requestSent": "Forespørsel sendt",
-            "cancel": "Avbryt",
-            "accept": "Godta",
-            "decline": "Avslå",
-            "friends": "Venner",
             "follow": "Følg",
-            "requested": "Forespurt",
-            "following": "Følger",
-            "unfollow": "Slutt å følge"
+            "requested": "Forespurt"
         },
         "tagPreferences": {
             "excludeHeading": "Ekskluder arrangementskategorier",

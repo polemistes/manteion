@@ -9,13 +9,13 @@ test('search excludes the current user and matches by name or username', functio
     $match = User::factory()->create(['name' => 'Grace Hopper', 'username' => 'grace']);
     User::factory()->create(['name' => 'Someone Else', 'username' => 'someone']);
 
-    $response = $this->actingAs($viewer)->get('/contacts/search?q=grace');
+    $response = $this->actingAs($viewer)->get('/contacts?find=grace');
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('contacts/Search')
-        ->where('results.0.id', $match->id)
-        ->has('results', 1));
+        ->component('contacts/Index')
+        ->where('findResults.0.id', $match->id)
+        ->has('findResults', 1));
 });
 
 test('search results reflect friendship and follow status', function () {
@@ -24,28 +24,28 @@ test('search results reflect friendship and follow status', function () {
     Friendship::factory()->accepted()->create(['requester_id' => $viewer->id, 'addressee_id' => $friend->id]);
     Follow::factory()->create(['follower_id' => $viewer->id, 'followed_id' => $friend->id]);
 
-    $response = $this->actingAs($viewer)->get('/contacts/search?q=friendperson');
+    $response = $this->actingAs($viewer)->get('/contacts?find=friendperson');
 
     $response->assertInertia(fn ($page) => $page
-        ->component('contacts/Search')
-        ->where('results.0.friend_status', 'friends')
-        ->where('results.0.follow_status', 'following'));
+        ->component('contacts/Index')
+        ->where('findResults.0.friend_status', 'friends')
+        ->where('findResults.0.follow_status', 'following'));
 });
 
 test('search excludes users who opted out of being searchable', function () {
     $viewer = User::factory()->create();
     User::factory()->unsearchable()->create(['name' => 'Grace Hopper', 'username' => 'grace']);
 
-    $response = $this->actingAs($viewer)->get('/contacts/search?q=grace');
+    $response = $this->actingAs($viewer)->get('/contacts?find=grace');
 
-    $response->assertInertia(fn ($page) => $page->has('results', 0));
+    $response->assertInertia(fn ($page) => $page->has('findResults', 0));
 });
 
 test('an empty query returns no results', function () {
     $viewer = User::factory()->create();
     User::factory()->create();
 
-    $response = $this->actingAs($viewer)->get('/contacts/search');
+    $response = $this->actingAs($viewer)->get('/contacts');
 
-    $response->assertInertia(fn ($page) => $page->has('results', 0));
+    $response->assertInertia(fn ($page) => $page->has('findResults', 0));
 });

@@ -63,7 +63,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/users/{user}', [UserProfileController::class, 'show'])->name('users.show');
 
     Route::get('/contacts', [ContactsController::class, 'index'])->name('contacts.index');
-    Route::get('/contacts/search', [ContactsController::class, 'search'])->name('contacts.search');
     Route::put('/contacts/{contact}/tag-preferences', [ContactTagPreferenceController::class, 'update'])->name('contacts.tag-preferences.update');
 
     Route::post('/friendships', [FriendshipController::class, 'store'])->name('friendships.store');

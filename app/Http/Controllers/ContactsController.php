@@ -35,6 +35,8 @@ class ContactsController extends Controller
             fn (Collection $rows) => $rows->contains(fn (ContactTagPreference $row) => $row->tag_id === null)
         )->keys();
 
+        $findQuery = trim((string) $request->string('find'));
+
         return Inertia::render('contacts/Index', [
             'friends' => $this->summarizeUsers($user->friends(), $preferencesByContact, $mutedContactIds),
             'pendingFriendRequests' => $this->summarizeFriendships($user->pendingFriendRequests()->with('requester')->get(), 'requester'),
@@ -60,21 +62,24 @@ class ContactsController extends Controller
             'friendGroups' => $this->summarizeGroups($user->contactGroups()->ofType(ContactGroupType::Friend)->with('members')->get()),
             'followingGroups' => $this->summarizeGroups($user->contactGroups()->ofType(ContactGroupType::Following)->with('members')->get()),
             'categories' => $this->categoriesTree(),
+            'findQuery' => $findQuery,
+            'findResults' => $this->findNewContacts($findQuery, $user),
         ]);
     }
 
-    public function search(Request $request): Response
+    /**
+     * @return array<int, array{id: int, name: string, username: string, avatar_url: string|null, friend_status: string, friendship_id: int|null, follow_status: string, follow_id: int|null}>
+     */
+    private function findNewContacts(string $term, User $viewer): array
     {
-        $term = trim((string) $request->string('q'));
-        $viewer = $request->user();
+        if ($term === '') {
+            return [];
+        }
 
         $results = User::query()
             ->whereKeyNot($viewer->getKey())
             ->where('searchable', true)
-            ->when($term !== '', fn ($query) => $query->where(
-                fn ($query) => $query->where('name', 'like', "%{$term}%")->orWhere('username', 'like', "%{$term}%")
-            ))
-            ->when($term === '', fn ($query) => $query->whereRaw('1 = 0'))
+            ->where(fn ($query) => $query->where('name', 'like', "%{$term}%")->orWhere('username', 'like', "%{$term}%"))
             ->orderBy('name')
             ->limit(20)
             ->get(['id', 'name', 'username', 'avatar_path']);
@@ -92,39 +97,36 @@ class ContactsController extends Controller
             ->get()
             ->keyBy('followed_id');
 
-        return Inertia::render('contacts/Search', [
-            'q' => $term,
-            'results' => $results->map(function (User $candidate) use ($friendships, $follows, $viewer) {
-                $friendship = $friendships->first(
-                    fn (Friendship $f) => $f->requester_id === $candidate->id || $f->addressee_id === $candidate->id
-                );
+        return $results->map(function (User $candidate) use ($friendships, $follows, $viewer) {
+            $friendship = $friendships->first(
+                fn (Friendship $f) => $f->requester_id === $candidate->id || $f->addressee_id === $candidate->id
+            );
 
-                $friendStatus = match (true) {
-                    $friendship === null => 'none',
-                    $friendship->status === FriendshipStatus::Accepted => 'friends',
-                    $friendship->requester_id === $viewer->getKey() => 'request_sent',
-                    default => 'request_received',
-                };
+            $friendStatus = match (true) {
+                $friendship === null => 'none',
+                $friendship->status === FriendshipStatus::Accepted => 'friends',
+                $friendship->requester_id === $viewer->getKey() => 'request_sent',
+                default => 'request_received',
+            };
 
-                $follow = $follows->get($candidate->id);
-                $followStatus = match (true) {
-                    $follow === null => 'none',
-                    $follow->status === FollowStatus::Accepted => 'following',
-                    default => 'pending',
-                };
+            $follow = $follows->get($candidate->id);
+            $followStatus = match (true) {
+                $follow === null => 'none',
+                $follow->status === FollowStatus::Accepted => 'following',
+                default => 'pending',
+            };
 
-                return [
-                    'id' => $candidate->id,
-                    'name' => $candidate->name,
-                    'username' => $candidate->username,
-                    'avatar_url' => $candidate->avatar_url,
-                    'friend_status' => $friendStatus,
-                    'friendship_id' => $friendship?->id,
-                    'follow_status' => $followStatus,
-                    'follow_id' => $follow?->id,
-                ];
-            })->values()->all(),
-        ]);
+            return [
+                'id' => $candidate->id,
+                'name' => $candidate->name,
+                'username' => $candidate->username,
+                'avatar_url' => $candidate->avatar_url,
+                'friend_status' => $friendStatus,
+                'friendship_id' => $friendship?->id,
+                'follow_status' => $followStatus,
+                'follow_id' => $follow?->id,
+            ];
+        })->values()->all();
     }
 
     /**

@@ -17,9 +17,6 @@
         "events": "Events",
         "messages": "Messages",
         "contacts": "Contacts",
-        "search": "Search",
-        "moderation": "Moderation",
-        "admin": "Admin",
         "logOut": "Log out"
     },
     "welcome": {
@@ -155,23 +152,15 @@
             "create": "Create",
             "deleteGroup": "Delete group",
             "addToGroup": "Add to group…",
-            "noMoreGroups": "No more groups"
-        },
-        "search": {
-            "title": "Search people",
-            "placeholder": "Search by name or username",
-            "search": "Search",
-            "noResults": "No one found for \"{query}\".",
+            "noMoreGroups": "No more groups",
+            "findHeading": "Find new contacts",
+            "findPlaceholder": "Search by name or username",
+            "find": "Search",
+            "findNoResults": "No one found for \"{query}\".",
             "addFriend": "Add friend",
             "requestSent": "Request sent",
-            "cancel": "Cancel",
-            "accept": "Accept",
-            "decline": "Decline",
-            "friends": "Friends",
             "follow": "Follow",
-            "requested": "Requested",
-            "following": "Following",
-            "unfollow": "Unfollow"
+            "requested": "Requested"
         },
         "tagPreferences": {
             "excludeHeading": "Exclude event categories",

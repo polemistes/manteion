@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { Form, Head, Link, usePoll } from '@inertiajs/vue3';
+import { Form, Head, Link, router, usePoll } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import ContactSearchResult from '@/components/ContactSearchResult.vue';
 import GroupMembershipDropdown from '@/components/GroupMembershipDropdown.vue';
 import PersonSummary from '@/components/PersonSummary.vue';
 import TagPreferencePicker from '@/components/TagPreferencePicker.vue';
 import * as contactGroups from '@/routes/contact-groups';
 import * as contactGroupMembers from '@/routes/contact-groups/members';
+import { index as contactsIndex } from '@/routes/contacts';
 import * as follows from '@/routes/follows';
 import * as friendships from '@/routes/friendships';
 import { store as startConversation } from '@/routes/messages';
@@ -47,6 +49,17 @@ interface GroupEntry {
     members: ContactSummary[];
 }
 
+interface FindResult {
+    id: number;
+    name: string;
+    username: string;
+    avatar_url: string | null;
+    friend_status: 'none' | 'request_sent' | 'request_received' | 'friends';
+    friendship_id: number | null;
+    follow_status: 'none' | 'pending' | 'following';
+    follow_id: number | null;
+}
+
 const props = defineProps<{
     friends: ContactSummary[];
     pendingFriendRequests: FriendshipEntry[];
@@ -58,6 +71,8 @@ const props = defineProps<{
     friendGroups: GroupEntry[];
     followingGroups: GroupEntry[];
     categories: CategoryOption[];
+    findQuery: string;
+    findResults: FindResult[];
 }>();
 
 usePoll(20000, {
@@ -98,6 +113,20 @@ function matchesQuery(contact: ContactSummary, query: string): boolean {
 
 const contactsQuery = ref('');
 const groupsOpen = ref(false);
+const findOpen = ref(false);
+const findQueryInput = ref(props.findQuery);
+
+function submitFind(): void {
+    router.get(
+        contactsIndex().url,
+        { find: findQueryInput.value },
+        {
+            preserveState: true,
+            preserveScroll: true,
+            only: ['findQuery', 'findResults'],
+        },
+    );
+}
 
 const filteredFriends = computed(() =>
     props.friends.filter((friend) => matchesQuery(friend, contactsQuery.value)),
@@ -120,6 +149,55 @@ const filteredFollowers = computed(() =>
     <h1 class="mb-6 text-xl font-bold">{{ t('contacts.index.title') }}</h1>
 
     <div class="contacts-layout">
+        <aside class="contacts-layout__find lg:sticky lg:top-6">
+            <button
+                type="button"
+                class="mb-3 flex w-full items-center justify-between text-sm font-bold uppercase lg:hidden"
+                @click="findOpen = !findOpen"
+            >
+                {{ t('contacts.index.findHeading') }}
+                <span>{{ findOpen ? '▲' : '▼' }}</span>
+            </button>
+
+            <div :class="findOpen ? '' : 'hidden lg:block'">
+                <h2 class="mb-3 hidden text-sm font-bold uppercase lg:block">
+                    {{ t('contacts.index.findHeading') }}
+                </h2>
+
+                <form class="mb-4 flex gap-2" @submit.prevent="submitFind">
+                    <input
+                        v-model="findQueryInput"
+                        type="text"
+                        :placeholder="t('contacts.index.findPlaceholder')"
+                        class="flex-1 border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+                    />
+                    <button
+                        type="submit"
+                        class="border border-black px-3 py-2 text-sm hover:bg-black hover:text-white"
+                    >
+                        {{ t('contacts.index.find') }}
+                    </button>
+                </form>
+
+                <p
+                    v-if="findQuery && !findResults.length"
+                    class="text-sm text-black/70"
+                >
+                    {{
+                        t('contacts.index.findNoResults', { query: findQuery })
+                    }}
+                </p>
+
+                <ul v-else class="flex flex-col gap-2">
+                    <ContactSearchResult
+                        v-for="result in findResults"
+                        :key="result.id"
+                        :result="result"
+                    />
+                </ul>
+            </div>
+        </aside>
+
         <aside class="contacts-layout__groups lg:sticky lg:top-6">
             <button
                 type="button"
@@ -617,20 +695,26 @@ const filteredFollowers = computed(() =>
 
 <style scoped>
 /*
- * On mobile the groups panel must come before the search field (a plain
- * collapsed toggle, so it's cheap to show first); on desktop the search
- * field spans the top and the groups panel sits as a sticky sidebar next
- * to the main list. That's a genuine reorder, not just a resize, so this
- * mirrors EventCard.vue's use of grid-template-areas instead of pure
- * utility classes.
+ * On mobile, "find new contacts" and the groups panel are collapsed
+ * toggles stacked above the filter field and the main list — find comes
+ * first since it's the more common reason to open the page. On desktop,
+ * the filter field spans the top and find/groups become two sticky
+ * sidebar columns flanking the main list. That's a genuine reorder, not
+ * just a resize, so this mirrors EventCard.vue's use of
+ * grid-template-areas instead of pure utility classes.
  */
 .contacts-layout {
     display: grid;
     gap: 2rem;
     grid-template-areas:
+        'find'
         'groups'
         'search'
         'main';
+}
+
+.contacts-layout__find {
+    grid-area: find;
 }
 
 .contacts-layout__groups {
@@ -647,11 +731,11 @@ const filteredFollowers = computed(() =>
 
 @media (min-width: 1024px) {
     .contacts-layout {
-        grid-template-columns: 2fr 1fr;
+        grid-template-columns: 2fr 1fr 1fr;
         align-items: start;
         grid-template-areas:
-            'search search'
-            'main groups';
+            'search search search'
+            'main find groups';
     }
 }
 </style>
