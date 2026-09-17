@@ -73,5 +73,26 @@ test('an attendee with visibility set to friends is hidden from non-friends but 
         ->assertInertia(fn ($page) => $page->where('attendees.0.status', AttendanceStatus::Attending->value));
 
     $this->actingAs($viewerStranger)->get("/events/{$event->id}")
-        ->assertInertia(fn ($page) => $page->where('attendees.0.status', null));
+        ->assertInertia(fn ($page) => $page->has('attendees', 0));
+});
+
+test('an attendee with visibility set to none is listed only for the owner and themselves', function () {
+    $owner = User::factory()->create();
+    $attendee = User::factory()->create();
+    $viewer = User::factory()->create();
+
+    $event = Event::factory()->searchable()->create(['user_id' => $owner->id]);
+    EventAttendee::factory()->attending()->visibility(AttendanceVisibility::None)->create([
+        'event_id' => $event->id,
+        'user_id' => $attendee->id,
+    ]);
+
+    $this->actingAs($viewer)->get("/events/{$event->id}")
+        ->assertInertia(fn ($page) => $page->has('attendees', 0));
+
+    $this->actingAs($attendee)->get("/events/{$event->id}")
+        ->assertInertia(fn ($page) => $page->where('attendees.0.status', AttendanceStatus::Attending->value));
+
+    $this->actingAs($owner)->get("/events/{$event->id}")
+        ->assertInertia(fn ($page) => $page->where('attendees.0.status', AttendanceStatus::Attending->value));
 });

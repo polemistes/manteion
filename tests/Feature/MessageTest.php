@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\ConversationType;
+use App\Enums\UserRole;
 use App\Models\Conversation;
 use App\Models\ConversationParticipant;
 use App\Models\User;
@@ -62,4 +63,18 @@ test('sending a message marks the conversation as read for the sender', function
     $this->actingAs($user)->post("/messages/{$conversation->id}/send", ['body' => 'Hello'])->assertRedirect();
 
     expect($participant->fresh()->last_read_at)->not->toBeNull();
+});
+
+test('staff cannot send messages into a conversation they are not part of', function () {
+    $moderator = User::factory()->create(['role' => UserRole::Moderator]);
+    $a = User::factory()->create();
+    $b = User::factory()->create();
+    $conversation = Conversation::factory()->create(['type' => ConversationType::Direct, 'creator_id' => $a->id]);
+    ConversationParticipant::factory()->create(['conversation_id' => $conversation->id, 'user_id' => $a->id]);
+    ConversationParticipant::factory()->create(['conversation_id' => $conversation->id, 'user_id' => $b->id]);
+
+    $this->actingAs($moderator)->get("/messages/{$conversation->id}")->assertSuccessful();
+    $this->actingAs($moderator)->post("/messages/{$conversation->id}/send", ['body' => 'Hello from staff'])->assertForbidden();
+
+    $this->assertDatabaseMissing('messages', ['conversation_id' => $conversation->id, 'body' => 'Hello from staff']);
 });

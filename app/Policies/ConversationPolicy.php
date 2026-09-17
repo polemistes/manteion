@@ -21,6 +21,15 @@ class ConversationPolicy
         return true;
     }
 
+    /**
+     * Only participants may write; staff read access (see `view`) does not
+     * extend to posting into someone else's conversation.
+     */
+    public function send(User $user, Conversation $conversation): bool
+    {
+        return $conversation->isVisibleTo($user);
+    }
+
     public function addParticipant(User $user, Conversation $conversation): bool
     {
         return $conversation->type === ConversationType::Group && $conversation->isVisibleTo($user);

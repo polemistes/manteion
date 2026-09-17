@@ -160,14 +160,29 @@ class User extends Authenticatable
     }
 
     /**
+     * Ids of every accepted friend, in one query, whichever side of the
+     * request this user was on.
+     *
+     * @return Collection<int, int>
+     */
+    public function friendIds(): Collection
+    {
+        return Friendship::query()
+            ->accepted()
+            ->where(fn ($query) => $query->where('requester_id', $this->id)->orWhere('addressee_id', $this->id))
+            ->get(['requester_id', 'addressee_id'])
+            ->map(fn (Friendship $friendship) => $friendship->requester_id === $this->id
+                ? $friendship->addressee_id
+                : $friendship->requester_id)
+            ->values();
+    }
+
+    /**
      * @return Collection<int, User>
      */
     public function friends(): Collection
     {
-        $viaSentRequests = $this->friendshipsAsRequester()->accepted()->with('addressee')->get()->pluck('addressee');
-        $viaReceivedRequests = $this->friendshipsAsAddressee()->accepted()->with('requester')->get()->pluck('requester');
-
-        return $viaSentRequests->merge($viaReceivedRequests);
+        return User::query()->whereIn('id', $this->friendIds())->orderBy('name')->get();
     }
 
     public function isFriendsWith(User $user): bool

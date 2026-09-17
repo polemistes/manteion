@@ -9,7 +9,7 @@ class StoreMessageRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('view', $this->route('conversation'));
+        return $this->user()->can('send', $this->route('conversation'));
     }
 
     /**

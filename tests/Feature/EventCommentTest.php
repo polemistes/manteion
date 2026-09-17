@@ -26,7 +26,10 @@ test('a follower can comment only when the owner allows it', function () {
 
     $this->actingAs($follower)->post("/events/{$event->id}/comments", ['body' => 'Can I come?'])->assertRedirect();
     $this->assertDatabaseHas('event_comments', ['event_id' => $event->id, 'user_id' => $follower->id]);
-    $this->assertDatabaseHas('event_attendees', ['event_id' => $event->id, 'user_id' => $follower->id]);
+    // Commenting is not attending: no attendee row is created behind the
+    // commenter's back, which would list them among the attendees and keep
+    // the event in their list after unfollowing.
+    $this->assertDatabaseMissing('event_attendees', ['event_id' => $event->id, 'user_id' => $follower->id]);
 });
 
 test('a comment author or the event owner can delete a comment, but no one else', function () {

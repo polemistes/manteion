@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 /**
  * @property int $id
@@ -62,11 +63,19 @@ class EventAttendee extends Model
         return $this->belongsTo(User::class, 'invited_by_user_id');
     }
 
-    public function isVisibleTo(User $viewer): bool
+    /**
+     * Whether this attendance may be shown to the viewer at all, given the
+     * attendee's visibility choice. The event owner and the attendee
+     * themselves are handled by the caller; this is the choice as it
+     * applies to everyone else.
+     *
+     * @param  Collection<int, int>  $viewerFriendIds
+     */
+    public function isVisibleGiven(Collection $viewerFriendIds): bool
     {
         return match ($this->attendance_visibility) {
             AttendanceVisibility::Everyone => true,
-            AttendanceVisibility::Friends => $viewer->isFriendsWith($this->user),
+            AttendanceVisibility::Friends => $viewerFriendIds->contains($this->user_id),
             AttendanceVisibility::None => false,
         };
     }

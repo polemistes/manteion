@@ -174,6 +174,7 @@ class EventController extends Controller
 
         $isOwner = $viewer->is($event->owner);
         $attendee = $event->attendeeFor($viewer);
+        $viewerFriendIds = $viewer->friendIds();
 
         return Inertia::render('events/Show', [
             'event' => [
@@ -205,15 +206,16 @@ class EventController extends Controller
                 'status' => $attendee->status->value,
                 'attendance_visibility' => $attendee->attendance_visibility->value,
             ],
-            'attendees' => $event->attendees->map(function (EventAttendee $attendee) use ($viewer, $isOwner) {
-                $showStatus = $isOwner || $viewer->is($attendee->user) || $attendee->isVisibleTo($viewer);
-
-                return [
+            // An attendee who limited their visibility is left out entirely
+            // for viewers outside it, not merely shown without a status:
+            // being listed at all reveals that they were invited.
+            'attendees' => $event->attendees
+                ->filter(fn (EventAttendee $attendee) => $isOwner || $attendee->user_id === $viewer->id || $attendee->isVisibleGiven($viewerFriendIds))
+                ->map(fn (EventAttendee $attendee) => [
                     'id' => $attendee->id,
                     'user' => ['id' => $attendee->user->id, 'name' => $attendee->user->name, 'username' => $attendee->user->username, 'avatar_url' => $attendee->user->avatar_url],
-                    'status' => $showStatus ? $attendee->status->value : null,
-                ];
-            })->values(),
+                    'status' => $attendee->status->value,
+                ])->values(),
             'comments' => $event->comments->map(fn (EventComment $comment) => [
                 'id' => $comment->id,
                 'body' => $comment->body,

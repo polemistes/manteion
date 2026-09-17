@@ -36,7 +36,7 @@ interface Tag {
 interface Attendee {
     id: number;
     user: Person;
-    status: string | null;
+    status: string;
 }
 
 interface Comment {
@@ -411,11 +411,7 @@ const locationLabel =
             >
                 <PersonSummary v-bind="attendee.user" />
                 <span class="text-xs font-bold">
-                    {{
-                        attendee.status
-                            ? statusLabel(attendee.status)
-                            : t('events.show.hidden')
-                    }}
+                    {{ statusLabel(attendee.status) }}
                 </span>
             </li>
             <li v-if="!props.attendees.length" class="text-sm text-black/70">
