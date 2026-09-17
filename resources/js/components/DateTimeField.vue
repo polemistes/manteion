@@ -83,7 +83,7 @@ function clear(): void {
                     <input
                         v-model="timeValue"
                         type="time"
-                        class="border border-black bg-white px-2 py-1 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+                        class="border border-edge bg-surface-raised px-2 py-1 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
                     />
                 </div>
                 <button

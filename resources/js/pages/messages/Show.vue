@@ -159,7 +159,7 @@ async function deleteMessage(message: MessageItem): Promise<void> {
             :href="conversationParticipants.destroy(props.conversation.id).url"
             method="delete"
             as="button"
-            class="shrink-0 border border-black px-3 py-2 text-sm hover:bg-black hover:text-white"
+            class="shrink-0 border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
         >
             {{ t('messages.show.leave') }}
         </Link>
@@ -167,7 +167,7 @@ async function deleteMessage(message: MessageItem): Promise<void> {
 
     <section
         v-if="props.conversation.type === 'group'"
-        class="mb-6 border-[3px] border-black p-3"
+        class="mb-6 border-frame border-edge p-3"
     >
         <h2 class="mb-2 text-xs font-bold uppercase">
             {{ t('messages.show.inThisConversation') }}
@@ -192,7 +192,7 @@ async function deleteMessage(message: MessageItem): Promise<void> {
             <select
                 name="user_id"
                 required
-                class="flex-1 border border-black bg-white px-2 py-1 font-sans text-sm"
+                class="flex-1 border border-edge bg-surface-raised px-2 py-1 font-sans text-sm"
             >
                 <option
                     v-for="candidate in props.addCandidates"
@@ -205,7 +205,7 @@ async function deleteMessage(message: MessageItem): Promise<void> {
             <button
                 type="submit"
                 :disabled="processing"
-                class="border border-black px-2 py-1 text-xs hover:bg-black hover:text-white"
+                class="border border-edge px-2 py-1 text-xs hover:bg-accent hover:text-on-accent"
             >
                 {{ t('messages.show.add') }}
             </button>
@@ -217,7 +217,7 @@ async function deleteMessage(message: MessageItem): Promise<void> {
         <button
             type="button"
             :disabled="loadingOlder"
-            class="border border-black px-3 py-2 text-sm hover:bg-black hover:text-white disabled:opacity-50"
+            class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent disabled:opacity-50"
             @click="loadOlder"
         >
             {{
@@ -240,7 +240,7 @@ async function deleteMessage(message: MessageItem): Promise<void> {
                         ? t('messages.show.you')
                         : message.sender.name
                 }}</span>
-                <span class="text-xs text-black/70">{{
+                <span class="text-xs text-ink/70">{{
                     formatTime(message.created_at)
                 }}</span>
                 <ReportButton
@@ -251,7 +251,7 @@ async function deleteMessage(message: MessageItem): Promise<void> {
                 <button
                     v-if="message.can_delete"
                     type="button"
-                    class="text-xs text-black/50 hover:underline"
+                    class="text-xs text-ink/50 hover:underline"
                     @click="deleteMessage(message)"
                 >
                     {{ t('messages.show.delete') }}
@@ -259,7 +259,7 @@ async function deleteMessage(message: MessageItem): Promise<void> {
             </div>
             <p
                 class="ml-10 font-sans text-sm whitespace-pre-line"
-                :class="{ 'text-black/50 italic': message.is_deleted }"
+                :class="{ 'text-ink/50 italic': message.is_deleted }"
             >
                 {{
                     message.is_deleted && !message.body
@@ -268,7 +268,7 @@ async function deleteMessage(message: MessageItem): Promise<void> {
                 }}
             </p>
         </li>
-        <li v-if="!allMessages.length" class="text-sm text-black/70">
+        <li v-if="!allMessages.length" class="text-sm text-ink/70">
             {{ t('messages.show.noMessagesYet') }}
         </li>
     </ul>
@@ -284,13 +284,13 @@ async function deleteMessage(message: MessageItem): Promise<void> {
             required
             rows="3"
             :placeholder="t('messages.show.messagePlaceholder')"
-            class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+            class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
         ></textarea>
         <FieldError :message="errors.body" />
         <button
             type="submit"
             :disabled="processing"
-            class="w-fit border border-black bg-black px-3 py-2 text-sm text-white hover:bg-white hover:text-black"
+            class="w-fit border border-edge bg-accent px-3 py-2 text-sm text-on-accent hover:bg-surface-raised hover:text-ink"
         >
             {{
                 processing

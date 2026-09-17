@@ -245,7 +245,7 @@ async function confirmCrop(): Promise<void> {
         >
             <div
                 ref="viewport"
-                class="relative touch-none overflow-hidden border border-black bg-gray-200"
+                class="relative touch-none overflow-hidden border border-edge bg-gray-200"
                 :style="{
                     width: VIEWPORT_WIDTH + 'px',
                     height: viewportHeight + 'px',
@@ -280,14 +280,14 @@ async function confirmCrop(): Promise<void> {
             <div class="flex gap-2">
                 <button
                     type="button"
-                    class="border border-black bg-black px-3 py-1.5 text-xs font-bold text-white hover:bg-white hover:text-black"
+                    class="border border-edge bg-accent px-3 py-1.5 text-xs font-bold text-on-accent hover:bg-surface-raised hover:text-ink"
                     @click="confirmCrop"
                 >
                     {{ t('imageCropper.usePhoto') }}
                 </button>
                 <button
                     type="button"
-                    class="border border-black px-3 py-1.5 text-xs hover:bg-black hover:text-white"
+                    class="border border-edge px-3 py-1.5 text-xs hover:bg-accent hover:text-on-accent"
                     @click="cancelCropping"
                 >
                     {{ t('common.cancel') }}
@@ -300,12 +300,12 @@ async function confirmCrop(): Promise<void> {
                 v-if="previewUrl"
                 :src="previewUrl"
                 alt=""
-                class="h-24 border border-black object-cover"
+                class="h-24 border border-edge object-cover"
                 :style="{ aspectRatio: String(props.aspectRatio) }"
             />
             <div
                 v-else
-                class="h-24 border border-black bg-gray-200"
+                class="h-24 border border-edge bg-gray-200"
                 :style="{ aspectRatio: String(props.aspectRatio) }"
             ></div>
 

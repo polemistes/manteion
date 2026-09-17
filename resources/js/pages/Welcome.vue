@@ -11,7 +11,7 @@ const { t } = useI18n();
     <Head :title="t('welcome.title')" />
 
     <div
-        class="relative flex min-h-screen flex-col items-center justify-center bg-white px-4 font-mono text-black"
+        class="relative flex min-h-screen flex-col items-center justify-center bg-surface px-4 font-body text-ink"
     >
         <div class="absolute inset-x-0 top-0">
             <AlphaBanner />
@@ -22,20 +22,20 @@ const { t } = useI18n();
         </div>
 
         <h1 class="mb-2 text-2xl font-bold tracking-tight">Manteion</h1>
-        <p class="mb-8 max-w-sm text-center text-sm text-black/70">
+        <p class="mb-8 max-w-sm text-center text-sm text-ink/70">
             {{ t('welcome.tagline') }}
         </p>
 
         <div class="flex gap-3">
             <Link
                 href="/login"
-                class="border border-black px-4 py-2 text-sm hover:bg-black hover:text-white"
+                class="border border-edge px-4 py-2 text-sm hover:bg-accent hover:text-on-accent"
             >
                 {{ t('welcome.logIn') }}
             </Link>
             <Link
                 href="/register"
-                class="border border-black bg-black px-4 py-2 text-sm text-white hover:bg-white hover:text-black"
+                class="border border-edge bg-accent px-4 py-2 text-sm text-on-accent hover:bg-surface-raised hover:text-ink"
             >
                 {{ t('welcome.register') }}
             </Link>

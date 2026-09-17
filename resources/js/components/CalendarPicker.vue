@@ -133,13 +133,13 @@ function select(date: Date): void {
 </script>
 
 <template>
-    <div class="w-fit border border-black">
+    <div class="w-fit border border-edge">
         <div
-            class="flex items-center justify-between border-b border-black px-2 py-1"
+            class="flex items-center justify-between border-b border-edge px-2 py-1"
         >
             <button
                 type="button"
-                class="px-1 font-bold hover:bg-black hover:text-white"
+                class="px-1 font-bold hover:bg-accent hover:text-on-accent"
                 @click="previousMonth"
             >
                 ‹
@@ -147,7 +147,7 @@ function select(date: Date): void {
             <span class="text-sm font-bold">{{ monthLabel }}</span>
             <button
                 type="button"
-                class="px-1 font-bold hover:bg-black hover:text-white"
+                class="px-1 font-bold hover:bg-accent hover:text-on-accent"
                 @click="nextMonth"
             >
                 ›
@@ -157,14 +157,14 @@ function select(date: Date): void {
             <thead>
                 <tr>
                     <th
-                        class="w-8 border-r border-b border-black px-1 py-1 font-normal text-black/50"
+                        class="w-8 border-r border-b border-edge px-1 py-1 font-normal text-ink/50"
                     >
                         {{ t('calendar.weekAbbreviation') }}
                     </th>
                     <th
                         v-for="label in weekdayLabels"
                         :key="label"
-                        class="w-8 border-b border-black px-1 py-1 font-normal"
+                        class="w-8 border-b border-edge px-1 py-1 font-normal"
                     >
                         {{ label }}
                     </th>
@@ -172,7 +172,7 @@ function select(date: Date): void {
             </thead>
             <tbody>
                 <tr v-for="row in weeks" :key="row.week">
-                    <td class="border-r border-black px-1 py-1 text-black/50">
+                    <td class="border-r border-edge px-1 py-1 text-ink/50">
                         {{ row.week }}
                     </td>
                     <td
@@ -185,9 +185,9 @@ function select(date: Date): void {
                             class="flex h-6 w-6 items-center justify-center"
                             :class="[
                                 isSameDay(cell.date, props.modelValue)
-                                    ? 'bg-black text-white'
-                                    : 'hover:bg-black hover:text-white',
-                                !cell.inMonth ? 'text-black/30' : '',
+                                    ? 'bg-accent text-on-accent'
+                                    : 'hover:bg-accent hover:text-on-accent',
+                                !cell.inMonth ? 'text-ink/30' : '',
                                 isSameDay(cell.date, today) &&
                                 !isSameDay(cell.date, props.modelValue)
                                     ? 'underline'

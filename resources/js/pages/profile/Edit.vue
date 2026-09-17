@@ -108,7 +108,7 @@ async function onPushToggle(): Promise<void> {
                         type="checkbox"
                         name="remove_avatar"
                         value="1"
-                        class="border border-black"
+                        class="border border-edge"
                     />
                     {{ t('profile.removePhoto') }}
                 </label>
@@ -125,7 +125,7 @@ async function onPushToggle(): Promise<void> {
                     name="name"
                     required
                     :value="props.user.name"
-                    class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+                    class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
                 />
                 <FieldError :message="errors.name" />
             </div>
@@ -140,7 +140,7 @@ async function onPushToggle(): Promise<void> {
                     name="username"
                     required
                     :value="props.user.username"
-                    class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+                    class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
                 />
                 <FieldError :message="errors.username" />
             </div>
@@ -155,7 +155,7 @@ async function onPushToggle(): Promise<void> {
                     name="email"
                     required
                     :value="props.user.email"
-                    class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+                    class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
                 />
                 <FieldError :message="errors.email" />
             </div>
@@ -171,7 +171,7 @@ async function onPushToggle(): Promise<void> {
                     maxlength="1000"
                     :placeholder="t('profile.bioPlaceholder')"
                     :value="props.user.bio"
-                    class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+                    class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
                 ></textarea>
                 <FieldError :message="errors.bio" />
             </div>
@@ -188,7 +188,7 @@ async function onPushToggle(): Promise<void> {
                         name="allow_public_follow"
                         value="1"
                         :checked="props.user.allow_public_follow"
-                        class="mt-0.5 border border-black"
+                        class="mt-0.5 border border-edge"
                     />
                     <span>{{ t('profile.allowPublicFollow') }}</span>
                 </label>
@@ -201,7 +201,7 @@ async function onPushToggle(): Promise<void> {
                         name="show_friends_list"
                         value="1"
                         :checked="props.user.show_friends_list"
-                        class="mt-0.5 border border-black"
+                        class="mt-0.5 border border-edge"
                     />
                     <span>{{ t('profile.showFriendsList') }}</span>
                 </label>
@@ -218,7 +218,7 @@ async function onPushToggle(): Promise<void> {
                         name="appear_in_friends_lists"
                         value="1"
                         :checked="props.user.appear_in_friends_lists"
-                        class="mt-0.5 border border-black"
+                        class="mt-0.5 border border-edge"
                     />
                     <span>{{ t('profile.appearInFriendsLists') }}</span>
                 </label>
@@ -231,7 +231,7 @@ async function onPushToggle(): Promise<void> {
                         name="searchable"
                         value="1"
                         :checked="props.user.searchable"
-                        class="mt-0.5 border border-black"
+                        class="mt-0.5 border border-edge"
                     />
                     <span>{{ t('profile.searchable') }}</span>
                 </label>
@@ -249,7 +249,7 @@ async function onPushToggle(): Promise<void> {
                         type="checkbox"
                         name="push_notifications_enabled"
                         value="1"
-                        class="mt-0.5 border border-black"
+                        class="mt-0.5 border border-edge"
                         @change="onPushToggle"
                     />
                     <span>{{ t('profile.pushNotificationsEnabled') }}</span>
@@ -271,7 +271,7 @@ async function onPushToggle(): Promise<void> {
                         value="1"
                         :checked="props.user.notify_event_invites"
                         :disabled="!pushEnabled"
-                        class="mt-0.5 border border-black"
+                        class="mt-0.5 border border-edge"
                     />
                     <span>{{ t('profile.notifyEventInvites') }}</span>
                 </label>
@@ -288,7 +288,7 @@ async function onPushToggle(): Promise<void> {
                         value="1"
                         :checked="props.user.notify_messages"
                         :disabled="!pushEnabled"
-                        class="mt-0.5 border border-black"
+                        class="mt-0.5 border border-edge"
                     />
                     <span>{{ t('profile.notifyMessages') }}</span>
                 </label>
@@ -309,7 +309,7 @@ async function onPushToggle(): Promise<void> {
                         value="1"
                         :checked="props.user.notify_friend_requests"
                         :disabled="!pushEnabled"
-                        class="mt-0.5 border border-black"
+                        class="mt-0.5 border border-edge"
                     />
                     <span>{{ t('profile.notifyFriendRequests') }}</span>
                 </label>
@@ -330,7 +330,7 @@ async function onPushToggle(): Promise<void> {
                         value="1"
                         :checked="props.user.notify_follow_requests"
                         :disabled="!pushEnabled"
-                        class="mt-0.5 border border-black"
+                        class="mt-0.5 border border-edge"
                     />
                     <span>{{ t('profile.notifyFollowRequests') }}</span>
                 </label>
@@ -340,7 +340,7 @@ async function onPushToggle(): Promise<void> {
             <button
                 type="submit"
                 :disabled="processing"
-                class="w-fit border border-black bg-black px-4 py-2 text-sm font-bold text-white hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
+                class="w-fit border border-edge bg-accent px-4 py-2 text-sm font-bold text-on-accent hover:bg-surface-raised hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
             >
                 {{ processing ? t('profile.saving') : t('profile.save') }}
             </button>
@@ -360,13 +360,13 @@ async function onPushToggle(): Promise<void> {
             <Link
                 v-if="isAdministrator"
                 :href="adminUsersIndex().url"
-                class="w-fit border border-black px-4 py-2 text-sm font-bold hover:bg-black hover:text-white"
+                class="w-fit border border-edge px-4 py-2 text-sm font-bold hover:bg-accent hover:text-on-accent"
             >
                 {{ t('profile.adminPanel') }}
             </Link>
             <Link
                 :href="moderationReportsIndex().url"
-                class="w-fit border border-black px-4 py-2 text-sm font-bold hover:bg-black hover:text-white"
+                class="w-fit border border-edge px-4 py-2 text-sm font-bold hover:bg-accent hover:text-on-accent"
             >
                 {{ t('profile.moderationQueue') }}
             </Link>
@@ -410,7 +410,7 @@ async function onPushToggle(): Promise<void> {
                     required
                     autocomplete="new-password"
                 />
-                <p class="mt-1 text-xs text-black/70">
+                <p class="mt-1 text-xs text-ink/70">
                     {{ t('common.passphraseHint') }}
                 </p>
                 <FieldError :message="errors.password" />
@@ -434,7 +434,7 @@ async function onPushToggle(): Promise<void> {
             <button
                 type="submit"
                 :disabled="processing"
-                class="w-fit border border-black bg-black px-4 py-2 text-sm font-bold text-white hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
+                class="w-fit border border-edge bg-accent px-4 py-2 text-sm font-bold text-on-accent hover:bg-surface-raised hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
             >
                 {{
                     processing
@@ -454,13 +454,13 @@ async function onPushToggle(): Promise<void> {
             :href="logout().url"
             method="post"
             as="button"
-            class="w-fit border border-black px-4 py-2 text-sm font-bold hover:bg-black hover:text-white"
+            class="w-fit border border-edge px-4 py-2 text-sm font-bold hover:bg-accent hover:text-on-accent"
         >
             {{ t('nav.logOut') }}
         </Link>
         <button
             type="button"
-            class="w-fit border border-black px-4 py-2 text-sm font-bold hover:bg-black hover:text-white"
+            class="w-fit border border-edge px-4 py-2 text-sm font-bold hover:bg-accent hover:text-on-accent"
             @click="deleteAccountDialogOpen = true"
         >
             {{ t('profile.deleteAccount') }}
@@ -496,7 +496,7 @@ async function onPushToggle(): Promise<void> {
             <div class="flex justify-end gap-2">
                 <button
                     type="button"
-                    class="border border-black px-3 py-2 text-sm hover:bg-black hover:text-white"
+                    class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
                     @click="deleteAccountDialogOpen = false"
                 >
                     {{ t('common.cancel') }}
@@ -504,7 +504,7 @@ async function onPushToggle(): Promise<void> {
                 <button
                     type="submit"
                     :disabled="processing"
-                    class="border border-black bg-black px-3 py-2 text-sm text-white hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
+                    class="border border-edge bg-accent px-3 py-2 text-sm text-on-accent hover:bg-surface-raised hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     {{ t('profile.deleteAccount') }}
                 </button>

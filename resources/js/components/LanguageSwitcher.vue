@@ -22,7 +22,7 @@ function onChange(event: Event): void {
 <template>
     <select
         :value="page.props.locale"
-        class="border border-black bg-white px-2 py-1 text-xs"
+        class="border border-edge bg-surface-raised px-2 py-1 text-xs"
         @change="onChange"
     >
         <option

@@ -173,7 +173,7 @@ onUnmounted(() => {
                 type="text"
                 :value="searchQuery"
                 :placeholder="t('location.searchPlaceholder')"
-                class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+                class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
                 @input="onSearchInput"
                 @keydown.enter.prevent
             />
@@ -181,33 +181,33 @@ onUnmounted(() => {
                  has to clear that or the map swallows the dropdown. -->
             <ul
                 v-if="results.length"
-                class="absolute z-[1001] mt-1 w-full border border-black bg-white"
+                class="absolute z-[1001] mt-1 w-full border border-edge bg-surface-raised"
             >
                 <li v-for="result in results" :key="result.display_name">
                     <button
                         type="button"
-                        class="block w-full px-3 py-2 text-left text-xs hover:bg-black hover:text-white"
+                        class="block w-full px-3 py-2 text-left text-xs hover:bg-accent hover:text-on-accent"
                         @click="selectResult(result)"
                     >
                         {{ result.display_name }}
                     </button>
                 </li>
             </ul>
-            <p v-else-if="searching" class="mt-1 text-xs text-black/70">
+            <p v-else-if="searching" class="mt-1 text-xs text-ink/70">
                 {{ t('location.searching') }}
             </p>
-            <p v-else-if="error" class="mt-1 text-xs text-black/70">
+            <p v-else-if="error" class="mt-1 text-xs text-ink/70">
                 {{ t('location.searchError') }}
             </p>
             <p
                 v-else-if="searchQuery.trim().length >= MIN_QUERY_LENGTH"
-                class="mt-1 text-xs text-black/70"
+                class="mt-1 text-xs text-ink/70"
             >
                 {{ t('location.noResults') }}
             </p>
         </div>
 
-        <div ref="mapContainer" class="h-64 w-full border border-black"></div>
+        <div ref="mapContainer" class="h-64 w-full border border-edge"></div>
 
         <div class="mt-2 flex items-center gap-3 text-xs">
             <span v-if="latitude !== null && longitude !== null">

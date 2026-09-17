@@ -23,7 +23,7 @@ defineProps<{
 
 <template>
     <li
-        class="flex flex-col gap-2 border-[3px] border-black px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between"
+        class="flex flex-col gap-2 border-frame border-edge px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between"
     >
         <PersonSummary
             :id="result.id"
@@ -40,7 +40,7 @@ defineProps<{
                 :data="{ user_id: result.id }"
                 as="button"
                 preserve-scroll
-                class="border border-black px-2 py-1 text-xs hover:bg-black hover:text-white"
+                class="border border-edge px-2 py-1 text-xs hover:bg-accent hover:text-on-accent"
             >
                 {{ t('contacts.index.addFriend') }}
             </Link>
@@ -48,7 +48,7 @@ defineProps<{
                 v-else-if="result.friend_status === 'request_sent'"
                 class="flex items-center gap-2"
             >
-                <span class="text-xs text-black/70">{{
+                <span class="text-xs text-ink/70">{{
                     t('contacts.index.requestSent')
                 }}</span>
                 <Link
@@ -56,7 +56,7 @@ defineProps<{
                     method="delete"
                     as="button"
                     preserve-scroll
-                    class="border border-black px-2 py-1 text-xs hover:bg-black hover:text-white"
+                    class="border border-edge px-2 py-1 text-xs hover:bg-accent hover:text-on-accent"
                 >
                     {{ t('contacts.index.cancel') }}
                 </Link>
@@ -71,7 +71,7 @@ defineProps<{
                     :data="{ action: 'accept' }"
                     as="button"
                     preserve-scroll
-                    class="border border-black px-2 py-1 text-xs hover:bg-black hover:text-white"
+                    class="border border-edge px-2 py-1 text-xs hover:bg-accent hover:text-on-accent"
                 >
                     {{ t('contacts.index.accept') }}
                 </Link>
@@ -81,7 +81,7 @@ defineProps<{
                     :data="{ action: 'decline' }"
                     as="button"
                     preserve-scroll
-                    class="border border-black px-2 py-1 text-xs hover:bg-black hover:text-white"
+                    class="border border-edge px-2 py-1 text-xs hover:bg-accent hover:text-on-accent"
                 >
                     {{ t('contacts.index.decline') }}
                 </Link>
@@ -97,7 +97,7 @@ defineProps<{
                 :data="{ user_id: result.id }"
                 as="button"
                 preserve-scroll
-                class="border border-black px-2 py-1 text-xs hover:bg-black hover:text-white"
+                class="border border-edge px-2 py-1 text-xs hover:bg-accent hover:text-on-accent"
             >
                 {{ t('contacts.index.follow') }}
             </Link>
@@ -105,7 +105,7 @@ defineProps<{
                 v-else-if="result.follow_status === 'pending'"
                 class="flex items-center gap-2"
             >
-                <span class="text-xs text-black/70">{{
+                <span class="text-xs text-ink/70">{{
                     t('contacts.index.requested')
                 }}</span>
                 <Link
@@ -113,7 +113,7 @@ defineProps<{
                     method="delete"
                     as="button"
                     preserve-scroll
-                    class="border border-black px-2 py-1 text-xs hover:bg-black hover:text-white"
+                    class="border border-edge px-2 py-1 text-xs hover:bg-accent hover:text-on-accent"
                 >
                     {{ t('contacts.index.cancel') }}
                 </Link>
@@ -127,7 +127,7 @@ defineProps<{
                     method="delete"
                     as="button"
                     preserve-scroll
-                    class="border border-black px-2 py-1 text-xs hover:bg-black hover:text-white"
+                    class="border border-edge px-2 py-1 text-xs hover:bg-accent hover:text-on-accent"
                 >
                     {{ t('contacts.index.unfollow') }}
                 </Link>

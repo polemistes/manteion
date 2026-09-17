@@ -9,7 +9,7 @@ import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
         <AlphaBanner />
 
         <div
-            class="flex min-h-screen flex-col items-center justify-center bg-white px-4 py-12 font-mono text-black"
+            class="flex min-h-screen flex-col items-center justify-center bg-surface px-4 py-12 font-body text-ink"
         >
             <div class="mb-8 flex w-full max-w-sm items-center justify-between">
                 <Link href="/" class="text-xl font-bold tracking-tight">
@@ -18,7 +18,7 @@ import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
                 <LanguageSwitcher />
             </div>
 
-            <div class="w-full max-w-sm border-[3px] border-black p-6">
+            <div class="w-full max-w-sm border-frame border-edge p-6">
                 <slot />
             </div>
         </div>

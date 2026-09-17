@@ -37,7 +37,7 @@ function onChange(): void {
     <select
         v-if="props.groups.length"
         v-model="selectedGroupId"
-        class="border border-black bg-white px-2 py-1 text-xs"
+        class="border border-edge bg-surface-raised px-2 py-1 text-xs"
         @change="onChange"
     >
         <option value="">{{ t('contacts.index.addToGroup') }}</option>
@@ -45,7 +45,7 @@ function onChange(): void {
             {{ group.name }}
         </option>
     </select>
-    <span v-else class="border border-black px-2 py-1 text-xs text-black/50">
+    <span v-else class="border border-edge px-2 py-1 text-xs text-ink/50">
         {{ t('contacts.index.noMoreGroups') }}
     </span>
 </template>

@@ -169,11 +169,11 @@ function formatDate(value: string): string {
             type="text"
             :placeholder="t('events.search.placeholder')"
             autofocus
-            class="flex-1 border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+            class="flex-1 border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
         />
         <button
             type="submit"
-            class="border border-black px-4 py-2 text-sm hover:bg-black hover:text-white"
+            class="border border-edge px-4 py-2 text-sm hover:bg-accent hover:text-on-accent"
         >
             {{ t('events.search.search') }}
         </button>
@@ -204,12 +204,12 @@ function formatDate(value: string): string {
                     type="text"
                     :value="nearQuery"
                     :placeholder="t('location.searchPlaceholder')"
-                    class="border border-black bg-white px-2 py-1 text-sm focus:ring-1 focus:ring-black focus:outline-none"
+                    class="border border-edge bg-surface-raised px-2 py-1 text-sm focus:ring-1 focus:ring-accent focus:outline-none"
                     @input="onNearSearchInput"
                 />
                 <button
                     type="button"
-                    class="border border-black px-2 py-1 text-xs hover:bg-black hover:text-white"
+                    class="border border-edge px-2 py-1 text-xs hover:bg-accent hover:text-on-accent"
                     @click="useCurrentLocation"
                 >
                     {{ t('location.useCurrentLocation') }}
@@ -217,28 +217,28 @@ function formatDate(value: string): string {
             </div>
             <ul
                 v-if="nearResults.length"
-                class="absolute z-10 mt-1 w-full border border-black bg-white"
+                class="absolute z-10 mt-1 w-full border border-edge bg-surface-raised"
             >
                 <li v-for="result in nearResults" :key="result.display_name">
                     <button
                         type="button"
-                        class="block w-full px-3 py-2 text-left text-xs hover:bg-black hover:text-white"
+                        class="block w-full px-3 py-2 text-left text-xs hover:bg-accent hover:text-on-accent"
                         @click="selectNearResult(result)"
                     >
                         {{ result.display_name }}
                     </button>
                 </li>
             </ul>
-            <p v-else-if="nearSearchError" class="mt-1 text-xs text-black/70">
+            <p v-else-if="nearSearchError" class="mt-1 text-xs text-ink/70">
                 {{ t('location.searchError') }}
             </p>
         </div>
-        <p v-if="geolocationErrorMessage" class="mt-1 text-xs text-black/70">
+        <p v-if="geolocationErrorMessage" class="mt-1 text-xs text-ink/70">
             {{ geolocationErrorMessage }}
         </p>
     </div>
 
-    <p v-if="q && !events.length" class="text-sm text-black/70">
+    <p v-if="q && !events.length" class="text-sm text-ink/70">
         {{ t('events.search.noResults', { query: q }) }}
     </p>
 
@@ -246,7 +246,7 @@ function formatDate(value: string): string {
         <li
             v-for="event in events"
             :key="event.id"
-            class="border-[3px] border-black p-4"
+            class="border-frame border-edge p-4"
         >
             <Link
                 :href="`/events/${event.id}`"
@@ -254,7 +254,7 @@ function formatDate(value: string): string {
             >
                 {{ event.name }}
             </Link>
-            <p class="text-sm text-black/70">
+            <p class="text-sm text-ink/70">
                 {{ formatDate(event.starts_at) }}
                 <template v-if="locationLabel(event)">
                     · {{ locationLabel(event) }}
@@ -276,7 +276,7 @@ function formatDate(value: string): string {
                 <span
                     v-for="tag in event.tags"
                     :key="tag.id"
-                    class="border border-black px-2 py-0.5 text-xs"
+                    class="border border-edge px-2 py-0.5 text-xs"
                 >
                     {{ categoryLabel(tag) }}
                 </span>

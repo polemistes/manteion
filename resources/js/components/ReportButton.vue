@@ -36,13 +36,13 @@ function submit(): void {
 </script>
 
 <template>
-    <span v-if="reported" class="text-xs text-black/50">{{
+    <span v-if="reported" class="text-xs text-ink/50">{{
         t('moderation.reported')
     }}</span>
     <button
         v-else
         type="button"
-        class="text-xs text-black/50 hover:underline"
+        class="text-xs text-ink/50 hover:underline"
         @click="open = true"
     >
         {{ t('moderation.report') }}
@@ -54,19 +54,19 @@ function submit(): void {
             v-model="reason"
             rows="3"
             :placeholder="t('moderation.reportReasonPlaceholder')"
-            class="mb-4 w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+            class="mb-4 w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
         ></textarea>
         <div class="flex justify-end gap-2">
             <button
                 type="button"
-                class="border border-black px-3 py-2 text-sm hover:bg-black hover:text-white"
+                class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
                 @click="open = false"
             >
                 {{ t('common.cancel') }}
             </button>
             <button
                 type="button"
-                class="border border-black bg-black px-3 py-2 text-sm text-white hover:bg-white hover:text-black"
+                class="border border-edge bg-accent px-3 py-2 text-sm text-on-accent hover:bg-surface-raised hover:text-ink"
                 @click="submit"
             >
                 {{ t('moderation.report') }}

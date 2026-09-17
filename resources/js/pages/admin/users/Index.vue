@@ -159,11 +159,11 @@ function submitDelete(): void {
             v-model="query"
             type="text"
             :placeholder="t('admin.users.searchPlaceholder')"
-            class="flex-1 border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+            class="flex-1 border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
         />
         <button
             type="submit"
-            class="border border-black px-4 py-2 text-sm hover:bg-black hover:text-white"
+            class="border border-edge px-4 py-2 text-sm hover:bg-accent hover:text-on-accent"
         >
             {{ t('common.search') }}
         </button>
@@ -172,7 +172,7 @@ function submitDelete(): void {
     <div class="overflow-x-auto">
         <table class="w-full border-collapse text-left text-sm">
             <thead>
-                <tr class="border-b-[3px] border-black">
+                <tr class="border-b-frame border-edge">
                     <th class="py-2 pr-4">{{ t('admin.users.name') }}</th>
                     <th class="py-2 pr-4">{{ t('admin.users.email') }}</th>
                     <th class="py-2 pr-4">{{ t('admin.users.role') }}</th>
@@ -184,11 +184,11 @@ function submitDelete(): void {
                 <tr
                     v-for="user in props.users.data"
                     :key="user.id"
-                    class="border-b border-black/20 align-top"
+                    class="border-b border-edge/20 align-top"
                 >
                     <td class="py-2 pr-4">
                         {{ user.name }}<br />
-                        <span class="text-xs text-black/60"
+                        <span class="text-xs text-ink/60"
                             >@{{ user.username }}</span
                         >
                     </td>
@@ -196,7 +196,7 @@ function submitDelete(): void {
                     <td class="py-2 pr-4">
                         <select
                             :value="user.role"
-                            class="border border-black bg-white px-2 py-1 font-sans text-xs"
+                            class="border border-edge bg-surface-raised px-2 py-1 font-sans text-xs"
                             @change="
                                 updateRole(
                                     user,
@@ -276,7 +276,7 @@ function submitDelete(): void {
         <template v-for="link in props.users.links" :key="link.label">
             <span
                 v-if="!link.url"
-                class="border border-black px-2 py-1 text-xs opacity-40"
+                class="border border-edge px-2 py-1 text-xs opacity-40"
                 v-html="link.label"
             />
             <Link
@@ -284,11 +284,11 @@ function submitDelete(): void {
                 :href="link.url"
                 preserve-scroll
                 preserve-state
-                class="border border-black px-2 py-1 text-xs"
+                class="border border-edge px-2 py-1 text-xs"
                 :class="
                     link.active
-                        ? 'bg-black text-white'
-                        : 'hover:bg-black hover:text-white'
+                        ? 'bg-accent text-on-accent'
+                        : 'hover:bg-accent hover:text-on-accent'
                 "
             >
                 <span v-html="link.label" />
@@ -304,19 +304,19 @@ function submitDelete(): void {
             v-model="suspendReason"
             rows="3"
             :placeholder="t('admin.users.suspendReasonPlaceholder')"
-            class="mb-4 w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+            class="mb-4 w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
         ></textarea>
         <div class="flex justify-end gap-2">
             <button
                 type="button"
-                class="border border-black px-3 py-2 text-sm hover:bg-black hover:text-white"
+                class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
                 @click="suspendTarget = null"
             >
                 {{ t('common.cancel') }}
             </button>
             <button
                 type="button"
-                class="border border-black bg-black px-3 py-2 text-sm text-white hover:bg-white hover:text-black"
+                class="border border-edge bg-accent px-3 py-2 text-sm text-on-accent hover:bg-surface-raised hover:text-ink"
                 @click="submitSuspend"
             >
                 {{ t('admin.users.suspend') }}
@@ -332,25 +332,25 @@ function submitDelete(): void {
             v-model="emailSubject"
             type="text"
             :placeholder="t('admin.users.emailSubjectPlaceholder')"
-            class="mb-2 w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+            class="mb-2 w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
         />
         <textarea
             v-model="emailBody"
             rows="5"
             :placeholder="t('admin.users.emailBodyPlaceholder')"
-            class="mb-4 w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+            class="mb-4 w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
         ></textarea>
         <div class="flex justify-end gap-2">
             <button
                 type="button"
-                class="border border-black px-3 py-2 text-sm hover:bg-black hover:text-white"
+                class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
                 @click="emailTarget = null"
             >
                 {{ t('common.cancel') }}
             </button>
             <button
                 type="button"
-                class="border border-black bg-black px-3 py-2 text-sm text-white hover:bg-white hover:text-black"
+                class="border border-edge bg-accent px-3 py-2 text-sm text-on-accent hover:bg-surface-raised hover:text-ink"
                 @click="submitEmail"
             >
                 {{ t('admin.users.sendEmail') }}
@@ -373,19 +373,19 @@ function submitDelete(): void {
         <input
             v-model="deletePassword"
             type="password"
-            class="mb-4 w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+            class="mb-4 w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
         />
         <div class="flex justify-end gap-2">
             <button
                 type="button"
-                class="border border-black px-3 py-2 text-sm hover:bg-black hover:text-white"
+                class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
                 @click="deleteTarget = null"
             >
                 {{ t('common.cancel') }}
             </button>
             <button
                 type="button"
-                class="border border-black bg-black px-3 py-2 text-sm text-white hover:bg-white hover:text-black"
+                class="border border-edge bg-accent px-3 py-2 text-sm text-on-accent hover:bg-surface-raised hover:text-ink"
                 @click="submitDelete"
             >
                 {{ t('admin.users.deleteAccount') }}

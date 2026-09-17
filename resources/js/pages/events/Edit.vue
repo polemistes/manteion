@@ -49,7 +49,7 @@ const props = defineProps<{
     <div v-if="props.event.image" class="mb-6 flex flex-col items-start gap-1">
         <img
             :src="props.event.image.url"
-            class="h-32 border border-black object-cover"
+            class="h-32 border border-edge object-cover"
             style="aspect-ratio: 1.5"
             alt=""
         />
@@ -83,7 +83,7 @@ const props = defineProps<{
                 name="name"
                 required
                 :value="props.event.name"
-                class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+                class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
             />
             <FieldError :message="errors.name" />
         </div>
@@ -97,7 +97,7 @@ const props = defineProps<{
                 type="text"
                 name="place"
                 :value="props.event.place"
-                class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+                class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
             />
             <FieldError :message="errors.place" />
         </div>
@@ -124,7 +124,7 @@ const props = defineProps<{
                 required
                 rows="4"
                 :value="props.event.description"
-                class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+                class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
             ></textarea>
             <FieldError :message="errors.description" />
         </div>
@@ -172,7 +172,7 @@ const props = defineProps<{
             <FieldError :message="errors.image" />
         </div>
 
-        <fieldset class="border-[3px] border-black p-3">
+        <fieldset class="border-frame border-edge p-3">
             <legend class="px-1 text-xs font-bold uppercase">
                 {{ t('events.edit.visibility') }}
             </legend>
@@ -182,7 +182,7 @@ const props = defineProps<{
                     name="visibility"
                     value="private"
                     :checked="props.event.visibility === 'private'"
-                    class="border border-black"
+                    class="border border-edge"
                 />
                 {{ t('events.edit.visibilityPrivate') }}
             </label>
@@ -192,13 +192,13 @@ const props = defineProps<{
                     name="visibility"
                     value="public"
                     :checked="props.event.visibility !== 'private'"
-                    class="border border-black"
+                    class="border border-edge"
                 />
                 {{ t('events.edit.visibilityPublic') }}
             </label>
             <p
                 v-if="props.event.is_searchable"
-                class="mt-2 text-xs text-black/70"
+                class="mt-2 text-xs text-ink/70"
             >
                 {{ t('events.edit.alreadySearchable') }}
             </p>
@@ -212,7 +212,7 @@ const props = defineProps<{
                 name="allow_invitee_invites"
                 value="1"
                 :checked="props.event.allow_invitee_invites"
-                class="mt-0.5 border border-black"
+                class="mt-0.5 border border-edge"
             />
             {{ t('events.edit.allowInviteeInvites') }}
         </label>
@@ -224,7 +224,7 @@ const props = defineProps<{
                 name="allow_invitee_comments"
                 value="1"
                 :checked="props.event.allow_invitee_comments"
-                class="mt-0.5 border border-black"
+                class="mt-0.5 border border-edge"
             />
             {{ t('events.edit.allowInviteeComments') }}
         </label>
@@ -232,7 +232,7 @@ const props = defineProps<{
         <button
             type="submit"
             :disabled="processing"
-            class="w-fit border border-black bg-black px-4 py-2 text-sm font-bold text-white hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
+            class="w-fit border border-edge bg-accent px-4 py-2 text-sm font-bold text-on-accent hover:bg-surface-raised hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
         >
             {{
                 processing

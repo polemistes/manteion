@@ -33,7 +33,7 @@ const { t } = useI18n();
                 required
                 autofocus
                 autocomplete="username"
-                class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+                class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
             />
             <FieldError :message="errors.username" />
         </div>
@@ -56,7 +56,7 @@ const { t } = useI18n();
                 type="checkbox"
                 name="remember"
                 checked
-                class="border border-black"
+                class="border border-edge"
             />
             {{ t('auth.login.remember') }}
         </label>
@@ -64,7 +64,7 @@ const { t } = useI18n();
         <button
             type="submit"
             :disabled="processing"
-            class="w-full border border-black bg-black px-3 py-2 text-sm font-bold text-white hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
+            class="w-full border border-edge bg-accent px-3 py-2 text-sm font-bold text-on-accent hover:bg-surface-raised hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
         >
             {{
                 processing ? t('auth.login.submitting') : t('auth.login.submit')

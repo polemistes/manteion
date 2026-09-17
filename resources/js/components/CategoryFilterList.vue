@@ -162,7 +162,7 @@ onUnmounted(() => document.removeEventListener('click', onDocumentClick));
         <p class="mb-1 text-xs font-bold">{{ t('events.index.category') }}</p>
         <button
             type="button"
-            class="border border-black bg-white px-2 py-1 text-left text-sm"
+            class="border border-edge bg-surface-raised px-2 py-1 text-left text-sm"
             @click="toggleOpen"
         >
             {{ summaryLabel }}
@@ -170,7 +170,7 @@ onUnmounted(() => document.removeEventListener('click', onDocumentClick));
 
         <div
             v-if="isOpen"
-            class="absolute z-20 mt-1 max-h-96 w-64 overflow-y-auto border border-black bg-white p-2"
+            class="absolute z-20 mt-1 max-h-96 w-64 overflow-y-auto border border-edge bg-surface-raised p-2"
         >
             <p class="mb-2 text-xs font-bold uppercase">
                 {{ t('events.index.searchOnlyFor') }}
@@ -188,7 +188,7 @@ onUnmounted(() => document.removeEventListener('click', onDocumentClick));
                         type="checkbox"
                         :checked="isExpanded(category)"
                         :disabled="isCategoryDisabled(category)"
-                        class="border border-black"
+                        class="border border-edge"
                         @change="
                             toggleCategory(
                                 category,
@@ -210,7 +210,7 @@ onUnmounted(() => document.removeEventListener('click', onDocumentClick));
                         <input
                             type="checkbox"
                             :checked="isSelected(child.slug)"
-                            class="border border-black"
+                            class="border border-edge"
                             @change="
                                 toggleChild(
                                     category,
@@ -226,7 +226,7 @@ onUnmounted(() => document.removeEventListener('click', onDocumentClick));
 
             <button
                 type="button"
-                class="mt-1 w-full border border-black bg-black px-2 py-1 text-xs font-bold text-white hover:bg-white hover:text-black"
+                class="mt-1 w-full border border-edge bg-accent px-2 py-1 text-xs font-bold text-on-accent hover:bg-surface-raised hover:text-ink"
                 @click="close"
             >
                 {{ t('categoryPicker.done') }}

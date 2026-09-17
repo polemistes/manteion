@@ -26,10 +26,12 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown));
 <template>
     <div
         v-if="props.open"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4"
         @click.self="close"
     >
-        <div class="w-full max-w-sm border-[3px] border-black bg-white p-6">
+        <div
+            class="w-full max-w-sm border-frame border-edge bg-surface-raised p-6"
+        >
             <slot />
         </div>
     </div>

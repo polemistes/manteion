@@ -10,7 +10,7 @@ const page = usePage();
 
 <template>
     <div
-        class="flex items-center justify-between gap-4 border-b-[3px] border-black bg-yellow-200 px-4 py-2 text-sm"
+        class="flex items-center justify-between gap-4 border-b-frame border-edge bg-yellow-200 px-4 py-2 text-sm"
     >
         <span>{{
             t('moderation.viewingAs', { name: page.props.auth.user.name })
@@ -19,7 +19,7 @@ const page = usePage();
             :href="exitImpersonation().url"
             method="post"
             as="button"
-            class="border border-black bg-white px-3 py-1 text-xs font-bold hover:bg-black hover:text-white"
+            class="border border-edge bg-surface-raised px-3 py-1 text-xs font-bold hover:bg-accent hover:text-on-accent"
         >
             {{ t('moderation.returnToAdmin') }}
         </Link>

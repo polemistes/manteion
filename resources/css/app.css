@@ -3,11 +3,112 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
-@theme inline {
+/*
+ * Design tokens. Components never name a colour, radius or font directly;
+ * they use these semantic utilities (bg-surface, text-ink, border-edge,
+ * bg-accent, rounded-card, font-body, border-frame …) and each style/mode
+ * combination below reassigns the variables. The values in @theme are the
+ * classic light style; `static` keeps every variable in the output so the
+ * theme blocks and @utility rules can reference them.
+ */
+@theme static {
     --font-sans:
         Instrument Sans, ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
-    --font-mono:
+    --font-body:
         'Courier New', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+    /* Page background, and the slightly lifted surface of cards and inputs. */
+    --color-surface: #ffffff;
+    --color-surface-raised: #ffffff;
+    /* Text, and lines/frames. */
+    --color-ink: #000000;
+    --color-edge: #000000;
+    /* Filled buttons, active navigation, focus rings — and the text on them. */
+    --color-accent: #000000;
+    --color-on-accent: #ffffff;
+
+    --radius-card: 0px;
+    --radius-control: 0px;
+}
+
+:root {
+    --frame-width: 3px;
+    color-scheme: light;
+}
+
+/* Classic, dark: the same brutalist frame, inverted. */
+html[data-style='classic'][data-mode='dark'] {
+    --color-surface: #0b0b0b;
+    --color-surface-raised: #0b0b0b;
+    --color-ink: #f2f2f2;
+    --color-edge: #f2f2f2;
+    --color-accent: #f2f2f2;
+    --color-on-accent: #0b0b0b;
+    color-scheme: dark;
+}
+
+/* Soft: rounded, warm, a coral accent, and a rounded sans throughout. */
+html[data-style='soft'] {
+    --font-body:
+        Nunito, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans:
+        Nunito, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --frame-width: 2px;
+    --radius-card: 1rem;
+    --radius-control: 0.5rem;
+
+    --color-surface: #fbf6ef;
+    --color-surface-raised: #ffffff;
+    --color-ink: #2f2a3d;
+    --color-edge: #e4d8ca;
+    --color-accent: #e8735a;
+    --color-on-accent: #ffffff;
+}
+
+html[data-style='soft'][data-mode='dark'] {
+    --color-surface: #1e1b2e;
+    --color-surface-raised: #2a2740;
+    --color-ink: #f2edf7;
+    --color-edge: #443f5c;
+    --color-accent: #ff8f76;
+    --color-on-accent: #1e1b2e;
+    color-scheme: dark;
+}
+
+/* The thick frame around panels; carries the card radius with it. */
+@utility border-frame {
+    border-width: var(--frame-width);
+    border-radius: var(--radius-card);
+}
+
+@utility border-x-frame {
+    border-inline-width: var(--frame-width);
+}
+
+@utility border-b-frame {
+    border-bottom-width: var(--frame-width);
+}
+
+@utility border-r-frame {
+    border-right-width: var(--frame-width);
+}
+
+@layer base {
+    /*
+     * Controls take the control radius by element, so no component has to
+     * opt in. `a.border` and `span.border` are links and chips styled as
+     * buttons. A utility such as rounded-full still wins over this.
+     */
+    button,
+    input,
+    select,
+    textarea,
+    a.border,
+    span.border {
+        border-radius: var(--radius-control);
+    }
 }

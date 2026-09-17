@@ -64,98 +64,59 @@ const navItems = computed(() => {
 </script>
 
 <template>
-    <div class="min-h-screen bg-white font-mono text-black">
-        <AlphaBanner />
-        <ImpersonationBanner v-if="isImpersonating" />
+    <div class="min-h-screen bg-surface font-body text-ink">
+        <div
+            class="mx-auto flex min-h-screen w-full max-w-7xl flex-col lg:border-x-frame lg:border-edge"
+        >
+            <AlphaBanner />
+            <ImpersonationBanner v-if="isImpersonating" />
 
-        <div class="lg:flex">
-            <aside
-                class="hidden lg:flex lg:w-64 lg:shrink-0 lg:flex-col lg:border-r-[3px] lg:border-black lg:p-6"
-            >
-                <Link
-                    :href="eventsIndex().url"
-                    class="mb-8 text-4xl font-bold tracking-tight"
+            <div class="lg:flex lg:flex-1">
+                <aside
+                    class="hidden lg:flex lg:w-64 lg:shrink-0 lg:flex-col lg:border-r-frame lg:border-edge lg:p-6"
                 >
-                    Manteion
-                </Link>
-
-                <div class="mb-6 border-b-[3px] border-black pb-4">
                     <Link
-                        :href="profileEdit().url"
-                        class="mb-2 flex items-center gap-2"
+                        :href="eventsIndex().url"
+                        class="mb-8 text-4xl font-bold tracking-tight"
                     >
-                        <Avatar :url="user.avatar_url" :name="user.name" />
-                        <span
-                            class="truncate text-xs text-black/70"
-                            :title="user.name"
-                        >
-                            @{{ user.username }}
-                        </span>
+                        Manteion
                     </Link>
-                    <LanguageSwitcher class="mb-2 w-full" />
-                    <Link
-                        :href="logout().url"
-                        method="post"
-                        as="button"
-                        class="w-full rounded border border-black px-3 py-2 text-left text-sm hover:bg-black hover:text-white"
-                    >
-                        {{ t('nav.logOut') }}
-                    </Link>
-                </div>
 
-                <nav class="flex flex-col gap-1">
-                    <Link
-                        v-for="item in navItems"
-                        :key="item.label"
-                        :href="item.href"
-                        class="flex items-center justify-between rounded px-3 py-2 text-sm"
-                        :class="
-                            item.active
-                                ? 'bg-black text-white'
-                                : 'hover:bg-black hover:text-white'
-                        "
-                    >
-                        {{ item.label }}
-                        <span v-if="item.badge" class="text-xs">{{
-                            item.badge
-                        }}</span>
-                    </Link>
-                </nav>
-            </aside>
-
-            <div class="flex min-h-screen flex-1 flex-col">
-                <div class="sticky top-0 z-10 bg-white lg:hidden">
-                    <header
-                        class="flex items-center justify-between border-b-[3px] border-black px-4 py-3"
-                    >
+                    <div class="mb-6 border-b-frame border-edge pb-4">
                         <Link
-                            :href="eventsIndex().url"
-                            class="text-2xl font-bold tracking-tight"
+                            :href="profileEdit().url"
+                            class="mb-2 flex items-center gap-2"
                         >
-                            Manteion
-                        </Link>
-                        <div class="flex items-center gap-3">
-                            <LanguageSwitcher />
-                            <Link
-                                :href="profileEdit().url"
-                                class="flex items-center gap-2 text-xs text-black/70"
+                            <Avatar :url="user.avatar_url" :name="user.name" />
+                            <span
+                                class="truncate text-xs text-ink/70"
+                                :title="user.name"
                             >
-                                <Avatar
-                                    :url="user.avatar_url"
-                                    :name="user.name"
-                                />
                                 @{{ user.username }}
-                            </Link>
-                        </div>
-                    </header>
+                            </span>
+                        </Link>
+                        <LanguageSwitcher class="mb-2 w-full" />
+                        <Link
+                            :href="logout().url"
+                            method="post"
+                            as="button"
+                            class="w-full rounded-control border border-edge px-3 py-2 text-left text-sm hover:bg-accent hover:text-on-accent"
+                        >
+                            {{ t('nav.logOut') }}
+                        </Link>
+                    </div>
 
-                    <nav class="grid grid-cols-3 border-b-[3px] border-black">
+                    <nav class="flex flex-col gap-1">
                         <Link
                             v-for="item in navItems"
                             :key="item.label"
                             :href="item.href"
-                            class="flex flex-col items-center gap-0.5 py-2 text-sm"
-                            :class="item.active ? 'bg-black text-white' : ''"
+                            class="flex items-center justify-between rounded-control px-3 py-2 text-sm"
+                            :class="
+                                item.active
+                                    ? 'bg-accent text-on-accent'
+                                    : 'hover:bg-accent hover:text-on-accent'
+                            "
                         >
                             {{ item.label }}
                             <span v-if="item.badge" class="text-xs">{{
@@ -163,11 +124,60 @@ const navItems = computed(() => {
                             }}</span>
                         </Link>
                     </nav>
-                </div>
+                </aside>
 
-                <main class="flex-1 px-4 py-6 lg:px-10 lg:py-10">
-                    <slot />
-                </main>
+                <div class="flex min-h-screen flex-1 flex-col">
+                    <div class="sticky top-0 z-10 bg-surface lg:hidden">
+                        <header
+                            class="flex items-center justify-between border-b-frame border-edge px-4 py-3"
+                        >
+                            <Link
+                                :href="eventsIndex().url"
+                                class="text-2xl font-bold tracking-tight"
+                            >
+                                Manteion
+                            </Link>
+                            <div class="flex items-center gap-3">
+                                <LanguageSwitcher />
+                                <Link
+                                    :href="profileEdit().url"
+                                    class="flex items-center gap-2 text-xs text-ink/70"
+                                >
+                                    <Avatar
+                                        :url="user.avatar_url"
+                                        :name="user.name"
+                                    />
+                                    @{{ user.username }}
+                                </Link>
+                            </div>
+                        </header>
+
+                        <nav
+                            class="grid grid-cols-3 border-b-frame border-edge"
+                        >
+                            <Link
+                                v-for="item in navItems"
+                                :key="item.label"
+                                :href="item.href"
+                                class="flex flex-col items-center gap-0.5 py-2 text-sm"
+                                :class="
+                                    item.active
+                                        ? 'bg-accent text-on-accent'
+                                        : ''
+                                "
+                            >
+                                {{ item.label }}
+                                <span v-if="item.badge" class="text-xs">{{
+                                    item.badge
+                                }}</span>
+                            </Link>
+                        </nav>
+                    </div>
+
+                    <main class="flex-1 px-4 py-6 lg:px-10 lg:py-10">
+                        <slot />
+                    </main>
+                </div>
             </div>
         </div>
 

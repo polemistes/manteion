@@ -29,13 +29,13 @@ usePoll(15000, { only: ['conversations', 'unreadMessagesCount'] });
         <h1 class="text-xl font-bold">{{ t('messages.index.title') }}</h1>
         <Link
             :href="create().url"
-            class="border border-black bg-black px-3 py-2 text-sm text-white hover:bg-white hover:text-black"
+            class="border border-edge bg-accent px-3 py-2 text-sm text-on-accent hover:bg-surface-raised hover:text-ink"
         >
             {{ t('messages.index.newMessage') }}
         </Link>
     </div>
 
-    <p v-if="!conversations.length" class="text-sm text-black/70">
+    <p v-if="!conversations.length" class="text-sm text-ink/70">
         {{ t('messages.index.noConversations') }}
     </p>
 
@@ -43,7 +43,7 @@ usePoll(15000, { only: ['conversations', 'unreadMessagesCount'] });
         <li
             v-for="conversation in conversations"
             :key="conversation.id"
-            class="border-[3px] border-black"
+            class="border-frame border-edge"
         >
             <Link
                 :href="show(conversation.id).url"
@@ -70,10 +70,8 @@ usePoll(15000, { only: ['conversations', 'unreadMessagesCount'] });
                     </span>
                     <span
                         v-if="conversation.last_message"
-                        class="block truncate font-sans text-xs text-black/70"
-                        :class="
-                            conversation.unread ? 'font-bold text-black' : ''
-                        "
+                        class="block truncate font-sans text-xs text-ink/70"
+                        :class="conversation.unread ? 'font-bold text-ink' : ''"
                     >
                         {{
                             conversation.last_message.is_mine
@@ -81,7 +79,7 @@ usePoll(15000, { only: ['conversations', 'unreadMessagesCount'] });
                                 : ''
                         }}{{ conversation.last_message.body }}
                     </span>
-                    <span v-else class="block text-xs text-black/70">{{
+                    <span v-else class="block text-xs text-ink/70">{{
                         t('messages.index.noMessagesYet')
                     }}</span>
                 </span>

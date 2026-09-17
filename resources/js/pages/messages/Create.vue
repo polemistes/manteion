@@ -24,7 +24,7 @@ const { t } = useI18n();
 
     <h1 class="mb-6 text-xl font-bold">{{ t('messages.create.title') }}</h1>
 
-    <p v-if="!friends.length" class="text-sm text-black/70">
+    <p v-if="!friends.length" class="text-sm text-ink/70">
         {{ t('messages.create.noFriends') }}
     </p>
 
@@ -47,7 +47,7 @@ const { t } = useI18n();
                         type="checkbox"
                         name="user_ids[]"
                         :value="friend.id"
-                        class="border border-black"
+                        class="border border-edge"
                     />
                     <label
                         :for="`friend-${friend.id}`"
@@ -70,7 +70,7 @@ const { t } = useI18n();
                 type="text"
                 name="name"
                 :placeholder="t('messages.create.groupNamePlaceholder')"
-                class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+                class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
             />
             <FieldError :message="errors.name" />
         </div>
@@ -78,7 +78,7 @@ const { t } = useI18n();
         <button
             type="submit"
             :disabled="processing"
-            class="w-fit border border-black bg-black px-4 py-2 text-sm font-bold text-white hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
+            class="w-fit border border-edge bg-accent px-4 py-2 text-sm font-bold text-on-accent hover:bg-surface-raised hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
         >
             {{
                 processing

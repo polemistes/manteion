@@ -182,7 +182,7 @@ onUnmounted(() => document.removeEventListener('click', onDocumentClick));
     <div v-if="props.categories.length" ref="root" class="relative">
         <button
             type="button"
-            class="border border-black bg-white px-2 py-1 text-left text-xs"
+            class="border border-edge bg-surface-raised px-2 py-1 text-left text-xs"
             @click="toggleOpen"
         >
             {{ summaryLabel }}
@@ -190,7 +190,7 @@ onUnmounted(() => document.removeEventListener('click', onDocumentClick));
 
         <div
             v-if="isOpen"
-            class="absolute z-20 mt-1 max-h-96 w-64 overflow-y-auto border border-black bg-white p-2"
+            class="absolute z-20 mt-1 max-h-96 w-64 overflow-y-auto border border-edge bg-surface-raised p-2"
         >
             <p class="mb-2 text-xs font-bold uppercase">
                 {{ t('contacts.tagPreferences.excludeHeading') }}
@@ -210,7 +210,7 @@ onUnmounted(() => document.removeEventListener('click', onDocumentClick));
                         type="checkbox"
                         :checked="isExpanded(category)"
                         :disabled="isCategoryDisabled(category) || muteAll"
-                        class="border border-black"
+                        class="border border-edge"
                         @change="
                             toggleCategory(
                                 category,
@@ -232,7 +232,7 @@ onUnmounted(() => document.removeEventListener('click', onDocumentClick));
                         <input
                             type="checkbox"
                             :checked="excludedIds.has(child.id)"
-                            class="border border-black"
+                            class="border border-edge"
                             @change="
                                 toggleChild(
                                     category,
@@ -246,12 +246,12 @@ onUnmounted(() => document.removeEventListener('click', onDocumentClick));
                 </div>
             </div>
 
-            <div class="mb-2 border-t border-black pt-2">
+            <div class="mb-2 border-t border-edge pt-2">
                 <label class="flex items-center gap-2 text-sm font-bold">
                     <input
                         type="checkbox"
                         :checked="muteAll"
-                        class="border border-black"
+                        class="border border-edge"
                         @change="
                             toggleMuteAll(
                                 ($event.target as HTMLInputElement).checked,
@@ -264,7 +264,7 @@ onUnmounted(() => document.removeEventListener('click', onDocumentClick));
 
             <button
                 type="button"
-                class="mt-1 w-full border border-black bg-black px-2 py-1 text-xs font-bold text-white hover:bg-white hover:text-black"
+                class="mt-1 w-full border border-edge bg-accent px-2 py-1 text-xs font-bold text-on-accent hover:bg-surface-raised hover:text-ink"
                 @click="close"
             >
                 {{ t('categoryPicker.done') }}

@@ -76,7 +76,7 @@ function toggleFollow(): void {
         />
         <div>
             <h1 class="text-xl font-bold">{{ props.profile.name }}</h1>
-            <p class="text-sm text-black/70">@{{ props.profile.username }}</p>
+            <p class="text-sm text-ink/70">@{{ props.profile.username }}</p>
         </div>
     </div>
 
@@ -86,7 +86,7 @@ function toggleFollow(): void {
     >
         {{ props.profile.bio }}
     </p>
-    <p v-else class="mb-6 text-sm text-black/70">
+    <p v-else class="mb-6 text-sm text-ink/70">
         {{ t('userProfile.noBio') }}
     </p>
 
@@ -99,7 +99,7 @@ function toggleFollow(): void {
                 :data="{ user_id: props.profile.id }"
                 as="button"
                 preserve-scroll
-                class="border border-black px-3 py-2 text-sm hover:bg-black hover:text-white"
+                class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
             >
                 {{ t('userProfile.addFriend') }}
             </Link>
@@ -107,7 +107,7 @@ function toggleFollow(): void {
                 v-else-if="props.friend_status === 'request_sent'"
                 class="flex items-center gap-2"
             >
-                <span class="text-sm text-black/70">{{
+                <span class="text-sm text-ink/70">{{
                     t('userProfile.friendRequestSent')
                 }}</span>
                 <Link
@@ -115,7 +115,7 @@ function toggleFollow(): void {
                     method="delete"
                     as="button"
                     preserve-scroll
-                    class="border border-black px-3 py-2 text-sm hover:bg-black hover:text-white"
+                    class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
                 >
                     {{ t('userProfile.cancel') }}
                 </Link>
@@ -130,7 +130,7 @@ function toggleFollow(): void {
                     :data="{ action: 'accept' }"
                     as="button"
                     preserve-scroll
-                    class="border border-black px-3 py-2 text-sm hover:bg-black hover:text-white"
+                    class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
                 >
                     {{ t('userProfile.acceptFriendRequest') }}
                 </Link>
@@ -140,7 +140,7 @@ function toggleFollow(): void {
                     :data="{ action: 'decline' }"
                     as="button"
                     preserve-scroll
-                    class="border border-black px-3 py-2 text-sm hover:bg-black hover:text-white"
+                    class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
                 >
                     {{ t('userProfile.decline') }}
                 </Link>
@@ -148,7 +148,7 @@ function toggleFollow(): void {
             <button
                 v-else
                 type="button"
-                class="border border-black px-3 py-2 text-sm hover:bg-black hover:text-white"
+                class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
                 @click="unfriend"
             >
                 {{ t('userProfile.unfriend') }}
@@ -160,7 +160,7 @@ function toggleFollow(): void {
                     props.follow_status === 'following'
                 "
                 type="button"
-                class="border border-black px-3 py-2 text-sm hover:bg-black hover:text-white"
+                class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
                 @click="toggleFollow"
             >
                 {{
@@ -170,7 +170,7 @@ function toggleFollow(): void {
                 }}
             </button>
             <span v-else class="flex items-center gap-2">
-                <span class="text-sm text-black/70">{{
+                <span class="text-sm text-ink/70">{{
                     t('userProfile.followRequested')
                 }}</span>
                 <Link
@@ -178,7 +178,7 @@ function toggleFollow(): void {
                     method="delete"
                     as="button"
                     preserve-scroll
-                    class="border border-black px-3 py-2 text-sm hover:bg-black hover:text-white"
+                    class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
                 >
                     {{ t('userProfile.cancel') }}
                 </Link>
@@ -190,7 +190,7 @@ function toggleFollow(): void {
                 method="post"
                 :data="{ user_ids: [props.profile.id] }"
                 as="button"
-                class="border border-black px-3 py-2 text-sm hover:bg-black hover:text-white"
+                class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
             >
                 {{ t('userProfile.message') }}
             </Link>
@@ -199,7 +199,7 @@ function toggleFollow(): void {
         <button
             v-if="props.friends.length"
             type="button"
-            class="w-full border border-black px-3 py-2 text-sm hover:bg-black hover:text-white"
+            class="w-full border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
             @click="friendsOpen = !friendsOpen"
         >
             {{

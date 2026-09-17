@@ -21,11 +21,11 @@ const visible = ref(false);
             :name="name"
             :type="visible ? 'text' : 'password'"
             v-bind="$attrs"
-            class="w-full border border-black bg-white px-3 py-2 pr-10 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+            class="w-full border border-edge bg-surface-raised px-3 py-2 pr-10 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
         />
         <button
             type="button"
-            class="absolute inset-y-0 right-0 flex items-center px-3 text-black/60 hover:text-black"
+            class="absolute inset-y-0 right-0 flex items-center px-3 text-ink/60 hover:text-ink"
             :aria-label="
                 visible ? t('common.hidePassword') : t('common.showPassword')
             "

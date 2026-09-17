@@ -175,7 +175,7 @@ const locationLabel =
     <div class="mb-4 flex items-start justify-between gap-4">
         <div>
             <h1 class="text-xl font-bold">{{ props.event.name }}</h1>
-            <p class="text-sm text-black/70">
+            <p class="text-sm text-ink/70">
                 {{ formatDate(props.event.starts_at) }}
                 <template v-if="props.event.ends_at">
                     – {{ formatDate(props.event.ends_at) }}
@@ -199,14 +199,14 @@ const locationLabel =
             <Link
                 v-if="props.event.is_owner"
                 :href="editEvent(props.event.id).url"
-                class="border border-black px-3 py-2 text-sm hover:bg-black hover:text-white"
+                class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
             >
                 {{ t('events.show.edit') }}
             </Link>
             <button
                 v-if="props.event.can_delete"
                 type="button"
-                class="border border-black px-3 py-2 text-sm hover:bg-black hover:text-white"
+                class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
                 @click="deleteEvent"
             >
                 {{ t('events.show.delete') }}
@@ -223,12 +223,12 @@ const locationLabel =
         <span
             v-for="tag in props.event.tags"
             :key="tag.id"
-            class="border border-black px-2 py-0.5 text-xs"
+            class="border border-edge px-2 py-0.5 text-xs"
         >
             {{ categoryLabel(tag) }}
         </span>
         <span
-            class="border border-black px-2 py-0.5 text-xs font-bold uppercase"
+            class="border border-edge px-2 py-0.5 text-xs font-bold uppercase"
         >
             {{
                 props.event.visibility === 'private'
@@ -243,21 +243,21 @@ const locationLabel =
             v-for="(image, index) in props.event.images"
             :key="index"
             :src="image"
-            class="h-32 w-32 border border-black object-cover"
+            class="h-32 w-32 border border-edge object-cover"
             alt=""
         />
     </div>
 
     <p
         class="mb-8 max-w-prose font-sans text-sm whitespace-pre-line"
-        :class="{ 'text-black/50 italic': props.event.is_deleted }"
+        :class="{ 'text-ink/50 italic': props.event.is_deleted }"
     >
         {{ props.event.description }}
     </p>
 
     <section
         v-if="props.event.is_owner"
-        class="mb-8 border-[3px] border-black p-4"
+        class="mb-8 border-frame border-edge p-4"
     >
         <h2 class="mb-2 text-sm font-bold uppercase">
             {{ t('events.show.ownerTools') }}
@@ -278,7 +278,7 @@ const locationLabel =
             <button
                 type="submit"
                 :disabled="processing"
-                class="border border-black px-3 py-2 text-sm hover:bg-black hover:text-white"
+                class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
             >
                 {{ t('events.show.makeSearchable') }}
             </button>
@@ -302,7 +302,7 @@ const locationLabel =
                     id="status"
                     name="status"
                     :value="props.myAttendance?.status ?? 'no_response'"
-                    class="border border-black bg-white px-2 py-1 text-sm"
+                    class="border border-edge bg-surface-raised px-2 py-1 text-sm"
                 >
                     <option value="no_response">
                         {{ t('events.show.statusNoResponse') }}
@@ -333,7 +333,7 @@ const locationLabel =
                     :value="
                         props.myAttendance?.attendance_visibility ?? 'everyone'
                     "
-                    class="border border-black bg-white px-2 py-1 text-sm"
+                    class="border border-edge bg-surface-raised px-2 py-1 text-sm"
                 >
                     <option value="everyone">
                         {{ t('events.show.visibilityEveryone') }}
@@ -351,7 +351,7 @@ const locationLabel =
             <button
                 type="submit"
                 :disabled="processing"
-                class="border border-black bg-black px-3 py-2 text-sm text-white hover:bg-white hover:text-black"
+                class="border border-edge bg-accent px-3 py-2 text-sm text-on-accent hover:bg-surface-raised hover:text-ink"
             >
                 {{
                     processing
@@ -375,7 +375,7 @@ const locationLabel =
             <select
                 name="user_ids[]"
                 multiple
-                class="min-w-48 border border-black bg-white px-2 py-1 text-sm"
+                class="min-w-48 border border-edge bg-surface-raised px-2 py-1 text-sm"
             >
                 <option
                     v-for="friend in props.inviteCandidates"
@@ -388,13 +388,13 @@ const locationLabel =
             <button
                 type="submit"
                 :disabled="processing"
-                class="border border-black px-3 py-2 text-sm hover:bg-black hover:text-white"
+                class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
             >
                 {{ t('events.show.invite') }}
             </button>
             <FieldError :message="errors.user_ids" />
         </Form>
-        <p v-else class="text-sm text-black/70">
+        <p v-else class="text-sm text-ink/70">
             {{ t('events.show.noInviteCandidates') }}
         </p>
     </section>
@@ -407,14 +407,14 @@ const locationLabel =
             <li
                 v-for="attendee in props.attendees"
                 :key="attendee.id"
-                class="flex items-center justify-between border-[3px] border-black px-3 py-2 text-sm"
+                class="flex items-center justify-between border-frame border-edge px-3 py-2 text-sm"
             >
                 <PersonSummary v-bind="attendee.user" />
                 <span class="text-xs font-bold">
                     {{ statusLabel(attendee.status) }}
                 </span>
             </li>
-            <li v-if="!props.attendees.length" class="text-sm text-black/70">
+            <li v-if="!props.attendees.length" class="text-sm text-ink/70">
                 {{ t('events.show.noOneYet') }}
             </li>
         </ul>
@@ -429,7 +429,7 @@ const locationLabel =
             <li
                 v-for="comment in props.comments"
                 :key="comment.id"
-                class="border-[3px] border-black p-3"
+                class="border-frame border-edge p-3"
             >
                 <div class="mb-1 flex items-center justify-between gap-2">
                     <PersonSummary v-bind="comment.user" />
@@ -451,15 +451,15 @@ const locationLabel =
                 </div>
                 <p
                     class="font-sans text-sm whitespace-pre-line"
-                    :class="{ 'text-black/50 italic': comment.is_deleted }"
+                    :class="{ 'text-ink/50 italic': comment.is_deleted }"
                 >
                     {{ comment.body }}
                 </p>
-                <p class="mt-1 text-xs text-black/70">
+                <p class="mt-1 text-xs text-ink/70">
                     {{ formatDate(comment.created_at) }}
                 </p>
             </li>
-            <li v-if="!props.comments.length" class="text-sm text-black/70">
+            <li v-if="!props.comments.length" class="text-sm text-ink/70">
                 {{ t('events.show.noComments') }}
             </li>
         </ul>
@@ -476,13 +476,13 @@ const locationLabel =
                 required
                 rows="3"
                 :placeholder="t('events.show.commentPlaceholder')"
-                class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+                class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
             ></textarea>
             <FieldError :message="errors.body" />
             <button
                 type="submit"
                 :disabled="processing"
-                class="w-fit border border-black bg-black px-3 py-2 text-sm text-white hover:bg-white hover:text-black"
+                class="w-fit border border-edge bg-accent px-3 py-2 text-sm text-on-accent hover:bg-surface-raised hover:text-ink"
             >
                 {{
                     processing
@@ -491,7 +491,7 @@ const locationLabel =
                 }}
             </button>
         </Form>
-        <p v-else class="text-sm text-black/70">
+        <p v-else class="text-sm text-ink/70">
             {{ t('events.show.commentsDisabled') }}
         </p>
     </section>

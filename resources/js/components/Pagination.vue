@@ -29,13 +29,13 @@ const { t } = useI18n();
             :href="props.pagination.previous_url"
             :only="props.only"
             preserve-scroll
-            class="border border-black px-3 py-2 hover:bg-black hover:text-white"
+            class="border border-edge px-3 py-2 hover:bg-accent hover:text-on-accent"
         >
             {{ t('pagination.previous') }}
         </Link>
         <span v-else />
 
-        <span class="text-xs text-black/70">
+        <span class="text-xs text-ink/70">
             {{
                 t('pagination.pageOf', {
                     page: props.pagination.current_page,
@@ -49,7 +49,7 @@ const { t } = useI18n();
             :href="props.pagination.next_url"
             :only="props.only"
             preserve-scroll
-            class="border border-black px-3 py-2 hover:bg-black hover:text-white"
+            class="border border-edge px-3 py-2 hover:bg-accent hover:text-on-accent"
         >
             {{ t('pagination.next') }}
         </Link>

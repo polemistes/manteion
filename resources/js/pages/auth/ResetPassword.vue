@@ -50,7 +50,7 @@ const { t } = useI18n();
                 autofocus
                 autocomplete="new-password"
             />
-            <p class="mt-1 text-xs text-black/70">
+            <p class="mt-1 text-xs text-ink/70">
                 {{ t('common.passphraseHint') }}
             </p>
             <FieldError :message="errors.password" />
@@ -74,7 +74,7 @@ const { t } = useI18n();
         <button
             type="submit"
             :disabled="processing"
-            class="w-full border border-black bg-black px-3 py-2 text-sm font-bold text-white hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
+            class="w-full border border-edge bg-accent px-3 py-2 text-sm font-bold text-on-accent hover:bg-surface-raised hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
         >
             {{
                 processing

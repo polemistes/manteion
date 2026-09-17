@@ -53,7 +53,7 @@ function message(notification: NotificationItem): string {
 
     <h1 class="mb-6 text-xl font-bold">{{ t('notifications.title') }}</h1>
 
-    <p v-if="!notifications.length" class="text-sm text-black/70">
+    <p v-if="!notifications.length" class="text-sm text-ink/70">
         {{ t('notifications.empty') }}
     </p>
 
@@ -61,7 +61,7 @@ function message(notification: NotificationItem): string {
         <li
             v-for="notification in notifications"
             :key="notification.id"
-            class="flex items-center justify-between gap-4 border-[3px] border-black px-3 py-2 text-sm"
+            class="flex items-center justify-between gap-4 border-frame border-edge px-3 py-2 text-sm"
             :class="notification.read_at ? '' : 'font-bold'"
         >
             <Link
@@ -70,7 +70,7 @@ function message(notification: NotificationItem): string {
             >
                 {{ message(notification) }}
             </Link>
-            <span class="shrink-0 text-xs text-black/70">{{
+            <span class="shrink-0 text-xs text-ink/70">{{
                 formatDate(notification.created_at)
             }}</span>
             <Link
@@ -78,7 +78,7 @@ function message(notification: NotificationItem): string {
                 :href="read(notification.id).url"
                 method="post"
                 as="button"
-                class="shrink-0 border border-black px-2 py-1 text-xs hover:bg-black hover:text-white"
+                class="shrink-0 border border-edge px-2 py-1 text-xs hover:bg-accent hover:text-on-accent"
             >
                 {{ t('notifications.markRead') }}
             </Link>

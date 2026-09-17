@@ -41,7 +41,7 @@ const props = defineProps<{
                 type="text"
                 name="name"
                 required
-                class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+                class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
             />
             <FieldError :message="errors.name" />
         </div>
@@ -54,7 +54,7 @@ const props = defineProps<{
                 id="place"
                 type="text"
                 name="place"
-                class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+                class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
             />
             <FieldError :message="errors.place" />
         </div>
@@ -73,7 +73,7 @@ const props = defineProps<{
                 name="description"
                 required
                 rows="4"
-                class="w-full border border-black bg-white px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-black focus:outline-none"
+                class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
             ></textarea>
             <FieldError :message="errors.description" />
         </div>
@@ -113,7 +113,7 @@ const props = defineProps<{
             <FieldError :message="errors.image" />
         </div>
 
-        <fieldset class="border-[3px] border-black p-3">
+        <fieldset class="border-frame border-edge p-3">
             <legend class="px-1 text-xs font-bold uppercase">
                 {{ t('events.create.visibility') }}
             </legend>
@@ -123,7 +123,7 @@ const props = defineProps<{
                     name="visibility"
                     value="private"
                     checked
-                    class="border border-black"
+                    class="border border-edge"
                 />
                 {{ t('events.create.visibilityPrivate') }}
             </label>
@@ -132,7 +132,7 @@ const props = defineProps<{
                     type="radio"
                     name="visibility"
                     value="public"
-                    class="border border-black"
+                    class="border border-edge"
                 />
                 {{ t('events.create.visibilityPublic') }}
             </label>
@@ -145,7 +145,7 @@ const props = defineProps<{
                 type="checkbox"
                 name="allow_invitee_invites"
                 value="1"
-                class="mt-0.5 border border-black"
+                class="mt-0.5 border border-edge"
             />
             {{ t('events.create.allowInviteeInvites') }}
         </label>
@@ -157,7 +157,7 @@ const props = defineProps<{
                 name="allow_invitee_comments"
                 value="1"
                 checked
-                class="mt-0.5 border border-black"
+                class="mt-0.5 border border-edge"
             />
             {{ t('events.create.allowInviteeComments') }}
         </label>
@@ -165,7 +165,7 @@ const props = defineProps<{
         <button
             type="submit"
             :disabled="processing"
-            class="w-fit border border-black bg-black px-4 py-2 text-sm font-bold text-white hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
+            class="w-fit border border-edge bg-accent px-4 py-2 text-sm font-bold text-on-accent hover:bg-surface-raised hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
         >
             {{
                 processing

@@ -104,7 +104,7 @@ async function suspendAuthor(user: ReportedUser): Promise<void> {
 
     <h1 class="mb-6 text-xl font-bold">{{ t('moderation.title') }}</h1>
 
-    <p v-if="!props.reports.length" class="text-sm text-black/70">
+    <p v-if="!props.reports.length" class="text-sm text-ink/70">
         {{ t('moderation.noReports') }}
     </p>
 
@@ -112,7 +112,7 @@ async function suspendAuthor(user: ReportedUser): Promise<void> {
         <li
             v-for="report in props.reports"
             :key="report.id"
-            class="border-[3px] border-black p-4"
+            class="border-frame border-edge p-4"
         >
             <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
                 <span class="text-xs font-bold uppercase">{{
@@ -129,14 +129,14 @@ async function suspendAuthor(user: ReportedUser): Promise<void> {
                 }}
             </p>
 
-            <p class="mb-1 text-xs text-black/70">
+            <p class="mb-1 text-xs text-ink/70">
                 {{
                     t('moderation.byAuthor', {
                         name: report.reportable.author.name,
                     })
                 }}
             </p>
-            <p class="mb-1 text-xs text-black/70">
+            <p class="mb-1 text-xs text-ink/70">
                 {{
                     t('moderation.reportedByReason', {
                         name: report.reporter.name,
@@ -144,42 +144,42 @@ async function suspendAuthor(user: ReportedUser): Promise<void> {
                     })
                 }}
             </p>
-            <p class="mb-3 text-xs text-black/50">
+            <p class="mb-3 text-xs text-ink/50">
                 {{ formatDate(report.created_at) }}
             </p>
 
             <div class="flex flex-wrap gap-2">
                 <button
                     type="button"
-                    class="border border-black bg-black px-3 py-1 text-xs text-white hover:bg-white hover:text-black"
+                    class="border border-edge bg-accent px-3 py-1 text-xs text-on-accent hover:bg-surface-raised hover:text-ink"
                     @click="deleteContent(report)"
                 >
                     {{ t('moderation.deleteContent') }}
                 </button>
                 <button
                     type="button"
-                    class="border border-black px-3 py-1 text-xs hover:bg-black hover:text-white"
+                    class="border border-edge px-3 py-1 text-xs hover:bg-accent hover:text-on-accent"
                     @click="dismiss(report)"
                 >
                     {{ t('moderation.dismiss') }}
                 </button>
                 <button
                     type="button"
-                    class="border border-black px-3 py-1 text-xs hover:bg-black hover:text-white"
+                    class="border border-edge px-3 py-1 text-xs hover:bg-accent hover:text-on-accent"
                     @click="messageAuthor(report.reporter)"
                 >
                     {{ t('moderation.messageReporter') }}
                 </button>
                 <button
                     type="button"
-                    class="border border-black px-3 py-1 text-xs hover:bg-black hover:text-white"
+                    class="border border-edge px-3 py-1 text-xs hover:bg-accent hover:text-on-accent"
                     @click="messageAuthor(report.reportable.author)"
                 >
                     {{ t('moderation.messageReportedUser') }}
                 </button>
                 <button
                     type="button"
-                    class="border border-black px-3 py-1 text-xs hover:bg-black hover:text-white"
+                    class="border border-edge px-3 py-1 text-xs hover:bg-accent hover:text-on-accent"
                     @click="suspendAuthor(report.reportable.author)"
                 >
                     {{ t('moderation.suspendUser') }}
