@@ -30,3 +30,6 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# Playwright MCP writes its snapshots and screenshots here
+/.playwright-mcp
