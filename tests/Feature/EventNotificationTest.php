@@ -128,3 +128,26 @@ test('a user can view and mark their notifications as read', function () {
 
     expect($follower->notifications()->first()->read_at)->not->toBeNull();
 });
+
+test('followers are notified once an event created private is later made public, and only once', function () {
+    Notification::fake();
+    $owner = User::factory()->create();
+    $follower = User::factory()->create();
+    Follow::factory()->create(['follower_id' => $follower->id, 'followed_id' => $owner->id]);
+    $event = Event::factory()->create(['user_id' => $owner->id]);
+
+    $payload = [
+        'name' => $event->name,
+        'description' => $event->description,
+        'starts_at' => $event->starts_at->toDateTimeString(),
+        'allow_invitee_invites' => false,
+        'allow_invitee_comments' => true,
+    ];
+
+    $this->actingAs($owner)->put("/events/{$event->id}", [...$payload, 'visibility' => 'public'])->assertRedirect();
+    Notification::assertSentToTimes($follower, FollowedUserPublishedEvent::class, 1);
+
+    $this->actingAs($owner)->put("/events/{$event->id}", [...$payload, 'visibility' => 'private'])->assertRedirect();
+    $this->actingAs($owner)->put("/events/{$event->id}", [...$payload, 'visibility' => 'public'])->assertRedirect();
+    Notification::assertSentToTimes($follower, FollowedUserPublishedEvent::class, 1);
+});

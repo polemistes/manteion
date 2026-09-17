@@ -36,3 +36,22 @@ test('searchable events are findable via the search endpoint', function () {
         ->has('events', 1)
         ->where('events.0.name', 'Citywide Picnic'));
 });
+
+test('the searchable tier survives making the event private and public again', function () {
+    $owner = User::factory()->create();
+    $event = Event::factory()->searchable()->create(['user_id' => $owner->id]);
+
+    $payload = [
+        'name' => $event->name,
+        'description' => $event->description,
+        'starts_at' => $event->starts_at->toDateTimeString(),
+        'allow_invitee_invites' => false,
+        'allow_invitee_comments' => true,
+    ];
+
+    $this->actingAs($owner)->put("/events/{$event->id}", [...$payload, 'visibility' => 'private'])->assertRedirect();
+    expect($event->fresh()->visibility)->toBe(EventVisibility::Private);
+
+    $this->actingAs($owner)->put("/events/{$event->id}", [...$payload, 'visibility' => 'public'])->assertRedirect();
+    expect($event->fresh()->visibility)->toBe(EventVisibility::Searchable);
+});

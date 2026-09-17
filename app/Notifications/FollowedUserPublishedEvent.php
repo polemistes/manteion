@@ -4,11 +4,13 @@ namespace App\Notifications;
 
 use App\Models\Event;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
+use Illuminate\Queue\SerializesModels;
 
-class FollowedUserPublishedEvent extends Notification
+class FollowedUserPublishedEvent extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, SerializesModels;
 
     public function __construct(
         public Event $event,

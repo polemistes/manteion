@@ -54,7 +54,7 @@ test('an administrator can email a user', function () {
     ]);
 
     $response->assertRedirect();
-    Mail::assertSent(AdminNotice::class, fn (AdminNotice $mail) => $mail->hasTo('target@example.com')
+    Mail::assertQueued(AdminNotice::class, fn (AdminNotice $mail) => $mail->hasTo('target@example.com')
         && $mail->subjectLine === 'Regarding your account');
 });
 

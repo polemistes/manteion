@@ -81,7 +81,7 @@ class UserController extends Controller
 
     public function sendEmail(StoreAdminEmailRequest $request, User $user): RedirectResponse
     {
-        Mail::to($user->email)->send(new AdminNotice(
+        Mail::to($user->email)->queue(new AdminNotice(
             $request->validated('subject'),
             $request->validated('body'),
         ));

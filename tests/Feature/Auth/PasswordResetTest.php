@@ -13,7 +13,7 @@ test('requesting a reset link for an email with one match sends one email with o
     $this->post('/forgot-password', ['email' => 'single@example.com'])->assertSessionHasNoErrors();
 
     expect(PasswordResetRequest::query()->where('user_id', $user->id)->count())->toBe(1);
-    Mail::assertSent(PasswordResetRequested::class, fn (PasswordResetRequested $mail) => $mail->hasTo('single@example.com')
+    Mail::assertQueued(PasswordResetRequested::class, fn (PasswordResetRequested $mail) => $mail->hasTo('single@example.com')
         && count($mail->links) === 1
         && $mail->links[0]['user']->is($user));
 });
@@ -26,7 +26,7 @@ test('requesting a reset link for an email with several matches sends one email 
     $this->post('/forgot-password', ['email' => 'shared@example.com'])->assertSessionHasNoErrors();
 
     expect(PasswordResetRequest::query()->count())->toBe(2);
-    Mail::assertSent(PasswordResetRequested::class, function (PasswordResetRequested $mail) use ($first, $second) {
+    Mail::assertQueued(PasswordResetRequested::class, function (PasswordResetRequested $mail) use ($first, $second) {
         $usernames = collect($mail->links)->map(fn ($link) => $link['user']->username)->all();
 
         return $mail->hasTo('shared@example.com')
@@ -42,7 +42,7 @@ test('requesting a reset link for an email with no matches responds the same way
     $response = $this->post('/forgot-password', ['email' => 'nobody@example.com']);
 
     $response->assertSessionHasNoErrors();
-    Mail::assertNothingSent();
+    Mail::assertNothingQueued();
     expect(PasswordResetRequest::query()->count())->toBe(0);
 });
 

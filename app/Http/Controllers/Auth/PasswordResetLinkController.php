@@ -25,7 +25,9 @@ class PasswordResetLinkController extends Controller
      * this generates one reset token per matching account and sends a
      * single email listing all of them. Always responds the same way
      * whether or not the email matched anything, so the response can't be
-     * used to check which emails have accounts.
+     * used to check which emails have accounts. The mail is queued rather
+     * than sent inline for the same reason: an inline send to the mail
+     * provider would make a matching email measurably slower to respond.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -52,7 +54,7 @@ class PasswordResetLinkController extends Controller
         if ($links->isNotEmpty()) {
             Mail::to($request->string('email')->value())
                 ->locale($users->first()->locale ?? 'en')
-                ->send(new PasswordResetRequested($links->values()->all()));
+                ->queue(new PasswordResetRequested($links->values()->all()));
         }
 
         return back()->with('status', __('passwords.sent'));

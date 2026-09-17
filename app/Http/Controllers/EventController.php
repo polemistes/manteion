@@ -9,6 +9,7 @@ use App\Enums\FollowStatus;
 use App\Enums\ReportStatus;
 use App\Http\Requests\StoreEventRequest;
 use App\Http\Requests\UpdateEventRequest;
+use App\Jobs\NotifyFollowersOfEvent;
 use App\Models\ContactGroup;
 use App\Models\ContactTagPreference;
 use App\Models\Event;
@@ -16,7 +17,6 @@ use App\Models\EventAttendee;
 use App\Models\EventComment;
 use App\Models\Tag;
 use App\Models\User;
-use App\Notifications\FollowedUserPublishedEvent;
 use App\Services\ImageProcessor;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -159,7 +159,7 @@ class EventController extends Controller
         $this->storeImage($event, $request->file('image'));
 
         if ($event->visibility !== EventVisibility::Private) {
-            $this->notifyFollowers($event);
+            NotifyFollowersOfEvent::dispatch($event);
         }
 
         return redirect()->route('events.show', $event);
@@ -267,9 +267,13 @@ class EventController extends Controller
     {
         $visibility = EventVisibility::from($request->string('visibility')->value());
 
-        if ($event->visibility === EventVisibility::Searchable && $visibility === EventVisibility::Public) {
+        // The searchable tier, once bought, survives visibility edits: making
+        // the event private hides it, and making it public again restores it.
+        if ($event->searchable_paid_at !== null && $visibility === EventVisibility::Public) {
             $visibility = EventVisibility::Searchable;
         }
+
+        $wasPrivate = $event->visibility === EventVisibility::Private;
 
         $event->update([
             ...$request->safe()->only(['name', 'place', 'latitude', 'longitude', 'city', 'country', 'description', 'starts_at', 'ends_at', 'allow_invitee_invites', 'allow_invitee_comments']),
@@ -278,6 +282,10 @@ class EventController extends Controller
 
         $this->syncTags($event, $request->input('tag_ids', []));
         $this->storeImage($event, $request->file('image'));
+
+        if ($wasPrivate && $visibility !== EventVisibility::Private && $event->followers_notified_at === null) {
+            NotifyFollowersOfEvent::dispatch($event);
+        }
 
         return redirect()->route('events.show', $event);
     }
@@ -500,27 +508,5 @@ class EventController extends Controller
         $path = $this->imageProcessor->store($file, "events/{$event->id}");
 
         $event->images()->create(['path' => $path, 'position' => 0]);
-    }
-
-    private function notifyFollowers(Event $event): void
-    {
-        $tagIds = $event->tags->pluck('id');
-
-        $followers = $event->owner->followers()->wherePivot('status', FollowStatus::Accepted->value)->get();
-
-        foreach ($followers as $follower) {
-            $mutedTagIds = ContactTagPreference::query()
-                ->where('user_id', $follower->id)
-                ->where('contact_user_id', $event->user_id)
-                ->pluck('tag_id');
-
-            if ($mutedTagIds->contains(null)) {
-                continue;
-            }
-
-            if ($mutedTagIds->isEmpty() || $mutedTagIds->intersect($tagIds)->isEmpty()) {
-                $follower->notify(new FollowedUserPublishedEvent($event));
-            }
-        }
     }
 }
