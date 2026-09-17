@@ -176,6 +176,10 @@ class EventController extends Controller
         $attendee = $event->attendeeFor($viewer);
         $viewerFriendIds = $viewer->friendIds();
 
+        // The comment policy reads the comment's event; hand it this loaded
+        // instance so no comment re-fetches the event and its attendees.
+        $event->comments->each(fn (EventComment $comment) => $comment->setRelation('event', $event));
+
         return Inertia::render('events/Show', [
             'event' => [
                 'id' => $event->id,
@@ -223,7 +227,9 @@ class EventController extends Controller
                 'created_at' => $comment->created_at->toIso8601String(),
                 'user' => ['id' => $comment->user->id, 'name' => $comment->user->name, 'username' => $comment->user->username, 'avatar_url' => $comment->user->avatar_url],
                 'can_delete' => $viewer->can('delete', $comment),
-                'can_report' => ! $comment->is_deleted && $viewer->can('view', $comment) && ! $viewer->is($comment->user),
+                // The viewer has already been authorised to view the event,
+                // and with it every comment on it.
+                'can_report' => ! $comment->is_deleted && $comment->user_id !== $viewer->id,
             ])->values(),
             'inviteCandidates' => $viewer->friends()
                 ->reject(fn (User $friend) => $event->attendeeFor($friend) !== null)

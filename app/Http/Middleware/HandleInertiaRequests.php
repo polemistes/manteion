@@ -46,9 +46,11 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $user,
             ],
-            'unreadNotificationsCount' => $user?->unreadNotifications()->count() ?? 0,
-            'unreadMessagesCount' => $user === null ? 0 : $this->unreadMessagesCount($user),
-            'pendingContactRequestsCount' => $user === null ? 0 : $this->pendingContactRequestsCount($user),
+            // Closures, so a partial reload that doesn't ask for these badges
+            // (a message poll, a filter change) doesn't run their queries.
+            'unreadNotificationsCount' => fn () => $user?->unreadNotifications()->count() ?? 0,
+            'unreadMessagesCount' => fn () => $user === null ? 0 : $this->unreadMessagesCount($user),
+            'pendingContactRequestsCount' => fn () => $user === null ? 0 : $this->pendingContactRequestsCount($user),
             'locale' => app()->getLocale(),
             'availableLocales' => config('app.supported_locales'),
             'vapidPublicKey' => config('webpush.vapid.public_key'),

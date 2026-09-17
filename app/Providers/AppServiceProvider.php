@@ -7,6 +7,7 @@ use App\Models\EventComment;
 use App\Models\Message;
 use Carbon\CarbonImmutable;
 use GuzzleHttp\Psr7\HttpFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -43,6 +44,11 @@ class AppServiceProvider extends ServiceProvider
     protected function configureDefaults(): void
     {
         Date::use(CarbonImmutable::class);
+
+        // A relation first touched on one model of a loaded collection is
+        // loaded for the whole collection, so the many `$row->user`-style
+        // accesses in controllers cost one query per relation, not per row.
+        Model::automaticallyEagerLoadRelationships();
 
         DB::prohibitDestructiveCommands(
             app()->isProduction(),
