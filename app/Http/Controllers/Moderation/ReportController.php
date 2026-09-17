@@ -21,7 +21,10 @@ class ReportController extends Controller
             ->where('status', ReportStatus::Pending)
             ->with(['reporter', 'reportable'])
             ->latest()
-            ->get()
+            ->paginate(25)
+            ->withQueryString();
+
+        $summaries = $reports->getCollection()
             ->filter(fn (Report $report) => $report->reportable !== null)
             ->map(fn (Report $report) => [
                 'id' => $report->id,
@@ -37,7 +40,14 @@ class ReportController extends Controller
             ->values();
 
         return Inertia::render('moderation/Index', [
-            'reports' => $reports,
+            'reports' => $summaries,
+            'pagination' => [
+                'current_page' => $reports->currentPage(),
+                'last_page' => $reports->lastPage(),
+                'total' => $reports->total(),
+                'previous_url' => $reports->previousPageUrl(),
+                'next_url' => $reports->nextPageUrl(),
+            ],
         ]);
     }
 

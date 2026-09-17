@@ -58,3 +58,25 @@ test('staff can message the reporter or the reported user from the queue', funct
 
     $response->assertRedirect();
 });
+
+test('the queue is paginated twenty-five reports a page', function () {
+    $moderator = User::factory()->create(['role' => UserRole::Moderator]);
+    $event = Event::factory()->create();
+
+    foreach (range(1, 26) as $number) {
+        $comment = EventComment::factory()->for($event)->create();
+        Report::factory()->for(User::factory()->create(), 'reporter')->create([
+            'reportable_type' => (new EventComment)->getMorphClass(),
+            'reportable_id' => $comment->id,
+        ]);
+    }
+
+    $this->actingAs($moderator)->get('/moderation/reports')
+        ->assertInertia(fn ($page) => $page
+            ->has('reports', 25)
+            ->where('pagination.last_page', 2)
+            ->where('pagination.total', 26));
+
+    $this->actingAs($moderator)->get('/moderation/reports?page=2')
+        ->assertInertia(fn ($page) => $page->has('reports', 1));
+});

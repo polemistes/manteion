@@ -86,7 +86,7 @@ class EventController extends Controller
         return Inertia::render('events/Index', [
             'events' => $this->summarizeEvents($events->getCollection(), $user, $nearPoint),
             'pagination' => $this->summarizePagination($events),
-            'categories' => $this->categoriesTree(),
+            'categories' => Tag::categoriesTree(),
             'friends' => $user->friends()->map(fn (User $friend) => ['id' => $friend->id, 'name' => $friend->name, 'username' => $friend->username, 'avatar_url' => $friend->avatar_url])->values(),
             'following' => User::query()->whereIn('id', $followedIds)->orderBy('name')->get(['id', 'name', 'username', 'avatar_path']),
             'friendGroups' => $user->contactGroups()->ofType(ContactGroupType::Friend)->get(['id', 'name']),
@@ -115,7 +115,7 @@ class EventController extends Controller
 
         return Inertia::render('events/Search', [
             'q' => $term,
-            'categories' => $this->categoriesTree(),
+            'categories' => Tag::categoriesTree(),
             'events' => $this->summarizeEvents($events->getCollection(), $viewer, $nearPoint),
             'pagination' => $this->summarizePagination($events),
             'filters' => $request->only(['tags', 'near_lat', 'near_lng']),
@@ -127,7 +127,7 @@ class EventController extends Controller
         Gate::authorize('create', Event::class);
 
         return Inertia::render('events/Create', [
-            'categories' => $this->categoriesTree(),
+            'categories' => Tag::categoriesTree(),
         ]);
     }
 
@@ -247,7 +247,7 @@ class EventController extends Controller
                     ? ['id' => $event->images->first()->id, 'url' => Storage::disk('public')->url($event->images->first()->path)]
                     : null,
             ],
-            'categories' => $this->categoriesTree(),
+            'categories' => Tag::categoriesTree(),
         ]);
     }
 
@@ -411,28 +411,6 @@ class EventController extends Controller
         $event->tags()->sync($tagIds->merge($parentIds)->unique());
     }
 
-    /**
-     * @return array<int, array{id: int, name: string, slug: string, children: array<int, array{id: int, name: string, slug: string}>}>
-     */
-    private function categoriesTree(): array
-    {
-        return Tag::query()
-            ->whereNull('parent_id')
-            ->with(['children' => fn ($query) => $query->orderBy('position')])
-            ->orderBy('position')
-            ->get()
-            ->map(fn (Tag $category) => [
-                'id' => $category->id,
-                'name' => $category->name,
-                'slug' => $category->slug,
-                'children' => $category->children->map(fn (Tag $child) => [
-                    'id' => $child->id,
-                    'name' => $child->name,
-                    'slug' => $child->slug,
-                ])->values()->all(),
-            ])->values()->all();
-    }
-
     private function storeImage(Event $event, ?UploadedFile $file): void
     {
         if ($file === null) {
@@ -444,7 +422,7 @@ class EventController extends Controller
             $existingImage->delete();
         }
 
-        $path = $this->imageProcessor->store($file, "events/{$event->id}");
+        $path = $this->imageProcessor->store($file, "events/{$event->id}", ImageProcessor::EVENT_MAX_EDGE);
 
         $event->images()->create(['path' => $path, 'position' => 0]);
     }

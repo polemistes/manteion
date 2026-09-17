@@ -35,6 +35,31 @@ class Tag extends Model
     }
 
     /**
+     * The fixed taxonomy as the pickers and filters render it: top-level
+     * categories in position order, each with its ordered children.
+     *
+     * @return array<int, array{id: int, name: string, slug: string, children: array<int, array{id: int, name: string, slug: string}>}>
+     */
+    public static function categoriesTree(): array
+    {
+        return self::query()
+            ->whereNull('parent_id')
+            ->with(['children' => fn ($query) => $query->orderBy('position')])
+            ->orderBy('position')
+            ->get()
+            ->map(fn (Tag $category) => [
+                'id' => $category->id,
+                'name' => $category->name,
+                'slug' => $category->slug,
+                'children' => $category->children->map(fn (Tag $child) => [
+                    'id' => $child->id,
+                    'name' => $child->name,
+                    'slug' => $child->slug,
+                ])->values()->all(),
+            ])->values()->all();
+    }
+
+    /**
      * @return BelongsToMany<Event, $this>
      */
     public function events(): BelongsToMany

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
+import Pagination from '@/components/Pagination.vue';
+import type { PaginationSummary } from '@/components/Pagination.vue';
 import { confirmAction } from '@/composables/useConfirm';
 import { staffDelete } from '@/composables/useStaffDelete';
 import { suspend as adminUsersSuspend } from '@/routes/admin/users';
@@ -46,6 +48,7 @@ interface ModerationReport {
 
 const props = defineProps<{
     reports: ModerationReport[];
+    pagination: PaginationSummary;
 }>();
 
 function typeLabel(type: Reportable['type']): string {
@@ -184,4 +187,9 @@ async function suspendAuthor(user: ReportedUser): Promise<void> {
             </div>
         </li>
     </ul>
+
+    <Pagination
+        :pagination="props.pagination"
+        :only="['reports', 'pagination']"
+    />
 </template>
