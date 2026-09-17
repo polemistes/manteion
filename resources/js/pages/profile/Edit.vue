@@ -310,6 +310,11 @@ async function onPushToggle(): Promise<void> {
 
                 <label class="flex items-start gap-2 text-sm">
                     <input
+                        type="hidden"
+                        name="push_notifications_enabled"
+                        value="0"
+                    />
+                    <input
                         v-model="pushEnabled"
                         type="checkbox"
                         name="push_notifications_enabled"
