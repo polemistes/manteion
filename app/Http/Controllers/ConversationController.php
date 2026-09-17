@@ -8,6 +8,7 @@ use App\Models\Conversation;
 use App\Models\ConversationParticipant;
 use App\Models\Message;
 use App\Models\User;
+use App\Services\MessageSummary;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -88,7 +89,14 @@ class ConversationController extends Controller
         Gate::authorize('view', $conversation);
 
         $user = $request->user();
-        $conversation->load(['participants.user', 'messages' => fn ($query) => $query->with('sender')->latest()->limit(100)]);
+        $conversation->load([
+            'participants.user',
+            'messages' => fn ($query) => $query->with('sender')->latest('id')->limit(ConversationMessageController::PAGE_SIZE),
+        ]);
+
+        $oldestLoadedId = $conversation->messages->min('id');
+        $hasOlder = $oldestLoadedId !== null
+            && $conversation->messages()->where('id', '<', $oldestLoadedId)->exists();
 
         $conversation->participantFor($user)?->update(['last_read_at' => now()]);
 
@@ -111,24 +119,8 @@ class ConversationController extends Controller
                 'avatar_url' => $participant->user->avatar_url,
                 'is_me' => $participant->user_id === $user->id,
             ])->values(),
-            'messages' => $conversation->messages->sortBy('created_at')->values()->map(fn (Message $message) => [
-                'id' => $message->id,
-                // A wiped, non-placeholder delete keeps sending null (the
-                // original text is never sent once deleted); a moderator
-                // placeholder is meant to be shown, so it passes through.
-                'body' => $message->is_deleted && $message->body === '' ? null : $message->body,
-                'is_deleted' => $message->is_deleted,
-                'created_at' => $message->created_at->toIso8601String(),
-                'sender' => [
-                    'id' => $message->sender->id,
-                    'name' => $message->sender->name,
-                    'username' => $message->sender->username,
-                    'avatar_url' => $message->sender->avatar_url,
-                ],
-                'is_mine' => $message->user_id === $user->id,
-                'can_delete' => ! $message->is_deleted && Gate::allows('delete', $message),
-                'can_report' => ! $message->is_deleted && $message->user_id !== $user->id,
-            ])->values(),
+            'messages' => $conversation->messages->sortBy('id')->values()->map(fn (Message $message) => MessageSummary::for($message, $user)),
+            'hasOlder' => $hasOlder,
             'canAddParticipant' => Gate::allows('addParticipant', $conversation),
             'canLeave' => Gate::allows('leave', $conversation),
             'addCandidates' => $user->friends()

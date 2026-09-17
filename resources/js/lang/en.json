@@ -287,6 +287,8 @@
             "newMessage": "New message",
             "noConversations": "No conversations yet. Start one with a friend.",
             "you": "You: ",
+            "loadOlder": "Load older messages",
+            "loadingOlder": "Loading…",
             "noMessagesYet": "No messages yet"
         },
         "create": {

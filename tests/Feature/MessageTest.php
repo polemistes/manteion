@@ -4,6 +4,7 @@ use App\Enums\ConversationType;
 use App\Enums\UserRole;
 use App\Models\Conversation;
 use App\Models\ConversationParticipant;
+use App\Models\Message;
 use App\Models\User;
 use App\Notifications\NewMessageReceived;
 use Illuminate\Support\Facades\Notification;
@@ -77,4 +78,42 @@ test('staff cannot send messages into a conversation they are not part of', func
     $this->actingAs($moderator)->post("/messages/{$conversation->id}/send", ['body' => 'Hello from staff'])->assertForbidden();
 
     $this->assertDatabaseMissing('messages', ['conversation_id' => $conversation->id, 'body' => 'Hello from staff']);
+});
+
+test('a conversation shows the newest fifty messages and older ones can be fetched page by page', function () {
+    $user = User::factory()->create();
+    $other = User::factory()->create();
+    $conversation = Conversation::factory()->create(['type' => ConversationType::Direct, 'creator_id' => $user->id]);
+    ConversationParticipant::factory()->create(['conversation_id' => $conversation->id, 'user_id' => $user->id]);
+    ConversationParticipant::factory()->create(['conversation_id' => $conversation->id, 'user_id' => $other->id]);
+
+    foreach (range(1, 60) as $number) {
+        Message::factory()->create(['conversation_id' => $conversation->id, 'user_id' => $other->id, 'body' => "Message {$number}"]);
+    }
+
+    $this->actingAs($user)->get("/messages/{$conversation->id}")
+        ->assertInertia(fn ($page) => $page
+            ->has('messages', 50)
+            ->where('messages.0.body', 'Message 11')
+            ->where('messages.49.body', 'Message 60')
+            ->where('hasOlder', true));
+
+    $eleventh = Message::query()->where('body', 'Message 11')->firstOrFail();
+
+    $this->actingAs($user)->getJson("/messages/{$conversation->id}/messages?before={$eleventh->id}")
+        ->assertOk()
+        ->assertJsonCount(10, 'messages')
+        ->assertJsonPath('messages.0.body', 'Message 1')
+        ->assertJsonPath('messages.9.body', 'Message 10')
+        ->assertJsonPath('has_older', false);
+});
+
+test('older messages cannot be fetched by a non-participant', function () {
+    $user = User::factory()->create();
+    $outsider = User::factory()->create();
+    $conversation = Conversation::factory()->create(['type' => ConversationType::Direct, 'creator_id' => $user->id]);
+    ConversationParticipant::factory()->create(['conversation_id' => $conversation->id, 'user_id' => $user->id]);
+    $message = Message::factory()->create(['conversation_id' => $conversation->id, 'user_id' => $user->id]);
+
+    $this->actingAs($outsider)->getJson("/messages/{$conversation->id}/messages?before=".($message->id + 1))->assertForbidden();
 });

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, Link, router, usePoll } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Avatar from '@/components/Avatar.vue';
 import FieldError from '@/components/FieldError.vue';
@@ -47,12 +48,62 @@ const props = defineProps<{
     };
     participants: Participant[];
     messages: MessageItem[];
+    hasOlder: boolean;
     canAddParticipant: boolean;
     canLeave: boolean;
     addCandidates: Person[];
 }>();
 
 usePoll(4000, { only: ['messages', 'participants'] });
+
+// History the reader asked for, kept apart from `messages` (the newest
+// page, refreshed by polling) so a poll never discards it.
+const olderMessages = ref<MessageItem[]>([]);
+const hasOlder = ref(props.hasOlder);
+const loadingOlder = ref(false);
+
+const allMessages = computed<MessageItem[]>(() => {
+    const byId = new Map<number, MessageItem>();
+
+    for (const message of [...olderMessages.value, ...props.messages]) {
+        byId.set(message.id, message);
+    }
+
+    return [...byId.values()].sort((a, b) => a.id - b.id);
+});
+
+async function loadOlder(): Promise<void> {
+    const oldest = allMessages.value[0];
+
+    if (!oldest || loadingOlder.value) {
+        return;
+    }
+
+    loadingOlder.value = true;
+
+    try {
+        const response = await fetch(
+            conversationMessages.index.url(props.conversation.id, {
+                query: { before: oldest.id },
+            }),
+            { headers: { Accept: 'application/json' } },
+        );
+
+        if (!response.ok) {
+            return;
+        }
+
+        const data = (await response.json()) as {
+            messages: MessageItem[];
+            has_older: boolean;
+        };
+
+        olderMessages.value = [...data.messages, ...olderMessages.value];
+        hasOlder.value = data.has_older;
+    } finally {
+        loadingOlder.value = false;
+    }
+}
 
 function formatTime(value: string): string {
     return new Date(value).toLocaleString(
@@ -162,8 +213,23 @@ async function deleteMessage(message: MessageItem): Promise<void> {
         </Form>
     </section>
 
+    <div v-if="hasOlder" class="mb-4">
+        <button
+            type="button"
+            :disabled="loadingOlder"
+            class="border border-black px-3 py-2 text-sm hover:bg-black hover:text-white disabled:opacity-50"
+            @click="loadOlder"
+        >
+            {{
+                loadingOlder
+                    ? t('messages.show.loadingOlder')
+                    : t('messages.show.loadOlder')
+            }}
+        </button>
+    </div>
+
     <ul class="mb-6 flex flex-col gap-4">
-        <li v-for="message in props.messages" :key="message.id">
+        <li v-for="message in allMessages" :key="message.id">
             <div class="mb-1 flex items-center gap-2">
                 <Avatar
                     :url="message.sender.avatar_url"
@@ -202,7 +268,7 @@ async function deleteMessage(message: MessageItem): Promise<void> {
                 }}
             </p>
         </li>
-        <li v-if="!props.messages.length" class="text-sm text-black/70">
+        <li v-if="!allMessages.length" class="text-sm text-black/70">
             {{ t('messages.show.noMessagesYet') }}
         </li>
     </ul>

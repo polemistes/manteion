@@ -105,6 +105,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/messages', [ConversationController::class, 'store'])->name('messages.store');
     Route::get('/messages/{conversation}', [ConversationController::class, 'show'])->name('messages.show');
     Route::post('/messages/{conversation}/send', [ConversationMessageController::class, 'store'])->name('messages.send');
+    Route::get('/messages/{conversation}/messages', [ConversationMessageController::class, 'index'])->name('messages.messages.index');
     Route::delete('/messages/{conversation}/messages/{message}', [ConversationMessageController::class, 'destroy'])
         ->name('messages.messages.destroy')
         ->scopeBindings();

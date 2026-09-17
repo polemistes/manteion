@@ -287,6 +287,8 @@
             "newMessage": "Ny melding",
             "noConversations": "Ingen samtaler ennå. Start en med en venn.",
             "you": "Deg: ",
+            "loadOlder": "Last inn eldre meldinger",
+            "loadingOlder": "Laster…",
             "noMessagesYet": "Ingen meldinger ennå"
         },
         "create": {

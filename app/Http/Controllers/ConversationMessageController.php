@@ -8,12 +8,46 @@ use App\Models\Conversation;
 use App\Models\ConversationParticipant;
 use App\Models\Message;
 use App\Notifications\NewMessageReceived;
+use App\Services\MessageSummary;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 class ConversationMessageController extends Controller
 {
+    /**
+     * Messages shown per page: the newest on first load, then this many
+     * more each time the reader asks for older ones.
+     */
+    public const PAGE_SIZE = 50;
+
+    /**
+     * Messages older than the given one, for the conversation page to
+     * prepend. Plain JSON rather than an Inertia visit, so loading history
+     * neither replaces the newest messages nor fights the page's polling.
+     */
+    public function index(Request $request, Conversation $conversation): JsonResponse
+    {
+        Gate::authorize('view', $conversation);
+
+        $request->validate(['before' => ['required', 'integer']]);
+
+        $messages = $conversation->messages()
+            ->with('sender')
+            ->where('id', '<', $request->integer('before'))
+            ->latest('id')
+            ->limit(self::PAGE_SIZE)
+            ->get();
+
+        $oldestId = $messages->min('id');
+
+        return response()->json([
+            'messages' => $messages->sortBy('id')->values()->map(fn (Message $message) => MessageSummary::for($message, $request->user())),
+            'has_older' => $oldestId !== null && $conversation->messages()->where('id', '<', $oldestId)->exists(),
+        ]);
+    }
+
     public function store(StoreMessageRequest $request, Conversation $conversation): RedirectResponse
     {
         $message = $conversation->messages()->create([
