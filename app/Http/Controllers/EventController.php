@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\AttendanceStatus;
 use App\Enums\ContactGroupType;
 use App\Enums\EventVisibility;
 use App\Enums\FollowStatus;
@@ -11,18 +10,19 @@ use App\Http\Requests\StoreEventRequest;
 use App\Http\Requests\UpdateEventRequest;
 use App\Jobs\NotifyFollowersOfEvent;
 use App\Models\ContactGroup;
-use App\Models\ContactTagPreference;
 use App\Models\Event;
 use App\Models\EventAttendee;
 use App\Models\EventComment;
 use App\Models\Tag;
 use App\Models\User;
+use App\Services\EventFeedQuery;
 use App\Services\ImageProcessor;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -32,26 +32,24 @@ class EventController extends Controller
 {
     public function __construct(private ImageProcessor $imageProcessor) {}
 
+    public const PER_PAGE = 30;
+
     public function index(Request $request): Response
     {
         $user = $request->user();
+        $feed = new EventFeedQuery($user);
+        $nearPoint = $this->nearPointFrom($request);
 
-        $events = $this->visibleEventsFor($user);
-
-        $tagFilter = $request->array('tags');
-        if ($tagFilter !== []) {
-            $events = $events->filter(fn (Event $event) => $event->tags->pluck('slug')->intersect($tagFilter)->isNotEmpty());
-        }
-
-        $friendIds = $user->friends()->pluck('id');
         $followedIds = $user->following()->wherePivot('status', FollowStatus::Accepted->value)->pluck('users.id');
+
+        $query = $feed->withAnyTag($feed->visible(), $request->array('tags'));
 
         $ownerFilter = $request->array('owner_filter');
         if ($ownerFilter !== []) {
             $allowedOwnerIds = collect();
 
             if (in_array('friends', $ownerFilter, true)) {
-                $allowedOwnerIds = $allowedOwnerIds->merge($friendIds);
+                $allowedOwnerIds = $allowedOwnerIds->merge($user->friendIds());
             }
 
             if (in_array('following', $ownerFilter, true)) {
@@ -59,38 +57,35 @@ class EventController extends Controller
             }
 
             $specificIds = collect($ownerFilter)->filter(fn ($value) => is_numeric($value))->map(fn ($value) => (int) $value);
-            $allowedOwnerIds = $allowedOwnerIds->merge($specificIds)->unique();
 
-            $events = $events->filter(fn (Event $event) => $allowedOwnerIds->contains($event->user_id));
+            $query->whereIn('user_id', $allowedOwnerIds->merge($specificIds)->unique()->all());
         }
 
         if ($request->filled('group_id')) {
             $group = ContactGroup::query()->find($request->integer('group_id'));
 
             if ($group !== null && $user->is($group->owner)) {
-                $memberIds = $group->members()->pluck('users.id');
-                $events = $events->filter(fn (Event $event) => $memberIds->contains($event->user_id));
+                $query->whereIn('user_id', DB::table('contact_group_members')
+                    ->select('member_user_id')
+                    ->where('contact_group_id', $group->id));
             }
         }
 
-        $startDateFilter = $request->has('start_date') ? $request->string('start_date')->toString() : now()->toDateString();
+        $startDateFilter = $request->has('start_date') ? $this->dateFrom($request, 'start_date') : now()->toDateString();
         if ($startDateFilter !== '') {
-            $events = $events->filter(fn (Event $event) => $event->starts_at->toDateString() >= $startDateFilter);
+            $query->whereDate('starts_at', '>=', $startDateFilter);
         }
 
-        if ($request->filled('end_date')) {
-            $endDateFilter = $request->string('end_date')->toString();
-            $events = $events->filter(fn (Event $event) => $event->starts_at->toDateString() <= $endDateFilter);
+        $endDateFilter = $this->dateFrom($request, 'end_date');
+        if ($endDateFilter !== '') {
+            $query->whereDate('starts_at', '<=', $endDateFilter);
         }
 
-        $nearPoint = $this->nearPointFrom($request);
-
-        if ($nearPoint !== null) {
-            $events = $this->sortByDistance($events, $nearPoint);
-        }
+        $events = $feed->ordered($query, $nearPoint)->paginate(self::PER_PAGE)->withQueryString();
 
         return Inertia::render('events/Index', [
-            'events' => $this->summarizeEvents($events, $user, $nearPoint),
+            'events' => $this->summarizeEvents($events->getCollection(), $user, $nearPoint),
+            'pagination' => $this->summarizePagination($events),
             'categories' => $this->categoriesTree(),
             'friends' => $user->friends()->map(fn (User $friend) => ['id' => $friend->id, 'name' => $friend->name, 'username' => $friend->username, 'avatar_url' => $friend->avatar_url])->values(),
             'following' => User::query()->whereIn('id', $followedIds)->orderBy('name')->get(['id', 'name', 'username', 'avatar_path']),
@@ -99,7 +94,7 @@ class EventController extends Controller
             'filters' => [
                 ...$request->only(['tags', 'owner_filter', 'group_id', 'near_lat', 'near_lng']),
                 'start_date' => $startDateFilter,
-                'end_date' => $request->filled('end_date') ? $request->string('end_date')->toString() : '',
+                'end_date' => $endDateFilter,
             ],
         ]);
     }
@@ -107,35 +102,22 @@ class EventController extends Controller
     public function search(Request $request): Response
     {
         $term = trim((string) $request->string('q'));
-        $tagFilter = $request->array('tags');
         $viewer = $request->user();
+        $feed = new EventFeedQuery($viewer);
         $nearPoint = $this->nearPointFrom($request);
 
-        $events = $this->withAttendanceCounts(
-            Event::query()
-                ->where('visibility', EventVisibility::Searchable)
-                ->where('is_deleted', false)
-                ->when($term !== '', fn ($query) => $query->where(
-                    fn ($query) => $query->where('name', 'like', "%{$term}%")->orWhere('place', 'like', "%{$term}%")
-                ))
-                ->with(['owner', 'tags', 'images', 'attendees' => fn ($query) => $query->where('user_id', $viewer->id)])
-        )
-            ->orderBy('starts_at')
-            ->limit(50)
-            ->get();
+        $query = $feed->withAnyTag($feed->searchable(), $request->array('tags'))
+            ->when($term !== '', fn ($query) => $query->where(
+                fn ($query) => $query->where('name', 'like', "%{$term}%")->orWhere('place', 'like', "%{$term}%")
+            ));
 
-        if ($tagFilter !== []) {
-            $events = $events->filter(fn (Event $event) => $event->tags->pluck('slug')->intersect($tagFilter)->isNotEmpty());
-        }
-
-        if ($nearPoint !== null) {
-            $events = $this->sortByDistance($events, $nearPoint);
-        }
+        $events = $feed->ordered($query, $nearPoint)->paginate(self::PER_PAGE)->withQueryString();
 
         return Inertia::render('events/Search', [
             'q' => $term,
             'categories' => $this->categoriesTree(),
-            'events' => $this->summarizeEvents($events, $viewer, $nearPoint),
+            'events' => $this->summarizeEvents($events->getCollection(), $viewer, $nearPoint),
+            'pagination' => $this->summarizePagination($events),
             'filters' => $request->only(['tags', 'near_lat', 'near_lng']),
         ]);
     }
@@ -328,57 +310,6 @@ class EventController extends Controller
     }
 
     /**
-     * @return Collection<int, Event>
-     */
-    private function visibleEventsFor(User $user): Collection
-    {
-        $attendeeEventIds = EventAttendee::query()->where('user_id', $user->id)->pluck('event_id');
-
-        $followedIds = $user->following()->wherePivot('status', FollowStatus::Accepted->value)->pluck('users.id');
-
-        $preferencesByContact = ContactTagPreference::query()
-            ->where('user_id', $user->id)
-            ->get()
-            ->groupBy('contact_user_id')
-            ->map(fn (Collection $rows) => $rows->pluck('tag_id'));
-
-        $withAttendee = fn ($query) => $query->where('user_id', $user->id);
-
-        $owned = $this->withAttendanceCounts(
-            Event::query()
-                ->where('user_id', $user->id)
-                ->where('is_deleted', false)
-                ->with(['owner', 'tags', 'images', 'attendees' => $withAttendee])
-        )->get();
-
-        $invited = $this->withAttendanceCounts(
-            Event::query()
-                ->whereIn('id', $attendeeEventIds)
-                ->where('is_deleted', false)
-                ->with(['owner', 'tags', 'images', 'attendees' => $withAttendee])
-        )->get();
-
-        $followedPublic = $this->withAttendanceCounts(
-            Event::query()
-                ->whereIn('user_id', $followedIds)
-                ->whereIn('visibility', [EventVisibility::Public->value, EventVisibility::Searchable->value])
-                ->where('is_deleted', false)
-                ->with(['owner', 'tags', 'images', 'attendees' => $withAttendee])
-        )->get()
-            ->filter(function (Event $event) use ($preferencesByContact) {
-                $mutedTagIds = $preferencesByContact->get($event->user_id);
-
-                if ($mutedTagIds !== null && $mutedTagIds->contains(null)) {
-                    return false;
-                }
-
-                return $mutedTagIds === null || $event->tags->pluck('id')->intersect($mutedTagIds)->isEmpty();
-            });
-
-        return $owned->merge($invited)->merge($followedPublic)->unique('id')->sortBy('starts_at')->values();
-    }
-
-    /**
      * @param  Collection<int, Event>  $events
      * @param  array{0: float, 1: float}|null  $nearPoint
      * @return array<int, array<string, mixed>>
@@ -430,16 +361,29 @@ class EventController extends Controller
     }
 
     /**
-     * @param  Collection<int, Event>  $events
-     * @param  array{0: float, 1: float}  $nearPoint
-     * @return Collection<int, Event>
+     * A `YYYY-MM-DD` value from the query string, or '' when absent or
+     * malformed — a bad date narrows nothing rather than erroring.
      */
-    private function sortByDistance(Collection $events, array $nearPoint): Collection
+    private function dateFrom(Request $request, string $key): string
     {
-        return $events->sortBy(fn (Event $event) => $event->latitude === null || $event->longitude === null
-            ? PHP_FLOAT_MAX
-            : $this->haversineKm($nearPoint[0], $nearPoint[1], $event->latitude, $event->longitude))
-            ->values();
+        $value = $request->string($key)->toString();
+
+        return preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) === 1 ? $value : '';
+    }
+
+    /**
+     * @param  LengthAwarePaginator<int, Event>  $events
+     * @return array{current_page: int, last_page: int, total: int, previous_url: string|null, next_url: string|null}
+     */
+    private function summarizePagination(LengthAwarePaginator $events): array
+    {
+        return [
+            'current_page' => $events->currentPage(),
+            'last_page' => $events->lastPage(),
+            'total' => $events->total(),
+            'previous_url' => $events->previousPageUrl(),
+            'next_url' => $events->nextPageUrl(),
+        ];
     }
 
     private function haversineKm(float $lat1, float $lng1, float $lat2, float $lng2): float
@@ -453,17 +397,6 @@ class EventController extends Controller
             + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($lngDelta / 2) ** 2;
 
         return $earthRadiusKm * 2 * atan2(sqrt($a), sqrt(1 - $a));
-    }
-
-    /**
-     * @param  Builder<Event>  $query
-     * @return Builder<Event>
-     */
-    private function withAttendanceCounts(Builder $query): Builder
-    {
-        return $query
-            ->withCount(['attendees as attending_count' => fn ($query) => $query->where('status', AttendanceStatus::Attending)])
-            ->withCount(['attendees as interested_count' => fn ($query) => $query->where('status', AttendanceStatus::Interested)]);
     }
 
     /**

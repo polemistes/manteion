@@ -319,6 +319,12 @@
         "invitedToEvent": "{name} invited you to \"{event}\"",
         "followedUserPublishedEvent": "{name} published \"{event}\""
     },
+    "pagination": {
+        "label": "Pages",
+        "previous": "Previous",
+        "next": "Next",
+        "pageOf": "Page {page} of {total}"
+    },
     "calendar": {
         "weekdayShort": {
             "mon": "Mo",

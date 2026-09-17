@@ -3,6 +3,8 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import CategoryFilterList from '@/components/CategoryFilterList.vue';
+import Pagination from '@/components/Pagination.vue';
+import type { PaginationSummary } from '@/components/Pagination.vue';
 import PersonSummary from '@/components/PersonSummary.vue';
 import { useNominatimSearch } from '@/composables/useNominatimSearch';
 import type { NominatimResult } from '@/composables/useNominatimSearch';
@@ -49,6 +51,7 @@ const props = defineProps<{
     q: string;
     categories: CategoryOption[];
     events: EventSummary[];
+    pagination: PaginationSummary;
     filters: {
         tags?: string[];
         near_lat?: string;
@@ -280,4 +283,6 @@ function formatDate(value: string): string {
             </div>
         </li>
     </ul>
+
+    <Pagination :pagination="pagination" :only="['events', 'pagination']" />
 </template>

@@ -6,6 +6,8 @@ import CategoryFilterList from '@/components/CategoryFilterList.vue';
 import DateFilterButton from '@/components/DateFilterButton.vue';
 import EventCard from '@/components/EventCard.vue';
 import OrganizerFilter from '@/components/OrganizerFilter.vue';
+import Pagination from '@/components/Pagination.vue';
+import type { PaginationSummary } from '@/components/Pagination.vue';
 import { useNominatimSearch } from '@/composables/useNominatimSearch';
 import type { NominatimResult } from '@/composables/useNominatimSearch';
 import { index as eventsIndex, create as eventsCreate } from '@/routes/events';
@@ -18,7 +20,7 @@ const unreadNotificationsCount = computed(
     () => page.props.unreadNotificationsCount,
 );
 
-usePoll(20000, { only: ['events'] });
+usePoll(20000, { only: ['events', 'pagination'] });
 
 interface TagOption {
     id: number;
@@ -65,6 +67,7 @@ interface EventSummary {
 
 const props = defineProps<{
     events: EventSummary[];
+    pagination: PaginationSummary;
     categories: CategoryOption[];
     friends: ContactOption[];
     following: ContactOption[];
@@ -372,4 +375,6 @@ function clearNear(): void {
             <EventCard :event="event" />
         </li>
     </ul>
+
+    <Pagination :pagination="pagination" :only="['events', 'pagination']" />
 </template>

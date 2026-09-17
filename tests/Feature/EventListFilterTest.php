@@ -245,3 +245,51 @@ test('an out-of-range near_lat or near_lng is ignored rather than erroring', fun
         ->has('events', 1)
         ->where('events.0.distance_km', null));
 });
+
+test('the list is paginated thirty events a page, ordered by start time', function () {
+    $owner = User::factory()->create();
+
+    foreach (range(1, 31) as $day) {
+        Event::factory()->create(['user_id' => $owner->id, 'name' => "Day {$day}", 'starts_at' => now()->addDays($day)]);
+    }
+
+    $this->actingAs($owner)->get('/events')
+        ->assertInertia(fn ($page) => $page
+            ->has('events', 30)
+            ->where('events.0.name', 'Day 1')
+            ->where('pagination.current_page', 1)
+            ->where('pagination.last_page', 2)
+            ->where('pagination.total', 31)
+            ->where('pagination.previous_url', null)
+            ->where('pagination.next_url', fn ($url) => str_contains($url, 'page=2')));
+
+    $this->actingAs($owner)->get('/events?page=2')
+        ->assertInertia(fn ($page) => $page
+            ->has('events', 1)
+            ->where('events.0.name', 'Day 31')
+            ->where('pagination.next_url', null));
+});
+
+test('filters and the page number travel together in the pager links', function () {
+    $owner = User::factory()->create();
+    $music = Tag::factory()->create(['name' => 'music']);
+
+    foreach (range(1, 31) as $day) {
+        $event = Event::factory()->create(['user_id' => $owner->id, 'starts_at' => now()->addDays($day)]);
+        $event->tags()->attach($music);
+    }
+
+    $this->actingAs($owner)->get('/events?tags[]=music')
+        ->assertInertia(fn ($page) => $page
+            ->has('events', 30)
+            ->where('pagination.next_url', fn ($url) => str_contains($url, 'tags%5B0%5D=music') && str_contains($url, 'page=2')));
+});
+
+test('a malformed date filter is ignored rather than erroring', function () {
+    $owner = User::factory()->create();
+    Event::factory()->create(['user_id' => $owner->id, 'starts_at' => now()->addDay()]);
+
+    $this->actingAs($owner)->get('/events?start_date=not-a-date&end_date=2026-13-99x')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->has('events', 1)->where('filters.end_date', ''));
+});

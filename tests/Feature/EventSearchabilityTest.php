@@ -2,6 +2,7 @@
 
 use App\Enums\EventVisibility;
 use App\Models\Event;
+use App\Models\Tag;
 use App\Models\User;
 
 test('the owner can make an event searchable', function () {
@@ -54,4 +55,37 @@ test('the searchable tier survives making the event private and public again', f
 
     $this->actingAs($owner)->put("/events/{$event->id}", [...$payload, 'visibility' => 'public'])->assertRedirect();
     expect($event->fresh()->visibility)->toBe(EventVisibility::Searchable);
+});
+
+test('a tag filter finds matching events however many untagged events precede them', function () {
+    $owner = User::factory()->create();
+    $viewer = User::factory()->create();
+    $music = Tag::factory()->create(['name' => 'music']);
+
+    foreach (range(1, 60) as $day) {
+        Event::factory()->searchable()->create(['user_id' => $owner->id, 'name' => 'Plain', 'starts_at' => now()->addDays($day)]);
+    }
+
+    $concert = Event::factory()->searchable()->create(['user_id' => $owner->id, 'name' => 'Concert', 'starts_at' => now()->addDays(90)]);
+    $concert->tags()->attach($music);
+
+    $this->actingAs($viewer)->get('/events/search?tags[]=music')
+        ->assertInertia(fn ($page) => $page
+            ->has('events', 1)
+            ->where('events.0.name', 'Concert'));
+});
+
+test('search results are paginated', function () {
+    $owner = User::factory()->create();
+    $viewer = User::factory()->create();
+
+    foreach (range(1, 31) as $day) {
+        Event::factory()->searchable()->create(['user_id' => $owner->id, 'name' => 'Picnic', 'starts_at' => now()->addDays($day)]);
+    }
+
+    $this->actingAs($viewer)->get('/events/search?q=Picnic')
+        ->assertInertia(fn ($page) => $page
+            ->has('events', 30)
+            ->where('pagination.last_page', 2)
+            ->where('pagination.next_url', fn ($url) => str_contains($url, 'q=Picnic') && str_contains($url, 'page=2')));
 });
