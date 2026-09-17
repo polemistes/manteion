@@ -25,7 +25,7 @@ usePoll(15000, { only: ['conversations', 'unreadMessagesCount'] });
 <template>
     <Head :title="t('messages.index.title')" />
 
-    <div class="mb-6 flex items-center justify-between">
+    <div class="mb-6 flex items-center justify-between gap-3">
         <h1 class="text-xl font-bold">{{ t('messages.index.title') }}</h1>
         <Link
             :href="create().url"

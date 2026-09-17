@@ -261,8 +261,10 @@ const filteredFollowers = computed(() =>
                         :key="group.id"
                         class="mb-4 border-frame border-edge p-3"
                     >
-                        <div class="mb-2 flex items-center justify-between">
-                            <span class="text-sm font-bold">{{
+                        <div
+                            class="mb-2 flex items-center justify-between gap-3"
+                        >
+                            <span class="min-w-0 text-sm font-bold">{{
                                 group.name
                             }}</span>
                             <Link
@@ -280,7 +282,7 @@ const filteredFollowers = computed(() =>
                             <li
                                 v-for="member in group.members"
                                 :key="member.id"
-                                class="flex items-center justify-between text-sm"
+                                class="flex items-center justify-between gap-3 text-sm"
                             >
                                 <PersonSummary v-bind="member" />
                                 <Link
@@ -350,8 +352,10 @@ const filteredFollowers = computed(() =>
                         :key="group.id"
                         class="mb-4 border-frame border-edge p-3"
                     >
-                        <div class="mb-2 flex items-center justify-between">
-                            <span class="text-sm font-bold">{{
+                        <div
+                            class="mb-2 flex items-center justify-between gap-3"
+                        >
+                            <span class="min-w-0 text-sm font-bold">{{
                                 group.name
                             }}</span>
                             <Link
@@ -369,7 +373,7 @@ const filteredFollowers = computed(() =>
                             <li
                                 v-for="member in group.members"
                                 :key="member.id"
-                                class="flex items-center justify-between text-sm"
+                                class="flex items-center justify-between gap-3 text-sm"
                             >
                                 <PersonSummary v-bind="member" />
                                 <Link
@@ -432,10 +436,10 @@ const filteredFollowers = computed(() =>
                     <li
                         v-for="request in pendingFriendRequests"
                         :key="request.friendship_id"
-                        class="flex items-center justify-between border-frame border-edge px-3 py-2 text-sm"
+                        class="flex items-center justify-between gap-3 border-frame border-edge px-3 py-2 text-sm"
                     >
                         <PersonSummary v-bind="request.user" />
-                        <span class="flex gap-2">
+                        <span class="flex shrink-0 gap-2">
                             <Form
                                 v-bind="
                                     friendships.update.form(
@@ -491,10 +495,10 @@ const filteredFollowers = computed(() =>
                     <li
                         v-for="request in pendingFollowerRequests"
                         :key="request.follow_id"
-                        class="flex items-center justify-between border-frame border-edge px-3 py-2 text-sm"
+                        class="flex items-center justify-between gap-3 border-frame border-edge px-3 py-2 text-sm"
                     >
                         <PersonSummary v-bind="request.user" />
-                        <span class="flex gap-2">
+                        <span class="flex shrink-0 gap-2">
                             <Link
                                 :href="follows.update(request.follow_id).url"
                                 method="patch"
@@ -584,7 +588,7 @@ const filteredFollowers = computed(() =>
                         <li
                             v-for="request in sentFriendRequests"
                             :key="request.friendship_id"
-                            class="flex items-center justify-between border-frame border-edge px-3 py-2 text-sm"
+                            class="flex items-center justify-between gap-3 border-frame border-edge px-3 py-2 text-sm"
                         >
                             <PersonSummary v-bind="request.user" />
                             <Link
@@ -665,7 +669,7 @@ const filteredFollowers = computed(() =>
                         <li
                             v-for="entry in pendingFollowRequestsSent"
                             :key="entry.follow_id"
-                            class="flex items-center justify-between border-frame border-edge px-3 py-2 text-sm"
+                            class="flex items-center justify-between gap-3 border-frame border-edge px-3 py-2 text-sm"
                         >
                             <PersonSummary v-bind="entry.user" />
                             <Link
@@ -700,7 +704,7 @@ const filteredFollowers = computed(() =>
                         <li
                             v-for="entry in filteredFollowers"
                             :key="entry.follow_id"
-                            class="flex items-center justify-between border-frame border-edge px-3 py-2 text-sm"
+                            class="flex items-center justify-between gap-3 border-frame border-edge px-3 py-2 text-sm"
                         >
                             <PersonSummary v-bind="entry.user" />
                             <Link
@@ -738,6 +742,7 @@ const filteredFollowers = computed(() =>
 .contacts-layout {
     display: grid;
     gap: 2rem;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
         'find'
         'groups'
@@ -763,7 +768,7 @@ const filteredFollowers = computed(() =>
 
 @media (min-width: 1024px) {
     .contacts-layout {
-        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         align-items: start;
         grid-template-areas:
             'search find groups'

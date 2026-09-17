@@ -99,6 +99,42 @@ html[data-style='soft'][data-mode='dark'] {
 
 @layer base {
     /*
+     * A word that cannot fit on a line (a long username, a pasted URL,
+     * an unbroken message) breaks rather than pushing its box wider.
+     */
+    body {
+        overflow-wrap: anywhere;
+    }
+
+    /*
+     * Form controls shrink to the row they sit in rather than keeping
+     * their intrinsic width (a select is otherwise as wide as its longest
+     * option, an input about twenty characters) and pushing the row out.
+     */
+    input,
+    select,
+    textarea {
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    /*
+     * Actions and chips keep their shape in a tight row: buttons never
+     * break mid-word, and neither buttons nor button-like links and chips
+     * shrink. The text beside them (a name, a title) is what gives way,
+     * by truncating or wrapping.
+     */
+    button {
+        overflow-wrap: normal;
+    }
+
+    button,
+    a.border,
+    span.border {
+        flex-shrink: 0;
+    }
+
+    /*
      * Controls take the control radius by element, so no component has to
      * opt in. `a.border` and `span.border` are links and chips styled as
      * buttons. A utility such as rounded-full still wins over this.

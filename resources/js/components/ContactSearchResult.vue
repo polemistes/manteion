@@ -23,7 +23,7 @@ defineProps<{
 
 <template>
     <li
-        class="flex flex-col gap-2 border-frame border-edge px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between"
+        class="flex flex-col gap-2 border-frame border-edge px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3"
     >
         <PersonSummary
             :id="result.id"
@@ -32,7 +32,7 @@ defineProps<{
             :avatar_url="result.avatar_url"
         />
 
-        <span class="flex flex-wrap gap-2">
+        <span class="flex flex-wrap gap-2 sm:shrink-0">
             <Link
                 v-if="result.friend_status === 'none'"
                 :href="friendships.store().url"

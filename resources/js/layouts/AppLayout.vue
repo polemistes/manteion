@@ -77,7 +77,7 @@ const navItems = computed(() => {
                 >
                     <Link
                         :href="eventsIndex().url"
-                        class="mb-8 text-4xl font-bold tracking-tight"
+                        class="mb-8 text-4xl font-bold tracking-tight whitespace-nowrap"
                     >
                         Manteion
                     </Link>
@@ -126,28 +126,30 @@ const navItems = computed(() => {
                     </nav>
                 </aside>
 
-                <div class="flex min-h-screen flex-1 flex-col">
+                <div class="flex min-h-screen min-w-0 flex-1 flex-col">
                     <div class="sticky top-0 z-10 bg-surface lg:hidden">
                         <header
-                            class="flex items-center justify-between border-b-frame border-edge px-4 py-3"
+                            class="flex items-center justify-between gap-3 border-b-frame border-edge px-4 py-3"
                         >
                             <Link
                                 :href="eventsIndex().url"
-                                class="text-2xl font-bold tracking-tight"
+                                class="shrink-0 text-2xl font-bold tracking-tight whitespace-nowrap"
                             >
                                 Manteion
                             </Link>
-                            <div class="flex items-center gap-3">
+                            <div class="flex min-w-0 items-center gap-3">
                                 <LanguageSwitcher />
                                 <Link
                                     :href="profileEdit().url"
-                                    class="flex items-center gap-2 text-xs text-ink/70"
+                                    class="flex min-w-0 items-center gap-2 text-xs text-ink/70"
                                 >
                                     <Avatar
                                         :url="user.avatar_url"
                                         :name="user.name"
                                     />
-                                    @{{ user.username }}
+                                    <span class="truncate">
+                                        @{{ user.username }}
+                                    </span>
                                 </Link>
                             </div>
                         </header>
@@ -174,7 +176,7 @@ const navItems = computed(() => {
                         </nav>
                     </div>
 
-                    <main class="flex-1 px-4 py-6 lg:px-10 lg:py-10">
+                    <main class="min-w-0 flex-1 px-4 py-6 lg:px-10 lg:py-10">
                         <slot />
                     </main>
                 </div>

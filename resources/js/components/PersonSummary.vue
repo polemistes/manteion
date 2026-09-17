@@ -17,9 +17,9 @@ withDefaults(
 <template>
     <Link
         :href="`/users/${id}`"
-        class="inline-flex items-center gap-2 hover:underline"
+        class="inline-flex max-w-full min-w-0 items-center gap-2 hover:underline"
     >
-        <Avatar :url="avatar_url" :name="name" :size="size" />
-        <span>{{ name }} · @{{ username }}</span>
+        <Avatar :url="avatar_url" :name="name" :size="size" class="shrink-0" />
+        <span class="min-w-0 truncate">{{ name }} · @{{ username }}</span>
     </Link>
 </template>

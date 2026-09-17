@@ -210,7 +210,7 @@ function clearNear(): void {
 <template>
     <Head :title="t('events.index.title')" />
 
-    <div class="mb-6 flex items-center justify-between">
+    <div class="mb-6 flex items-center justify-between gap-3">
         <h1 class="text-xl font-bold">{{ t('events.index.title') }}</h1>
         <Link
             :href="eventsCreate().url"
@@ -273,13 +273,13 @@ function clearNear(): void {
                 @update:model-value="onEndDateChange"
             />
 
-            <div>
+            <div class="max-w-full min-w-0">
                 <p class="mb-1 text-xs font-bold">
                     {{ t('events.index.specificGroup') }}
                 </p>
                 <select
                     v-model="groupId"
-                    class="border border-edge bg-surface-raised px-2 py-1 text-sm"
+                    class="max-w-full border border-edge bg-surface-raised px-2 py-1 text-sm"
                     @change="applyFilters"
                 >
                     <option value="">{{ t('events.index.anyGroup') }}</option>
@@ -370,8 +370,8 @@ function clearNear(): void {
         {{ t('events.index.noMatches') }}
     </p>
 
-    <ul class="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
-        <li v-for="event in events" :key="event.id" class="h-full">
+    <ul class="grid grid-cols-1 gap-3 md:gap-4 xl:grid-cols-2">
+        <li v-for="event in events" :key="event.id" class="h-full min-w-0">
             <EventCard :event="event" />
         </li>
     </ul>

@@ -173,7 +173,7 @@ const locationLabel =
     <Head :title="props.event.name" />
 
     <div class="mb-4 flex items-start justify-between gap-4">
-        <div>
+        <div class="min-w-0">
             <h1 class="text-xl font-bold">{{ props.event.name }}</h1>
             <p class="text-sm text-ink/70">
                 {{ formatDate(props.event.starts_at) }}
@@ -407,10 +407,10 @@ const locationLabel =
             <li
                 v-for="attendee in props.attendees"
                 :key="attendee.id"
-                class="flex items-center justify-between border-frame border-edge px-3 py-2 text-sm"
+                class="flex items-center justify-between gap-3 border-frame border-edge px-3 py-2 text-sm"
             >
                 <PersonSummary v-bind="attendee.user" />
-                <span class="text-xs font-bold">
+                <span class="shrink-0 text-xs font-bold whitespace-nowrap">
                     {{ statusLabel(attendee.status) }}
                 </span>
             </li>

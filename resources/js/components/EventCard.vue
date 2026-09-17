@@ -133,7 +133,7 @@ function onVisibilityChange(event: Event): void {
 </script>
 
 <template>
-    <div class="event-card h-full border-frame border-edge p-3">
+    <div class="event-card h-full min-w-0 border-frame border-edge p-3">
         <Link
             :href="`/events/${props.event.id}`"
             class="event-card__image block h-full w-full"
@@ -263,7 +263,9 @@ function onVisibilityChange(event: Event): void {
 .event-card {
     display: grid;
     gap: 0.5rem;
-    grid-template-columns: 1fr;
+    /* minmax(0, …) lets the text column shrink below its longest word, so
+       truncate/line-clamp can do their job instead of widening the card. */
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
         'meta'
         'title'
@@ -304,7 +306,7 @@ function onVisibilityChange(event: Event): void {
 
 @media (min-width: 768px) {
     .event-card {
-        grid-template-columns: 16rem 1fr;
+        grid-template-columns: 12rem minmax(0, 1fr);
         grid-template-rows: auto auto 1fr auto auto auto;
         column-gap: 1rem;
         grid-template-areas:
