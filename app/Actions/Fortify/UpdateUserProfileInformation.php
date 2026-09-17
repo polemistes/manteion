@@ -2,6 +2,8 @@
 
 namespace App\Actions\Fortify;
 
+use App\Enums\ThemeMode;
+use App\Enums\ThemeStyle;
 use App\Http\Requests\StoreEventRequest;
 use App\Models\User;
 use App\Services\ImageProcessor;
@@ -53,6 +55,8 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
             'notify_messages' => ['required', 'boolean'],
             'notify_friend_requests' => ['required', 'boolean'],
             'notify_follow_requests' => ['required', 'boolean'],
+            'theme_style' => ['required', Rule::enum(ThemeStyle::class)],
+            'theme_mode' => ['required', Rule::enum(ThemeMode::class)],
             'bio' => ['nullable', 'string', 'max:1000'],
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048', Rule::dimensions()->maxWidth(StoreEventRequest::MAX_UPLOAD_EDGE)->maxHeight(StoreEventRequest::MAX_UPLOAD_EDGE)],
             'remove_avatar' => ['nullable', 'boolean'],
@@ -71,6 +75,8 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
             'notify_messages' => $input['notify_messages'],
             'notify_friend_requests' => $input['notify_friend_requests'],
             'notify_follow_requests' => $input['notify_follow_requests'],
+            'theme_style' => ThemeStyle::from($input['theme_style']),
+            'theme_mode' => ThemeMode::from($input['theme_mode']),
             'bio' => $input['bio'] ?? null,
             'avatar_path' => $this->resolveAvatarPath($user, $input),
         ];

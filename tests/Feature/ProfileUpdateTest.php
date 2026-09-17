@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\ThemeMode;
+use App\Enums\ThemeStyle;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
@@ -21,6 +23,8 @@ test('a user can update their profile information and privacy setting', function
         'notify_messages' => '1',
         'notify_friend_requests' => '1',
         'notify_follow_requests' => '1',
+        'theme_style' => 'classic',
+        'theme_mode' => 'system',
     ]);
 
     $response->assertRedirect();
@@ -48,6 +52,8 @@ test('a user can update their friends-list and search privacy settings', functio
         'notify_messages' => '1',
         'notify_friend_requests' => '1',
         'notify_follow_requests' => '1',
+        'theme_style' => 'classic',
+        'theme_mode' => 'system',
     ]);
 
     $response->assertRedirect();
@@ -79,6 +85,8 @@ test('a user can update their push notification preferences', function () {
         'notify_messages' => '0',
         'notify_friend_requests' => '0',
         'notify_follow_requests' => '0',
+        'theme_style' => 'classic',
+        'theme_mode' => 'system',
     ]);
 
     $response->assertRedirect();
@@ -107,6 +115,8 @@ test('a user cannot take an existing username', function () {
         'notify_messages' => '1',
         'notify_friend_requests' => '1',
         'notify_follow_requests' => '1',
+        'theme_style' => 'classic',
+        'theme_mode' => 'system',
     ]);
 
     $response->assertSessionHasErrorsIn('updateProfileInformation', ['username']);
@@ -129,6 +139,8 @@ test('a user can upload an avatar and set a bio', function () {
         'notify_messages' => '1',
         'notify_friend_requests' => '1',
         'notify_follow_requests' => '1',
+        'theme_style' => 'classic',
+        'theme_mode' => 'system',
         'bio' => 'Hello, I like board games.',
         'avatar' => UploadedFile::fake()->image('avatar.jpg'),
     ]);
@@ -159,6 +171,8 @@ test('uploading a new avatar replaces and deletes the old one', function () {
         'notify_messages' => '1',
         'notify_friend_requests' => '1',
         'notify_follow_requests' => '1',
+        'theme_style' => 'classic',
+        'theme_mode' => 'system',
         'avatar' => UploadedFile::fake()->image('new.jpg'),
     ])->assertRedirect();
 
@@ -186,6 +200,8 @@ test('a user can remove their avatar', function () {
         'notify_messages' => '1',
         'notify_friend_requests' => '1',
         'notify_follow_requests' => '1',
+        'theme_style' => 'classic',
+        'theme_mode' => 'system',
         'remove_avatar' => '1',
     ])->assertRedirect();
 
@@ -205,4 +221,62 @@ test('a user can update their password', function () {
 
     $response->assertRedirect();
     expect(Hash::check('new-password', $user->fresh()->password))->toBeTrue();
+});
+
+test('a user can choose a visual style and light or dark mode, and the choice is shared with every page', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->put('/user/profile-information', [
+        'name' => $user->name,
+        'username' => $user->username,
+        'email' => $user->email,
+        'allow_public_follow' => '1',
+        'show_friends_list' => '1',
+        'appear_in_friends_lists' => '1',
+        'searchable' => '1',
+        'push_notifications_enabled' => '1',
+        'notify_event_invites' => '1',
+        'notify_messages' => '1',
+        'notify_friend_requests' => '1',
+        'notify_follow_requests' => '1',
+        'theme_style' => 'soft',
+        'theme_mode' => 'dark',
+    ])->assertRedirect()->assertValid();
+
+    expect($user->fresh()->theme_style)->toBe(ThemeStyle::Soft);
+    expect($user->fresh()->theme_mode)->toBe(ThemeMode::Dark);
+
+    $this->actingAs($user->fresh())->get('/events')
+        ->assertInertia(fn ($page) => $page
+            ->where('theme.style', 'soft')
+            ->where('theme.mode', 'dark'))
+        ->assertSee('data-style="soft"', false)
+        ->assertSee('data-mode="dark"', false);
+});
+
+test('an unknown style or mode is rejected', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->put('/user/profile-information', [
+        'name' => $user->name,
+        'username' => $user->username,
+        'email' => $user->email,
+        'allow_public_follow' => '1',
+        'show_friends_list' => '1',
+        'appear_in_friends_lists' => '1',
+        'searchable' => '1',
+        'push_notifications_enabled' => '1',
+        'notify_event_invites' => '1',
+        'notify_messages' => '1',
+        'notify_friend_requests' => '1',
+        'notify_follow_requests' => '1',
+        'theme_style' => 'neon',
+        'theme_mode' => 'dim',
+    ])->assertInvalid(['theme_style', 'theme_mode'], 'updateProfileInformation');
+});
+
+test('guests get the classic style following the system', function () {
+    $this->get('/login')
+        ->assertSee('data-style="classic"', false)
+        ->assertSee('data-mode="system"', false);
 });

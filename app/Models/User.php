@@ -5,6 +5,8 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\FollowStatus;
 use App\Enums\FriendshipStatus;
+use App\Enums\ThemeMode;
+use App\Enums\ThemeStyle;
 use App\Enums\UserRole;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -41,6 +43,8 @@ use NotificationChannels\WebPush\HasPushSubscriptions;
  * @property string|null $avatar_path
  * @property string|null $bio
  * @property string|null $locale
+ * @property ThemeStyle $theme_style
+ * @property ThemeMode $theme_mode
  * @property Carbon|null $suspended_at
  * @property string|null $suspended_reason
  * @property int|null $suspended_by
@@ -49,7 +53,7 @@ use NotificationChannels\WebPush\HasPushSubscriptions;
  * @property Carbon|null $updated_at
  * @property-read string|null $avatar_url
  */
-#[Fillable(['name', 'username', 'email', 'password', 'role', 'allow_public_follow', 'show_friends_list', 'appear_in_friends_lists', 'searchable', 'push_notifications_enabled', 'notify_event_invites', 'notify_messages', 'notify_friend_requests', 'notify_follow_requests', 'avatar_path', 'bio', 'locale', 'suspended_at', 'suspended_reason', 'suspended_by'])]
+#[Fillable(['name', 'username', 'email', 'password', 'role', 'allow_public_follow', 'show_friends_list', 'appear_in_friends_lists', 'searchable', 'push_notifications_enabled', 'notify_event_invites', 'notify_messages', 'notify_friend_requests', 'notify_follow_requests', 'avatar_path', 'bio', 'locale', 'theme_style', 'theme_mode', 'suspended_at', 'suspended_reason', 'suspended_by'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -82,6 +86,8 @@ class User extends Authenticatable
             'notify_friend_requests' => 'boolean',
             'notify_follow_requests' => 'boolean',
             'suspended_at' => 'datetime',
+            'theme_style' => ThemeStyle::class,
+            'theme_mode' => ThemeMode::class,
         ];
     }
 

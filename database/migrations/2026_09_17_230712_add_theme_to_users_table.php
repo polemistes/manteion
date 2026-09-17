@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            //
+            $table->string('theme_style')->default('classic')->after('locale');
+            $table->string('theme_mode')->default('system')->after('theme_style');
         });
     }
 
@@ -22,7 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            //
+            $table->dropColumn(['theme_style', 'theme_mode']);
         });
     }
 };

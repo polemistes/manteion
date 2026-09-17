@@ -1,7 +1,19 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"  @class(['dark' => ($appearance ?? 'system') == 'dark'])>
+@php($theme = \App\Http\Middleware\HandleInertiaRequests::themeFor(auth()->user()))
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-style="{{ $theme['style'] }}" data-mode="{{ $theme['mode'] }}">
     <head>
         <meta charset="utf-8">
+        {{-- Resolve "system" to light/dark before first paint, so a dark-mode
+             visitor never sees a white flash. Kept in sync afterwards by
+             applyTheme() in resources/js/theme.ts. --}}
+        <script>
+            (function () {
+                var root = document.documentElement;
+                if (root.dataset.mode === 'system') {
+                    root.dataset.mode = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+            })();
+        </script>
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
         <link rel="icon" href="/favicon.ico" sizes="any">

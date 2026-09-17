@@ -13,6 +13,8 @@ import { index as moderationReportsIndex } from '@/routes/moderation/reports';
 import { destroy as destroyProfile } from '@/routes/profile';
 import { update as updatePassword } from '@/routes/user-password';
 import { update as updateProfileInformation } from '@/routes/user-profile-information';
+import type { ThemeMode, ThemeStyle } from '@/theme';
+import { applyTheme } from '@/theme';
 
 const { t } = useI18n();
 
@@ -34,8 +36,21 @@ const props = defineProps<{
         notify_follow_requests: boolean;
         avatar_url: string | null;
         bio: string | null;
+        theme_style: ThemeStyle;
+        theme_mode: ThemeMode;
     };
 }>();
+
+const themeStyle = ref<ThemeStyle>(props.user.theme_style);
+const themeMode = ref<ThemeMode>(props.user.theme_mode);
+
+const themeStyles: ThemeStyle[] = ['classic', 'soft'];
+const themeModes: ThemeMode[] = ['light', 'dark', 'system'];
+
+// Preview the choice at once; saving the form makes it stick.
+function previewTheme(): void {
+    applyTheme({ style: themeStyle.value, mode: themeMode.value });
+}
 
 const removeAvatar = ref(false);
 const deleteAccountDialogOpen = ref(false);
@@ -236,6 +251,56 @@ async function onPushToggle(): Promise<void> {
                     <span>{{ t('profile.searchable') }}</span>
                 </label>
                 <FieldError :message="errors.searchable" />
+            </div>
+
+            <div>
+                <span class="mb-1 block text-sm font-bold">{{
+                    t('profile.appearanceHeading')
+                }}</span>
+
+                <div class="flex flex-wrap gap-4">
+                    <label class="flex flex-col gap-1 text-sm">
+                        <span class="text-xs font-bold">{{
+                            t('profile.themeStyle')
+                        }}</span>
+                        <select
+                            v-model="themeStyle"
+                            name="theme_style"
+                            class="border border-edge bg-surface-raised px-2 py-1 font-sans text-sm"
+                            @change="previewTheme"
+                        >
+                            <option
+                                v-for="style in themeStyles"
+                                :key="style"
+                                :value="style"
+                            >
+                                {{ t(`profile.themeStyles.${style}`) }}
+                            </option>
+                        </select>
+                    </label>
+
+                    <label class="flex flex-col gap-1 text-sm">
+                        <span class="text-xs font-bold">{{
+                            t('profile.themeMode')
+                        }}</span>
+                        <select
+                            v-model="themeMode"
+                            name="theme_mode"
+                            class="border border-edge bg-surface-raised px-2 py-1 font-sans text-sm"
+                            @change="previewTheme"
+                        >
+                            <option
+                                v-for="mode in themeModes"
+                                :key="mode"
+                                :value="mode"
+                            >
+                                {{ t(`profile.themeModes.${mode}`) }}
+                            </option>
+                        </select>
+                    </label>
+                </div>
+                <FieldError :message="errors.theme_style" />
+                <FieldError :message="errors.theme_mode" />
             </div>
 
             <div>

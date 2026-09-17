@@ -1,3 +1,4 @@
+import type { Theme } from '@/theme';
 import type { Auth } from '@/types/auth';
 
 // Extend ImportMeta interface for Vite...
@@ -23,6 +24,7 @@ declare module '@inertiajs/core' {
             unreadMessagesCount: number;
             pendingContactRequestsCount: number;
             locale: string;
+            theme: Theme;
             availableLocales: Record<string, string>;
             vapidPublicKey: string | null;
             impersonating: boolean;

@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\ThemeMode;
+use App\Enums\ThemeStyle;
 use App\Models\ConversationParticipant;
 use App\Models\Follow;
 use App\Models\User;
@@ -52,9 +54,26 @@ class HandleInertiaRequests extends Middleware
             'unreadMessagesCount' => fn () => $user === null ? 0 : $this->unreadMessagesCount($user),
             'pendingContactRequestsCount' => fn () => $user === null ? 0 : $this->pendingContactRequestsCount($user),
             'locale' => app()->getLocale(),
+            'theme' => self::themeFor($user),
             'availableLocales' => config('app.supported_locales'),
             'vapidPublicKey' => config('webpush.vapid.public_key'),
             'impersonating' => $request->session()->has('impersonator_id'),
+        ];
+    }
+
+    /**
+     * The visual style and light/dark mode to render for a user — the
+     * classic style following the system for guests. Used both here (so the
+     * client can switch without a reload) and by the root Blade view (so
+     * the first paint is already right).
+     *
+     * @return array{style: string, mode: string}
+     */
+    public static function themeFor(?User $user): array
+    {
+        return [
+            'style' => ($user->theme_style ?? ThemeStyle::Classic)->value,
+            'mode' => ($user->theme_mode ?? ThemeMode::System)->value,
         ];
     }
 
