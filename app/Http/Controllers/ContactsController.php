@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Enums\ContactGroupType;
 use App\Enums\FollowStatus;
-use App\Enums\FriendshipStatus;
 use App\Models\ContactGroup;
 use App\Models\ContactTagPreference;
 use App\Models\Follow;
@@ -102,12 +101,7 @@ class ContactsController extends Controller
                 fn (Friendship $f) => $f->requester_id === $candidate->id || $f->addressee_id === $candidate->id
             );
 
-            $friendStatus = match (true) {
-                $friendship === null => 'none',
-                $friendship->status === FriendshipStatus::Accepted => 'friends',
-                $friendship->requester_id === $viewer->getKey() => 'request_sent',
-                default => 'request_received',
-            };
+            $friendStatus = $friendship?->statusFor($viewer) ?? 'none';
 
             $follow = $follows->get($candidate->id);
             $followStatus = match (true) {
@@ -122,7 +116,7 @@ class ContactsController extends Controller
                 'username' => $candidate->username,
                 'avatar_url' => $candidate->avatar_url,
                 'friend_status' => $friendStatus,
-                'friendship_id' => $friendship?->id,
+                'friendship_id' => $friendStatus === 'none' ? null : $friendship?->id,
                 'follow_status' => $followStatus,
                 'follow_id' => $follow?->id,
             ];

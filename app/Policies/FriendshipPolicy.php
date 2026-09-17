@@ -22,11 +22,13 @@ class FriendshipPolicy
     }
 
     /**
-     * Cancel a pending request (requester) or remove an accepted friendship (either party).
+     * Cancel an open request (requester) or remove an accepted friendship
+     * (either party). A declined request still looks open to its requester,
+     * so they may cancel it too.
      */
     public function delete(User $user, Friendship $friendship): bool
     {
-        if ($friendship->status === FriendshipStatus::Pending) {
+        if ($friendship->status !== FriendshipStatus::Accepted) {
             return $user->is($friendship->requester);
         }
 

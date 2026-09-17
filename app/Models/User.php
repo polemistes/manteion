@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\FollowStatus;
+use App\Enums\FriendshipStatus;
 use App\Enums\UserRole;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -139,11 +140,15 @@ class User extends Authenticatable
     }
 
     /**
+     * Requests this user sent that have not been accepted. A declined
+     * request is deliberately included: the addressee's decision is never
+     * revealed to the requester, who keeps seeing the request as open.
+     *
      * @return HasMany<Friendship, $this>
      */
     public function sentFriendRequests(): HasMany
     {
-        return $this->friendshipsAsRequester()->pending();
+        return $this->friendshipsAsRequester()->whereIn('status', [FriendshipStatus::Pending, FriendshipStatus::Declined]);
     }
 
     /**

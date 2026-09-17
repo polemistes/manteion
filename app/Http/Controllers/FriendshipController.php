@@ -14,6 +14,14 @@ class FriendshipController extends Controller
 {
     public function store(StoreFriendshipRequest $request): RedirectResponse
     {
+        // If the addressee once asked this user and was declined, that old
+        // request is superseded by this one rather than left dangling.
+        Friendship::query()
+            ->where('requester_id', $request->integer('user_id'))
+            ->where('addressee_id', $request->user()->getKey())
+            ->where('status', FriendshipStatus::Declined)
+            ->delete();
+
         $friendship = Friendship::create([
             'requester_id' => $request->user()->getKey(),
             'addressee_id' => $request->integer('user_id'),

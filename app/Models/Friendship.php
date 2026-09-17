@@ -49,6 +49,21 @@ class Friendship extends Model
     }
 
     /**
+     * How this friendship looks from one user's side. A declined request is
+     * reported as still sent to its requester and as nothing at all to the
+     * addressee, so declining is never revealed.
+     */
+    public function statusFor(User $viewer): string
+    {
+        return match (true) {
+            $this->status === FriendshipStatus::Accepted => 'friends',
+            $this->requester_id === $viewer->id => 'request_sent',
+            $this->status === FriendshipStatus::Declined => 'none',
+            default => 'request_received',
+        };
+    }
+
+    /**
      * @param  Builder<Friendship>  $query
      * @return Builder<Friendship>
      */

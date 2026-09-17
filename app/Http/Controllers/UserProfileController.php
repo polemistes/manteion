@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Enums\FollowStatus;
-use App\Enums\FriendshipStatus;
 use App\Models\Follow;
 use App\Models\Friendship;
 use App\Models\User;
@@ -22,12 +21,7 @@ class UserProfileController extends Controller
             ->orWhere(fn ($query) => $query->where('requester_id', $user->id)->where('addressee_id', $viewer->id))
             ->first();
 
-        $friendStatus = match (true) {
-            $friendship === null => 'none',
-            $friendship->status === FriendshipStatus::Accepted => 'friends',
-            $friendship->requester_id === $viewer->id => 'request_sent',
-            default => 'request_received',
-        };
+        $friendStatus = $friendship?->statusFor($viewer) ?? 'none';
 
         $follow = Follow::query()
             ->where('follower_id', $viewer->id)
@@ -55,7 +49,7 @@ class UserProfileController extends Controller
             ],
             'is_self' => $viewer->is($user),
             'friend_status' => $friendStatus,
-            'friendship_id' => $friendship?->id,
+            'friendship_id' => $friendStatus === 'none' ? null : $friendship?->id,
             'follow_status' => $followStatus,
             'follow_id' => $follow?->id,
             'friends' => $friends->map(fn (User $friend) => [

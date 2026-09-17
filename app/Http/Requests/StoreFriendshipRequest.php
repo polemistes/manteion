@@ -43,14 +43,18 @@ class StoreFriendshipRequest extends FormRequest
     {
         return [
             function (Validator $validator) {
+                // A declined request is still open from the requester's point
+                // of view, so it blocks a repeat in the same direction. In the
+                // other direction it does not: the person who declined may
+                // still reach out themselves (see FriendshipController::store).
                 $alreadyRelated = Friendship::query()
-                    ->whereIn('status', [FriendshipStatus::Pending, FriendshipStatus::Accepted])
                     ->where(fn ($query) => $query
                         ->where('requester_id', $this->user()->getKey())
                         ->where('addressee_id', $this->integer('user_id')))
                     ->orWhere(fn ($query) => $query
                         ->where('requester_id', $this->integer('user_id'))
-                        ->where('addressee_id', $this->user()->getKey()))
+                        ->where('addressee_id', $this->user()->getKey())
+                        ->whereIn('status', [FriendshipStatus::Pending, FriendshipStatus::Accepted]))
                     ->exists();
 
                 if ($alreadyRelated) {

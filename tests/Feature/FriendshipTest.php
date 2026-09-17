@@ -97,3 +97,59 @@ test('accepted friendships appear in both users friend lists', function () {
     expect($userA->fresh()->isFriendsWith($userB))->toBeTrue();
     expect($userA->fresh()->friends()->pluck('id'))->toContain($userB->id);
 });
+
+test('a declined request still looks sent to the requester and is hidden from the addressee', function () {
+    $sender = User::factory()->create();
+    $recipient = User::factory()->create();
+    $friendship = Friendship::factory()->create(['requester_id' => $sender->id, 'addressee_id' => $recipient->id, 'status' => FriendshipStatus::Declined]);
+
+    $this->actingAs($sender)->get('/contacts')->assertInertia(fn ($page) => $page
+        ->where('sentFriendRequests.0.friendship_id', $friendship->id)
+        ->has('pendingFriendRequests', 0));
+
+    $this->actingAs($sender)->get("/users/{$recipient->id}")->assertInertia(fn ($page) => $page
+        ->where('friend_status', 'request_sent')
+        ->where('friendship_id', $friendship->id));
+
+    $this->actingAs($recipient)->get('/contacts')->assertInertia(fn ($page) => $page
+        ->has('pendingFriendRequests', 0)
+        ->has('sentFriendRequests', 0));
+
+    $this->actingAs($recipient)->get("/users/{$sender->id}")->assertInertia(fn ($page) => $page
+        ->where('friend_status', 'none')
+        ->where('friendship_id', null));
+});
+
+test('a declined request blocks a repeat request in the same direction', function () {
+    $sender = User::factory()->create();
+    $recipient = User::factory()->create();
+    Friendship::factory()->create(['requester_id' => $sender->id, 'addressee_id' => $recipient->id, 'status' => FriendshipStatus::Declined]);
+
+    $this->actingAs($sender)->post('/friendships', ['user_id' => $recipient->id])->assertInvalid(['user_id']);
+});
+
+test('the person who declined can still send their own request, replacing the declined one', function () {
+    $sender = User::factory()->create();
+    $recipient = User::factory()->create();
+    $declined = Friendship::factory()->create(['requester_id' => $sender->id, 'addressee_id' => $recipient->id, 'status' => FriendshipStatus::Declined]);
+
+    $this->actingAs($recipient)->post('/friendships', ['user_id' => $sender->id])->assertRedirect()->assertValid();
+
+    $this->assertModelMissing($declined);
+    $this->assertDatabaseHas('friendships', [
+        'requester_id' => $recipient->id,
+        'addressee_id' => $sender->id,
+        'status' => FriendshipStatus::Pending->value,
+    ]);
+});
+
+test('the requester can cancel a declined request', function () {
+    $sender = User::factory()->create();
+    $recipient = User::factory()->create();
+    $friendship = Friendship::factory()->create(['requester_id' => $sender->id, 'addressee_id' => $recipient->id, 'status' => FriendshipStatus::Declined]);
+
+    $this->actingAs($recipient)->delete("/friendships/{$friendship->id}")->assertForbidden();
+    $this->actingAs($sender)->delete("/friendships/{$friendship->id}")->assertRedirect();
+
+    $this->assertModelMissing($friendship);
+});
