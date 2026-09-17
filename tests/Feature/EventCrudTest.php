@@ -164,3 +164,37 @@ test('only the owner can update or delete an event', function () {
     $this->actingAs($owner)->delete("/events/{$event->id}")->assertRedirect('/events');
     $this->assertModelMissing($event);
 });
+
+test('an oversized event image is scaled down to fit before it is stored', function () {
+    Storage::fake('public');
+    $owner = User::factory()->create();
+
+    $this->actingAs($owner)->post('/events', [
+        'name' => 'Big Picture',
+        'description' => 'A wide banner.',
+        'starts_at' => now()->addWeek()->toDateTimeString(),
+        'visibility' => 'private',
+        'allow_invitee_invites' => false,
+        'allow_invitee_comments' => true,
+        'image' => UploadedFile::fake()->image('banner.png', 3200, 1600),
+    ])->assertRedirect();
+
+    $path = Event::query()->where('name', 'Big Picture')->firstOrFail()->images->first()->path;
+    [$width, $height] = getimagesize(Storage::disk('public')->path($path));
+
+    expect($width)->toBe(1600)->and($height)->toBe(800);
+});
+
+test('an image beyond the decoding cap is rejected by validation', function () {
+    $owner = User::factory()->create();
+
+    $this->actingAs($owner)->post('/events', [
+        'name' => 'Huge Picture',
+        'description' => 'Far too large.',
+        'starts_at' => now()->addWeek()->toDateTimeString(),
+        'visibility' => 'private',
+        'allow_invitee_invites' => false,
+        'allow_invitee_comments' => true,
+        'image' => UploadedFile::fake()->image('huge.jpg', 5001, 100),
+    ])->assertInvalid(['image']);
+});

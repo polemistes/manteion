@@ -2,6 +2,7 @@
 
 namespace App\Actions\Fortify;
 
+use App\Http\Requests\StoreEventRequest;
 use App\Models\User;
 use App\Services\ImageProcessor;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -53,7 +54,7 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
             'notify_friend_requests' => ['required', 'boolean'],
             'notify_follow_requests' => ['required', 'boolean'],
             'bio' => ['nullable', 'string', 'max:1000'],
-            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048', Rule::dimensions()->maxWidth(StoreEventRequest::MAX_UPLOAD_EDGE)->maxHeight(StoreEventRequest::MAX_UPLOAD_EDGE)],
             'remove_avatar' => ['nullable', 'boolean'],
         ])->validateWithBag('updateProfileInformation');
 
@@ -107,7 +108,7 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
                 Storage::disk('public')->delete($user->avatar_path);
             }
 
-            return $this->imageProcessor->store($input['avatar'], 'avatars');
+            return $this->imageProcessor->store($input['avatar'], 'avatars', ImageProcessor::AVATAR_MAX_EDGE);
         }
 
         if (! empty($input['remove_avatar'])) {

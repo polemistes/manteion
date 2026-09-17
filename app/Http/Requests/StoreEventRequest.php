@@ -9,6 +9,12 @@ use Illuminate\Validation\Rule;
 
 class StoreEventRequest extends FormRequest
 {
+    /**
+     * Decoding an image costs about four bytes of memory a pixel, so an
+     * upload is capped before it is decoded at all.
+     */
+    public const MAX_UPLOAD_EDGE = 5000;
+
     public function authorize(): bool
     {
         return true;
@@ -34,7 +40,7 @@ class StoreEventRequest extends FormRequest
             'allow_invitee_comments' => ['required', 'boolean'],
             'tag_ids' => ['array', 'max:50'],
             'tag_ids.*' => ['integer', 'exists:tags,id'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', Rule::dimensions()->maxWidth(self::MAX_UPLOAD_EDGE)->maxHeight(self::MAX_UPLOAD_EDGE)],
         ];
     }
 }
