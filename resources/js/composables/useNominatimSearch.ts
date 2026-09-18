@@ -112,6 +112,11 @@ export function useNominatimSearch() {
             return;
         }
 
+        // Counts as searching from the first keystroke, so the UI never
+        // reports "no results" for a query that hasn't been sent yet.
+        searching.value = true;
+        error.value = false;
+
         debounceTimer = setTimeout(() => {
             void runSearch(trimmed);
         }, SEARCH_DEBOUNCE_MS);

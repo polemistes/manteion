@@ -133,8 +133,12 @@ function onVisibilityChange(event: Event): void {
 </script>
 
 <template>
-    <div class="event-card h-full min-w-0 border-frame border-edge p-3">
+    <div
+        class="event-card h-full min-w-0 border-frame border-edge p-3"
+        :class="{ 'event-card--no-image': !props.event.cover_image_url }"
+    >
         <Link
+            v-if="props.event.cover_image_url"
             :href="`/events/${props.event.id}`"
             class="event-card__image block h-full w-full"
         >
@@ -146,12 +150,10 @@ function onVisibilityChange(event: Event): void {
             </div>
             <div class="hidden h-full md:block">
                 <img
-                    v-if="props.event.cover_image_url"
                     :src="props.event.cover_image_url"
                     :alt="props.event.name"
                     class="h-full w-full object-cover"
                 />
-                <div v-else class="h-full w-full bg-gray-200"></div>
             </div>
         </Link>
 
@@ -304,6 +306,18 @@ function onVisibilityChange(event: Event): void {
     grid-area: organizer;
 }
 
+/* Without an image the text takes the whole card, in the same order as
+   the desktop layout below. */
+.event-card--no-image {
+    grid-template-areas:
+        'meta'
+        'title'
+        'categories'
+        'response'
+        'counts'
+        'organizer';
+}
+
 @media (min-width: 768px) {
     .event-card {
         grid-template-columns: 12rem minmax(0, 1fr);
@@ -316,6 +330,18 @@ function onVisibilityChange(event: Event): void {
             'image response'
             'image counts'
             'image organizer';
+    }
+
+    .event-card--no-image {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto auto 1fr auto auto auto;
+        grid-template-areas:
+            'meta'
+            'title'
+            'categories'
+            'response'
+            'counts'
+            'organizer';
     }
 }
 </style>

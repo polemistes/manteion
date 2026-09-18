@@ -35,35 +35,27 @@ function categoryLabel(tag: TagOption): string {
     return te(key) ? t(key) : tag.name;
 }
 
-function tagById(id: number): TagOption | undefined {
-    for (const category of props.categories) {
-        if (category.id === id) {
-            return category;
-        }
-
-        const child = category.children.find((c) => c.id === id);
-
-        if (child) {
-            return child;
-        }
-    }
-
-    return undefined;
-}
-
+// The chosen categories by name. A parent whose subcategories are chosen
+// is implied by them and left out, so picking "Day trip" reads as just
+// that rather than "Travel, Day trip".
 const summaryLabel = computed(() => {
-    if (selectedIds.value.size === 0) {
-        return t('categoryPicker.chooseCategories');
+    const names: string[] = [];
+
+    for (const category of props.categories) {
+        const children = category.children.filter((child) =>
+            selectedIds.value.has(child.id),
+        );
+
+        if (children.length > 0) {
+            names.push(...children.map(categoryLabel));
+        } else if (selectedIds.value.has(category.id)) {
+            names.push(categoryLabel(category));
+        }
     }
 
-    if (selectedIds.value.size === 1) {
-        const [id] = selectedIds.value;
-        const tag = tagById(id);
-
-        return tag ? categoryLabel(tag) : String(id);
-    }
-
-    return t('categoryPicker.selectedCount', { count: selectedIds.value.size });
+    return names.length
+        ? names.join(', ')
+        : t('categoryPicker.chooseCategories');
 });
 
 // Checking a subcategory also checks its parent category, and the parent

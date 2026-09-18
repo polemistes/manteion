@@ -49,6 +49,9 @@ const longitude = ref<number | null>(props.initialValue?.longitude ?? null);
 const city = ref<string | null>(props.initialValue?.city ?? null);
 const country = ref<string | null>(props.initialValue?.country ?? null);
 const searchQuery = ref('');
+// True once a result has been picked: the field then holds the chosen
+// address, which is not an unanswered search.
+const picked = ref(false);
 
 const { results, searching, error, search, clearResults } =
     useNominatimSearch();
@@ -100,6 +103,7 @@ function selectResult(result: NominatimResult): void {
     city.value = cityFromAddress(result.address);
     country.value = countryFromAddress(result.address);
     searchQuery.value = result.display_name;
+    picked.value = true;
     clearResults();
 
     placeMarker(lat, lng);
@@ -109,6 +113,7 @@ function selectResult(result: NominatimResult): void {
 function onSearchInput(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
     searchQuery.value = value;
+    picked.value = false;
     search(value);
 }
 
@@ -118,6 +123,7 @@ function clearLocation(): void {
     city.value = null;
     country.value = null;
     searchQuery.value = '';
+    picked.value = false;
     clearResults();
 
     if (marker) {
@@ -200,7 +206,9 @@ onUnmounted(() => {
                 {{ t('location.searchError') }}
             </p>
             <p
-                v-else-if="searchQuery.trim().length >= MIN_QUERY_LENGTH"
+                v-else-if="
+                    !picked && searchQuery.trim().length >= MIN_QUERY_LENGTH
+                "
                 class="mt-1 text-xs text-ink/70"
             >
                 {{ t('location.noResults') }}
