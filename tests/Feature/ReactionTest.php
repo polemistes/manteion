@@ -28,6 +28,23 @@ test('reacting to a leaflet adds the emoji and reacting again removes it', funct
     expect(Reaction::query()->count())->toBe(0);
 });
 
+test('a user has one reaction per item: another emoji replaces it', function () {
+    $user = User::factory()->create();
+    $leaflet = Leaflet::factory()->official()->create();
+
+    $this->actingAs($user)->post('/reactions', ['reactable_type' => 'leaflet', 'reactable_id' => $leaflet->id, 'emoji' => '👍'])->assertRedirect();
+    $this->actingAs($user)->post('/reactions', ['reactable_type' => 'leaflet', 'reactable_id' => $leaflet->id, 'emoji' => '❤️'])->assertRedirect();
+
+    expect(Reaction::query()->count())->toBe(1);
+    expect(Reaction::query()->first()->emoji)->toBe('❤️');
+
+    $this->actingAs($user)->get('/leaflets')
+        ->assertInertia(fn ($page) => $page
+            ->has('leaflets.0.reactions', 1)
+            ->where('leaflets.0.reactions.0.emoji', '❤️')
+            ->where('leaflets.0.reactions.0.reacted', true));
+});
+
 test('reactions are summarised per emoji, most used first, with the viewers own marked', function () {
     $viewer = User::factory()->create();
     $others = User::factory()->count(2)->create();

@@ -352,6 +352,7 @@
         "noMatches": "Ingen emoji passer.",
         "add": "Reager med {emoji}",
         "remove": "Fjern din {emoji}",
+        "removeMine": "Fjern reaksjonen din ({name})",
         "groups": {
             "0": "Smilefjes og følelser",
             "1": "Mennesker og kropp",

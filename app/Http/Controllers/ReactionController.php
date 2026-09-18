@@ -9,25 +9,31 @@ use Illuminate\Http\RedirectResponse;
 class ReactionController extends Controller
 {
     /**
-     * Toggles the viewer's reaction: the same emoji sent again removes it.
+     * A user has one reaction per item. Sending the emoji they already
+     * used removes it; sending another replaces it.
      */
     public function store(StoreReactionRequest $request): RedirectResponse
     {
         $reactable = $request->reactable();
+        $emoji = $request->validated('emoji');
 
-        $attributes = [
-            'user_id' => $request->user()->id,
-            'reactable_type' => $reactable->getMorphClass(),
-            'reactable_id' => $reactable->id,
-            'emoji' => $request->validated('emoji'),
-        ];
+        $existing = Reaction::query()
+            ->where('user_id', $request->user()->id)
+            ->where('reactable_type', $reactable->getMorphClass())
+            ->where('reactable_id', $reactable->id)
+            ->first();
 
-        $existing = Reaction::query()->where($attributes)->first();
-
-        if ($existing !== null) {
+        if ($existing === null) {
+            Reaction::query()->create([
+                'user_id' => $request->user()->id,
+                'reactable_type' => $reactable->getMorphClass(),
+                'reactable_id' => $reactable->id,
+                'emoji' => $emoji,
+            ]);
+        } elseif ($existing->emoji === $emoji) {
             $existing->delete();
         } else {
-            Reaction::query()->create($attributes);
+            $existing->update(['emoji' => $emoji]);
         }
 
         return back();

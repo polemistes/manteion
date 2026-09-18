@@ -352,6 +352,7 @@
         "noMatches": "No emoji match.",
         "add": "React with {emoji}",
         "remove": "Remove your {emoji}",
+        "removeMine": "Remove your reaction ({name})",
         "groups": {
             "0": "Smileys and emotion",
             "1": "People and body",
