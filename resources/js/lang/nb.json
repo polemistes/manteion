@@ -187,6 +187,21 @@
         }
     },
     "events": {
+        "calendar": {
+            "title": "Kalender",
+            "viewSwitch": "Vis som",
+            "listView": "Liste",
+            "calendarView": "Kalender",
+            "month": "Måned",
+            "week": "Uke",
+            "day": "Dag",
+            "today": "I dag",
+            "previous": "Forrige",
+            "next": "Neste",
+            "weekNumber": "Uke {week}",
+            "more": "+{count} til",
+            "noEvents": "Ingen arrangementer"
+        },
         "index": {
             "title": "Arrangementer",
             "createEvent": "Opprett arrangement",

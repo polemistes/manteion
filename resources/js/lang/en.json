@@ -187,6 +187,21 @@
         }
     },
     "events": {
+        "calendar": {
+            "title": "Calendar",
+            "viewSwitch": "Show as",
+            "listView": "List",
+            "calendarView": "Calendar",
+            "month": "Month",
+            "week": "Week",
+            "day": "Day",
+            "today": "Today",
+            "previous": "Previous",
+            "next": "Next",
+            "weekNumber": "Week {week}",
+            "more": "+{count} more",
+            "noEvents": "No events"
+        },
         "index": {
             "title": "Events",
             "createEvent": "Create event",

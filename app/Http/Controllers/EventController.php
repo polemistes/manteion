@@ -17,6 +17,9 @@ use App\Models\Tag;
 use App\Models\User;
 use App\Services\EventFeedQuery;
 use App\Services\ImageProcessor;
+use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -34,42 +37,19 @@ class EventController extends Controller
 
     public const PER_PAGE = 30;
 
+    /** @var list<string> */
+    public const CALENDAR_VIEWS = ['month', 'week', 'day'];
+
+    public const CALENDAR_MAX_EVENTS = 500;
+
     public function index(Request $request): Response
     {
         $user = $request->user();
         $feed = new EventFeedQuery($user);
         $nearPoint = $this->nearPointFrom($request);
+        $followedIds = $this->followedIds($user);
 
-        $followedIds = $user->following()->wherePivot('status', FollowStatus::Accepted->value)->pluck('users.id');
-
-        $query = $feed->withAnyTag($feed->visible(), $request->array('tags'));
-
-        $ownerFilter = $request->array('owner_filter');
-        if ($ownerFilter !== []) {
-            $allowedOwnerIds = collect();
-
-            if (in_array('friends', $ownerFilter, true)) {
-                $allowedOwnerIds = $allowedOwnerIds->merge($user->friendIds());
-            }
-
-            if (in_array('following', $ownerFilter, true)) {
-                $allowedOwnerIds = $allowedOwnerIds->merge($followedIds);
-            }
-
-            $specificIds = collect($ownerFilter)->filter(fn ($value) => is_numeric($value))->map(fn ($value) => (int) $value);
-
-            $query->whereIn('user_id', $allowedOwnerIds->merge($specificIds)->unique()->all());
-        }
-
-        if ($request->filled('group_id')) {
-            $group = ContactGroup::query()->find($request->integer('group_id'));
-
-            if ($group !== null && $user->is($group->owner)) {
-                $query->whereIn('user_id', DB::table('contact_group_members')
-                    ->select('member_user_id')
-                    ->where('contact_group_id', $group->id));
-            }
-        }
+        $query = $this->applyContactFilters($feed->withAnyTag($feed->visible(), $request->array('tags')), $request, $user, $followedIds);
 
         $startDateFilter = $request->has('start_date') ? $this->dateFrom($request, 'start_date') : now()->toDateString();
         if ($startDateFilter !== '') {
@@ -86,16 +66,58 @@ class EventController extends Controller
         return Inertia::render('events/Index', [
             'events' => $this->summarizeEvents($events->getCollection(), $user, $nearPoint),
             'pagination' => $this->summarizePagination($events),
-            'categories' => Tag::categoriesTree(),
-            'friends' => $user->friends()->map(fn (User $friend) => ['id' => $friend->id, 'name' => $friend->name, 'username' => $friend->username, 'avatar_url' => $friend->avatar_url])->values(),
-            'following' => User::query()->whereIn('id', $followedIds)->orderBy('name')->get(['id', 'name', 'username', 'avatar_path']),
-            'friendGroups' => $user->contactGroups()->ofType(ContactGroupType::Friend)->get(['id', 'name']),
-            'followingGroups' => $user->contactGroups()->ofType(ContactGroupType::Following)->get(['id', 'name']),
+            ...$this->filterPanelProps($user, $followedIds),
             'filters' => [
                 ...$request->only(['tags', 'owner_filter', 'group_id', 'near_lat', 'near_lng']),
                 'start_date' => $startDateFilter,
                 'end_date' => $endDateFilter,
             ],
+        ]);
+    }
+
+    /**
+     * The same events as the list, laid out by date. The range fetched is a
+     * day wider than the view on each side, because the browser groups
+     * events by the viewer's local date and the server does not know their
+     * timezone.
+     */
+    public function calendar(Request $request): Response
+    {
+        $user = $request->user();
+        $feed = new EventFeedQuery($user);
+        $followedIds = $this->followedIds($user);
+
+        $view = in_array($request->string('view')->toString(), self::CALENDAR_VIEWS, true)
+            ? $request->string('view')->toString()
+            : 'month';
+        $date = $this->dateFrom($request, 'date') ?: now()->toDateString();
+        $anchor = CarbonImmutable::parse($date);
+
+        [$rangeStart, $rangeEnd] = match ($view) {
+            'month' => [
+                $anchor->startOfMonth()->startOfWeek(CarbonInterface::MONDAY),
+                $anchor->endOfMonth()->endOfWeek(CarbonInterface::SUNDAY),
+            ],
+            'week' => [$anchor->startOfWeek(CarbonInterface::MONDAY), $anchor->endOfWeek(CarbonInterface::SUNDAY)],
+            default => [$anchor->startOfDay(), $anchor->endOfDay()],
+        };
+
+        $events = $this->applyContactFilters($feed->withAnyTag($feed->visible(), $request->array('tags')), $request, $user, $followedIds)
+            ->whereBetween('starts_at', [$rangeStart->subDay(), $rangeEnd->addDay()])
+            ->orderBy('starts_at')
+            ->orderBy('id')
+            ->limit(self::CALENDAR_MAX_EVENTS)
+            ->get();
+
+        return Inertia::render('events/Calendar', [
+            'events' => $this->summarizeEvents($events, $user),
+            'calendar' => [
+                'view' => $view,
+                'date' => $anchor->toDateString(),
+                'today' => now()->toDateString(),
+            ],
+            ...$this->filterPanelProps($user, $followedIds),
+            'filters' => $request->only(['tags', 'owner_filter', 'group_id']),
         ]);
     }
 
@@ -358,6 +380,71 @@ class EventController extends Controller
         }
 
         return [$lat, $lng];
+    }
+
+    /**
+     * @return Collection<int, int>
+     */
+    private function followedIds(User $user): Collection
+    {
+        return $user->following()->wherePivot('status', FollowStatus::Accepted->value)->pluck('users.id');
+    }
+
+    /**
+     * Narrows a feed query by organizer (friends, followed users, specific
+     * people) and by contact group, as the list and calendar pages share.
+     *
+     * @param  Builder<Event>  $query
+     * @param  Collection<int, int>  $followedIds
+     * @return Builder<Event>
+     */
+    private function applyContactFilters(Builder $query, Request $request, User $user, Collection $followedIds): Builder
+    {
+        $ownerFilter = $request->array('owner_filter');
+        if ($ownerFilter !== []) {
+            $allowedOwnerIds = collect();
+
+            if (in_array('friends', $ownerFilter, true)) {
+                $allowedOwnerIds = $allowedOwnerIds->merge($user->friendIds());
+            }
+
+            if (in_array('following', $ownerFilter, true)) {
+                $allowedOwnerIds = $allowedOwnerIds->merge($followedIds);
+            }
+
+            $specificIds = collect($ownerFilter)->filter(fn ($value) => is_numeric($value))->map(fn ($value) => (int) $value);
+
+            $query->whereIn('user_id', $allowedOwnerIds->merge($specificIds)->unique()->all());
+        }
+
+        if ($request->filled('group_id')) {
+            $group = ContactGroup::query()->find($request->integer('group_id'));
+
+            if ($group !== null && $user->is($group->owner)) {
+                $query->whereIn('user_id', DB::table('contact_group_members')
+                    ->select('member_user_id')
+                    ->where('contact_group_id', $group->id));
+            }
+        }
+
+        return $query;
+    }
+
+    /**
+     * The options the filter panel offers: categories, contacts and groups.
+     *
+     * @param  Collection<int, int>  $followedIds
+     * @return array<string, mixed>
+     */
+    private function filterPanelProps(User $user, Collection $followedIds): array
+    {
+        return [
+            'categories' => Tag::categoriesTree(),
+            'friends' => $user->friends()->map(fn (User $friend) => ['id' => $friend->id, 'name' => $friend->name, 'username' => $friend->username, 'avatar_url' => $friend->avatar_url])->values(),
+            'following' => User::query()->whereIn('id', $followedIds)->orderBy('name')->get(['id', 'name', 'username', 'avatar_path']),
+            'friendGroups' => $user->contactGroups()->ofType(ContactGroupType::Friend)->get(['id', 'name']),
+            'followingGroups' => $user->contactGroups()->ofType(ContactGroupType::Following)->get(['id', 'name']),
+        ];
     }
 
     /**
