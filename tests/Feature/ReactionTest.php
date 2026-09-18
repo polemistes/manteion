@@ -61,18 +61,21 @@ test('reactions are summarised per emoji, most used first, with the viewers own 
             ->where('leaflets.0.reactions.1', ['emoji' => '👍', 'count' => 1, 'reacted' => true]));
 });
 
-test('any single unicode emoji is accepted, including flags and sequences, but text is not', function () {
+test('any single unicode emoji is accepted, including flags and sequences', function (string $emoji) {
     $user = User::factory()->create();
     $leaflet = Leaflet::factory()->official()->create();
 
-    foreach (['🇳🇴', '👩‍💻', '👍🏽', '1️⃣', '❤️'] as $emoji) {
-        $this->actingAs($user)->post('/reactions', ['reactable_type' => 'leaflet', 'reactable_id' => $leaflet->id, 'emoji' => $emoji])->assertValid();
-    }
+    $this->actingAs($user)->post('/reactions', ['reactable_type' => 'leaflet', 'reactable_id' => $leaflet->id, 'emoji' => $emoji])->assertValid();
+    expect(Reaction::query()->value('emoji'))->toBe($emoji);
+})->with(['🇳🇴', '👩‍💻', '👍🏽', '1️⃣', '❤️', '🎉']);
 
-    foreach (['ok', 'a', '🎉🎉', ''] as $invalid) {
-        $this->actingAs($user)->post('/reactions', ['reactable_type' => 'leaflet', 'reactable_id' => $leaflet->id, 'emoji' => $invalid])->assertInvalid(['emoji']);
-    }
-});
+test('text, several emoji, or nothing is not a reaction', function (string $invalid) {
+    $user = User::factory()->create();
+    $leaflet = Leaflet::factory()->official()->create();
+
+    $this->actingAs($user)->post('/reactions', ['reactable_type' => 'leaflet', 'reactable_id' => $leaflet->id, 'emoji' => $invalid])->assertInvalid(['emoji']);
+    expect(Reaction::query()->count())->toBe(0);
+})->with(['ok', 'a', '🎉🎉', '', '👍👍🏽']);
 
 test('you can react to a response on a leaflet you can read, and not otherwise', function () {
     $author = User::factory()->create();
