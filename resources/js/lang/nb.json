@@ -289,6 +289,13 @@
             "inviteFriends": "Inviter venner",
             "invite": "Inviter",
             "noInviteCandidates": "Alle vennene dine er allerede på listen, eller du har ingen ennå.",
+            "guestCounts": "{coming} kommer · {maybe} kanskje · {invited} invitert",
+            "guestTabs": {
+                "attending": "Kommer",
+                "interested": "Kanskje",
+                "no_response": "Invitert",
+                "not_attending": "Kommer ikke"
+            },
             "whosOnTheList": "Hvem som er på listen",
             "noOneYet": "Ingen ennå.",
             "comments": "Kommentarer",

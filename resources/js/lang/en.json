@@ -289,6 +289,13 @@
             "inviteFriends": "Invite friends",
             "invite": "Invite",
             "noInviteCandidates": "All of your friends are already on the list, or you have none yet.",
+            "guestCounts": "{coming} coming · {maybe} maybe · {invited} invited",
+            "guestTabs": {
+                "attending": "Coming",
+                "interested": "Maybe",
+                "no_response": "Invited",
+                "not_attending": "Not coming"
+            },
             "whosOnTheList": "Who's on the list",
             "noOneYet": "No one yet.",
             "comments": "Comments",
