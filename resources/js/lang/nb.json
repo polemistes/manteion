@@ -331,8 +331,37 @@
             "save": "Lagre endringer",
             "saving": "Lagrer…"
         },
+        "responses": {
+            "heading": "Svar",
+            "placeholder": "Skriv et svar…",
+            "send": "Svar",
+            "sending": "Sender…",
+            "delete": "Slett",
+            "confirmDelete": "Slette dette svaret?"
+        },
         "show": {
             "backToFeed": "Tilbake til alle flyveblad"
+        }
+    },
+    "reactions": {
+        "pick": "Legg til en reaksjon",
+        "pickerTitle": "Velg en emoji",
+        "search": "Søk etter emoji",
+        "close": "Lukk",
+        "loading": "Laster emoji…",
+        "noMatches": "Ingen emoji passer.",
+        "add": "Reager med {emoji}",
+        "remove": "Fjern din {emoji}",
+        "groups": {
+            "0": "Smilefjes og følelser",
+            "1": "Mennesker og kropp",
+            "2": "Dyr og natur",
+            "3": "Mat og drikke",
+            "4": "Reise og steder",
+            "5": "Aktiviteter",
+            "6": "Gjenstander",
+            "7": "Symboler",
+            "8": "Flagg"
         }
     },
     "messages": {
@@ -511,7 +540,8 @@
             "message": "Melding",
             "event": "Arrangement",
             "comment": "Kommentar",
-            "leaflet": "Flyveblad"
+            "leaflet": "Flyveblad",
+            "leaflet_response": "Svar på flyveblad"
         },
         "viewInContext": "Vis i sammenheng",
         "alreadyDeleted": "Dette innholdet er allerede fjernet.",

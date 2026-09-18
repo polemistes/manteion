@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Event;
 use App\Models\EventComment;
 use App\Models\Leaflet;
+use App\Models\LeafletResponse;
 use App\Models\Message;
 use Carbon\CarbonImmutable;
 use GuzzleHttp\Psr7\HttpFactory;
@@ -118,6 +119,7 @@ class AppServiceProvider extends ServiceProvider
             'event' => Event::class,
             'comment' => EventComment::class,
             'leaflet' => Leaflet::class,
+            'leaflet_response' => LeafletResponse::class,
         ]);
     }
 }

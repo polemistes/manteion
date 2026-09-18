@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Models\Event;
 use App\Models\EventComment;
 use App\Models\Leaflet;
+use App\Models\LeafletResponse;
 use App\Models\Message;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -19,6 +20,7 @@ class StoreReportRequest extends FormRequest
         'event' => Event::class,
         'comment' => EventComment::class,
         'leaflet' => Leaflet::class,
+        'leaflet_response' => LeafletResponse::class,
     ];
 
     public function authorize(): bool
@@ -44,7 +46,7 @@ class StoreReportRequest extends FormRequest
         ];
     }
 
-    public function reportable(): Message|Event|EventComment|Leaflet|null
+    public function reportable(): Message|Event|EventComment|Leaflet|LeafletResponse|null
     {
         $type = $this->string('reportable_type')->value();
         $modelClass = self::REPORTABLE_TYPES[$type] ?? null;
@@ -56,13 +58,14 @@ class StoreReportRequest extends FormRequest
         return $modelClass::find($this->integer('reportable_id'));
     }
 
-    private function reportableOwner(Message|Event|EventComment|Leaflet $reportable): mixed
+    private function reportableOwner(Message|Event|EventComment|Leaflet|LeafletResponse $reportable): mixed
     {
         return match (true) {
             $reportable instanceof Message => $reportable->sender,
             $reportable instanceof Event => $reportable->owner,
             $reportable instanceof EventComment => $reportable->user,
             $reportable instanceof Leaflet => $reportable->owner,
+            $reportable instanceof LeafletResponse => $reportable->user,
         };
     }
 }

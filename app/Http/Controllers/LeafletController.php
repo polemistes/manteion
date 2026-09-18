@@ -8,6 +8,8 @@ use App\Http\Requests\StoreLeafletRequest;
 use App\Http\Requests\UpdateLeafletRequest;
 use App\Jobs\FetchLeafletLinkPreview;
 use App\Models\Leaflet;
+use App\Models\LeafletResponse;
+use App\Models\Reaction;
 use App\Models\User;
 use App\Services\ImageProcessor;
 use App\Services\LeafletFeedQuery;
@@ -66,6 +68,8 @@ class LeafletController extends Controller
     public function show(Request $request, Leaflet $leaflet): Response
     {
         Gate::authorize('view', $leaflet);
+
+        $leaflet->load(['owner', 'reactions', 'responses.user', 'responses.reactions']);
 
         return Inertia::render('leaflets/Show', [
             'leaflet' => $this->summarize($leaflet, $request->user()),
@@ -150,6 +154,16 @@ class LeafletController extends Controller
             'can_edit' => Gate::forUser($viewer)->allows('update', $leaflet),
             'can_delete' => Gate::forUser($viewer)->allows('delete', $leaflet),
             'can_report' => $leaflet->user_id !== $viewer->id,
+            'reactions' => Reaction::summarize($leaflet->reactions, $viewer),
+            'responses' => $leaflet->responses->map(fn (LeafletResponse $response) => [
+                'id' => $response->id,
+                'body' => $response->body,
+                'created_at' => $response->created_at->toIso8601String(),
+                'user' => ['id' => $response->user->id, 'name' => $response->user->name, 'username' => $response->user->username, 'avatar_url' => $response->user->avatar_url],
+                'can_delete' => $viewer->id === $response->user_id || $viewer->id === $leaflet->user_id || $viewer->isStaff(),
+                'can_report' => $response->user_id !== $viewer->id,
+                'reactions' => Reaction::summarize($response->reactions, $viewer),
+            ])->values()->all(),
         ];
     }
 

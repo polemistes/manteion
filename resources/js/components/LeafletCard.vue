@@ -1,14 +1,18 @@
 <script setup lang="ts">
-import { Link, router } from '@inertiajs/vue3';
+import { Form, Link, router } from '@inertiajs/vue3';
+import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import FieldError from '@/components/FieldError.vue';
 import PersonSummary from '@/components/PersonSummary.vue';
+import ReactionBar from '@/components/ReactionBar.vue';
 import ReportButton from '@/components/ReportButton.vue';
 import { confirmAction } from '@/composables/useConfirm';
-import type { LeafletSummary } from '@/leaflets';
+import type { LeafletResponseSummary, LeafletSummary } from '@/leaflets';
 import {
     destroy as destroyLeaflet,
     edit as editLeaflet,
 } from '@/routes/leaflets';
+import * as leafletResponses from '@/routes/leaflets/responses';
 
 const props = defineProps<{ leaflet: LeafletSummary }>();
 
@@ -24,6 +28,24 @@ function formatTime(value: string): string {
         dateFnsLocales[locale.value] ?? locale.value,
         { dateStyle: 'medium', timeStyle: 'short' },
     );
+}
+
+const responseBody = ref('');
+
+async function removeResponse(response: LeafletResponseSummary): Promise<void> {
+    const confirmed = await confirmAction({
+        message: t('leaflets.responses.confirmDelete'),
+    });
+
+    if (confirmed) {
+        router.delete(
+            leafletResponses.destroy({
+                leaflet: props.leaflet.id,
+                response: response.id,
+            }).url,
+            { preserveScroll: true },
+        );
+    }
 }
 
 async function remove(): Promise<void> {
@@ -96,6 +118,95 @@ async function remove(): Promise<void> {
                 </span>
             </span>
         </a>
+
+        <div class="mt-3">
+            <ReactionBar
+                reactable-type="leaflet"
+                :reactable-id="props.leaflet.id"
+                :reactions="props.leaflet.reactions"
+            />
+        </div>
+
+        <section class="mt-4 border-t border-edge pt-3">
+            <h3 class="mb-2 text-xs font-bold uppercase">
+                {{ t('leaflets.responses.heading') }}
+            </h3>
+
+            <ul class="mb-3 flex flex-col gap-3">
+                <li
+                    v-for="response in props.leaflet.responses"
+                    :key="response.id"
+                    class="border-l-2 border-edge pl-3"
+                >
+                    <div
+                        class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm"
+                    >
+                        <PersonSummary v-bind="response.user" />
+                        <span class="text-xs text-ink/70">{{
+                            formatTime(response.created_at)
+                        }}</span>
+                        <button
+                            v-if="response.can_delete"
+                            type="button"
+                            class="text-xs text-ink/50 hover:underline"
+                            @click="removeResponse(response)"
+                        >
+                            {{ t('leaflets.responses.delete') }}
+                        </button>
+                        <ReportButton
+                            v-if="response.can_report"
+                            reportable-type="leaflet_response"
+                            :reportable-id="response.id"
+                        />
+                    </div>
+                    <p class="mt-1 font-sans text-sm whitespace-pre-line">
+                        {{ response.body }}
+                    </p>
+                    <div class="mt-1">
+                        <ReactionBar
+                            reactable-type="leaflet_response"
+                            :reactable-id="response.id"
+                            :reactions="response.reactions"
+                        />
+                    </div>
+                </li>
+            </ul>
+
+            <Form
+                v-bind="leafletResponses.store.form(props.leaflet.id)"
+                #default="{ errors, processing }"
+                class="flex flex-col gap-2"
+                @success="responseBody = ''"
+            >
+                <label
+                    :for="`leaflet-response-${props.leaflet.id}`"
+                    class="sr-only"
+                    >{{ t('leaflets.responses.placeholder') }}</label
+                >
+                <textarea
+                    :id="`leaflet-response-${props.leaflet.id}`"
+                    v-model="responseBody"
+                    name="body"
+                    required
+                    rows="2"
+                    maxlength="2000"
+                    :placeholder="t('leaflets.responses.placeholder')"
+                    class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+                ></textarea>
+                <FieldError :message="errors.body" />
+                <button
+                    type="submit"
+                    :disabled="processing"
+                    class="w-fit border border-edge px-3 py-1 text-xs hover:bg-accent hover:text-on-accent disabled:opacity-50"
+                >
+                    {{
+                        processing
+                            ? t('leaflets.responses.sending')
+                            : t('leaflets.responses.send')
+                    }}
+                </button>
+            </Form>
+        </section>
 
         <footer
             v-if="

@@ -20,12 +20,14 @@ use App\Http\Controllers\EventSearchabilityController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\FriendshipController;
 use App\Http\Controllers\LeafletController;
+use App\Http\Controllers\LeafletResponseController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Moderation\ReportController as ModerationReportController;
 use App\Http\Controllers\Moderation\StaffConversationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PushSubscriptionController;
+use App\Http\Controllers\ReactionController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserProfileController;
 use Illuminate\Http\Request;
@@ -104,6 +106,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/leaflets/{leaflet}/edit', [LeafletController::class, 'edit'])->name('leaflets.edit');
     Route::put('/leaflets/{leaflet}', [LeafletController::class, 'update'])->name('leaflets.update');
     Route::delete('/leaflets/{leaflet}', [LeafletController::class, 'destroy'])->name('leaflets.destroy');
+    Route::post('/leaflets/{leaflet}/responses', [LeafletResponseController::class, 'store'])->name('leaflets.responses.store');
+    Route::delete('/leaflets/{leaflet}/responses/{response}', [LeafletResponseController::class, 'destroy'])
+        ->name('leaflets.responses.destroy')
+        ->scopeBindings();
+    Route::post('/reactions', [ReactionController::class, 'store'])->name('reactions.store');
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'update'])->name('notifications.read');

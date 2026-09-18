@@ -4,9 +4,11 @@ import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Avatar from '@/components/Avatar.vue';
 import FieldError from '@/components/FieldError.vue';
+import ReactionBar from '@/components/ReactionBar.vue';
 import ReportButton from '@/components/ReportButton.vue';
 import { confirmAction } from '@/composables/useConfirm';
 import { staffDelete } from '@/composables/useStaffDelete';
+import type { ReactionSummary } from '@/reactions';
 import { send } from '@/routes/messages';
 import * as conversationMessages from '@/routes/messages/messages';
 import * as conversationParticipants from '@/routes/messages/participants';
@@ -38,6 +40,7 @@ interface MessageItem {
     is_mine: boolean;
     can_delete: boolean;
     can_report: boolean;
+    reactions: ReactionSummary[];
 }
 
 const props = defineProps<{
@@ -267,6 +270,13 @@ async function deleteMessage(message: MessageItem): Promise<void> {
                         : message.body
                 }}
             </p>
+            <div v-if="!message.is_deleted" class="mt-1 ml-10">
+                <ReactionBar
+                    reactable-type="message"
+                    :reactable-id="message.id"
+                    :reactions="message.reactions"
+                />
+            </div>
         </li>
         <li v-if="!allMessages.length" class="text-sm text-ink/70">
             {{ t('messages.show.noMessagesYet') }}

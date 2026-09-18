@@ -30,7 +30,7 @@ interface ReportedUser {
 }
 
 interface Reportable {
-    type: 'message' | 'event' | 'comment' | 'leaflet';
+    type: 'message' | 'event' | 'comment' | 'leaflet' | 'leaflet_response';
     excerpt: string | null;
     is_deleted: boolean;
     author: ReportedUser;
@@ -64,13 +64,16 @@ async function deleteContent(report: ModerationReport): Promise<void> {
     // (unlike comments and messages) — just confirm and delete.
     if (
         report.reportable.type === 'event' ||
-        report.reportable.type === 'leaflet'
+        report.reportable.type === 'leaflet' ||
+        report.reportable.type === 'leaflet_response'
     ) {
         const confirmed = await confirmAction({
             message: t(
                 report.reportable.type === 'event'
                     ? 'events.show.confirmDeleteEvent'
-                    : 'leaflets.card.confirmDelete',
+                    : report.reportable.type === 'leaflet'
+                      ? 'leaflets.card.confirmDelete'
+                      : 'leaflets.responses.confirmDelete',
             ),
         });
 

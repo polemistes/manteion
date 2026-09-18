@@ -91,7 +91,7 @@ class ConversationController extends Controller
         $user = $request->user();
         $conversation->load([
             'participants.user',
-            'messages' => fn ($query) => $query->with('sender')->latest('id')->limit(ConversationMessageController::PAGE_SIZE),
+            'messages' => fn ($query) => $query->with(['sender', 'reactions'])->latest('id')->limit(ConversationMessageController::PAGE_SIZE),
         ]);
 
         $oldestLoadedId = $conversation->messages->min('id');

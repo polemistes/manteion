@@ -1,3 +1,5 @@
+import type { ReactionSummary } from '@/reactions';
+
 export type LeafletVisibility =
     'official' | 'friends_and_followers' | 'friends' | 'private';
 
@@ -31,4 +33,21 @@ export interface LeafletSummary {
     can_edit: boolean;
     can_delete: boolean;
     can_report: boolean;
+    reactions: ReactionSummary[];
+    responses: LeafletResponseSummary[];
+}
+
+export interface LeafletResponseSummary {
+    id: number;
+    body: string;
+    created_at: string;
+    user: {
+        id: number;
+        name: string;
+        username: string;
+        avatar_url: string | null;
+    };
+    can_delete: boolean;
+    can_report: boolean;
+    reactions: ReactionSummary[];
 }

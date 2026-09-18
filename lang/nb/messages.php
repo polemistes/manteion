@@ -34,6 +34,10 @@ return [
         'one_attachment' => 'Et flyveblad kan ha enten et bilde eller en lenke, ikke begge.',
     ],
 
+    'reaction' => [
+        'not_an_emoji' => 'Det er ikke en enkelt emoji.',
+    ],
+
     'moderation' => [
         'deleted_placeholder' => 'Slettet av en moderator',
     ],

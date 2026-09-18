@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Carbon;
 
@@ -33,6 +34,18 @@ class Leaflet extends Model
     /** @use HasFactory<LeafletFactory> */
     use HasFactory;
 
+    /**
+     * Reactions hang off a polymorphic relation, which no foreign key
+     * cascades, so they go when the leaflet (and its responses) go.
+     */
+    protected static function booted(): void
+    {
+        static::deleting(function (Leaflet $leaflet) {
+            $leaflet->responses->each->delete();
+            $leaflet->reactions()->delete();
+        });
+    }
+
     protected function casts(): array
     {
         return [
@@ -47,6 +60,22 @@ class Leaflet extends Model
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * @return HasMany<LeafletResponse, $this>
+     */
+    public function responses(): HasMany
+    {
+        return $this->hasMany(LeafletResponse::class)->orderBy('id');
+    }
+
+    /**
+     * @return MorphMany<Reaction, $this>
+     */
+    public function reactions(): MorphMany
+    {
+        return $this->morphMany(Reaction::class, 'reactable');
     }
 
     /**

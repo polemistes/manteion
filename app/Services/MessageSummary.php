@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Message;
+use App\Models\Reaction;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 
@@ -14,7 +15,7 @@ use Illuminate\Support\Facades\Gate;
 class MessageSummary
 {
     /**
-     * @return array{id: int, body: string|null, is_deleted: bool, created_at: string, sender: array{id: int, name: string, username: string, avatar_url: string|null}, is_mine: bool, can_delete: bool, can_report: bool}
+     * @return array{id: int, body: string|null, is_deleted: bool, created_at: string, sender: array{id: int, name: string, username: string, avatar_url: string|null}, is_mine: bool, can_delete: bool, can_report: bool, reactions: array<int, array{emoji: string, count: int, reacted: bool}>}
      */
     public static function for(Message $message, User $viewer): array
     {
@@ -35,6 +36,7 @@ class MessageSummary
             'is_mine' => $message->user_id === $viewer->id,
             'can_delete' => ! $message->is_deleted && Gate::forUser($viewer)->allows('delete', $message),
             'can_report' => ! $message->is_deleted && $message->user_id !== $viewer->id,
+            'reactions' => Reaction::summarize($message->reactions, $viewer),
         ];
     }
 }

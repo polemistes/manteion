@@ -331,8 +331,37 @@
             "save": "Save changes",
             "saving": "Saving…"
         },
+        "responses": {
+            "heading": "Responses",
+            "placeholder": "Write a response…",
+            "send": "Respond",
+            "sending": "Sending…",
+            "delete": "Delete",
+            "confirmDelete": "Delete this response?"
+        },
         "show": {
             "backToFeed": "Back to all leaflets"
+        }
+    },
+    "reactions": {
+        "pick": "Add a reaction",
+        "pickerTitle": "Pick an emoji",
+        "search": "Search emoji",
+        "close": "Close",
+        "loading": "Loading emoji…",
+        "noMatches": "No emoji match.",
+        "add": "React with {emoji}",
+        "remove": "Remove your {emoji}",
+        "groups": {
+            "0": "Smileys and emotion",
+            "1": "People and body",
+            "2": "Animals and nature",
+            "3": "Food and drink",
+            "4": "Travel and places",
+            "5": "Activities",
+            "6": "Objects",
+            "7": "Symbols",
+            "8": "Flags"
         }
     },
     "messages": {
@@ -511,7 +540,8 @@
             "message": "Message",
             "event": "Event",
             "comment": "Comment",
-            "leaflet": "Leaflet"
+            "leaflet": "Leaflet",
+            "leaflet_response": "Leaflet response"
         },
         "viewInContext": "View in context",
         "alreadyDeleted": "This content has already been removed.",

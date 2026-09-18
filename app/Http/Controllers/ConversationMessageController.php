@@ -34,7 +34,7 @@ class ConversationMessageController extends Controller
         $request->validate(['before' => ['required', 'integer']]);
 
         $messages = $conversation->messages()
-            ->with('sender')
+            ->with(['sender', 'reactions'])
             ->where('id', '<', $request->integer('before'))
             ->latest('id')
             ->limit(self::PAGE_SIZE)

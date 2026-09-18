@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventComment;
 use App\Models\Leaflet;
+use App\Models\LeafletResponse;
 use App\Models\Message;
 use App\Models\Report;
 use Illuminate\Http\RedirectResponse;
@@ -102,6 +103,14 @@ class ReportController extends Controller
                 'author' => $this->summarizeUser($reportable->owner),
                 'url' => route('leaflets.show', $reportable->id),
                 'delete_url' => route('leaflets.destroy', $reportable->id),
+            ],
+            $reportable instanceof LeafletResponse => [
+                'type' => 'leaflet_response',
+                'excerpt' => $reportable->body,
+                'is_deleted' => false,
+                'author' => $this->summarizeUser($reportable->user),
+                'url' => route('leaflets.show', $reportable->leaflet_id),
+                'delete_url' => route('leaflets.responses.destroy', [$reportable->leaflet_id, $reportable->id]),
             ],
             default => null,
         };

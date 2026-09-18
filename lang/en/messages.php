@@ -34,6 +34,10 @@ return [
         'one_attachment' => 'A leaflet can carry either an image or a link, not both.',
     ],
 
+    'reaction' => [
+        'not_an_emoji' => 'That is not a single emoji.',
+    ],
+
     'moderation' => [
         'deleted_placeholder' => 'Deleted by a moderator',
     ],
