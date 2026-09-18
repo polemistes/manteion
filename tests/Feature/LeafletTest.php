@@ -10,8 +10,8 @@ use App\Models\Report;
 use App\Models\User;
 use App\Services\LinkPreview;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -80,8 +80,8 @@ test('the feed is newest first and can be narrowed to one visibility', function 
         ->assertInertia(fn ($page) => $page->has('leaflets', 3)->where('scope', null));
 });
 
-test('a leaflet with a link gets its preview fetched in the background', function () {
-    Queue::fake();
+test('a leaflet with a link gets its preview fetched right after the response', function () {
+    Bus::fake();
     $user = User::factory()->create();
 
     $this->actingAs($user)->post('/leaflets', [
@@ -92,7 +92,7 @@ test('a leaflet with a link gets its preview fetched in the background', functio
 
     $leaflet = Leaflet::query()->firstOrFail();
     expect($leaflet->link_url)->toBe('https://example.com/article');
-    Queue::assertPushed(FetchLeafletLinkPreview::class, fn (FetchLeafletLinkPreview $job) => $job->leaflet->is($leaflet));
+    Bus::assertDispatchedAfterResponse(FetchLeafletLinkPreview::class, fn (FetchLeafletLinkPreview $job) => $job->leaflet->is($leaflet));
 });
 
 test('the link preview job stores the pages open graph data', function () {
@@ -168,7 +168,7 @@ test('a leaflet may carry an image or a link but not both', function () {
 
 test('the author can edit everything about a leaflet, including swapping the image for a link', function () {
     Storage::fake('public');
-    Queue::fake();
+    Bus::fake();
     $user = User::factory()->create();
     Storage::disk('public')->put('leaflets/1/old.jpg', 'x');
     $leaflet = Leaflet::factory()->create(['user_id' => $user->id, 'image_path' => 'leaflets/1/old.jpg']);
@@ -186,7 +186,7 @@ test('the author can edit everything about a leaflet, including swapping the ima
         ->and($leaflet->image_path)->toBeNull()
         ->and($leaflet->link_url)->toBe('https://example.com/new');
     Storage::disk('public')->assertMissing('leaflets/1/old.jpg');
-    Queue::assertPushed(FetchLeafletLinkPreview::class);
+    Bus::assertDispatchedAfterResponse(FetchLeafletLinkPreview::class);
 });
 
 test('a link cannot be added while an image is kept', function () {
@@ -250,4 +250,22 @@ test('the feed is paginated twenty leaflets a page', function () {
 
     $this->actingAs($user)->get('/leaflets')
         ->assertInertia(fn ($page) => $page->has('leaflets', 20)->where('pagination.last_page', 2));
+});
+
+test('a link whose preview was never fetched is retried when it is shown, once a minute', function () {
+    Bus::fake();
+    $user = User::factory()->create();
+    $stale = Leaflet::factory()->withLink('https://example.com/lost')->create(['user_id' => $user->id]);
+    $stale->forceFill(['created_at' => now()->subHour(), 'updated_at' => now()->subHour()])->save();
+    $fresh = Leaflet::factory()->withLink('https://example.com/new')->create(['user_id' => $user->id]);
+    $done = Leaflet::factory()->withLink('https://example.com/done')->create(['user_id' => $user->id, 'link_fetched_at' => now()->subHour()]);
+    $done->forceFill(['updated_at' => now()->subHour()])->save();
+
+    $this->actingAs($user)->get('/leaflets')->assertOk();
+
+    Bus::assertDispatchedAfterResponseTimes(FetchLeafletLinkPreview::class, 1);
+    Bus::assertDispatchedAfterResponse(FetchLeafletLinkPreview::class, fn (FetchLeafletLinkPreview $job) => $job->leaflet->is($stale));
+
+    $this->actingAs($user)->get('/leaflets')->assertOk();
+    Bus::assertDispatchedAfterResponseTimes(FetchLeafletLinkPreview::class, 1);
 });

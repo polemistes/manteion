@@ -103,6 +103,16 @@ async function remove(): Promise<void> {
                 alt=""
                 class="mx-auto block max-h-64 max-w-full border-b border-edge"
             />
+            <!-- No image from the site: a band with its name stands in. -->
+            <span
+                v-else
+                class="flex h-24 items-center justify-center gap-2 border-b border-edge bg-surface px-3 text-lg font-bold"
+            >
+                <span aria-hidden="true">🔗</span>
+                <span class="truncate">{{
+                    props.leaflet.link.host ?? props.leaflet.link.url
+                }}</span>
+            </span>
             <span class="block p-3">
                 <span class="block text-xs text-ink/70">{{
                     props.leaflet.link.host ?? props.leaflet.link.url

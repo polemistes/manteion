@@ -28,7 +28,7 @@ class LinkPreview
 
         try {
             $response = Http::timeout(10)
-                ->withHeaders(['User-Agent' => 'Manteion link preview', 'Accept' => 'text/html'])
+                ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; ManteionBot/1.0; +https://manteion.no)', 'Accept' => 'text/html'])
                 ->withOptions(['allow_redirects' => ['max' => 3]])
                 ->get($url);
         } catch (ConnectionException|RequestException) {

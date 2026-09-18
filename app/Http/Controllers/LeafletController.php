@@ -37,6 +37,8 @@ class LeafletController extends Controller
             ->paginate(self::PER_PAGE)
             ->withQueryString();
 
+        $leaflets->getCollection()->each(fn (Leaflet $leaflet) => $this->retryMissingLinkPreview($leaflet));
+
         return Inertia::render('leaflets/Index', [
             'leaflets' => $leaflets->getCollection()->map(fn (Leaflet $leaflet) => $this->summarize($leaflet, $viewer))->values(),
             'pagination' => [
@@ -70,6 +72,7 @@ class LeafletController extends Controller
         Gate::authorize('view', $leaflet);
 
         $leaflet->load(['owner', 'reactions', 'responses.user', 'responses.reactions']);
+        $this->retryMissingLinkPreview($leaflet);
 
         return Inertia::render('leaflets/Show', [
             'leaflet' => $this->summarize($leaflet, $request->user()),
@@ -190,12 +193,30 @@ class LeafletController extends Controller
         $leaflet->update(['image_path' => null]);
     }
 
+    /**
+     * A link whose preview was never fetched (the job was lost, say, to a
+     * queue with no worker) gets another attempt when it is shown, at most
+     * once a minute so a stubborn one doesn't refetch on every poll.
+     */
+    private function retryMissingLinkPreview(Leaflet $leaflet): void
+    {
+        if ($leaflet->link_url === null || $leaflet->link_fetched_at !== null || $leaflet->updated_at->gt(now()->subMinute())) {
+            return;
+        }
+
+        $leaflet->touch();
+
+        FetchLeafletLinkPreview::dispatchAfterResponse($leaflet);
+    }
+
     private function refreshLinkPreview(Leaflet $leaflet): void
     {
         $leaflet->update(['link_title' => null, 'link_description' => null, 'link_image_url' => null, 'link_fetched_at' => null]);
 
+        // Runs after the response is sent, whatever the queue connection
+        // is, so a preview never depends on a worker being present.
         if ($leaflet->link_url !== null) {
-            FetchLeafletLinkPreview::dispatch($leaflet);
+            FetchLeafletLinkPreview::dispatchAfterResponse($leaflet);
         }
     }
 }
