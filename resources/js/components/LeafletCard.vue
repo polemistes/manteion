@@ -79,7 +79,7 @@ async function remove(): Promise<void> {
         </header>
 
         <p
-            class="rounded-card bg-surface-inset px-4 py-3 font-sans text-base whitespace-pre-line"
+            class="rounded-card bg-surface-inset px-4 py-3 font-sans text-lg whitespace-pre-line"
         >
             {{ props.leaflet.body }}
         </p>
