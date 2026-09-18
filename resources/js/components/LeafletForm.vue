@@ -32,10 +32,27 @@ const props = withDefaults(
 
 const { t } = useI18n();
 
+// Local state behind every field: a bare :value binding is re-applied on
+// each re-render (Vue always patches `value`), which would wipe what the
+// user typed as soon as they changed the attachment kind.
+const body = ref(props.body);
+const visibility = ref<LeafletVisibility>(props.visibility);
+const linkUrl = ref(props.linkUrl ?? '');
 const removeImage = ref(false);
 const attachment = ref<'none' | 'image' | 'link'>(
     props.imageUrl ? 'image' : props.linkUrl ? 'link' : 'none',
 );
+
+function onSuccess(): void {
+    if (!props.resetOnSuccess) {
+        return;
+    }
+
+    body.value = '';
+    visibility.value = props.visibility;
+    linkUrl.value = '';
+    attachment.value = 'none';
+}
 </script>
 
 <template>
@@ -43,6 +60,7 @@ const attachment = ref<'none' | 'image' | 'link'>(
         v-bind="props.action"
         :reset-on-success="props.resetOnSuccess"
         #default="{ errors, processing }"
+        @success="onSuccess"
         class="flex flex-col gap-3"
     >
         <div>
@@ -55,8 +73,8 @@ const attachment = ref<'none' | 'image' | 'link'>(
                 required
                 rows="3"
                 maxlength="2000"
+                v-model="body"
                 :placeholder="t('leaflets.form.bodyPlaceholder')"
-                :value="props.body"
                 class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
             ></textarea>
             <FieldError :message="errors.body" />
@@ -68,8 +86,8 @@ const attachment = ref<'none' | 'image' | 'link'>(
                     t('leaflets.form.visibility')
                 }}</span>
                 <select
+                    v-model="visibility"
                     name="visibility"
-                    :value="props.visibility"
                     class="border border-edge bg-surface-raised px-2 py-1 font-sans text-sm"
                 >
                     <option
@@ -129,9 +147,9 @@ const attachment = ref<'none' | 'image' | 'link'>(
             }}</label>
             <input
                 id="leaflet-link"
+                v-model="linkUrl"
                 type="url"
                 name="link_url"
-                :value="props.linkUrl ?? ''"
                 placeholder="https://"
                 class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
             />

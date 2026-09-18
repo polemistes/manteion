@@ -74,11 +74,12 @@ async function remove(): Promise<void> {
             rel="noopener noreferrer"
             class="mt-3 block border border-edge hover:bg-surface-raised"
         >
+            <!-- Shown at natural size, capped, so a small logo is not blown up. -->
             <img
                 v-if="props.leaflet.link.image_url"
                 :src="props.leaflet.link.image_url"
                 alt=""
-                class="max-h-64 w-full border-b border-edge object-cover"
+                class="mx-auto block max-h-64 max-w-full border-b border-edge"
             />
             <span class="block p-3">
                 <span class="block text-xs text-ink/70">{{

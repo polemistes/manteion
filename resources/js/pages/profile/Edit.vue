@@ -52,6 +52,13 @@ function previewTheme(): void {
     applyTheme({ style: themeStyle.value, mode: themeMode.value });
 }
 
+// Text fields keep their own state: a bare :value binding is re-applied on
+// every re-render (Vue always patches `value`), so toggling any checkbox
+// below would otherwise wipe an edited name or bio.
+const name = ref(props.user.name);
+const username = ref(props.user.username);
+const email = ref(props.user.email);
+const bio = ref(props.user.bio ?? '');
 const removeAvatar = ref(false);
 const deleteAccountDialogOpen = ref(false);
 
@@ -139,7 +146,7 @@ async function onPushToggle(): Promise<void> {
                     type="text"
                     name="name"
                     required
-                    :value="props.user.name"
+                    v-model="name"
                     class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
                 />
                 <FieldError :message="errors.name" />
@@ -154,7 +161,7 @@ async function onPushToggle(): Promise<void> {
                     type="text"
                     name="username"
                     required
-                    :value="props.user.username"
+                    v-model="username"
                     class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
                 />
                 <FieldError :message="errors.username" />
@@ -169,7 +176,7 @@ async function onPushToggle(): Promise<void> {
                     type="email"
                     name="email"
                     required
-                    :value="props.user.email"
+                    v-model="email"
                     class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
                 />
                 <FieldError :message="errors.email" />
@@ -185,7 +192,7 @@ async function onPushToggle(): Promise<void> {
                     rows="3"
                     maxlength="1000"
                     :placeholder="t('profile.bioPlaceholder')"
-                    :value="props.user.bio"
+                    v-model="bio"
                     class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
                 ></textarea>
                 <FieldError :message="errors.bio" />

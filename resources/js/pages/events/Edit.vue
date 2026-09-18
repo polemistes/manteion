@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, Link } from '@inertiajs/vue3';
+import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import CategoryPicker from '@/components/CategoryPicker.vue';
 import DateTimeField from '@/components/DateTimeField.vue';
@@ -39,6 +40,10 @@ const props = defineProps<{
     };
     categories: CategoryOption[];
 }>();
+
+const name = ref(props.event.name);
+const place = ref(props.event.place ?? '');
+const description = ref(props.event.description);
 </script>
 
 <template>
@@ -82,7 +87,7 @@ const props = defineProps<{
                 type="text"
                 name="name"
                 required
-                :value="props.event.name"
+                v-model="name"
                 class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
             />
             <FieldError :message="errors.name" />
@@ -96,7 +101,7 @@ const props = defineProps<{
                 id="place"
                 type="text"
                 name="place"
-                :value="props.event.place"
+                v-model="place"
                 class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
             />
             <FieldError :message="errors.place" />
@@ -123,7 +128,7 @@ const props = defineProps<{
                 name="description"
                 required
                 rows="4"
-                :value="props.event.description"
+                v-model="description"
                 class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
             ></textarea>
             <FieldError :message="errors.description" />
