@@ -238,22 +238,32 @@ const locationLabel =
         </span>
     </div>
 
-    <div v-if="props.event.images.length" class="mb-6 flex flex-wrap gap-3">
-        <img
-            v-for="(image, index) in props.event.images"
-            :key="index"
-            :src="image"
-            class="h-32 w-32 border border-edge object-cover"
-            alt=""
-        />
-    </div>
-
-    <p
-        class="mb-8 max-w-prose font-sans text-sm whitespace-pre-line"
-        :class="{ 'text-ink/50 italic': props.event.is_deleted }"
+    <!-- Text to the left on a tinted panel, the image to the right taking
+         half the width; stacked with the image first on narrow screens. -->
+    <div
+        class="mb-8 grid grid-cols-1 gap-4"
+        :class="{ 'md:grid-cols-2': props.event.images.length }"
     >
-        {{ props.event.description }}
-    </p>
+        <div
+            v-if="props.event.images.length"
+            class="order-first flex flex-col gap-3 md:order-last"
+        >
+            <img
+                v-for="(image, index) in props.event.images"
+                :key="index"
+                :src="image"
+                class="w-full border border-edge object-cover"
+                alt=""
+            />
+        </div>
+
+        <p
+            class="min-w-0 rounded-card bg-surface-inset px-4 py-3 font-sans text-lg whitespace-pre-line"
+            :class="{ 'text-ink/50 italic': props.event.is_deleted }"
+        >
+            {{ props.event.description }}
+        </p>
+    </div>
 
     <section
         v-if="props.event.is_owner"
