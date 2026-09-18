@@ -296,6 +296,7 @@
                 "no_response": "Invited",
                 "not_attending": "Not coming"
             },
+            "areYouComing": "Are you coming?",
             "whosOnTheList": "Who's on the list",
             "noOneYet": "No one yet.",
             "comments": "Comments",

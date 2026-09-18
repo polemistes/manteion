@@ -12,7 +12,6 @@ import { destroy as destroyEvent, edit as editEvent } from '@/routes/events';
 import * as eventAttendance from '@/routes/events/attendance';
 import * as eventComments from '@/routes/events/comments';
 import * as eventInvitations from '@/routes/events/invitations';
-import * as eventSearchable from '@/routes/events/searchable';
 
 const { t, te, locale } = useI18n();
 
@@ -182,10 +181,7 @@ const locationLabel =
 
     <!-- Details to the left, the image to the right from the very top;
          stacked with the image first on narrow screens. -->
-    <div
-        class="mb-8 grid grid-cols-1 gap-4"
-        :class="{ 'md:grid-cols-2': props.event.images.length }"
-    >
+    <div class="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2">
         <div class="min-w-0">
             <div class="mb-1 flex items-start justify-between gap-3">
                 <h1 class="text-xl font-bold">{{ props.event.name }}</h1>
@@ -218,9 +214,42 @@ const locationLabel =
                 </template>
                 <template v-if="locationLabel"> · {{ locationLabel }}</template>
             </p>
-            <div
-                class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm"
+            <p
+                class="min-w-0 rounded-card bg-surface-inset px-4 py-3 font-sans text-lg whitespace-pre-line"
+                :class="{ 'text-ink/50 italic': props.event.is_deleted }"
             >
+                {{ props.event.description }}
+            </p>
+            <div class="mt-3 flex flex-wrap gap-2">
+                <span
+                    v-for="tag in props.event.tags"
+                    :key="tag.id"
+                    class="border border-edge px-2 py-0.5 text-xs"
+                >
+                    {{ categoryLabel(tag) }}
+                </span>
+                <span
+                    class="border border-edge px-2 py-0.5 text-xs font-bold uppercase"
+                >
+                    {{
+                        props.event.visibility === 'private'
+                            ? t('events.show.visibilityLabelPrivate')
+                            : t('events.show.visibilityLabelPublic')
+                    }}
+                </span>
+            </div>
+        </div>
+
+        <div class="order-first flex flex-col gap-3 md:order-last">
+            <img
+                v-for="(image, index) in props.event.images"
+                :key="index"
+                :src="image"
+                class="w-full border border-edge object-cover"
+                alt=""
+            />
+
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
                 <span>
                     {{ t('events.show.by') }}
                     <PersonSummary v-bind="props.event.owner" />
@@ -241,44 +270,22 @@ const locationLabel =
                 </button>
             </div>
 
-            <div class="mt-3 mb-4 flex flex-wrap gap-2">
-                <span
-                    v-for="tag in props.event.tags"
-                    :key="tag.id"
-                    class="border border-edge px-2 py-0.5 text-xs"
+            <div v-if="props.event.is_owner" class="flex flex-wrap gap-2">
+                <Link
+                    :href="editEvent(props.event.id).url"
+                    class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
                 >
-                    {{ categoryLabel(tag) }}
-                </span>
-                <span
-                    class="border border-edge px-2 py-0.5 text-xs font-bold uppercase"
+                    {{ t('events.show.edit') }}
+                </Link>
+                <button
+                    v-if="props.event.can_delete"
+                    type="button"
+                    class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
+                    @click="deleteEvent"
                 >
-                    {{
-                        props.event.visibility === 'private'
-                            ? t('events.show.visibilityLabelPrivate')
-                            : t('events.show.visibilityLabelPublic')
-                    }}
-                </span>
+                    {{ t('events.show.delete') }}
+                </button>
             </div>
-
-            <p
-                class="min-w-0 rounded-card bg-surface-inset px-4 py-3 font-sans text-lg whitespace-pre-line"
-                :class="{ 'text-ink/50 italic': props.event.is_deleted }"
-            >
-                {{ props.event.description }}
-            </p>
-        </div>
-
-        <div
-            v-if="props.event.images.length"
-            class="order-first flex flex-col gap-3 md:order-last"
-        >
-            <img
-                v-for="(image, index) in props.event.images"
-                :key="index"
-                :src="image"
-                class="w-full border border-edge object-cover"
-                alt=""
-            />
         </div>
     </div>
 
@@ -330,135 +337,79 @@ const locationLabel =
         </button>
     </Modal>
 
-    <!-- Your response, and for the owner their tools beside it, under the image. -->
-    <div
-        class="mb-8 grid grid-cols-1 gap-4"
-        :class="{ 'md:grid-cols-2': props.event.is_owner }"
-    >
-        <section>
-            <h2 class="mb-3 text-sm font-bold uppercase">
-                {{ t('events.show.yourResponse') }}
-            </h2>
-            <Form
-                v-bind="eventAttendance.update.form(props.event.id)"
-                #default="{ errors, processing }"
-                class="flex flex-wrap items-end gap-3"
-            >
-                <div>
-                    <label for="status" class="mb-1 block text-xs font-bold">{{
-                        t('events.show.status')
-                    }}</label>
-                    <select
-                        id="status"
-                        name="status"
-                        :value="props.myAttendance?.status ?? 'no_response'"
-                        class="border border-edge bg-surface-raised px-2 py-1 text-sm"
-                    >
-                        <option value="no_response">
-                            {{ t('events.show.statusNoResponse') }}
-                        </option>
-                        <option value="attending">
-                            {{ t('events.show.statusAttending') }}
-                        </option>
-                        <option value="interested">
-                            {{ t('events.show.statusInterested') }}
-                        </option>
-                        <option value="not_attending">
-                            {{ t('events.show.statusNotAttending') }}
-                        </option>
-                    </select>
-                    <FieldError :message="errors.status" />
-                </div>
-
-                <div>
-                    <label
-                        for="attendance_visibility"
-                        class="mb-1 block text-xs font-bold"
-                    >
-                        {{ t('events.show.whoCanSee') }}
-                    </label>
-                    <select
-                        id="attendance_visibility"
-                        name="attendance_visibility"
-                        :value="
-                            props.myAttendance?.attendance_visibility ??
-                            'everyone'
-                        "
-                        class="border border-edge bg-surface-raised px-2 py-1 text-sm"
-                    >
-                        <option value="everyone">
-                            {{ t('events.show.visibilityEveryone') }}
-                        </option>
-                        <option value="friends">
-                            {{ t('events.show.visibilityFriends') }}
-                        </option>
-                        <option value="none">
-                            {{ t('events.show.visibilityNone') }}
-                        </option>
-                    </select>
-                    <FieldError :message="errors.attendance_visibility" />
-                </div>
-
-                <button
-                    type="submit"
-                    :disabled="processing"
-                    class="border border-edge bg-accent px-3 py-2 text-sm text-on-accent hover:bg-surface-raised hover:text-ink"
-                >
-                    {{
-                        processing
-                            ? t('events.show.saving')
-                            : t('events.show.saveResponse')
-                    }}
-                </button>
-            </Form>
-        </section>
-
-        <section
-            v-if="props.event.is_owner"
-            class="border-frame border-edge p-4"
+    <section class="mb-8">
+        <Form
+            v-bind="eventAttendance.update.form(props.event.id)"
+            #default="{ errors, processing }"
+            class="flex flex-wrap items-end gap-3"
         >
-            <h2 class="mb-3 text-sm font-bold uppercase">
-                {{ t('events.show.ownerTools') }}
-            </h2>
-            <div class="mb-3 flex flex-wrap gap-2">
-                <Link
-                    :href="editEvent(props.event.id).url"
-                    class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
+            <div>
+                <label for="status" class="mb-1 block text-xs font-bold">{{
+                    t('events.show.areYouComing')
+                }}</label>
+                <select
+                    id="status"
+                    name="status"
+                    :value="props.myAttendance?.status ?? 'no_response'"
+                    class="border border-edge bg-surface-raised px-2 py-1 text-sm"
                 >
-                    {{ t('events.show.edit') }}
-                </Link>
-                <button
-                    v-if="props.event.can_delete"
-                    type="button"
-                    class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
-                    @click="deleteEvent"
-                >
-                    {{ t('events.show.delete') }}
-                </button>
+                    <option value="no_response">
+                        {{ t('events.show.statusNoResponse') }}
+                    </option>
+                    <option value="attending">
+                        {{ t('events.show.statusAttending') }}
+                    </option>
+                    <option value="interested">
+                        {{ t('events.show.statusInterested') }}
+                    </option>
+                    <option value="not_attending">
+                        {{ t('events.show.statusNotAttending') }}
+                    </option>
+                </select>
+                <FieldError :message="errors.status" />
             </div>
-            <p class="mb-2 text-sm">
-                {{ t('events.show.searchable') }}
-                <span class="font-bold">{{
-                    props.event.is_searchable_paid
-                        ? t('events.show.yes')
-                        : t('events.show.no')
-                }}</span>
-            </p>
-            <Form
-                v-if="!props.event.is_searchable_paid"
-                v-bind="eventSearchable.store.form(props.event.id)"
-                #default="{ processing }"
-            >
-                <button
-                    type="submit"
-                    :disabled="processing"
-                    class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
+
+            <div>
+                <label
+                    for="attendance_visibility"
+                    class="mb-1 block text-xs font-bold"
                 >
-                    {{ t('events.show.makeSearchable') }}
-                </button>
-            </Form>
-        </section>
-    </div>
+                    {{ t('events.show.whoCanSee') }}
+                </label>
+                <select
+                    id="attendance_visibility"
+                    name="attendance_visibility"
+                    :value="
+                        props.myAttendance?.attendance_visibility ?? 'everyone'
+                    "
+                    class="border border-edge bg-surface-raised px-2 py-1 text-sm"
+                >
+                    <option value="everyone">
+                        {{ t('events.show.visibilityEveryone') }}
+                    </option>
+                    <option value="friends">
+                        {{ t('events.show.visibilityFriends') }}
+                    </option>
+                    <option value="none">
+                        {{ t('events.show.visibilityNone') }}
+                    </option>
+                </select>
+                <FieldError :message="errors.attendance_visibility" />
+            </div>
+
+            <button
+                type="submit"
+                :disabled="processing"
+                class="border border-edge bg-accent px-3 py-2 text-sm text-on-accent hover:bg-surface-raised hover:text-ink"
+            >
+                {{
+                    processing
+                        ? t('events.show.saving')
+                        : t('events.show.saveResponse')
+                }}
+            </button>
+        </Form>
+    </section>
 
     <section v-if="props.event.can_invite" class="mb-8">
         <h2 class="mb-3 text-sm font-bold uppercase">

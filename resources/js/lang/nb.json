@@ -296,6 +296,7 @@
                 "no_response": "Invitert",
                 "not_attending": "Kommer ikke"
             },
+            "areYouComing": "Kommer du?",
             "whosOnTheList": "Hvem som er på listen",
             "noOneYet": "Ingen ennå.",
             "comments": "Kommentarer",
