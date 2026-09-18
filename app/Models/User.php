@@ -242,6 +242,14 @@ class User extends Authenticatable
     }
 
     /**
+     * @return HasMany<Leaflet, $this>
+     */
+    public function leaflets(): HasMany
+    {
+        return $this->hasMany(Leaflet::class);
+    }
+
+    /**
      * @return HasMany<EventAttendee, $this>
      */
     public function eventAttendances(): HasMany

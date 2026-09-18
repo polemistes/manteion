@@ -30,7 +30,7 @@ interface ReportedUser {
 }
 
 interface Reportable {
-    type: 'message' | 'event' | 'comment';
+    type: 'message' | 'event' | 'comment' | 'leaflet';
     excerpt: string | null;
     is_deleted: boolean;
     author: ReportedUser;
@@ -60,11 +60,18 @@ function dismiss(report: ModerationReport): void {
 }
 
 async function deleteContent(report: ModerationReport): Promise<void> {
-    // Events don't offer the "leave a placeholder" choice (unlike comments
-    // and messages) — just confirm and delete.
-    if (report.reportable.type === 'event') {
+    // Events and leaflets don't offer the "leave a placeholder" choice
+    // (unlike comments and messages) — just confirm and delete.
+    if (
+        report.reportable.type === 'event' ||
+        report.reportable.type === 'leaflet'
+    ) {
         const confirmed = await confirmAction({
-            message: t('events.show.confirmDeleteEvent'),
+            message: t(
+                report.reportable.type === 'event'
+                    ? 'events.show.confirmDeleteEvent'
+                    : 'leaflets.card.confirmDelete',
+            ),
         });
 
         if (confirmed) {

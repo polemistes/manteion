@@ -19,6 +19,7 @@ use App\Http\Controllers\EventInvitationController;
 use App\Http\Controllers\EventSearchabilityController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\FriendshipController;
+use App\Http\Controllers\LeafletController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Moderation\ReportController as ModerationReportController;
 use App\Http\Controllers\Moderation\StaffConversationController;
@@ -96,6 +97,13 @@ Route::middleware('auth')->group(function () {
         ->name('events.images.destroy')
         ->scopeBindings();
     Route::post('/events/{event}/searchable', [EventSearchabilityController::class, 'store'])->name('events.searchable.store');
+
+    Route::get('/leaflets', [LeafletController::class, 'index'])->name('leaflets.index');
+    Route::post('/leaflets', [LeafletController::class, 'store'])->name('leaflets.store');
+    Route::get('/leaflets/{leaflet}', [LeafletController::class, 'show'])->name('leaflets.show');
+    Route::get('/leaflets/{leaflet}/edit', [LeafletController::class, 'edit'])->name('leaflets.edit');
+    Route::put('/leaflets/{leaflet}', [LeafletController::class, 'update'])->name('leaflets.update');
+    Route::delete('/leaflets/{leaflet}', [LeafletController::class, 'destroy'])->name('leaflets.destroy');
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'update'])->name('notifications.read');

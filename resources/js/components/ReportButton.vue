@@ -8,7 +8,7 @@ import { store as reportsStore } from '@/routes/reports';
 const { t } = useI18n();
 
 const props = defineProps<{
-    reportableType: 'message' | 'event' | 'comment';
+    reportableType: 'message' | 'event' | 'comment' | 'leaflet';
     reportableId: number;
 }>();
 

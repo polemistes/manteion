@@ -21,6 +21,7 @@ class RestrictImpersonatedRequests
         'events.comments.destroy',
         'events.images.destroy',
         'messages.messages.destroy',
+        'leaflets.destroy',
     ];
 
     /**

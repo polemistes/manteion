@@ -30,6 +30,10 @@ return [
         'friends_only' => 'You can only add your own friends.',
     ],
 
+    'leaflet' => [
+        'one_attachment' => 'A leaflet can carry either an image or a link, not both.',
+    ],
+
     'moderation' => [
         'deleted_placeholder' => 'Deleted by a moderator',
     ],

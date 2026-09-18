@@ -6,6 +6,7 @@ use App\Enums\ReportStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventComment;
+use App\Models\Leaflet;
 use App\Models\Message;
 use App\Models\Report;
 use Illuminate\Http\RedirectResponse;
@@ -93,6 +94,14 @@ class ReportController extends Controller
                 'author' => $this->summarizeUser($reportable->user),
                 'url' => route('events.show', $reportable->event_id),
                 'delete_url' => route('events.comments.destroy', [$reportable->event_id, $reportable->id]),
+            ],
+            $reportable instanceof Leaflet => [
+                'type' => 'leaflet',
+                'excerpt' => $reportable->body,
+                'is_deleted' => false,
+                'author' => $this->summarizeUser($reportable->owner),
+                'url' => route('leaflets.show', $reportable->id),
+                'delete_url' => route('leaflets.destroy', $reportable->id),
             ],
             default => null,
         };

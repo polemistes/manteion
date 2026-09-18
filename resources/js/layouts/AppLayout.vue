@@ -11,6 +11,7 @@ import StaffDeleteDialog from '@/components/StaffDeleteDialog.vue';
 import { logout } from '@/routes';
 import { index as contactsIndex } from '@/routes/contacts';
 import { index as eventsIndex } from '@/routes/events';
+import { index as leafletsIndex } from '@/routes/leaflets';
 import { index as messagesIndex } from '@/routes/messages';
 import { edit as profileEdit } from '@/routes/profile';
 
@@ -44,6 +45,11 @@ const navItems = computed(() => {
             label: t('nav.events'),
             href: eventsIndex().url,
             badge: unreadNotificationsCount.value,
+        },
+        {
+            label: t('nav.leaflets'),
+            href: leafletsIndex().url,
+            badge: 0,
         },
         {
             label: t('nav.messages'),
@@ -155,7 +161,7 @@ const navItems = computed(() => {
                         </header>
 
                         <nav
-                            class="grid grid-cols-3 border-b-frame border-edge"
+                            class="grid grid-cols-4 border-b-frame border-edge"
                         >
                             <Link
                                 v-for="item in navItems"

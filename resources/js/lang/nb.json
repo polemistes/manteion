@@ -15,6 +15,7 @@
     },
     "nav": {
         "events": "Arrangementer",
+        "leaflets": "Flyveblad",
         "messages": "Meldinger",
         "contacts": "Kontakter",
         "logOut": "Logg ut"
@@ -293,6 +294,47 @@
             "by": "av"
         }
     },
+    "leaflets": {
+        "index": {
+            "title": "Flyveblad",
+            "compose": "Skriv et flyveblad",
+            "scope": "Vis",
+            "scopeAll": "Alle",
+            "empty": "Ingen flyveblad her ennå."
+        },
+        "form": {
+            "body": "Melding",
+            "bodyPlaceholder": "Hva vil du si?",
+            "visibility": "Hvem kan lese det",
+            "attachment": "Legg ved",
+            "attachmentNone": "Ingenting",
+            "attachmentImage": "Et bilde",
+            "attachmentLink": "En lenke",
+            "link": "Lenke",
+            "send": "Send flyveblad",
+            "sending": "Sender…"
+        },
+        "visibility": {
+            "official": "Offisielt",
+            "friends_and_followers": "Venner og følgere",
+            "friends": "Bare venner",
+            "private": "Privat"
+        },
+        "card": {
+            "edited": "redigert",
+            "edit": "Rediger",
+            "delete": "Slett",
+            "confirmDelete": "Slette dette flyvebladet?"
+        },
+        "edit": {
+            "title": "Rediger flyveblad",
+            "save": "Lagre endringer",
+            "saving": "Lagrer…"
+        },
+        "show": {
+            "backToFeed": "Tilbake til alle flyveblad"
+        }
+    },
     "messages": {
         "index": {
             "title": "Meldinger",
@@ -468,7 +510,8 @@
         "type": {
             "message": "Melding",
             "event": "Arrangement",
-            "comment": "Kommentar"
+            "comment": "Kommentar",
+            "leaflet": "Flyveblad"
         },
         "viewInContext": "Vis i sammenheng",
         "alreadyDeleted": "Dette innholdet er allerede fjernet.",

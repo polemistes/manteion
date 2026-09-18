@@ -20,8 +20,8 @@
       "_wayfinder-EjxJmgWQ.js"
     ]
   },
-  "_GuestLayout-EPdujRq5.js": {
-    "file": "assets/GuestLayout-EPdujRq5.js",
+  "_GuestLayout-SlD0Z1to.js": {
+    "file": "assets/GuestLayout-SlD0Z1to.js",
     "name": "GuestLayout",
     "imports": [
       "_wayfinder-EjxJmgWQ.js",
@@ -33,6 +33,25 @@
     "name": "ImageCropper",
     "imports": [
       "_wayfinder-EjxJmgWQ.js"
+    ]
+  },
+  "_LeafletCard-BDQcwaK7.js": {
+    "file": "assets/LeafletCard-BDQcwaK7.js",
+    "name": "LeafletCard",
+    "imports": [
+      "_wayfinder-EjxJmgWQ.js",
+      "resources/js/app.ts",
+      "_PersonSummary-DoF6appu.js",
+      "_ReportButton-tRLM4oUN.js"
+    ]
+  },
+  "_LeafletForm-t8myQlHu.js": {
+    "file": "assets/LeafletForm-t8myQlHu.js",
+    "name": "LeafletForm",
+    "imports": [
+      "_wayfinder-EjxJmgWQ.js",
+      "_FieldError-BfDKx0cH.js",
+      "_ImageCropper-BH2gYjx7.js"
     ]
   },
   "_LocationPicker-1DTFk8zz.css": {
@@ -72,16 +91,16 @@
       "_wayfinder-EjxJmgWQ.js"
     ]
   },
-  "_PersonSummary-Duf_71qd.js": {
-    "file": "assets/PersonSummary-Duf_71qd.js",
+  "_PersonSummary-DoF6appu.js": {
+    "file": "assets/PersonSummary-DoF6appu.js",
     "name": "PersonSummary",
     "imports": [
       "_wayfinder-EjxJmgWQ.js",
       "resources/js/app.ts"
     ]
   },
-  "_ReportButton-DFjXTMV1.js": {
-    "file": "assets/ReportButton-DFjXTMV1.js",
+  "_ReportButton-tRLM4oUN.js": {
+    "file": "assets/ReportButton-tRLM4oUN.js",
     "name": "ReportButton",
     "imports": [
       "_wayfinder-EjxJmgWQ.js",
@@ -198,7 +217,7 @@
     "name": "wayfinder"
   },
   "node_modules/@capacitor/app/dist/esm/web.js": {
-    "file": "assets/web-DxLaD6wJ.js",
+    "file": "assets/web-BkN8Owx9.js",
     "name": "web",
     "src": "node_modules/@capacitor/app/dist/esm/web.js",
     "isDynamicEntry": true,
@@ -227,7 +246,7 @@
     "src": "node_modules/leaflet/dist/images/marker-shadow.png"
   },
   "resources/css/app.css": {
-    "file": "assets/app-Pinx-442.css",
+    "file": "assets/app-B24NZj3H.css",
     "name": "app",
     "names": [
       "app.css"
@@ -236,7 +255,7 @@
     "isEntry": true
   },
   "resources/js/app.ts": {
-    "file": "assets/app-C_wSIhxr.js",
+    "file": "assets/app-D2l3IE-K.js",
     "name": "app",
     "src": "resources/js/app.ts",
     "isEntry": true,
@@ -257,6 +276,9 @@
       "resources/js/pages/events/Index.vue",
       "resources/js/pages/events/Search.vue",
       "resources/js/pages/events/Show.vue",
+      "resources/js/pages/leaflets/Edit.vue",
+      "resources/js/pages/leaflets/Index.vue",
+      "resources/js/pages/leaflets/Show.vue",
       "resources/js/pages/messages/Create.vue",
       "resources/js/pages/messages/Index.vue",
       "resources/js/pages/messages/Show.vue",
@@ -267,7 +289,7 @@
     ]
   },
   "resources/js/pages/Welcome.vue": {
-    "file": "assets/Welcome-Q1lKYVbJ.js",
+    "file": "assets/Welcome-CCaGjoN8.js",
     "name": "Welcome",
     "src": "resources/js/pages/Welcome.vue",
     "isDynamicEntry": true,
@@ -277,7 +299,7 @@
     ]
   },
   "resources/js/pages/admin/users/Index.vue": {
-    "file": "assets/Index-DQqSoof_.js",
+    "file": "assets/Index-CI93lz9d.js",
     "name": "Index",
     "src": "resources/js/pages/admin/users/Index.vue",
     "isDynamicEntry": true,
@@ -289,64 +311,64 @@
     ]
   },
   "resources/js/pages/auth/ForgotPassword.vue": {
-    "file": "assets/ForgotPassword-Csz1LLee.js",
+    "file": "assets/ForgotPassword-OL_7Gg3G.js",
     "name": "ForgotPassword",
     "src": "resources/js/pages/auth/ForgotPassword.vue",
     "isDynamicEntry": true,
     "imports": [
       "_wayfinder-EjxJmgWQ.js",
       "_FieldError-BfDKx0cH.js",
-      "_GuestLayout-EPdujRq5.js",
+      "_GuestLayout-SlD0Z1to.js",
       "_password-kZ0kF0_K.js"
     ]
   },
   "resources/js/pages/auth/Login.vue": {
-    "file": "assets/Login-BAp-nzFw.js",
+    "file": "assets/Login-BQ0Tyi2O.js",
     "name": "Login",
     "src": "resources/js/pages/auth/Login.vue",
     "isDynamicEntry": true,
     "imports": [
       "_wayfinder-EjxJmgWQ.js",
       "_FieldError-BfDKx0cH.js",
-      "_GuestLayout-EPdujRq5.js",
+      "_GuestLayout-SlD0Z1to.js",
       "_password-kZ0kF0_K.js",
       "_PasswordField-icucAgcT.js"
     ]
   },
   "resources/js/pages/auth/Register.vue": {
-    "file": "assets/Register-B1mgQZpO.js",
+    "file": "assets/Register-BaWsE249.js",
     "name": "Register",
     "src": "resources/js/pages/auth/Register.vue",
     "isDynamicEntry": true,
     "imports": [
       "_wayfinder-EjxJmgWQ.js",
       "_FieldError-BfDKx0cH.js",
-      "_GuestLayout-EPdujRq5.js",
+      "_GuestLayout-SlD0Z1to.js",
       "_PasswordField-icucAgcT.js"
     ]
   },
   "resources/js/pages/auth/ResetPassword.vue": {
-    "file": "assets/ResetPassword-Cb6oEX34.js",
+    "file": "assets/ResetPassword-Cbn1xHGS.js",
     "name": "ResetPassword",
     "src": "resources/js/pages/auth/ResetPassword.vue",
     "isDynamicEntry": true,
     "imports": [
       "_wayfinder-EjxJmgWQ.js",
       "_FieldError-BfDKx0cH.js",
-      "_GuestLayout-EPdujRq5.js",
+      "_GuestLayout-SlD0Z1to.js",
       "_password-kZ0kF0_K.js",
       "_PasswordField-icucAgcT.js"
     ]
   },
   "resources/js/pages/contacts/Index.vue": {
-    "file": "assets/Index-CeXok8Pk.js",
+    "file": "assets/Index-B64KVszp.js",
     "name": "Index",
     "src": "resources/js/pages/contacts/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "_wayfinder-EjxJmgWQ.js",
       "resources/js/app.ts",
-      "_PersonSummary-Duf_71qd.js",
+      "_PersonSummary-DoF6appu.js",
       "_friendships-vKql2gfd.js",
       "__plugin-vue_export-helper-BDNMzG2s.js"
     ],
@@ -355,7 +377,7 @@
     ]
   },
   "resources/js/pages/events/Create.vue": {
-    "file": "assets/Create-nrzya45w.js",
+    "file": "assets/Create-CNxVfI38.js",
     "name": "Create",
     "src": "resources/js/pages/events/Create.vue",
     "isDynamicEntry": true,
@@ -368,7 +390,7 @@
     ]
   },
   "resources/js/pages/events/Edit.vue": {
-    "file": "assets/Edit-J3uNcLKy.js",
+    "file": "assets/Edit-C1hGVoji.js",
     "name": "Edit",
     "src": "resources/js/pages/events/Edit.vue",
     "isDynamicEntry": true,
@@ -381,14 +403,14 @@
     ]
   },
   "resources/js/pages/events/Index.vue": {
-    "file": "assets/Index-BPB3MVVl.js",
+    "file": "assets/Index-DySWdsnq.js",
     "name": "Index",
     "src": "resources/js/pages/events/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "_wayfinder-EjxJmgWQ.js",
       "resources/js/app.ts",
-      "_PersonSummary-Duf_71qd.js",
+      "_PersonSummary-DoF6appu.js",
       "__plugin-vue_export-helper-BDNMzG2s.js",
       "_CalendarPicker-c-mmRiru.js",
       "_useNominatimSearch-CgKoSpH9.js",
@@ -401,21 +423,21 @@
     ]
   },
   "resources/js/pages/events/Search.vue": {
-    "file": "assets/Search-ByEdMhQE.js",
+    "file": "assets/Search-B7srKj9y.js",
     "name": "Search",
     "src": "resources/js/pages/events/Search.vue",
     "isDynamicEntry": true,
     "imports": [
       "_wayfinder-EjxJmgWQ.js",
       "resources/js/app.ts",
-      "_PersonSummary-Duf_71qd.js",
+      "_PersonSummary-DoF6appu.js",
       "_useNominatimSearch-CgKoSpH9.js",
       "_CategoryFilterList-Bg4ntBBc.js",
       "_Pagination-D1flj-P4.js"
     ]
   },
   "resources/js/pages/events/Show.vue": {
-    "file": "assets/Show-D4bxWRYf.js",
+    "file": "assets/Show-B3Z68z8-.js",
     "name": "Show",
     "src": "resources/js/pages/events/Show.vue",
     "isDynamicEntry": true,
@@ -423,12 +445,47 @@
       "_wayfinder-EjxJmgWQ.js",
       "resources/js/app.ts",
       "_FieldError-BfDKx0cH.js",
-      "_PersonSummary-Duf_71qd.js",
-      "_ReportButton-DFjXTMV1.js"
+      "_PersonSummary-DoF6appu.js",
+      "_ReportButton-tRLM4oUN.js"
+    ]
+  },
+  "resources/js/pages/leaflets/Edit.vue": {
+    "file": "assets/Edit-DZz1brAB.js",
+    "name": "Edit",
+    "src": "resources/js/pages/leaflets/Edit.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "_wayfinder-EjxJmgWQ.js",
+      "resources/js/app.ts",
+      "_LeafletForm-t8myQlHu.js"
+    ]
+  },
+  "resources/js/pages/leaflets/Index.vue": {
+    "file": "assets/Index-Q9FAbU4K.js",
+    "name": "Index",
+    "src": "resources/js/pages/leaflets/Index.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "_wayfinder-EjxJmgWQ.js",
+      "resources/js/app.ts",
+      "_Pagination-D1flj-P4.js",
+      "_LeafletForm-t8myQlHu.js",
+      "_LeafletCard-BDQcwaK7.js"
+    ]
+  },
+  "resources/js/pages/leaflets/Show.vue": {
+    "file": "assets/Show-DyLOT7ZP.js",
+    "name": "Show",
+    "src": "resources/js/pages/leaflets/Show.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "_wayfinder-EjxJmgWQ.js",
+      "resources/js/app.ts",
+      "_LeafletCard-BDQcwaK7.js"
     ]
   },
   "resources/js/pages/messages/Create.vue": {
-    "file": "assets/Create-Be2shBjU.js",
+    "file": "assets/Create-Cek7LujR.js",
     "name": "Create",
     "src": "resources/js/pages/messages/Create.vue",
     "isDynamicEntry": true,
@@ -439,7 +496,7 @@
     ]
   },
   "resources/js/pages/messages/Index.vue": {
-    "file": "assets/Index-BD6Q_NvJ.js",
+    "file": "assets/Index-vx4n0y3n.js",
     "name": "Index",
     "src": "resources/js/pages/messages/Index.vue",
     "isDynamicEntry": true,
@@ -449,7 +506,7 @@
     ]
   },
   "resources/js/pages/messages/Show.vue": {
-    "file": "assets/Show-Did1UnF8.js",
+    "file": "assets/Show-CiQQGyV5.js",
     "name": "Show",
     "src": "resources/js/pages/messages/Show.vue",
     "isDynamicEntry": true,
@@ -457,11 +514,11 @@
       "_wayfinder-EjxJmgWQ.js",
       "resources/js/app.ts",
       "_FieldError-BfDKx0cH.js",
-      "_ReportButton-DFjXTMV1.js"
+      "_ReportButton-tRLM4oUN.js"
     ]
   },
   "resources/js/pages/moderation/Index.vue": {
-    "file": "assets/Index-Co4F91WO.js",
+    "file": "assets/Index-DRstKsgv.js",
     "name": "Index",
     "src": "resources/js/pages/moderation/Index.vue",
     "isDynamicEntry": true,
@@ -485,7 +542,7 @@
     ]
   },
   "resources/js/pages/profile/Edit.vue": {
-    "file": "assets/Edit-CHGkTJYM.js",
+    "file": "assets/Edit-BcC4k8ZE.js",
     "name": "Edit",
     "src": "resources/js/pages/profile/Edit.vue",
     "isDynamicEntry": true,
@@ -500,14 +557,14 @@
     ]
   },
   "resources/js/pages/users/Show.vue": {
-    "file": "assets/Show-DSVb64z0.js",
+    "file": "assets/Show-BqdXE2dS.js",
     "name": "Show",
     "src": "resources/js/pages/users/Show.vue",
     "isDynamicEntry": true,
     "imports": [
       "_wayfinder-EjxJmgWQ.js",
       "resources/js/app.ts",
-      "_PersonSummary-Duf_71qd.js",
+      "_PersonSummary-DoF6appu.js",
       "_friendships-vKql2gfd.js"
     ]
   }

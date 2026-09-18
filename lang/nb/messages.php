@@ -30,6 +30,10 @@ return [
         'friends_only' => 'Du kan bare legge til dine egne venner.',
     ],
 
+    'leaflet' => [
+        'one_attachment' => 'Et flyveblad kan ha enten et bilde eller en lenke, ikke begge.',
+    ],
+
     'moderation' => [
         'deleted_placeholder' => 'Slettet av en moderator',
     ],
