@@ -19,9 +19,11 @@
     --font-body:
         'Courier New', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-    /* Page background, and the slightly lifted surface of cards and inputs. */
+    /* Page background, the slightly lifted surface of cards and inputs,
+       and a tinted inset for text that should stand out inside a card. */
     --color-surface: #ffffff;
     --color-surface-raised: #ffffff;
+    --color-surface-inset: #f1f1f1;
     /* Text, and lines/frames. */
     --color-ink: #000000;
     --color-edge: #000000;
@@ -42,6 +44,7 @@
 html[data-style='classic'][data-mode='dark'] {
     --color-surface: #0b0b0b;
     --color-surface-raised: #0b0b0b;
+    --color-surface-inset: #1c1c1c;
     --color-ink: #f2f2f2;
     --color-edge: #f2f2f2;
     --color-accent: #f2f2f2;
@@ -63,6 +66,7 @@ html[data-style='soft'] {
 
     --color-surface: #fbf6ef;
     --color-surface-raised: #ffffff;
+    --color-surface-inset: #fdeee3;
     --color-ink: #2f2a3d;
     --color-edge: #e4d8ca;
     --color-accent: #e8735a;
@@ -72,6 +76,7 @@ html[data-style='soft'] {
 html[data-style='soft'][data-mode='dark'] {
     --color-surface: #1e1b2e;
     --color-surface-raised: #2a2740;
+    --color-surface-inset: #36325a;
     --color-ink: #f2edf7;
     --color-edge: #443f5c;
     --color-accent: #ff8f76;

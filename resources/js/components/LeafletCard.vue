@@ -78,7 +78,9 @@ async function remove(): Promise<void> {
             </span>
         </header>
 
-        <p class="font-sans text-sm whitespace-pre-line">
+        <p
+            class="rounded-card bg-surface-inset px-4 py-3 font-sans text-base whitespace-pre-line"
+        >
             {{ props.leaflet.body }}
         </p>
 
@@ -86,7 +88,7 @@ async function remove(): Promise<void> {
             v-if="props.leaflet.image_url"
             :src="props.leaflet.image_url"
             alt=""
-            class="mt-3 max-h-96 w-full border border-edge object-cover"
+            class="mt-3 block max-h-96 max-w-full border border-edge"
         />
 
         <a
@@ -94,14 +96,14 @@ async function remove(): Promise<void> {
             :href="props.leaflet.link.url"
             target="_blank"
             rel="noopener noreferrer"
-            class="mt-3 block border border-edge hover:bg-surface-raised"
+            class="mt-3 block w-fit max-w-full border border-edge hover:bg-surface-inset sm:max-w-md"
         >
             <!-- Shown at natural size, capped, so a small logo is not blown up. -->
             <img
                 v-if="props.leaflet.link.image_url"
                 :src="props.leaflet.link.image_url"
                 alt=""
-                class="mx-auto block max-h-64 max-w-full border-b border-edge"
+                class="block max-h-64 max-w-full border-b border-edge"
             />
             <!-- No image from the site: a band with its name stands in. -->
             <span
