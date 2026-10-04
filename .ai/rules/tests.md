@@ -14,3 +14,6 @@ This environment has no PHP GD extension installed (only `php` + `php-sqlite` pa
 GD is now present, so `UploadedFile::fake()->image('photo.jpg')` works and should be preferred for any test whose upload ends up passed through `App\Services\ImageProcessor` (avatar and event-photo uploads) — that service decodes the file with `imagecreatefromjpeg`/`imagecreatefrompng`/`imagecreatefromwebp` to strip EXIF, and `->create()`'s placeholder bytes fail to decode (`gd-jpeg: ... Empty input file`), producing a 500 rather than a normal validation failure.
 
 `->create()` is still fine for anything that only needs to satisfy Laravel's `image`/`mimes` validation without being actually decoded.
+
+## Name the users a test expects in order
+People lists are sorted by name, and factory names are random, so a test asserting friends.0/friends.1 with unnamed users fails now and then. Give every user whose position is asserted an explicit name ("A …", "B …"). Likewise, keep time-dependent paths (marking a conversation read when messages are newer than last_read_at) out of query-count tests, or they flake when the clock ticks into a new second mid-test.
