@@ -1,64 +1,79 @@
 <script setup lang="ts">
 import { Form, Head, Link } from '@inertiajs/vue3';
+import { MailCheck } from '@lucide/vue';
+import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import FieldError from '@/components/FieldError.vue';
+import Button from '@/components/ui/Button.vue';
+import TextField from '@/components/ui/TextField.vue';
 import GuestLayout from '@/layouts/GuestLayout.vue';
-import { email } from '@/routes/password';
+import { login } from '@/routes';
+import { email as sendResetLink } from '@/routes/password';
 
 defineOptions({ layout: GuestLayout });
 
 const { t } = useI18n();
+
+const email = ref('');
 </script>
 
 <template>
     <Head :title="t('auth.forgotPassword.title')" />
 
-    <h1 class="text-lg mb-2 font-bold">{{ t('auth.forgotPassword.title') }}</h1>
-    <p class="text-sm mb-6 text-ink/70">
+    <h1 class="font-display text-title-1">
+        {{ t('auth.forgotPassword.title') }}
+    </h1>
+    <p class="mt-1 text-body text-ink-muted">
         {{ t('auth.forgotPassword.description') }}
     </p>
 
     <Form
-        v-bind="email.form()"
+        v-bind="sendResetLink.form()"
+        class="mt-6 flex flex-col gap-4"
         #default="{ errors, processing, wasSuccessful }"
-        class="flex flex-col gap-4"
     >
-        <div>
-            <label for="email" class="text-sm mb-1 block font-bold">{{
-                t('auth.forgotPassword.email')
-            }}</label>
-            <input
-                id="email"
-                type="email"
-                name="email"
-                required
-                autofocus
-                autocomplete="username"
-                class="border-edge bg-surface-raised text-sm w-full border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
-            />
-            <FieldError :message="errors.email" />
-        </div>
-
-        <button
+        <TextField
+            v-model="email"
+            name="email"
+            type="email"
+            :label="t('auth.forgotPassword.email')"
+            :error="errors.email"
+            autocomplete="email"
+            required
+            autofocus
+        />
+        <Button
             type="submit"
+            variant="primary"
+            size="lg"
+            block
             :disabled="processing"
-            class="border-edge text-sm hover:bg-surface-raised w-full border bg-accent px-3 py-2 font-bold text-on-accent hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
         >
             {{
                 processing
                     ? t('auth.forgotPassword.submitting')
                     : t('auth.forgotPassword.submit')
             }}
-        </button>
-
-        <p v-if="wasSuccessful" class="text-sm font-bold">
+        </Button>
+        <p
+            v-if="wasSuccessful"
+            class="flex items-start gap-2.5 rounded-md bg-success-soft px-3.5 py-3 text-label text-success"
+            role="status"
+        >
+            <MailCheck
+                :size="18"
+                :stroke-width="2"
+                class="mt-px shrink-0"
+                aria-hidden="true"
+            />
             {{ t('auth.forgotPassword.checkEmail') }}
         </p>
     </Form>
 
-    <div class="text-sm mt-6">
-        <Link href="/login" class="underline">{{
-            t('auth.forgotPassword.backToLogin')
-        }}</Link>
-    </div>
+    <p class="mt-6 text-center">
+        <Link
+            :href="login().url"
+            class="text-label font-semibold text-ink underline underline-offset-2"
+            >{{ t('auth.forgotPassword.backToLogin') }}</Link
+        >
+    </p>
 </template>

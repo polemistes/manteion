@@ -1,6 +1,13 @@
 {
     "title": "Welcome",
-    "tagline": "Invite friends to events. See only what you asked to see — no ads, no algorithmic feed.",
+    "headline": "Plans with the people you know.",
+    "tagline": "Invite friends to dinners, trips and game nights, see who’s coming and talk it over. No ads, and no feed that decides for you.",
     "logIn": "Log in",
-    "register": "Register"
+    "register": "Create an account",
+    "events": "Events",
+    "eventsBody": "Invite people, answer in one tap, and see who’s coming.",
+    "messages": "Messages",
+    "messagesBody": "Chats with friends and groups, with notifications only for what you ask for.",
+    "leaflets": "Leaflets",
+    "leafletsBody": "Short notes to friends and followers: a question, a tip, something to lend."
 }

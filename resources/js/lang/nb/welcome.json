@@ -1,6 +1,13 @@
 {
     "title": "Velkommen",
-    "tagline": "Inviter venner til arrangementer. Se bare det du har bedt om å se — ingen reklame, ingen algoritmisk feed.",
+    "headline": "Planer med folk du kjenner.",
+    "tagline": "Inviter venner til middager, turer og spillkvelder, se hvem som kommer, og snakk sammen om det. Ingen reklame, og ingen feed som bestemmer for deg.",
     "logIn": "Logg inn",
-    "register": "Registrer deg"
+    "register": "Opprett en konto",
+    "events": "Arrangementer",
+    "eventsBody": "Inviter folk, svar med ett trykk, og se hvem som kommer.",
+    "messages": "Meldinger",
+    "messagesBody": "Samtaler med venner og grupper, med varsler bare for det du ber om.",
+    "leaflets": "Flyveblad",
+    "leafletsBody": "Korte beskjeder til venner og følgere: et spørsmål, et tips, noe å låne bort."
 }
