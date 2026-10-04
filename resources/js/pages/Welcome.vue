@@ -49,6 +49,9 @@ const features = computed(() => [
                 <LanguageSwitcher />
             </header>
 
+            <!-- Under the header, as on the sign-in pages and in the app. -->
+            <AlphaNotice class="mt-2 sm:max-w-[34rem]" />
+
             <main
                 class="flex flex-1 flex-col justify-center py-10 lg:grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-center lg:gap-16"
             >
@@ -76,7 +79,6 @@ const features = computed(() => [
                             {{ t('welcome.logIn') }}
                         </Button>
                     </div>
-                    <AlphaNotice class="mt-8 max-w-[34rem]" />
                 </div>
 
                 <ul class="mt-12 flex flex-col gap-3 lg:mt-0">
