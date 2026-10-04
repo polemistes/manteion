@@ -145,10 +145,10 @@ onUnmounted(() => document.removeEventListener('click', onDocumentClick));
 
 <template>
     <div ref="root" class="relative">
-        <p class="mb-1 text-xs font-bold">{{ t('events.index.organizer') }}</p>
+        <p class="text-xs mb-1 font-bold">{{ t('events.index.organizer') }}</p>
         <button
             type="button"
-            class="border border-edge bg-surface-raised px-2 py-1 text-left text-sm"
+            class="border-edge bg-surface-raised text-sm border px-2 py-1 text-left"
             @click="toggleOpen"
         >
             {{ summaryLabel }}
@@ -156,14 +156,14 @@ onUnmounted(() => document.removeEventListener('click', onDocumentClick));
 
         <div
             v-if="isOpen"
-            class="absolute z-20 mt-1 max-h-96 w-64 overflow-y-auto border border-edge bg-surface-raised p-2"
+            class="border-edge bg-surface-raised absolute z-20 mt-1 max-h-96 w-64 overflow-y-auto border p-2"
         >
             <div v-for="group in groups" :key="group.token" class="mb-2">
-                <label class="flex items-center gap-2 text-sm font-bold">
+                <label class="text-sm flex items-center gap-2 font-bold">
                     <input
                         type="checkbox"
                         :checked="isSelected(group.token)"
-                        class="border border-edge"
+                        class="border-edge border"
                         @change="
                             toggleGroup(
                                 group,
@@ -180,12 +180,12 @@ onUnmounted(() => document.removeEventListener('click', onDocumentClick));
                     <label
                         v-for="member in group.members"
                         :key="member.id"
-                        class="flex items-center gap-2 text-xs"
+                        class="text-xs flex items-center gap-2"
                     >
                         <input
                             type="checkbox"
                             :checked="isSelected(String(member.id))"
-                            class="border border-edge"
+                            class="border-edge border"
                             @change="
                                 toggleMember(
                                     group,
@@ -201,7 +201,7 @@ onUnmounted(() => document.removeEventListener('click', onDocumentClick));
 
             <button
                 type="button"
-                class="mt-1 w-full border border-edge bg-accent px-2 py-1 text-xs font-bold text-on-accent hover:bg-surface-raised hover:text-ink"
+                class="border-edge text-xs hover:bg-surface-raised mt-1 w-full border bg-accent px-2 py-1 font-bold text-on-accent hover:text-ink"
                 @click="close"
             >
                 {{ t('categoryPicker.done') }}

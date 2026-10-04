@@ -27,10 +27,12 @@ declare module '@inertiajs/core' {
             /** Live counts come from useBadges() in @/realtime/badges. */
             badges: Badges;
             locale: string;
+            timezone: string;
             availableLocales: Record<string, string>;
             theme: Theme;
             vapidPublicKey: string | null;
             impersonating: boolean;
+            alphaNoticeDismissed: boolean;
             [key: string]: unknown;
         };
     }

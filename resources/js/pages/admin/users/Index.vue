@@ -152,25 +152,25 @@ function submitDelete(): void {
 <template>
     <Head :title="t('admin.users.title')" />
 
-    <h1 class="mb-6 text-xl font-bold">{{ t('admin.users.title') }}</h1>
+    <h1 class="text-xl mb-6 font-bold">{{ t('admin.users.title') }}</h1>
 
     <form class="mb-6 flex gap-2" @submit.prevent="submitSearch">
         <input
             v-model="query"
             type="text"
             :placeholder="t('admin.users.searchPlaceholder')"
-            class="flex-1 border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+            class="border-edge bg-surface-raised text-sm flex-1 border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
         />
         <button
             type="submit"
-            class="border border-edge px-4 py-2 text-sm hover:bg-accent hover:text-on-accent"
+            class="border-edge text-sm border px-4 py-2 hover:bg-accent hover:text-on-accent"
         >
             {{ t('common.search') }}
         </button>
     </form>
 
     <div class="overflow-x-auto">
-        <table class="w-full border-collapse text-left text-sm">
+        <table class="text-sm w-full border-collapse text-left">
             <thead>
                 <tr class="border-b-frame border-edge">
                     <th class="py-2 pr-4">{{ t('admin.users.name') }}</th>
@@ -184,7 +184,7 @@ function submitDelete(): void {
                 <tr
                     v-for="user in props.users.data"
                     :key="user.id"
-                    class="border-b border-edge/20 align-top"
+                    class="border-edge/20 border-b align-top"
                 >
                     <td class="py-2 pr-4">
                         {{ user.name }}<br />
@@ -196,7 +196,7 @@ function submitDelete(): void {
                     <td class="py-2 pr-4">
                         <select
                             :value="user.role"
-                            class="border border-edge bg-surface-raised px-2 py-1 font-sans text-xs"
+                            class="border-edge bg-surface-raised text-xs border px-2 py-1 font-sans"
                             @change="
                                 updateRole(
                                     user,
@@ -276,7 +276,7 @@ function submitDelete(): void {
         <template v-for="link in props.users.links" :key="link.label">
             <span
                 v-if="!link.url"
-                class="border border-edge px-2 py-1 text-xs opacity-40"
+                class="border-edge text-xs border px-2 py-1 opacity-40"
                 v-html="link.label"
             />
             <Link
@@ -284,7 +284,7 @@ function submitDelete(): void {
                 :href="link.url"
                 preserve-scroll
                 preserve-state
-                class="border border-edge px-2 py-1 text-xs"
+                class="border-edge text-xs border px-2 py-1"
                 :class="
                     link.active
                         ? 'bg-accent text-on-accent'
@@ -297,26 +297,26 @@ function submitDelete(): void {
     </nav>
 
     <Modal :open="suspendTarget !== null" @update:open="suspendTarget = null">
-        <p class="mb-2 text-sm font-bold">
+        <p class="text-sm mb-2 font-bold">
             {{ t('admin.users.suspendTitle', { name: suspendTarget?.name }) }}
         </p>
         <textarea
             v-model="suspendReason"
             rows="3"
             :placeholder="t('admin.users.suspendReasonPlaceholder')"
-            class="mb-4 w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+            class="border-edge bg-surface-raised text-sm mb-4 w-full border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
         ></textarea>
         <div class="flex justify-end gap-2">
             <button
                 type="button"
-                class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
+                class="border-edge text-sm border px-3 py-2 hover:bg-accent hover:text-on-accent"
                 @click="suspendTarget = null"
             >
                 {{ t('common.cancel') }}
             </button>
             <button
                 type="button"
-                class="border border-edge bg-accent px-3 py-2 text-sm text-on-accent hover:bg-surface-raised hover:text-ink"
+                class="border-edge text-sm hover:bg-surface-raised border bg-accent px-3 py-2 text-on-accent hover:text-ink"
                 @click="submitSuspend"
             >
                 {{ t('admin.users.suspend') }}
@@ -325,32 +325,32 @@ function submitDelete(): void {
     </Modal>
 
     <Modal :open="emailTarget !== null" @update:open="emailTarget = null">
-        <p class="mb-2 text-sm font-bold">
+        <p class="text-sm mb-2 font-bold">
             {{ t('admin.users.emailTitle', { name: emailTarget?.name }) }}
         </p>
         <input
             v-model="emailSubject"
             type="text"
             :placeholder="t('admin.users.emailSubjectPlaceholder')"
-            class="mb-2 w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+            class="border-edge bg-surface-raised text-sm mb-2 w-full border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
         />
         <textarea
             v-model="emailBody"
             rows="5"
             :placeholder="t('admin.users.emailBodyPlaceholder')"
-            class="mb-4 w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+            class="border-edge bg-surface-raised text-sm mb-4 w-full border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
         ></textarea>
         <div class="flex justify-end gap-2">
             <button
                 type="button"
-                class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
+                class="border-edge text-sm border px-3 py-2 hover:bg-accent hover:text-on-accent"
                 @click="emailTarget = null"
             >
                 {{ t('common.cancel') }}
             </button>
             <button
                 type="button"
-                class="border border-edge bg-accent px-3 py-2 text-sm text-on-accent hover:bg-surface-raised hover:text-ink"
+                class="border-edge text-sm hover:bg-surface-raised border bg-accent px-3 py-2 text-on-accent hover:text-ink"
                 @click="submitEmail"
             >
                 {{ t('admin.users.sendEmail') }}
@@ -359,33 +359,33 @@ function submitDelete(): void {
     </Modal>
 
     <Modal :open="deleteTarget !== null" @update:open="deleteTarget = null">
-        <p class="mb-2 text-sm font-bold">
+        <p class="text-sm mb-2 font-bold">
             {{
                 t('admin.users.deleteAccountTitle', {
                     name: deleteTarget?.name,
                 })
             }}
         </p>
-        <p class="mb-4 text-sm">{{ t('admin.users.deleteAccountWarning') }}</p>
-        <label class="mb-1 block text-sm font-bold">{{
+        <p class="text-sm mb-4">{{ t('admin.users.deleteAccountWarning') }}</p>
+        <label class="text-sm mb-1 block font-bold">{{
             t('admin.users.yourPassword')
         }}</label>
         <input
             v-model="deletePassword"
             type="password"
-            class="mb-4 w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+            class="border-edge bg-surface-raised text-sm mb-4 w-full border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
         />
         <div class="flex justify-end gap-2">
             <button
                 type="button"
-                class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
+                class="border-edge text-sm border px-3 py-2 hover:bg-accent hover:text-on-accent"
                 @click="deleteTarget = null"
             >
                 {{ t('common.cancel') }}
             </button>
             <button
                 type="button"
-                class="border border-edge bg-accent px-3 py-2 text-sm text-on-accent hover:bg-surface-raised hover:text-ink"
+                class="border-edge text-sm hover:bg-surface-raised border bg-accent px-3 py-2 text-on-accent hover:text-ink"
                 @click="submitDelete"
             >
                 {{ t('admin.users.deleteAccount') }}

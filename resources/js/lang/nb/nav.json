@@ -3,5 +3,13 @@
     "leaflets": "Flyveblad",
     "messages": "Meldinger",
     "contacts": "Kontakter",
-    "logOut": "Logg ut"
+    "activity": "Aktivitet",
+    "me": "Meg",
+    "settings": "Innstillinger",
+    "home": "Manteion, forsiden",
+    "logOut": "Logg ut",
+    "createEvent": "Opprett arrangement",
+    "newLeaflet": "Nytt flyveblad",
+    "newMessage": "Ny melding",
+    "findPeople": "Finn folk"
 }

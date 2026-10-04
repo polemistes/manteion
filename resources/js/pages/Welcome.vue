@@ -11,7 +11,7 @@ const { t } = useI18n();
     <Head :title="t('welcome.title')" />
 
     <div
-        class="relative flex min-h-screen flex-col items-center justify-center bg-surface px-4 font-body text-ink"
+        class="font-body relative flex min-h-screen flex-col items-center justify-center bg-surface px-4 text-ink"
     >
         <div class="absolute inset-x-0 top-0">
             <AlphaBanner />
@@ -21,21 +21,21 @@ const { t } = useI18n();
             <LanguageSwitcher />
         </div>
 
-        <h1 class="mb-2 text-2xl font-bold tracking-tight">Manteion</h1>
-        <p class="mb-8 max-w-sm text-center text-sm text-ink/70">
+        <h1 class="text-2xl mb-2 font-bold tracking-tight">Manteion</h1>
+        <p class="text-sm mb-8 max-w-sm text-center text-ink/70">
             {{ t('welcome.tagline') }}
         </p>
 
         <div class="flex gap-3">
             <Link
                 href="/login"
-                class="border border-edge px-4 py-2 text-sm hover:bg-accent hover:text-on-accent"
+                class="border-edge text-sm border px-4 py-2 hover:bg-accent hover:text-on-accent"
             >
                 {{ t('welcome.logIn') }}
             </Link>
             <Link
                 href="/register"
-                class="border border-edge bg-accent px-4 py-2 text-sm text-on-accent hover:bg-surface-raised hover:text-ink"
+                class="border-edge text-sm hover:bg-surface-raised border bg-accent px-4 py-2 text-on-accent hover:text-ink"
             >
                 {{ t('welcome.register') }}
             </Link>

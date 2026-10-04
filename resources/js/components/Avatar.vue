@@ -20,12 +20,12 @@ const sizeClasses = {
         v-if="url"
         :src="url"
         :alt="name"
-        class="shrink-0 border border-edge object-cover"
+        class="border-edge shrink-0 border object-cover"
         :class="sizeClasses[size]"
     />
     <span
         v-else
-        class="flex shrink-0 items-center justify-center border border-edge bg-surface-raised font-bold"
+        class="border-edge bg-surface-raised flex shrink-0 items-center justify-center border font-bold"
         :class="sizeClasses[size]"
     >
         {{ name.charAt(0).toUpperCase() }}

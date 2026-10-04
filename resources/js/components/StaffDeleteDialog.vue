@@ -1,41 +1,73 @@
 <script setup lang="ts">
+import {
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogOverlay,
+    AlertDialogPortal,
+    AlertDialogRoot,
+    AlertDialogTitle,
+} from 'reka-ui';
 import { useI18n } from 'vue-i18n';
-import Modal from '@/components/Modal.vue';
+import Button from '@/components/ui/Button.vue';
 import {
     resolveStaffDelete,
     useStaffDeleteState,
 } from '@/composables/useStaffDelete';
 
+/** Staff deleting someone else's content: remove it, or leave a placeholder. */
 const { t } = useI18n();
 
 const state = useStaffDeleteState();
+
+function onOpenChange(open: boolean): void {
+    if (!open && state.isOpen) {
+        resolveStaffDelete(null);
+    }
+}
 </script>
 
 <template>
-    <Modal :open="state.isOpen" @update:open="resolveStaffDelete(null)">
-        <p class="mb-6 text-sm">{{ state.message }}</p>
-        <div class="flex flex-col gap-2">
-            <button
-                type="button"
-                class="border border-edge bg-accent px-3 py-2 text-sm text-on-accent hover:bg-surface-raised hover:text-ink"
-                @click="resolveStaffDelete('placeholder')"
+    <AlertDialogRoot :open="state.isOpen" @update:open="onOpenChange">
+        <AlertDialogPortal>
+            <AlertDialogOverlay
+                class="fixed inset-0 z-50 bg-scrim data-[state=closed]:animate-[fade-out_200ms_var(--ease-exit)] data-[state=open]:animate-[fade-in_280ms_var(--ease-enter)]"
+            />
+            <AlertDialogContent
+                class="fixed inset-x-0 bottom-0 z-50 w-full rounded-t-xl bg-surface px-4 pt-5 pb-[calc(16px+env(safe-area-inset-bottom))] text-ink shadow-lg focus:outline-none data-[state=closed]:animate-[sheet-out_200ms_var(--ease-exit)] data-[state=open]:animate-[sheet-in_280ms_var(--ease-enter)] sm:inset-auto sm:top-1/2 sm:left-1/2 sm:w-[calc(100vw-32px)] sm:max-w-[440px] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:p-6 sm:data-[state=closed]:animate-[dialog-out_200ms_var(--ease-exit)] sm:data-[state=open]:animate-[dialog-in_280ms_var(--ease-enter)]"
             >
-                {{ t('moderation.deleteWithPlaceholder') }}
-            </button>
-            <button
-                type="button"
-                class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
-                @click="resolveStaffDelete('delete')"
-            >
-                {{ t('moderation.deleteWithoutPlaceholder') }}
-            </button>
-            <button
-                type="button"
-                class="px-3 py-2 text-sm text-ink/70 hover:underline"
-                @click="resolveStaffDelete(null)"
-            >
-                {{ t('common.cancel') }}
-            </button>
-        </div>
-    </Modal>
+                <AlertDialogTitle class="font-display text-title-3 text-pretty">
+                    {{ t('moderation.deleteContent') }}
+                </AlertDialogTitle>
+                <AlertDialogDescription class="mt-1.5 text-ink-muted">
+                    {{ state.message }}
+                </AlertDialogDescription>
+                <div class="mt-5 flex flex-col gap-2">
+                    <Button
+                        variant="danger"
+                        block
+                        @click="resolveStaffDelete('placeholder')"
+                    >
+                        {{ t('moderation.deleteWithPlaceholder') }}
+                    </Button>
+                    <Button
+                        variant="danger"
+                        block
+                        @click="resolveStaffDelete('delete')"
+                    >
+                        {{ t('moderation.deleteWithoutPlaceholder') }}
+                    </Button>
+                    <AlertDialogCancel as-child>
+                        <Button
+                            variant="ghost"
+                            block
+                            @click="resolveStaffDelete(null)"
+                        >
+                            {{ t('common.cancel') }}
+                        </Button>
+                    </AlertDialogCancel>
+                </div>
+            </AlertDialogContent>
+        </AlertDialogPortal>
+    </AlertDialogRoot>
 </template>

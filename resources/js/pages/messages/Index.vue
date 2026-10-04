@@ -29,7 +29,7 @@ usePoll(15000, { only: ['conversations'] });
         <h1 class="text-xl font-bold">{{ t('messages.index.title') }}</h1>
         <Link
             :href="create().url"
-            class="border border-edge bg-accent px-3 py-2 text-sm text-on-accent hover:bg-surface-raised hover:text-ink"
+            class="border-edge text-sm hover:bg-surface-raised border bg-accent px-3 py-2 text-on-accent hover:text-ink"
         >
             {{ t('messages.index.newMessage') }}
         </Link>
@@ -57,20 +57,20 @@ usePoll(15000, { only: ['conversations'] });
                 <span class="min-w-0 flex-1">
                     <span class="flex items-center justify-between gap-2">
                         <span
-                            class="truncate text-sm"
+                            class="text-sm truncate"
                             :class="conversation.unread ? 'font-bold' : ''"
                         >
                             {{ conversation.title }}
                         </span>
                         <span
                             v-if="conversation.unread"
-                            class="shrink-0 text-xs font-bold"
+                            class="text-xs shrink-0 font-bold"
                             >●</span
                         >
                     </span>
                     <span
                         v-if="conversation.last_message"
-                        class="block truncate font-sans text-xs text-ink/70"
+                        class="text-xs block truncate font-sans text-ink/70"
                         :class="conversation.unread ? 'font-bold text-ink' : ''"
                     >
                         {{
@@ -79,7 +79,7 @@ usePoll(15000, { only: ['conversations'] });
                                 : ''
                         }}{{ conversation.last_message.body }}
                     </span>
-                    <span v-else class="block text-xs text-ink/70">{{
+                    <span v-else class="text-xs block text-ink/70">{{
                         t('messages.index.noMessagesYet')
                     }}</span>
                 </span>

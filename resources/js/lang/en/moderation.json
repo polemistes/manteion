@@ -20,11 +20,15 @@
     "suspendUser": "Suspend user",
     "report": "Report",
     "reportTitle": "Report this content",
-    "reportReasonPlaceholder": "Why are you reporting this? (optional)",
+    "reportReasonPlaceholder": "For example: it’s spam, or it’s hurtful.",
     "reported": "Reported",
     "deleteWithPlaceholder": "Delete and leave \"Deleted by a moderator\"",
     "deleteWithoutPlaceholder": "Delete completely",
     "confirmDeleteContent": "Delete this content, or delete it and leave a placeholder in its place?",
     "viewingAs": "Viewing as {name} — you can browse and delete content, but not post or change anything.",
-    "returnToAdmin": "Return to admin"
+    "returnToAdmin": "Return to admin",
+    "reportThanks": "Thanks. A moderator will look at it.",
+    "reportDescription": "Moderators see what you report and who reported it. The person you report doesn’t.",
+    "reportReason": "What’s wrong?",
+    "reporting": "Reporting…"
 }

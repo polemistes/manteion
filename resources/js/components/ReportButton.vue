@@ -1,77 +1,35 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { Flag } from '@lucide/vue';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import Modal from '@/components/Modal.vue';
-import { store as reportsStore } from '@/routes/reports';
+import Button from '@/components/ui/Button.vue';
+import { isReported, report } from '@/composables/useReport';
+import type { ReportableType } from '@/composables/useReport';
 
-const { t } = useI18n();
-
+/** A quiet "Report" button that opens the shell's report dialog. */
 const props = defineProps<{
-    reportableType:
-        'message' | 'event' | 'comment' | 'leaflet' | 'leaflet_response';
+    reportableType: ReportableType;
     reportableId: number;
 }>();
 
-const open = ref(false);
-const reason = ref('');
-const reported = ref(false);
+const { t } = useI18n();
 
-function submit(): void {
-    router.post(
-        reportsStore().url,
-        {
-            reportable_type: props.reportableType,
-            reportable_id: props.reportableId,
-            reason: reason.value || null,
-        },
-        {
-            preserveScroll: true,
-            onSuccess: () => {
-                reported.value = true;
-                open.value = false;
-            },
-        },
-    );
-}
+const done = computed(() =>
+    isReported(props.reportableType, props.reportableId),
+);
 </script>
 
 <template>
-    <span v-if="reported" class="text-xs text-ink/50">{{
+    <span v-if="done" class="text-meta text-ink-subtle">{{
         t('moderation.reported')
     }}</span>
-    <button
+    <Button
         v-else
-        type="button"
-        class="text-xs text-ink/50 hover:underline"
-        @click="open = true"
+        variant="ghost"
+        size="sm"
+        :icon="Flag"
+        @click="report(props.reportableType, props.reportableId)"
     >
         {{ t('moderation.report') }}
-    </button>
-
-    <Modal :open="open" @update:open="open = $event">
-        <p class="mb-2 text-sm font-bold">{{ t('moderation.reportTitle') }}</p>
-        <textarea
-            v-model="reason"
-            rows="3"
-            :placeholder="t('moderation.reportReasonPlaceholder')"
-            class="mb-4 w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
-        ></textarea>
-        <div class="flex justify-end gap-2">
-            <button
-                type="button"
-                class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
-                @click="open = false"
-            >
-                {{ t('common.cancel') }}
-            </button>
-            <button
-                type="button"
-                class="border border-edge bg-accent px-3 py-2 text-sm text-on-accent hover:bg-surface-raised hover:text-ink"
-                @click="submit"
-            >
-                {{ t('moderation.report') }}
-            </button>
-        </div>
-    </Modal>
+    </Button>
 </template>

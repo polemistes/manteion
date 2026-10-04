@@ -172,14 +172,14 @@ onUnmounted(() => {
         <input type="hidden" name="city" :value="city ?? ''" />
         <input type="hidden" name="country" :value="country ?? ''" />
 
-        <p class="mb-1 text-sm font-bold">{{ t('location.mapLocation') }}</p>
+        <p class="text-sm mb-1 font-bold">{{ t('location.mapLocation') }}</p>
 
         <div class="relative mb-2">
             <input
                 type="text"
                 :value="searchQuery"
                 :placeholder="t('location.searchPlaceholder')"
-                class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+                class="border-edge bg-surface-raised text-sm w-full border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
                 @input="onSearchInput"
                 @keydown.enter.prevent
             />
@@ -187,37 +187,37 @@ onUnmounted(() => {
                  has to clear that or the map swallows the dropdown. -->
             <ul
                 v-if="results.length"
-                class="absolute z-[1001] mt-1 w-full border border-edge bg-surface-raised"
+                class="border-edge bg-surface-raised absolute z-[1001] mt-1 w-full border"
             >
                 <li v-for="result in results" :key="result.display_name">
                     <button
                         type="button"
-                        class="block w-full px-3 py-2 text-left text-xs hover:bg-accent hover:text-on-accent"
+                        class="text-xs block w-full px-3 py-2 text-left hover:bg-accent hover:text-on-accent"
                         @click="selectResult(result)"
                     >
                         {{ result.display_name }}
                     </button>
                 </li>
             </ul>
-            <p v-else-if="searching" class="mt-1 text-xs text-ink/70">
+            <p v-else-if="searching" class="text-xs mt-1 text-ink/70">
                 {{ t('location.searching') }}
             </p>
-            <p v-else-if="error" class="mt-1 text-xs text-ink/70">
+            <p v-else-if="error" class="text-xs mt-1 text-ink/70">
                 {{ t('location.searchError') }}
             </p>
             <p
                 v-else-if="
                     !picked && searchQuery.trim().length >= MIN_QUERY_LENGTH
                 "
-                class="mt-1 text-xs text-ink/70"
+                class="text-xs mt-1 text-ink/70"
             >
                 {{ t('location.noResults') }}
             </p>
         </div>
 
-        <div ref="mapContainer" class="h-64 w-full border border-edge"></div>
+        <div ref="mapContainer" class="border-edge h-64 w-full border"></div>
 
-        <div class="mt-2 flex items-center gap-3 text-xs">
+        <div class="text-xs mt-2 flex items-center gap-3">
             <span v-if="latitude !== null && longitude !== null">
                 {{ [city, country].filter(Boolean).join(', ') }}
             </span>

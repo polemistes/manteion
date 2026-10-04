@@ -1,22 +1,33 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
+import { SmilePlus } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import EmojiPicker from '@/components/EmojiPicker.vue';
+import IconButton from '@/components/ui/IconButton.vue';
 import { capitalize, loadEmojiNames } from '@/emojiNames';
 import type { ReactableType, ReactionSummary } from '@/reactions';
 import { store as reactionsStore } from '@/routes/reactions';
 
-const props = defineProps<{
-    reactableType: ReactableType;
-    reactableId: number;
-    reactions: ReactionSummary[];
-}>();
+/**
+ * Emoji reactions as small pills, plus a button to add one. One reaction
+ * per person: tapping your own pill takes it back, another emoji replaces
+ * it. The pills change at once; the server applies the same rule.
+ */
+const props = withDefaults(
+    defineProps<{
+        reactableType: ReactableType;
+        reactableId: number;
+        reactions: ReactionSummary[];
+        addable?: boolean;
+    }>(),
+    { addable: true },
+);
+
+const emit = defineEmits<{ changed: [reactions: ReactionSummary[]] }>();
 
 const { t } = useI18n();
 
-// A local copy that changes at once on click, so the chips respond before
-// the round trip; the next page refresh replaces it with the server's view.
 const reactions = ref<ReactionSummary[]>(
     props.reactions.map((r) => ({ ...r })),
 );
@@ -39,7 +50,7 @@ function nameOf(emoji: string): string {
 }
 
 // Names are fetched the first time the pointer reaches the bar, so the
-// tooltip is ready by the time a chip is hovered.
+// tooltip is ready by the time a pill is hovered.
 async function ensureNames(): Promise<void> {
     if (names.value === null) {
         names.value = await loadEmojiNames();
@@ -62,8 +73,6 @@ function adjust(emoji: string, delta: number): void {
     reactions.value = reactions.value.filter((r) => r.count > 0);
 }
 
-// One reaction per person: the same emoji again removes it, another emoji
-// replaces it. The server applies the same rule.
 function toggle(emoji: string): void {
     const current = mine.value;
 
@@ -74,6 +83,8 @@ function toggle(emoji: string): void {
     if (!current || current.emoji !== emoji) {
         adjust(emoji, 1);
     }
+
+    emit('changed', reactions.value);
 
     router.post(
         reactionsStore().url,
@@ -86,58 +97,46 @@ function toggle(emoji: string): void {
     );
 }
 
-function removeMine(): void {
-    if (mine.value) {
-        toggle(mine.value.emoji);
-    }
-}
+defineExpose({ toggle });
 </script>
 
 <template>
-    <div class="flex flex-wrap items-center gap-1" @pointerenter="ensureNames">
+    <div
+        class="flex flex-wrap items-center gap-1.5"
+        @pointerenter="ensureNames"
+    >
         <button
             v-for="reaction in reactions"
             :key="reaction.emoji"
             type="button"
             :aria-pressed="reaction.reacted"
+            :aria-label="
+                reaction.reacted
+                    ? t('reactions.removeMine', {
+                          name: nameOf(reaction.emoji),
+                      })
+                    : t('reactions.add', { emoji: nameOf(reaction.emoji) })
+            "
             :title="nameOf(reaction.emoji)"
-            class="border px-2 py-0.5 text-xs"
+            class="relative inline-flex h-8 animate-[pop-in_160ms_var(--ease-enter)] items-center gap-1 rounded-full px-2.5 text-caption font-semibold tabular-nums ring-1 transition-colors duration-120 ring-inset after:absolute after:inset-x-0 after:-inset-y-1.5"
             :class="
                 reaction.reacted
-                    ? 'border-accent bg-accent text-on-accent'
-                    : 'border-edge hover:bg-surface'
+                    ? 'bg-accent-soft text-accent-ink ring-accent-line'
+                    : 'bg-surface text-ink-muted ring-line hover:bg-surface-2'
             "
             @click="toggle(reaction.emoji)"
         >
-            {{ reaction.emoji }} {{ reaction.count }}
+            <span class="text-[15px] leading-none">{{ reaction.emoji }}</span>
+            {{ reaction.count }}
         </button>
-        <button
-            v-if="mine"
-            type="button"
-            :title="t('reactions.removeMine', { name: nameOf(mine.emoji) })"
-            :aria-label="
-                t('reactions.removeMine', { name: nameOf(mine.emoji) })
-            "
-            class="border border-edge px-2 py-0.5 text-xs text-ink/70 hover:bg-accent hover:text-on-accent"
-            @click="removeMine"
-        >
-            −
-        </button>
-        <button
-            v-else
-            type="button"
-            :title="t('reactions.pick')"
-            :aria-label="t('reactions.pick')"
-            class="border border-edge px-2 py-0.5 text-xs text-ink/70 hover:bg-accent hover:text-on-accent"
+        <IconButton
+            v-if="props.addable"
+            :icon="SmilePlus"
+            :label="t('reactions.pick')"
+            size="sm"
             @click="pickerOpen = true"
-        >
-            +
-        </button>
-
-        <EmojiPicker
-            :open="pickerOpen"
-            @update:open="pickerOpen = $event"
-            @select="toggle"
         />
+
+        <EmojiPicker v-model:open="pickerOpen" @select="toggle" />
     </div>
 </template>

@@ -1,182 +1,345 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
+import { Settings } from '@lucide/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import AlphaBanner from '@/components/AlphaBanner.vue';
-import Avatar from '@/components/Avatar.vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import ImpersonationBanner from '@/components/ImpersonationBanner.vue';
-import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
+import ReportDialog from '@/components/ReportDialog.vue';
+import AlphaNotice from '@/components/shell/AlphaNotice.vue';
+import { useNavigation } from '@/components/shell/useNavigation';
 import StaffDeleteDialog from '@/components/StaffDeleteDialog.vue';
-import { useBadges } from '@/realtime';
-import { logout } from '@/routes';
-import { index as contactsIndex } from '@/routes/contacts';
+import Avatar from '@/components/ui/Avatar.vue';
+import CountBadge from '@/components/ui/CountBadge.vue';
+import Mark from '@/components/ui/Mark.vue';
+import Toaster from '@/components/ui/Toaster.vue';
+import { showMessageBanner } from '@/lib/toast';
+import {
+    onIncomingMessage,
+    playMessageSound,
+    viewedConversationId,
+} from '@/realtime';
 import { index as eventsIndex } from '@/routes/events';
-import { index as leafletsIndex } from '@/routes/leaflets';
-import { index as messagesIndex } from '@/routes/messages';
-import { edit as profileEdit } from '@/routes/profile';
+import { show as messagesShow } from '@/routes/messages';
+import { index as settingsIndex } from '@/routes/settings';
 
 const { t } = useI18n();
-
 const page = usePage();
+const { items } = useNavigation();
+
 const user = computed(() => page.props.auth.user);
-const { badges } = useBadges();
 
-const isImpersonating = computed(() => page.props.impersonating);
+/** Screens that bring their own bottom bar (composer, answer bar, Create). */
+const ownBottomBar: Record<string, string> = {
+    'messages/Show': 'calc(72px + env(safe-area-inset-bottom))',
+    'messages/Create': 'calc(16px + env(safe-area-inset-bottom))',
+    'events/Show': 'calc(136px + env(safe-area-inset-bottom))',
+    'events/Create': 'calc(100px + env(safe-area-inset-bottom))',
+    'events/Edit': 'calc(100px + env(safe-area-inset-bottom))',
+    'leaflets/Edit': 'calc(16px + env(safe-area-inset-bottom))',
+};
 
-const navItems = computed(() => {
-    const currentUrl = page.url;
+const hasTabBar = computed(() => !(page.component in ownBottomBar));
 
-    return [
-        {
-            label: t('nav.events'),
-            href: eventsIndex().url,
-            badge: badges.value.activity,
-        },
-        {
-            label: t('nav.leaflets'),
-            href: leafletsIndex().url,
-            badge: 0,
-        },
-        {
-            label: t('nav.messages'),
-            href: messagesIndex().url,
-            badge: badges.value.messages,
-        },
-        {
-            label: t('nav.contacts'),
-            href: contactsIndex().url,
-            badge: badges.value.requests,
-        },
-    ].map((item) => ({
-        ...item,
-        active:
-            currentUrl === item.href || currentUrl.startsWith(`${item.href}?`),
-    }));
+const toastBottom = computed(
+    () =>
+        ownBottomBar[page.component] ??
+        'calc(var(--spacing-tabbar) + env(safe-area-inset-bottom) + 12px)',
+);
+
+const tabItems = computed(() =>
+    items.value.filter((item) => item.key !== 'activity'),
+);
+
+const meItem = computed(() => items.value.find((item) => item.key === 'me')!);
+
+const railItems = computed(() =>
+    items.value.filter((item) => item.key !== 'me'),
+);
+
+// Someone wrote: a banner and the message sound, unless that chat is open.
+onIncomingMessage((message) => {
+    if (viewedConversationId.value === message.conversation_id) {
+        return;
+    }
+
+    const previews =
+        (
+            user.value.notification_settings as
+                { message_previews?: boolean } | null | undefined
+        )?.message_previews ?? true;
+    const isGroup = message.conversation_type === 'group';
+
+    showMessageBanner({
+        conversationId: message.conversation_id,
+        name: isGroup ? message.conversation_title : message.sender.name,
+        avatarUrl: message.sender.avatar_url,
+        preview: previews
+            ? isGroup
+                ? `${message.sender.name}: ${message.preview}`
+                : message.preview
+            : t('shell.newMessage'),
+        href: messagesShow(message.conversation_id).url,
+    });
+
+    playMessageSound();
 });
 </script>
 
 <template>
-    <div class="min-h-screen bg-surface font-body text-ink">
-        <div
-            class="mx-auto flex min-h-screen w-full max-w-7xl flex-col lg:border-x-frame lg:border-edge"
+    <div
+        class="min-h-dvh bg-canvas text-ink"
+        :style="{ '--toast-bottom': toastBottom }"
+    >
+        <a
+            href="#main"
+            class="sr-only z-[70] rounded-full bg-surface px-4 py-2 font-semibold shadow-lg focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
         >
-            <AlphaBanner />
-            <ImpersonationBanner v-if="isImpersonating" />
+            {{ t('ui.skipToContent') }}
+        </a>
 
-            <div class="lg:flex lg:flex-1">
-                <aside
-                    class="hidden lg:flex lg:w-64 lg:shrink-0 lg:flex-col lg:border-r-frame lg:border-edge lg:p-6"
+        <ImpersonationBanner v-if="page.props.impersonating" />
+
+        <div class="sm:flex">
+            <!-- Tablet: a 104px rail of icons with labels under them. -->
+            <nav
+                :aria-label="t('ui.mainNavigation')"
+                class="sticky top-0 hidden h-dvh w-rail shrink-0 flex-col items-center border-r border-line bg-canvas px-1 pt-[18px] pb-4 sm:flex lg:hidden"
+            >
+                <Link
+                    :href="eventsIndex().url"
+                    :aria-label="t('nav.home')"
+                    class="mb-5 grid size-11 place-items-center rounded-full"
                 >
+                    <Mark class="h-[30px] w-5 text-mark" />
+                </Link>
+                <div class="flex flex-col items-center gap-1">
                     <Link
-                        :href="eventsIndex().url"
-                        class="mb-8 text-4xl font-bold tracking-tight whitespace-nowrap"
+                        v-for="item in railItems"
+                        :key="item.key"
+                        :href="item.href"
+                        :aria-current="item.active ? 'page' : undefined"
+                        class="group flex w-24 flex-col items-center gap-1 rounded-md py-1.5"
                     >
-                        Manteion
-                    </Link>
-
-                    <div class="mb-6 border-b-frame border-edge pb-4">
-                        <Link
-                            :href="profileEdit().url"
-                            class="mb-2 flex items-center gap-2"
-                        >
-                            <Avatar :url="user.avatar_url" :name="user.name" />
-                            <span
-                                class="truncate text-xs text-ink/70"
-                                :title="user.name"
-                            >
-                                @{{ user.username }}
-                            </span>
-                        </Link>
-                        <LanguageSwitcher class="mb-2 w-full" />
-                        <Link
-                            :href="logout().url"
-                            method="post"
-                            as="button"
-                            class="w-full rounded-control border border-edge px-3 py-2 text-left text-sm hover:bg-accent hover:text-on-accent"
-                        >
-                            {{ t('nav.logOut') }}
-                        </Link>
-                    </div>
-
-                    <nav class="flex flex-col gap-1">
-                        <Link
-                            v-for="item in navItems"
-                            :key="item.label"
-                            :href="item.href"
-                            class="flex items-center justify-between rounded-control px-3 py-2 text-sm"
+                        <span
+                            class="relative grid h-8 w-14 place-items-center rounded-full transition-colors duration-200"
                             :class="
                                 item.active
-                                    ? 'bg-accent text-on-accent'
-                                    : 'hover:bg-accent hover:text-on-accent'
+                                    ? 'bg-accent-soft text-accent-ink'
+                                    : 'text-ink-muted group-hover:bg-surface-2'
                             "
                         >
-                            {{ item.label }}
-                            <span v-if="item.badge" class="text-xs">{{
-                                item.badge
-                            }}</span>
-                        </Link>
-                    </nav>
-                </aside>
-
-                <div class="flex min-h-screen min-w-0 flex-1 flex-col">
-                    <div class="sticky top-0 z-10 bg-surface lg:hidden">
-                        <header
-                            class="flex items-center justify-between gap-3 border-b-frame border-edge px-4 py-3"
+                            <component
+                                :is="item.icon"
+                                :size="22"
+                                :stroke-width="1.75"
+                                aria-hidden="true"
+                            />
+                            <CountBadge
+                                :count="item.badge"
+                                :label="item.badgeLabel"
+                                ring
+                                class="absolute -top-[3px] left-8"
+                            />
+                        </span>
+                        <span
+                            class="text-caption"
+                            :class="
+                                item.active
+                                    ? 'font-semibold text-ink'
+                                    : 'font-medium text-ink-muted'
+                            "
+                            >{{ item.label }}</span
                         >
-                            <Link
-                                :href="eventsIndex().url"
-                                class="shrink-0 text-2xl font-bold tracking-tight whitespace-nowrap"
-                            >
-                                Manteion
-                            </Link>
-                            <div class="flex min-w-0 items-center gap-3">
-                                <LanguageSwitcher />
-                                <Link
-                                    :href="profileEdit().url"
-                                    class="flex min-w-0 items-center gap-2 text-xs text-ink/70"
-                                >
-                                    <Avatar
-                                        :url="user.avatar_url"
-                                        :name="user.name"
-                                    />
-                                    <span class="truncate">
-                                        @{{ user.username }}
-                                    </span>
-                                </Link>
-                            </div>
-                        </header>
-
-                        <nav
-                            class="grid grid-cols-4 border-b-frame border-edge"
-                        >
-                            <Link
-                                v-for="item in navItems"
-                                :key="item.label"
-                                :href="item.href"
-                                class="flex flex-col items-center gap-0.5 py-2 text-sm"
-                                :class="
-                                    item.active
-                                        ? 'bg-accent text-on-accent'
-                                        : ''
-                                "
-                            >
-                                {{ item.label }}
-                                <span v-if="item.badge" class="text-xs">{{
-                                    item.badge
-                                }}</span>
-                            </Link>
-                        </nav>
-                    </div>
-
-                    <main class="min-w-0 flex-1 px-4 py-6 lg:px-10 lg:py-10">
-                        <slot />
-                    </main>
+                    </Link>
                 </div>
-            </div>
+                <Link
+                    :href="settingsIndex().url"
+                    :aria-label="t('shell.yourProfile')"
+                    :aria-current="meItem.active ? 'page' : undefined"
+                    class="mt-auto grid size-11 place-items-center rounded-full"
+                >
+                    <Avatar
+                        :name="user.name"
+                        :src="user.avatar_url"
+                        :size="36"
+                        decorative
+                        :class="
+                            meItem.active
+                                ? 'ring-2 ring-accent ring-offset-2 ring-offset-canvas'
+                                : ''
+                        "
+                    />
+                </Link>
+            </nav>
+
+            <!-- Desktop: a 256px sidebar with the wordmark and full labels. -->
+            <nav
+                :aria-label="t('ui.mainNavigation')"
+                class="sticky top-0 hidden h-dvh w-sidebar shrink-0 flex-col border-r border-line bg-canvas px-4 pt-[22px] pb-4 lg:flex"
+            >
+                <Link
+                    :href="eventsIndex().url"
+                    :aria-label="t('nav.home')"
+                    class="mb-6.5 flex items-center gap-2.5 px-2.5 py-0.5"
+                >
+                    <Mark class="h-[30px] w-5 text-mark" />
+                    <span class="font-display text-title-2 font-medium"
+                        >Manteion</span
+                    >
+                </Link>
+                <div class="flex flex-col gap-1">
+                    <Link
+                        v-for="item in railItems"
+                        :key="item.key"
+                        :href="item.href"
+                        :aria-current="item.active ? 'page' : undefined"
+                        class="flex h-11 items-center gap-3 rounded-md pr-2.5 pl-2 transition-colors duration-120"
+                        :class="
+                            item.active
+                                ? 'bg-surface ring-1 ring-line ring-inset'
+                                : 'hover:bg-surface-2'
+                        "
+                    >
+                        <component
+                            :is="item.icon"
+                            :size="22"
+                            :stroke-width="1.75"
+                            :class="
+                                item.active
+                                    ? 'text-accent-ink'
+                                    : 'text-ink-muted'
+                            "
+                            aria-hidden="true"
+                        />
+                        <span
+                            class="min-w-0 flex-1 truncate text-body"
+                            :class="
+                                item.active ? 'font-semibold' : 'font-medium'
+                            "
+                            >{{ item.label }}</span
+                        >
+                        <CountBadge
+                            :count="item.badge"
+                            :label="item.badgeLabel"
+                        />
+                    </Link>
+                </div>
+                <div class="mt-auto flex flex-col gap-3">
+                    <AlphaNotice variant="card" />
+                    <Link
+                        :href="settingsIndex().url"
+                        :aria-current="meItem.active ? 'page' : undefined"
+                        class="flex items-center gap-3 rounded-md px-2 py-2 transition-colors duration-120"
+                        :class="
+                            meItem.active
+                                ? 'bg-surface ring-1 ring-line ring-inset'
+                                : 'hover:bg-surface-2'
+                        "
+                    >
+                        <Avatar
+                            :name="user.name"
+                            :src="user.avatar_url"
+                            :size="36"
+                            decorative
+                        />
+                        <span class="min-w-0 flex-1">
+                            <span
+                                class="block truncate text-label font-semibold"
+                                >{{ user.name }}</span
+                            >
+                            <span
+                                class="block truncate text-meta text-ink-muted"
+                                >@{{ user.username }}</span
+                            >
+                        </span>
+                        <Settings
+                            :size="20"
+                            :stroke-width="1.8"
+                            class="shrink-0 text-ink-muted"
+                            :aria-label="t('shell.openSettings')"
+                        />
+                    </Link>
+                </div>
+            </nav>
+
+            <main
+                id="main"
+                class="min-w-0 flex-1"
+                :class="
+                    hasTabBar
+                        ? 'pb-[calc(var(--spacing-tabbar)+env(safe-area-inset-bottom)+24px)] sm:pb-12'
+                        : 'sm:pb-12'
+                "
+            >
+                <slot />
+            </main>
         </div>
 
+        <!-- Phone: the bottom tab bar. -->
+        <nav
+            v-if="hasTabBar"
+            :aria-label="t('ui.mainNavigation')"
+            class="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] [--badge-ring:var(--color-surface)] sm:hidden"
+        >
+            <div class="flex h-tabbar px-1">
+                <Link
+                    v-for="item in tabItems"
+                    :key="item.key"
+                    :href="item.href"
+                    :aria-current="item.active ? 'page' : undefined"
+                    class="flex min-w-max flex-1 basis-0 flex-col items-center justify-center gap-1"
+                >
+                    <span
+                        class="relative grid h-[30px] w-14 place-items-center rounded-full transition-colors duration-200"
+                        :class="
+                            item.active
+                                ? 'bg-accent-soft text-accent-ink'
+                                : 'text-ink-muted'
+                        "
+                    >
+                        <Avatar
+                            v-if="item.key === 'me'"
+                            :name="user.name"
+                            :src="user.avatar_url"
+                            :size="28"
+                            decorative
+                            :class="
+                                item.active
+                                    ? 'ring-2 ring-accent ring-offset-2 ring-offset-surface'
+                                    : ''
+                            "
+                        />
+                        <component
+                            :is="item.icon"
+                            v-else
+                            :size="22"
+                            :stroke-width="1.75"
+                            aria-hidden="true"
+                        />
+                        <CountBadge
+                            :count="item.badge"
+                            :label="item.badgeLabel"
+                            ring
+                            class="absolute -top-[3px] left-8"
+                        />
+                    </span>
+                    <span
+                        class="text-caption"
+                        :class="
+                            item.active
+                                ? 'font-semibold text-ink'
+                                : 'font-medium text-ink-muted'
+                        "
+                        >{{ item.label }}</span
+                    >
+                </Link>
+            </div>
+        </nav>
+
+        <Toaster />
         <ConfirmDialog />
         <StaffDeleteDialog />
+        <ReportDialog />
     </div>
 </template>

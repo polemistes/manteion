@@ -1,38 +1,46 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue';
+import {
+    DialogContent,
+    DialogOverlay,
+    DialogPortal,
+    DialogRoot,
+    DialogTitle,
+} from 'reka-ui';
 
-const props = defineProps<{
-    open: boolean;
-}>();
+/**
+ * The older modal API (`open` + default slot), drawn as the sheet/dialog.
+ * New code uses ui/AppDialog, which also takes a title and actions.
+ */
+const props = withDefaults(defineProps<{ open: boolean; title?: string }>(), {
+    title: undefined,
+});
 
 const emit = defineEmits<{
     'update:open': [value: boolean];
 }>();
-
-function close(): void {
-    emit('update:open', false);
-}
-
-function onKeydown(event: KeyboardEvent): void {
-    if (props.open && event.key === 'Escape') {
-        close();
-    }
-}
-
-onMounted(() => document.addEventListener('keydown', onKeydown));
-onUnmounted(() => document.removeEventListener('keydown', onKeydown));
 </script>
 
 <template>
-    <div
-        v-if="props.open"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4"
-        @click.self="close"
-    >
-        <div
-            class="w-full max-w-sm border-frame border-edge bg-surface-raised p-6"
-        >
-            <slot />
-        </div>
-    </div>
+    <DialogRoot :open="props.open" @update:open="emit('update:open', $event)">
+        <DialogPortal>
+            <DialogOverlay
+                class="fixed inset-0 z-50 bg-scrim data-[state=closed]:animate-[fade-out_200ms_var(--ease-exit)] data-[state=open]:animate-[fade-in_280ms_var(--ease-enter)]"
+            />
+            <DialogContent
+                :aria-describedby="undefined"
+                class="fixed inset-x-0 bottom-0 z-50 max-h-[90dvh] w-full overflow-auto overscroll-contain rounded-t-xl bg-surface px-4 pt-4 pb-[calc(16px+env(safe-area-inset-bottom))] text-ink shadow-lg focus:outline-none data-[state=closed]:animate-[sheet-out_200ms_var(--ease-exit)] data-[state=open]:animate-[sheet-in_280ms_var(--ease-enter)] sm:inset-auto sm:top-1/2 sm:left-1/2 sm:w-[calc(100vw-32px)] sm:max-w-[440px] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:p-6 sm:data-[state=closed]:animate-[dialog-out_200ms_var(--ease-exit)] sm:data-[state=open]:animate-[dialog-in_280ms_var(--ease-enter)]"
+            >
+                <DialogTitle
+                    :class="
+                        props.title
+                            ? 'mb-4 font-display text-title-3'
+                            : 'sr-only'
+                    "
+                >
+                    {{ props.title ?? '' }}
+                </DialogTitle>
+                <slot />
+            </DialogContent>
+        </DialogPortal>
+    </DialogRoot>
 </template>

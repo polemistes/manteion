@@ -21,7 +21,7 @@ const props = defineProps<{
 <template>
     <Head :title="t('leaflets.edit.title')" />
 
-    <h1 class="mb-6 text-xl font-bold">{{ t('leaflets.edit.title') }}</h1>
+    <h1 class="text-xl mb-6 font-bold">{{ t('leaflets.edit.title') }}</h1>
 
     <div class="max-w-xl">
         <LeafletForm

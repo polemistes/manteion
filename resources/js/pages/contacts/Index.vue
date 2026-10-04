@@ -146,13 +146,13 @@ const filteredFollowers = computed(() =>
 <template>
     <Head :title="t('contacts.index.title')" />
 
-    <h1 class="mb-6 text-xl font-bold">{{ t('contacts.index.title') }}</h1>
+    <h1 class="text-xl mb-6 font-bold">{{ t('contacts.index.title') }}</h1>
 
     <div class="contacts-layout">
         <aside class="contacts-layout__find lg:sticky lg:top-6">
             <button
                 type="button"
-                class="mb-3 flex w-full items-center justify-between text-sm font-bold uppercase lg:hidden"
+                class="text-sm mb-3 flex w-full items-center justify-between font-bold uppercase lg:hidden"
                 @click="findOpen = !findOpen"
             >
                 {{ t('contacts.index.findHeading') }}
@@ -160,7 +160,7 @@ const filteredFollowers = computed(() =>
             </button>
 
             <div :class="findOpen ? '' : 'hidden lg:block'">
-                <h2 class="mb-3 hidden text-sm font-bold uppercase lg:block">
+                <h2 class="text-sm mb-3 hidden font-bold uppercase lg:block">
                     {{ t('contacts.index.findHeading') }}
                 </h2>
 
@@ -169,11 +169,11 @@ const filteredFollowers = computed(() =>
                         v-model="findQueryInput"
                         type="text"
                         :placeholder="t('contacts.index.findPlaceholder')"
-                        class="flex-1 border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+                        class="border-edge bg-surface-raised text-sm flex-1 border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
                     />
                     <button
                         type="submit"
-                        class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
+                        class="border-edge text-sm border px-3 py-2 hover:bg-accent hover:text-on-accent"
                     >
                         {{ t('contacts.index.find') }}
                     </button>
@@ -205,7 +205,7 @@ const filteredFollowers = computed(() =>
         <aside class="contacts-layout__groups lg:sticky lg:top-6">
             <button
                 type="button"
-                class="mb-3 flex w-full items-center justify-between text-sm font-bold uppercase lg:hidden"
+                class="text-sm mb-3 flex w-full items-center justify-between font-bold uppercase lg:hidden"
                 @click="groupsOpen = !groupsOpen"
             >
                 {{ t('contacts.index.groupsHeading') }}
@@ -214,10 +214,10 @@ const filteredFollowers = computed(() =>
 
             <div :class="groupsOpen ? '' : 'hidden lg:block'">
                 <section class="mb-10">
-                    <h2 class="mb-3 text-sm font-bold uppercase">
+                    <h2 class="text-sm mb-3 font-bold uppercase">
                         {{ t('contacts.index.friendGroups') }}
                     </h2>
-                    <p class="mb-3 text-xs text-ink/70">
+                    <p class="text-xs mb-3 text-ink/70">
                         {{ t('contacts.index.friendGroupsDescription') }}
                     </p>
 
@@ -230,7 +230,7 @@ const filteredFollowers = computed(() =>
                         <div class="flex-1">
                             <label
                                 for="friend_group_name"
-                                class="mb-1 block text-xs font-bold"
+                                class="text-xs mb-1 block font-bold"
                                 >{{ t('contacts.index.newGroupName') }}</label
                             >
                             <input
@@ -238,11 +238,11 @@ const filteredFollowers = computed(() =>
                                 type="text"
                                 name="name"
                                 required
-                                class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+                                class="border-edge bg-surface-raised text-sm w-full border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
                             />
                             <p
                                 v-if="errors.name"
-                                class="mt-1 text-xs font-bold"
+                                class="text-xs mt-1 font-bold"
                             >
                                 ! {{ errors.name }}
                             </p>
@@ -250,7 +250,7 @@ const filteredFollowers = computed(() =>
                         <button
                             type="submit"
                             :disabled="processing"
-                            class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
+                            class="border-edge text-sm border px-3 py-2 hover:bg-accent hover:text-on-accent"
                         >
                             {{ t('contacts.index.create') }}
                         </button>
@@ -259,12 +259,12 @@ const filteredFollowers = computed(() =>
                     <div
                         v-for="group in friendGroups"
                         :key="group.id"
-                        class="mb-4 border-frame border-edge p-3"
+                        class="border-frame border-edge mb-4 p-3"
                     >
                         <div
                             class="mb-2 flex items-center justify-between gap-3"
                         >
-                            <span class="min-w-0 text-sm font-bold">{{
+                            <span class="text-sm min-w-0 font-bold">{{
                                 group.name
                             }}</span>
                             <Link
@@ -282,7 +282,7 @@ const filteredFollowers = computed(() =>
                             <li
                                 v-for="member in group.members"
                                 :key="member.id"
-                                class="flex items-center justify-between gap-3 text-sm"
+                                class="text-sm flex items-center justify-between gap-3"
                             >
                                 <PersonSummary v-bind="member" />
                                 <Link
@@ -305,10 +305,10 @@ const filteredFollowers = computed(() =>
                 </section>
 
                 <section>
-                    <h2 class="mb-3 text-sm font-bold uppercase">
+                    <h2 class="text-sm mb-3 font-bold uppercase">
                         {{ t('contacts.index.followingGroups') }}
                     </h2>
-                    <p class="mb-3 text-xs text-ink/70">
+                    <p class="text-xs mb-3 text-ink/70">
                         {{ t('contacts.index.followingGroupsDescription') }}
                     </p>
 
@@ -321,7 +321,7 @@ const filteredFollowers = computed(() =>
                         <div class="flex-1">
                             <label
                                 for="following_group_name"
-                                class="mb-1 block text-xs font-bold"
+                                class="text-xs mb-1 block font-bold"
                                 >{{ t('contacts.index.newGroupName') }}</label
                             >
                             <input
@@ -329,11 +329,11 @@ const filteredFollowers = computed(() =>
                                 type="text"
                                 name="name"
                                 required
-                                class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+                                class="border-edge bg-surface-raised text-sm w-full border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
                             />
                             <p
                                 v-if="errors.name"
-                                class="mt-1 text-xs font-bold"
+                                class="text-xs mt-1 font-bold"
                             >
                                 ! {{ errors.name }}
                             </p>
@@ -341,7 +341,7 @@ const filteredFollowers = computed(() =>
                         <button
                             type="submit"
                             :disabled="processing"
-                            class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
+                            class="border-edge text-sm border px-3 py-2 hover:bg-accent hover:text-on-accent"
                         >
                             {{ t('contacts.index.create') }}
                         </button>
@@ -350,12 +350,12 @@ const filteredFollowers = computed(() =>
                     <div
                         v-for="group in followingGroups"
                         :key="group.id"
-                        class="mb-4 border-frame border-edge p-3"
+                        class="border-frame border-edge mb-4 p-3"
                     >
                         <div
                             class="mb-2 flex items-center justify-between gap-3"
                         >
-                            <span class="min-w-0 text-sm font-bold">{{
+                            <span class="text-sm min-w-0 font-bold">{{
                                 group.name
                             }}</span>
                             <Link
@@ -373,7 +373,7 @@ const filteredFollowers = computed(() =>
                             <li
                                 v-for="member in group.members"
                                 :key="member.id"
-                                class="flex items-center justify-between gap-3 text-sm"
+                                class="text-sm flex items-center justify-between gap-3"
                             >
                                 <PersonSummary v-bind="member" />
                                 <Link
@@ -398,20 +398,20 @@ const filteredFollowers = computed(() =>
         </aside>
 
         <div class="contacts-layout__search">
-            <h2 class="mb-3 text-sm font-bold uppercase">
+            <h2 class="text-sm mb-3 font-bold uppercase">
                 {{ t('contacts.index.filterHeading') }}
             </h2>
             <input
                 v-model="contactsQuery"
                 type="text"
                 :placeholder="t('contacts.index.filterPlaceholder')"
-                class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+                class="border-edge bg-surface-raised text-sm w-full border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
             />
         </div>
 
         <div class="contacts-layout__main">
             <section v-if="findQuery" class="mb-10 hidden lg:block">
-                <h2 class="mb-3 text-sm font-bold uppercase">
+                <h2 class="text-sm mb-3 font-bold uppercase">
                     {{ t('contacts.index.searchResultsHeading') }}
                 </h2>
                 <p v-if="!findResults.length" class="text-sm text-ink/70">
@@ -429,14 +429,14 @@ const filteredFollowers = computed(() =>
             </section>
 
             <section v-if="pendingFriendRequests.length" class="mb-10">
-                <h2 class="mb-3 text-sm font-bold uppercase">
+                <h2 class="text-sm mb-3 font-bold uppercase">
                     {{ t('contacts.index.friendRequests') }}
                 </h2>
                 <ul class="flex flex-col gap-2">
                     <li
                         v-for="request in pendingFriendRequests"
                         :key="request.friendship_id"
-                        class="flex items-center justify-between gap-3 border-frame border-edge px-3 py-2 text-sm"
+                        class="border-frame border-edge text-sm flex items-center justify-between gap-3 px-3 py-2"
                     >
                         <PersonSummary v-bind="request.user" />
                         <span class="flex shrink-0 gap-2">
@@ -456,7 +456,7 @@ const filteredFollowers = computed(() =>
                                 <button
                                     type="submit"
                                     :disabled="processing"
-                                    class="border border-edge px-2 py-1 hover:bg-accent hover:text-on-accent"
+                                    class="border-edge border px-2 py-1 hover:bg-accent hover:text-on-accent"
                                 >
                                     {{ t('contacts.index.accept') }}
                                 </button>
@@ -477,7 +477,7 @@ const filteredFollowers = computed(() =>
                                 <button
                                     type="submit"
                                     :disabled="processing"
-                                    class="border border-edge px-2 py-1 hover:bg-accent hover:text-on-accent"
+                                    class="border-edge border px-2 py-1 hover:bg-accent hover:text-on-accent"
                                 >
                                     {{ t('contacts.index.decline') }}
                                 </button>
@@ -488,14 +488,14 @@ const filteredFollowers = computed(() =>
             </section>
 
             <section v-if="pendingFollowerRequests.length" class="mb-10">
-                <h2 class="mb-3 text-sm font-bold uppercase">
+                <h2 class="text-sm mb-3 font-bold uppercase">
                     {{ t('contacts.index.followRequests') }}
                 </h2>
                 <ul class="flex flex-col gap-2">
                     <li
                         v-for="request in pendingFollowerRequests"
                         :key="request.follow_id"
-                        class="flex items-center justify-between gap-3 border-frame border-edge px-3 py-2 text-sm"
+                        class="border-frame border-edge text-sm flex items-center justify-between gap-3 px-3 py-2"
                     >
                         <PersonSummary v-bind="request.user" />
                         <span class="flex shrink-0 gap-2">
@@ -504,7 +504,7 @@ const filteredFollowers = computed(() =>
                                 method="patch"
                                 as="button"
                                 preserve-scroll
-                                class="border border-edge px-2 py-1 hover:bg-accent hover:text-on-accent"
+                                class="border-edge border px-2 py-1 hover:bg-accent hover:text-on-accent"
                             >
                                 {{ t('contacts.index.approve') }}
                             </Link>
@@ -513,7 +513,7 @@ const filteredFollowers = computed(() =>
                                 method="delete"
                                 as="button"
                                 preserve-scroll
-                                class="border border-edge px-2 py-1 hover:bg-accent hover:text-on-accent"
+                                class="border-edge border px-2 py-1 hover:bg-accent hover:text-on-accent"
                             >
                                 {{ t('contacts.index.reject') }}
                             </Link>
@@ -523,7 +523,7 @@ const filteredFollowers = computed(() =>
             </section>
 
             <section class="mb-10">
-                <h2 class="mb-3 text-sm font-bold uppercase">
+                <h2 class="text-sm mb-3 font-bold uppercase">
                     {{ t('contacts.index.friends') }}
                 </h2>
                 <p v-if="!friends.length" class="text-sm text-ink/70">
@@ -540,7 +540,7 @@ const filteredFollowers = computed(() =>
                         <li
                             v-for="friend in filteredFriends"
                             :key="friend.id"
-                            class="border-frame border-edge px-3 py-2 text-sm"
+                            class="border-frame border-edge text-sm px-3 py-2"
                         >
                             <PersonSummary
                                 :id="friend.id"
@@ -571,7 +571,7 @@ const filteredFollowers = computed(() =>
                                     method="post"
                                     :data="{ user_ids: [friend.id] }"
                                     as="button"
-                                    class="border border-edge px-2 py-1 text-xs hover:bg-accent hover:text-on-accent"
+                                    class="border-edge text-xs border px-2 py-1 hover:bg-accent hover:text-on-accent"
                                 >
                                     {{ t('contacts.index.message') }}
                                 </Link>
@@ -581,14 +581,14 @@ const filteredFollowers = computed(() =>
                 </template>
 
                 <div v-if="sentFriendRequests.length" class="mt-4">
-                    <h3 class="mb-2 text-xs font-bold text-ink/70 uppercase">
+                    <h3 class="text-xs mb-2 font-bold text-ink/70 uppercase">
                         {{ t('contacts.index.requestsSent') }}
                     </h3>
                     <ul class="flex flex-col gap-2">
                         <li
                             v-for="request in sentFriendRequests"
                             :key="request.friendship_id"
-                            class="flex items-center justify-between gap-3 border-frame border-edge px-3 py-2 text-sm"
+                            class="border-frame border-edge text-sm flex items-center justify-between gap-3 px-3 py-2"
                         >
                             <PersonSummary v-bind="request.user" />
                             <Link
@@ -599,7 +599,7 @@ const filteredFollowers = computed(() =>
                                 method="delete"
                                 as="button"
                                 preserve-scroll
-                                class="border border-edge px-2 py-1 hover:bg-accent hover:text-on-accent"
+                                class="border-edge border px-2 py-1 hover:bg-accent hover:text-on-accent"
                             >
                                 {{ t('contacts.index.cancel') }}
                             </Link>
@@ -609,7 +609,7 @@ const filteredFollowers = computed(() =>
             </section>
 
             <section class="mb-10">
-                <h2 class="mb-3 text-sm font-bold uppercase">
+                <h2 class="text-sm mb-3 font-bold uppercase">
                     {{ t('contacts.index.following') }}
                 </h2>
                 <p v-if="!following.length" class="text-sm text-ink/70">
@@ -626,7 +626,7 @@ const filteredFollowers = computed(() =>
                         <li
                             v-for="entry in filteredFollowing"
                             :key="entry.follow_id"
-                            class="border-frame border-edge px-3 py-2 text-sm"
+                            class="border-frame border-edge text-sm px-3 py-2"
                         >
                             <PersonSummary v-bind="entry.user" />
                             <div class="mt-2 flex flex-wrap items-center gap-2">
@@ -652,7 +652,7 @@ const filteredFollowers = computed(() =>
                                     method="delete"
                                     as="button"
                                     preserve-scroll
-                                    class="border border-edge px-2 py-1 hover:bg-accent hover:text-on-accent"
+                                    class="border-edge border px-2 py-1 hover:bg-accent hover:text-on-accent"
                                 >
                                     {{ t('contacts.index.unfollow') }}
                                 </Link>
@@ -662,14 +662,14 @@ const filteredFollowers = computed(() =>
                 </template>
 
                 <div v-if="pendingFollowRequestsSent.length" class="mt-4">
-                    <h3 class="mb-2 text-xs font-bold text-ink/70 uppercase">
+                    <h3 class="text-xs mb-2 font-bold text-ink/70 uppercase">
                         {{ t('contacts.index.requestsAwaitingApproval') }}
                     </h3>
                     <ul class="flex flex-col gap-2">
                         <li
                             v-for="entry in pendingFollowRequestsSent"
                             :key="entry.follow_id"
-                            class="flex items-center justify-between gap-3 border-frame border-edge px-3 py-2 text-sm"
+                            class="border-frame border-edge text-sm flex items-center justify-between gap-3 px-3 py-2"
                         >
                             <PersonSummary v-bind="entry.user" />
                             <Link
@@ -677,7 +677,7 @@ const filteredFollowers = computed(() =>
                                 method="delete"
                                 as="button"
                                 preserve-scroll
-                                class="border border-edge px-2 py-1 hover:bg-accent hover:text-on-accent"
+                                class="border-edge border px-2 py-1 hover:bg-accent hover:text-on-accent"
                             >
                                 {{ t('contacts.index.cancel') }}
                             </Link>
@@ -687,7 +687,7 @@ const filteredFollowers = computed(() =>
             </section>
 
             <section class="mb-10">
-                <h2 class="mb-3 text-sm font-bold uppercase">
+                <h2 class="text-sm mb-3 font-bold uppercase">
                     {{ t('contacts.index.followers') }}
                 </h2>
                 <p v-if="!followers.length" class="text-sm text-ink/70">
@@ -704,7 +704,7 @@ const filteredFollowers = computed(() =>
                         <li
                             v-for="entry in filteredFollowers"
                             :key="entry.follow_id"
-                            class="flex items-center justify-between gap-3 border-frame border-edge px-3 py-2 text-sm"
+                            class="border-frame border-edge text-sm flex items-center justify-between gap-3 px-3 py-2"
                         >
                             <PersonSummary v-bind="entry.user" />
                             <Link
@@ -712,7 +712,7 @@ const filteredFollowers = computed(() =>
                                 method="delete"
                                 as="button"
                                 preserve-scroll
-                                class="border border-edge px-2 py-1 hover:bg-accent hover:text-on-accent"
+                                class="border-edge border px-2 py-1 hover:bg-accent hover:text-on-accent"
                             >
                                 {{ t('contacts.index.remove') }}
                             </Link>

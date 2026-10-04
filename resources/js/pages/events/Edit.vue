@@ -49,12 +49,12 @@ const description = ref(props.event.description);
 <template>
     <Head :title="t('events.edit.title')" />
 
-    <h1 class="mb-6 text-xl font-bold">{{ t('events.edit.title') }}</h1>
+    <h1 class="text-xl mb-6 font-bold">{{ t('events.edit.title') }}</h1>
 
     <div v-if="props.event.image" class="mb-6 flex flex-col items-start gap-1">
         <img
             :src="props.event.image.url"
-            class="h-32 border border-edge object-cover"
+            class="border-edge h-32 border object-cover"
             style="aspect-ratio: 1.5"
             alt=""
         />
@@ -79,7 +79,7 @@ const description = ref(props.event.description);
         class="flex max-w-xl flex-col gap-4"
     >
         <div>
-            <label for="name" class="mb-1 block text-sm font-bold">{{
+            <label for="name" class="text-sm mb-1 block font-bold">{{
                 t('events.edit.name')
             }}</label>
             <input
@@ -88,13 +88,13 @@ const description = ref(props.event.description);
                 name="name"
                 required
                 v-model="name"
-                class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+                class="border-edge bg-surface-raised text-sm w-full border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
             />
             <FieldError :message="errors.name" />
         </div>
 
         <div>
-            <label for="place" class="mb-1 block text-sm font-bold">{{
+            <label for="place" class="text-sm mb-1 block font-bold">{{
                 t('events.edit.placeOptional')
             }}</label>
             <input
@@ -102,7 +102,7 @@ const description = ref(props.event.description);
                 type="text"
                 name="place"
                 v-model="place"
-                class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+                class="border-edge bg-surface-raised text-sm w-full border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
             />
             <FieldError :message="errors.place" />
         </div>
@@ -120,7 +120,7 @@ const description = ref(props.event.description);
         </div>
 
         <div>
-            <label for="description" class="mb-1 block text-sm font-bold">{{
+            <label for="description" class="text-sm mb-1 block font-bold">{{
                 t('events.edit.description')
             }}</label>
             <textarea
@@ -129,13 +129,13 @@ const description = ref(props.event.description);
                 required
                 rows="4"
                 v-model="description"
-                class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+                class="border-edge bg-surface-raised text-sm w-full border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
             ></textarea>
             <FieldError :message="errors.description" />
         </div>
 
         <div>
-            <p class="mb-1 text-sm font-bold">{{ t('events.edit.starts') }}</p>
+            <p class="text-sm mb-1 font-bold">{{ t('events.edit.starts') }}</p>
             <DateTimeField
                 name="starts_at"
                 :initial-value="props.event.starts_at"
@@ -145,7 +145,7 @@ const description = ref(props.event.description);
         </div>
 
         <div>
-            <p class="mb-1 text-sm font-bold">
+            <p class="text-sm mb-1 font-bold">
                 {{ t('events.edit.endsOptional') }}
             </p>
             <DateTimeField
@@ -156,7 +156,7 @@ const description = ref(props.event.description);
         </div>
 
         <div>
-            <p class="mb-1 text-sm font-bold">{{ t('events.edit.tags') }}</p>
+            <p class="text-sm mb-1 font-bold">{{ t('events.edit.tags') }}</p>
             <CategoryPicker
                 :categories="props.categories"
                 :initial-selected-ids="props.event.tag_ids"
@@ -165,7 +165,7 @@ const description = ref(props.event.description);
         </div>
 
         <div>
-            <p class="mb-1 text-sm font-bold">
+            <p class="text-sm mb-1 font-bold">
                 {{ t('events.edit.replaceImage') }}
             </p>
             <ImageCropper
@@ -178,58 +178,58 @@ const description = ref(props.event.description);
         </div>
 
         <fieldset class="border-frame border-edge p-3">
-            <legend class="px-1 text-xs font-bold uppercase">
+            <legend class="text-xs px-1 font-bold uppercase">
                 {{ t('events.edit.visibility') }}
             </legend>
-            <label class="mb-1 flex items-center gap-2 text-sm">
+            <label class="text-sm mb-1 flex items-center gap-2">
                 <input
                     type="radio"
                     name="visibility"
                     value="private"
                     :checked="props.event.visibility === 'private'"
-                    class="border border-edge"
+                    class="border-edge border"
                 />
                 {{ t('events.edit.visibilityPrivate') }}
             </label>
-            <label class="flex items-center gap-2 text-sm">
+            <label class="text-sm flex items-center gap-2">
                 <input
                     type="radio"
                     name="visibility"
                     value="public"
                     :checked="props.event.visibility !== 'private'"
-                    class="border border-edge"
+                    class="border-edge border"
                 />
                 {{ t('events.edit.visibilityPublic') }}
             </label>
             <p
                 v-if="props.event.is_searchable"
-                class="mt-2 text-xs text-ink/70"
+                class="text-xs mt-2 text-ink/70"
             >
                 {{ t('events.edit.alreadySearchable') }}
             </p>
             <FieldError :message="errors.visibility" />
         </fieldset>
 
-        <label class="flex items-start gap-2 text-sm">
+        <label class="text-sm flex items-start gap-2">
             <input type="hidden" name="allow_invitee_invites" value="0" />
             <input
                 type="checkbox"
                 name="allow_invitee_invites"
                 value="1"
                 :checked="props.event.allow_invitee_invites"
-                class="mt-0.5 border border-edge"
+                class="border-edge mt-0.5 border"
             />
             {{ t('events.edit.allowInviteeInvites') }}
         </label>
 
-        <label class="flex items-start gap-2 text-sm">
+        <label class="text-sm flex items-start gap-2">
             <input type="hidden" name="allow_invitee_comments" value="0" />
             <input
                 type="checkbox"
                 name="allow_invitee_comments"
                 value="1"
                 :checked="props.event.allow_invitee_comments"
-                class="mt-0.5 border border-edge"
+                class="border-edge mt-0.5 border"
             />
             {{ t('events.edit.allowInviteeComments') }}
         </label>
@@ -237,7 +237,7 @@ const description = ref(props.event.description);
         <button
             type="submit"
             :disabled="processing"
-            class="w-fit border border-edge bg-accent px-4 py-2 text-sm font-bold text-on-accent hover:bg-surface-raised hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
+            class="border-edge text-sm hover:bg-surface-raised w-fit border bg-accent px-4 py-2 font-bold text-on-accent hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
         >
             {{
                 processing

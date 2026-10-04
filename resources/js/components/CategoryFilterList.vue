@@ -159,10 +159,10 @@ onUnmounted(() => document.removeEventListener('click', onDocumentClick));
 
 <template>
     <div ref="root" class="relative">
-        <p class="mb-1 text-xs font-bold">{{ t('events.index.category') }}</p>
+        <p class="text-xs mb-1 font-bold">{{ t('events.index.category') }}</p>
         <button
             type="button"
-            class="border border-edge bg-surface-raised px-2 py-1 text-left text-sm"
+            class="border-edge bg-surface-raised text-sm border px-2 py-1 text-left"
             @click="toggleOpen"
         >
             {{ summaryLabel }}
@@ -170,9 +170,9 @@ onUnmounted(() => document.removeEventListener('click', onDocumentClick));
 
         <div
             v-if="isOpen"
-            class="absolute z-20 mt-1 max-h-96 w-64 overflow-y-auto border border-edge bg-surface-raised p-2"
+            class="border-edge bg-surface-raised absolute z-20 mt-1 max-h-96 w-64 overflow-y-auto border p-2"
         >
-            <p class="mb-2 text-xs font-bold uppercase">
+            <p class="text-xs mb-2 font-bold uppercase">
                 {{ t('events.index.searchOnlyFor') }}
             </p>
             <div
@@ -181,14 +181,14 @@ onUnmounted(() => document.removeEventListener('click', onDocumentClick));
                 class="mb-2"
             >
                 <label
-                    class="flex items-center gap-2 text-sm"
+                    class="text-sm flex items-center gap-2"
                     :class="{ 'opacity-50': isCategoryDisabled(category) }"
                 >
                     <input
                         type="checkbox"
                         :checked="isExpanded(category)"
                         :disabled="isCategoryDisabled(category)"
-                        class="border border-edge"
+                        class="border-edge border"
                         @change="
                             toggleCategory(
                                 category,
@@ -205,12 +205,12 @@ onUnmounted(() => document.removeEventListener('click', onDocumentClick));
                     <label
                         v-for="child in category.children"
                         :key="child.id"
-                        class="flex items-center gap-2 text-xs"
+                        class="text-xs flex items-center gap-2"
                     >
                         <input
                             type="checkbox"
                             :checked="isSelected(child.slug)"
-                            class="border border-edge"
+                            class="border-edge border"
                             @change="
                                 toggleChild(
                                     category,
@@ -226,7 +226,7 @@ onUnmounted(() => document.removeEventListener('click', onDocumentClick));
 
             <button
                 type="button"
-                class="mt-1 w-full border border-edge bg-accent px-2 py-1 text-xs font-bold text-on-accent hover:bg-surface-raised hover:text-ink"
+                class="border-edge text-xs hover:bg-surface-raised mt-1 w-full border bg-accent px-2 py-1 font-bold text-on-accent hover:text-ink"
                 @click="close"
             >
                 {{ t('categoryPicker.done') }}

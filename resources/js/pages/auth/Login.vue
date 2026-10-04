@@ -15,7 +15,7 @@ const { t } = useI18n();
 <template>
     <Head :title="t('auth.login.title')" />
 
-    <h1 class="mb-6 text-lg font-bold">{{ t('auth.login.title') }}</h1>
+    <h1 class="text-lg mb-6 font-bold">{{ t('auth.login.title') }}</h1>
 
     <Form
         v-bind="store.form()"
@@ -23,7 +23,7 @@ const { t } = useI18n();
         class="flex flex-col gap-4"
     >
         <div>
-            <label for="username" class="mb-1 block text-sm font-bold">{{
+            <label for="username" class="text-sm mb-1 block font-bold">{{
                 t('auth.login.username')
             }}</label>
             <input
@@ -33,13 +33,13 @@ const { t } = useI18n();
                 required
                 autofocus
                 autocomplete="username"
-                class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+                class="border-edge bg-surface-raised text-sm w-full border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
             />
             <FieldError :message="errors.username" />
         </div>
 
         <div>
-            <label for="password" class="mb-1 block text-sm font-bold">{{
+            <label for="password" class="text-sm mb-1 block font-bold">{{
                 t('auth.login.password')
             }}</label>
             <PasswordField
@@ -51,12 +51,12 @@ const { t } = useI18n();
             <FieldError :message="errors.password" />
         </div>
 
-        <label class="flex items-center gap-2 text-sm">
+        <label class="text-sm flex items-center gap-2">
             <input
                 type="checkbox"
                 name="remember"
                 checked
-                class="border border-edge"
+                class="border-edge border"
             />
             {{ t('auth.login.remember') }}
         </label>
@@ -64,7 +64,7 @@ const { t } = useI18n();
         <button
             type="submit"
             :disabled="processing"
-            class="w-full border border-edge bg-accent px-3 py-2 text-sm font-bold text-on-accent hover:bg-surface-raised hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
+            class="border-edge text-sm hover:bg-surface-raised w-full border bg-accent px-3 py-2 font-bold text-on-accent hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
         >
             {{
                 processing ? t('auth.login.submitting') : t('auth.login.submit')
@@ -72,7 +72,7 @@ const { t } = useI18n();
         </button>
     </Form>
 
-    <div class="mt-6 flex flex-col gap-1 text-sm">
+    <div class="text-sm mt-6 flex flex-col gap-1">
         <Link :href="requestPasswordReset().url" class="underline">{{
             t('auth.login.forgotPassword')
         }}</Link>

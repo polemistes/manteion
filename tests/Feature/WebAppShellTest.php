@@ -24,9 +24,9 @@ test('the browser colour follows the system, or the mode the user picked', funct
         ->assertSee('<meta name="theme-color" media="(prefers-color-scheme: light)" content="'.$light.'">', false)
         ->assertSee('<meta name="theme-color" media="(prefers-color-scheme: dark)" content="'.$dark.'">', false);
 })->with([
-    'system' => [ThemeMode::System, '#FFFFFF', '#131211'],
-    'light' => [ThemeMode::Light, '#FFFFFF', '#FFFFFF'],
-    'dark' => [ThemeMode::Dark, '#131211', '#131211'],
+    'system' => [ThemeMode::System, '#F7F3EC', '#14100D'],
+    'light' => [ThemeMode::Light, '#F7F3EC', '#F7F3EC'],
+    'dark' => [ThemeMode::Dark, '#14100D', '#14100D'],
 ]);
 
 test('the manifest makes the app installable, with icons of the sizes it claims', function () {

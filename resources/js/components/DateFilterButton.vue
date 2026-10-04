@@ -112,10 +112,10 @@ onUnmounted(() => document.removeEventListener('click', onDocumentClick));
 
 <template>
     <div ref="root" class="relative">
-        <p class="mb-1 text-xs font-bold">{{ props.label }}</p>
+        <p class="text-xs mb-1 font-bold">{{ props.label }}</p>
         <button
             type="button"
-            class="border border-edge bg-surface-raised px-2 py-1 text-sm"
+            class="border-edge bg-surface-raised text-sm border px-2 py-1"
             @click="toggleOpen"
         >
             {{ displayLabel }}
@@ -123,7 +123,7 @@ onUnmounted(() => document.removeEventListener('click', onDocumentClick));
 
         <div
             v-if="isOpen"
-            class="absolute z-20 mt-1 w-fit border border-edge bg-surface-raised p-2"
+            class="border-edge bg-surface-raised absolute z-20 mt-1 w-fit border p-2"
         >
             <CalendarPicker
                 :model-value="selectedDate"
@@ -132,7 +132,7 @@ onUnmounted(() => document.removeEventListener('click', onDocumentClick));
             <button
                 v-if="props.modelValue"
                 type="button"
-                class="mt-2 w-full border border-edge px-2 py-1 text-xs hover:bg-accent hover:text-on-accent"
+                class="border-edge text-xs mt-2 w-full border px-2 py-1 hover:bg-accent hover:text-on-accent"
                 @click="clear"
             >
                 {{ t('calendar.clearDate') }}

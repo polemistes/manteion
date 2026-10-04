@@ -22,7 +22,7 @@ const { t } = useI18n();
 <template>
     <Head :title="t('messages.create.title')" />
 
-    <h1 class="mb-6 text-xl font-bold">{{ t('messages.create.title') }}</h1>
+    <h1 class="text-xl mb-6 font-bold">{{ t('messages.create.title') }}</h1>
 
     <p v-if="!friends.length" class="text-sm text-ink/70">
         {{ t('messages.create.noFriends') }}
@@ -35,19 +35,19 @@ const { t } = useI18n();
         class="flex max-w-md flex-col gap-4"
     >
         <div>
-            <p class="mb-2 text-sm font-bold">{{ t('messages.create.to') }}</p>
+            <p class="text-sm mb-2 font-bold">{{ t('messages.create.to') }}</p>
             <ul class="flex flex-col gap-2">
                 <li
                     v-for="friend in friends"
                     :key="friend.id"
-                    class="flex items-center gap-2 text-sm"
+                    class="text-sm flex items-center gap-2"
                 >
                     <input
                         :id="`friend-${friend.id}`"
                         type="checkbox"
                         name="user_ids[]"
                         :value="friend.id"
-                        class="border border-edge"
+                        class="border-edge border"
                     />
                     <label
                         :for="`friend-${friend.id}`"
@@ -62,7 +62,7 @@ const { t } = useI18n();
         </div>
 
         <div>
-            <label for="name" class="mb-1 block text-sm font-bold">{{
+            <label for="name" class="text-sm mb-1 block font-bold">{{
                 t('messages.create.groupNameOptional')
             }}</label>
             <input
@@ -70,7 +70,7 @@ const { t } = useI18n();
                 type="text"
                 name="name"
                 :placeholder="t('messages.create.groupNamePlaceholder')"
-                class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+                class="border-edge bg-surface-raised text-sm w-full border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
             />
             <FieldError :message="errors.name" />
         </div>
@@ -78,7 +78,7 @@ const { t } = useI18n();
         <button
             type="submit"
             :disabled="processing"
-            class="w-fit border border-edge bg-accent px-4 py-2 text-sm font-bold text-on-accent hover:bg-surface-raised hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
+            class="border-edge text-sm hover:bg-surface-raised w-fit border bg-accent px-4 py-2 font-bold text-on-accent hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
         >
             {{
                 processing

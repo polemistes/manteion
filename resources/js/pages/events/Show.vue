@@ -200,7 +200,7 @@ const locationLabel =
                     <button
                         v-if="props.event.can_delete && !props.event.is_owner"
                         type="button"
-                        class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
+                        class="border-edge text-sm border px-3 py-2 hover:bg-accent hover:text-on-accent"
                         @click="deleteEvent"
                     >
                         {{ t('events.show.delete') }}
@@ -215,7 +215,7 @@ const locationLabel =
                 <template v-if="locationLabel"> · {{ locationLabel }}</template>
             </p>
             <p
-                class="min-w-0 rounded-card bg-surface-inset px-4 py-3 font-sans text-lg whitespace-pre-line"
+                class="rounded-card bg-surface-inset text-lg min-w-0 px-4 py-3 font-sans whitespace-pre-line"
                 :class="{ 'text-ink/50 italic': props.event.is_deleted }"
             >
                 {{ props.event.description }}
@@ -224,12 +224,12 @@ const locationLabel =
                 <span
                     v-for="tag in props.event.tags"
                     :key="tag.id"
-                    class="border border-edge px-2 py-0.5 text-xs"
+                    class="border-edge text-xs border px-2 py-0.5"
                 >
                     {{ categoryLabel(tag) }}
                 </span>
                 <span
-                    class="border border-edge px-2 py-0.5 text-xs font-bold uppercase"
+                    class="border-edge text-xs border px-2 py-0.5 font-bold uppercase"
                 >
                     {{
                         props.event.visibility === 'private'
@@ -245,18 +245,18 @@ const locationLabel =
                 v-for="(image, index) in props.event.images"
                 :key="index"
                 :src="image"
-                class="w-full border border-edge object-cover"
+                class="border-edge w-full border object-cover"
                 alt=""
             />
 
-            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+            <div class="text-sm flex flex-wrap items-center gap-x-3 gap-y-1">
                 <span>
                     {{ t('events.show.by') }}
                     <PersonSummary v-bind="props.event.owner" />
                 </span>
                 <button
                     type="button"
-                    class="border border-edge px-2 py-0.5 text-xs hover:bg-accent hover:text-on-accent"
+                    class="border-edge text-xs border px-2 py-0.5 hover:bg-accent hover:text-on-accent"
                     :title="t('events.show.whosOnTheList')"
                     @click="guestsOpen = true"
                 >
@@ -273,14 +273,14 @@ const locationLabel =
             <div v-if="props.event.is_owner" class="flex flex-wrap gap-2">
                 <Link
                     :href="editEvent(props.event.id).url"
-                    class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
+                    class="border-edge text-sm border px-3 py-2 hover:bg-accent hover:text-on-accent"
                 >
                     {{ t('events.show.edit') }}
                 </Link>
                 <button
                     v-if="props.event.can_delete"
                     type="button"
-                    class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
+                    class="border-edge text-sm border px-3 py-2 hover:bg-accent hover:text-on-accent"
                     @click="deleteEvent"
                 >
                     {{ t('events.show.delete') }}
@@ -290,7 +290,7 @@ const locationLabel =
     </div>
 
     <Modal :open="guestsOpen" @update:open="guestsOpen = $event">
-        <h2 class="mb-3 text-sm font-bold uppercase">
+        <h2 class="text-sm mb-3 font-bold uppercase">
             {{ t('events.show.whosOnTheList') }}
         </h2>
         <div class="mb-3 flex flex-wrap" role="tablist">
@@ -300,7 +300,7 @@ const locationLabel =
                 type="button"
                 role="tab"
                 :aria-selected="guestTab === group"
-                class="border border-edge px-2 py-1 text-xs"
+                class="border-edge text-xs border px-2 py-1"
                 :class="[
                     index > 0 ? '-ml-px' : '',
                     guestTab === group
@@ -330,7 +330,7 @@ const locationLabel =
         </ul>
         <button
             type="button"
-            class="mt-4 border border-edge px-3 py-1 text-xs hover:bg-accent hover:text-on-accent"
+            class="border-edge text-xs mt-4 border px-3 py-1 hover:bg-accent hover:text-on-accent"
             @click="guestsOpen = false"
         >
             {{ t('reactions.close') }}
@@ -344,14 +344,14 @@ const locationLabel =
             class="flex flex-wrap items-end gap-3"
         >
             <div>
-                <label for="status" class="mb-1 block text-xs font-bold">{{
+                <label for="status" class="text-xs mb-1 block font-bold">{{
                     t('events.show.areYouComing')
                 }}</label>
                 <select
                     id="status"
                     name="status"
                     :value="props.myAttendance?.status ?? 'no_response'"
-                    class="border border-edge bg-surface-raised px-2 py-1 text-sm"
+                    class="border-edge bg-surface-raised text-sm border px-2 py-1"
                 >
                     <option value="no_response">
                         {{ t('events.show.statusNoResponse') }}
@@ -372,7 +372,7 @@ const locationLabel =
             <div>
                 <label
                     for="attendance_visibility"
-                    class="mb-1 block text-xs font-bold"
+                    class="text-xs mb-1 block font-bold"
                 >
                     {{ t('events.show.whoCanSee') }}
                 </label>
@@ -382,7 +382,7 @@ const locationLabel =
                     :value="
                         props.myAttendance?.attendance_visibility ?? 'everyone'
                     "
-                    class="border border-edge bg-surface-raised px-2 py-1 text-sm"
+                    class="border-edge bg-surface-raised text-sm border px-2 py-1"
                 >
                     <option value="everyone">
                         {{ t('events.show.visibilityEveryone') }}
@@ -400,7 +400,7 @@ const locationLabel =
             <button
                 type="submit"
                 :disabled="processing"
-                class="border border-edge bg-accent px-3 py-2 text-sm text-on-accent hover:bg-surface-raised hover:text-ink"
+                class="border-edge text-sm hover:bg-surface-raised border bg-accent px-3 py-2 text-on-accent hover:text-ink"
             >
                 {{
                     processing
@@ -412,7 +412,7 @@ const locationLabel =
     </section>
 
     <section v-if="props.event.can_invite" class="mb-8">
-        <h2 class="mb-3 text-sm font-bold uppercase">
+        <h2 class="text-sm mb-3 font-bold uppercase">
             {{ t('events.show.inviteFriends') }}
         </h2>
         <Form
@@ -424,7 +424,7 @@ const locationLabel =
             <select
                 name="user_ids[]"
                 multiple
-                class="min-w-48 border border-edge bg-surface-raised px-2 py-1 text-sm"
+                class="border-edge bg-surface-raised text-sm min-w-48 border px-2 py-1"
             >
                 <option
                     v-for="friend in props.inviteCandidates"
@@ -437,7 +437,7 @@ const locationLabel =
             <button
                 type="submit"
                 :disabled="processing"
-                class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
+                class="border-edge text-sm border px-3 py-2 hover:bg-accent hover:text-on-accent"
             >
                 {{ t('events.show.invite') }}
             </button>
@@ -449,7 +449,7 @@ const locationLabel =
     </section>
 
     <section>
-        <h2 class="mb-3 text-sm font-bold uppercase">
+        <h2 class="text-sm mb-3 font-bold uppercase">
             {{ t('events.show.comments') }}
         </h2>
 
@@ -478,12 +478,12 @@ const locationLabel =
                     </div>
                 </div>
                 <p
-                    class="font-sans text-sm whitespace-pre-line"
+                    class="text-sm font-sans whitespace-pre-line"
                     :class="{ 'text-ink/50 italic': comment.is_deleted }"
                 >
                     {{ comment.body }}
                 </p>
-                <p class="mt-1 text-xs text-ink/70">
+                <p class="text-xs mt-1 text-ink/70">
                     {{ formatDate(comment.created_at) }}
                 </p>
             </li>
@@ -504,13 +504,13 @@ const locationLabel =
                 required
                 rows="3"
                 :placeholder="t('events.show.commentPlaceholder')"
-                class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+                class="border-edge bg-surface-raised text-sm w-full border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
             ></textarea>
             <FieldError :message="errors.body" />
             <button
                 type="submit"
                 :disabled="processing"
-                class="w-fit border border-edge bg-accent px-3 py-2 text-sm text-on-accent hover:bg-surface-raised hover:text-ink"
+                class="border-edge text-sm hover:bg-surface-raised w-fit border bg-accent px-3 py-2 text-on-accent hover:text-ink"
             >
                 {{
                     processing

@@ -82,11 +82,11 @@ function toggleFollow(): void {
 
     <p
         v-if="props.profile.bio"
-        class="mb-6 max-w-prose font-sans text-sm whitespace-pre-line"
+        class="text-sm mb-6 max-w-prose font-sans whitespace-pre-line"
     >
         {{ props.profile.bio }}
     </p>
-    <p v-else class="mb-6 text-sm text-ink/70">
+    <p v-else class="text-sm mb-6 text-ink/70">
         {{ t('userProfile.noBio') }}
     </p>
 
@@ -99,7 +99,7 @@ function toggleFollow(): void {
                 :data="{ user_id: props.profile.id }"
                 as="button"
                 preserve-scroll
-                class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
+                class="border-edge text-sm border px-3 py-2 hover:bg-accent hover:text-on-accent"
             >
                 {{ t('userProfile.addFriend') }}
             </Link>
@@ -115,7 +115,7 @@ function toggleFollow(): void {
                     method="delete"
                     as="button"
                     preserve-scroll
-                    class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
+                    class="border-edge text-sm border px-3 py-2 hover:bg-accent hover:text-on-accent"
                 >
                     {{ t('userProfile.cancel') }}
                 </Link>
@@ -130,7 +130,7 @@ function toggleFollow(): void {
                     :data="{ action: 'accept' }"
                     as="button"
                     preserve-scroll
-                    class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
+                    class="border-edge text-sm border px-3 py-2 hover:bg-accent hover:text-on-accent"
                 >
                     {{ t('userProfile.acceptFriendRequest') }}
                 </Link>
@@ -140,7 +140,7 @@ function toggleFollow(): void {
                     :data="{ action: 'decline' }"
                     as="button"
                     preserve-scroll
-                    class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
+                    class="border-edge text-sm border px-3 py-2 hover:bg-accent hover:text-on-accent"
                 >
                     {{ t('userProfile.decline') }}
                 </Link>
@@ -148,7 +148,7 @@ function toggleFollow(): void {
             <button
                 v-else
                 type="button"
-                class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
+                class="border-edge text-sm border px-3 py-2 hover:bg-accent hover:text-on-accent"
                 @click="unfriend"
             >
                 {{ t('userProfile.unfriend') }}
@@ -160,7 +160,7 @@ function toggleFollow(): void {
                     props.follow_status === 'following'
                 "
                 type="button"
-                class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
+                class="border-edge text-sm border px-3 py-2 hover:bg-accent hover:text-on-accent"
                 @click="toggleFollow"
             >
                 {{
@@ -178,7 +178,7 @@ function toggleFollow(): void {
                     method="delete"
                     as="button"
                     preserve-scroll
-                    class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
+                    class="border-edge text-sm border px-3 py-2 hover:bg-accent hover:text-on-accent"
                 >
                     {{ t('userProfile.cancel') }}
                 </Link>
@@ -190,7 +190,7 @@ function toggleFollow(): void {
                 method="post"
                 :data="{ user_ids: [props.profile.id] }"
                 as="button"
-                class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
+                class="border-edge text-sm border px-3 py-2 hover:bg-accent hover:text-on-accent"
             >
                 {{ t('userProfile.message') }}
             </Link>
@@ -199,7 +199,7 @@ function toggleFollow(): void {
         <button
             v-if="props.friends.length"
             type="button"
-            class="w-full border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
+            class="border-edge text-sm w-full border px-3 py-2 hover:bg-accent hover:text-on-accent"
             @click="friendsOpen = !friendsOpen"
         >
             {{
@@ -211,7 +211,7 @@ function toggleFollow(): void {
     </div>
 
     <div v-if="props.friends.length && friendsOpen" class="mt-3">
-        <h2 class="mb-2 text-sm font-bold uppercase">
+        <h2 class="text-sm mb-2 font-bold uppercase">
             {{ t('userProfile.friendsHeading') }}
         </h2>
         <ul class="flex flex-col gap-2">

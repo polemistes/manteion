@@ -64,7 +64,7 @@ async function remove(): Promise<void> {
 <template>
     <article class="border-frame border-edge p-4">
         <header
-            class="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm"
+            class="text-sm mb-2 flex flex-wrap items-center gap-x-3 gap-y-1"
         >
             <PersonSummary v-bind="props.leaflet.owner" />
             <span class="text-xs text-ink/70">
@@ -73,13 +73,13 @@ async function remove(): Promise<void> {
                     · {{ t('leaflets.card.edited') }}
                 </template>
             </span>
-            <span class="border border-edge px-2 py-0.5 text-xs">
+            <span class="border-edge text-xs border px-2 py-0.5">
                 {{ t(`leaflets.visibility.${props.leaflet.visibility}`) }}
             </span>
         </header>
 
         <p
-            class="rounded-card bg-surface-inset px-4 py-3 font-sans text-lg whitespace-pre-line"
+            class="rounded-card bg-surface-inset text-lg px-4 py-3 font-sans whitespace-pre-line"
         >
             {{ props.leaflet.body }}
         </p>
@@ -88,7 +88,7 @@ async function remove(): Promise<void> {
             v-if="props.leaflet.image_url"
             :src="props.leaflet.image_url"
             alt=""
-            class="mt-3 block max-h-96 max-w-full border border-edge"
+            class="border-edge mt-3 block max-h-96 max-w-full border"
         />
 
         <a
@@ -96,19 +96,19 @@ async function remove(): Promise<void> {
             :href="props.leaflet.link.url"
             target="_blank"
             rel="noopener noreferrer"
-            class="mt-3 block w-fit max-w-full border border-edge hover:bg-surface-inset sm:max-w-md"
+            class="border-edge hover:bg-surface-inset mt-3 block w-fit max-w-full border sm:max-w-md"
         >
             <!-- Shown at natural size, capped, so a small logo is not blown up. -->
             <img
                 v-if="props.leaflet.link.image_url"
                 :src="props.leaflet.link.image_url"
                 alt=""
-                class="block max-h-64 max-w-full border-b border-edge"
+                class="border-edge block max-h-64 max-w-full border-b"
             />
             <!-- No image from the site: a band with its name stands in. -->
             <span
                 v-else
-                class="flex h-24 items-center justify-center gap-2 border-b border-edge bg-surface px-3 text-lg font-bold"
+                class="border-edge text-lg flex h-24 items-center justify-center gap-2 border-b bg-surface px-3 font-bold"
             >
                 <span aria-hidden="true">🔗</span>
                 <span class="truncate">{{
@@ -116,15 +116,15 @@ async function remove(): Promise<void> {
                 }}</span>
             </span>
             <span class="block p-3">
-                <span class="block text-xs text-ink/70">{{
+                <span class="text-xs block text-ink/70">{{
                     props.leaflet.link.host ?? props.leaflet.link.url
                 }}</span>
-                <span class="block text-sm font-bold">{{
+                <span class="text-sm block font-bold">{{
                     props.leaflet.link.title ?? props.leaflet.link.url
                 }}</span>
                 <span
                     v-if="props.leaflet.link.description"
-                    class="mt-1 line-clamp-3 block font-sans text-xs text-ink/70"
+                    class="text-xs mt-1 line-clamp-3 block font-sans text-ink/70"
                 >
                     {{ props.leaflet.link.description }}
                 </span>
@@ -139,8 +139,8 @@ async function remove(): Promise<void> {
             />
         </div>
 
-        <section class="mt-4 border-t border-edge pt-3">
-            <h3 class="mb-2 text-xs font-bold uppercase">
+        <section class="border-edge mt-4 border-t pt-3">
+            <h3 class="text-xs mb-2 font-bold uppercase">
                 {{ t('leaflets.responses.heading') }}
             </h3>
 
@@ -148,10 +148,10 @@ async function remove(): Promise<void> {
                 <li
                     v-for="response in props.leaflet.responses"
                     :key="response.id"
-                    class="border-l-2 border-edge pl-3"
+                    class="border-edge border-l-2 pl-3"
                 >
                     <div
-                        class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm"
+                        class="text-sm flex flex-wrap items-center gap-x-3 gap-y-1"
                     >
                         <PersonSummary v-bind="response.user" />
                         <span class="text-xs text-ink/70">{{
@@ -171,7 +171,7 @@ async function remove(): Promise<void> {
                             :reportable-id="response.id"
                         />
                     </div>
-                    <p class="mt-1 font-sans text-sm whitespace-pre-line">
+                    <p class="text-sm mt-1 font-sans whitespace-pre-line">
                         {{ response.body }}
                     </p>
                     <div class="mt-1">
@@ -203,13 +203,13 @@ async function remove(): Promise<void> {
                     rows="2"
                     maxlength="2000"
                     :placeholder="t('leaflets.responses.placeholder')"
-                    class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+                    class="border-edge bg-surface-raised text-sm w-full border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
                 ></textarea>
                 <FieldError :message="errors.body" />
                 <button
                     type="submit"
                     :disabled="processing"
-                    class="w-fit border border-edge px-3 py-1 text-xs hover:bg-accent hover:text-on-accent disabled:opacity-50"
+                    class="border-edge text-xs w-fit border px-3 py-1 hover:bg-accent hover:text-on-accent disabled:opacity-50"
                 >
                     {{
                         processing

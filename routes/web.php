@@ -145,3 +145,9 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{user}', [AdminUserController::class, 'destroy'])->name('destroy');
     });
 });
+
+// A local-only page that renders every UI primitive, for checking the design
+// system in both modes and both languages.
+if (app()->isLocal()) {
+    Route::middleware('auth')->get('/dev/kit', fn () => Inertia::render('dev/Kit'))->name('dev.kit');
+}

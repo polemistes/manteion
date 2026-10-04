@@ -4,86 +4,349 @@
 @source '../../storage/framework/views/*.php';
 
 /*
- * Design tokens. Components never name a colour, radius or font directly;
- * they use these semantic utilities (bg-surface, text-ink, border-edge,
- * bg-accent, rounded-card, font-body, border-frame …) and the dark mode
- * below reassigns the variables. The values in @theme are the light mode;
- * `static` keeps every variable in the output so the dark block and
- * @utility rules can reference them.
+ * Manteion design tokens: "Terracotta", warm editorial.
+ *
+ * Light values live in @theme; html[data-mode='dark'] reassigns the same
+ * variables, so a utility like bg-surface or text-ink-muted works in both
+ * modes and components never need a dark: variant. The app stamps
+ * data-mode="light" or "dark" on <html> (it resolves "system" itself, see
+ * resources/js/theme.ts and app.blade.php).
+ *
+ * The default Tailwind palette, radii, shadows and text sizes are switched
+ * off, so only these tokens exist: a stray text-sm or bg-gray-100 compiles
+ * to nothing. `static` keeps every variable in the output, so component
+ * CSS and inline styles can always read them.
  */
 @theme static {
+    /* Lock the scales to these tokens: no stray Tailwind palette colours,
+       radii, shadows or text sizes. */
+    --color-*: initial;
+    --radius-*: initial;
+    --shadow-*: initial;
+    --text-*: initial;
+
+    /* ---------- Fonts (Bunny Fonts, loaded by laravel-vite-plugin/fonts) ---------- */
     --font-sans:
-        Instrument Sans, ui-sans-serif, system-ui, sans-serif,
-        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Schibsted Grotesk', 'Schibsted Grotesk fallback', ui-sans-serif,
+        system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Noto Color Emoji';
-    --font-body:
-        'Courier New', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --font-display:
+        'Newsreader', 'Newsreader fallback', 'Iowan Old Style', Georgia, serif;
 
-    /* Page background, the slightly lifted surface of cards and inputs,
-       and a tinted inset for text that should stand out inside a card. */
-    --color-surface: #ffffff;
-    --color-surface-raised: #ffffff;
-    --color-surface-inset: #e4e4e4;
-    /* Text, and lines/frames. */
-    --color-ink: #000000;
-    --color-edge: #000000;
-    /* Filled buttons, active navigation, focus rings — and the text on them. */
-    --color-accent: #000000;
-    --color-on-accent: #ffffff;
+    /* ---------- Type scale (13 steps, whole pixels, rem so user zoom works) ----------
+       Sans roles set no weight; pick font-normal/medium/semibold per component.
+       Serif roles (title-*, display, reading, numeral, leaf) are used with font-display. */
+    --text-kicker: 0.6875rem; /* 11: caps labels, date-tile weekday/month, badges */
+    --text-kicker--line-height: 0.875rem;
+    --text-kicker--letter-spacing: 0.08em;
+    --text-kicker--font-weight: 600;
+    --text-caption: 0.75rem; /* 12: tab labels, chat timestamps */
+    --text-caption--line-height: 1rem;
+    --text-meta: 0.8125rem; /* 13: secondary lines, counts, hints */
+    --text-meta--line-height: 1.125rem;
+    --text-label: 0.875rem; /* 14: chips, small buttons, RSVP pills, menu hints */
+    --text-label--line-height: 1.25rem;
+    --text-body: 0.9375rem; /* 15: UI text, list rows, md buttons */
+    --text-body--line-height: 1.375rem;
+    --text-input: 1rem; /* 16: every input, chat bubbles, lg buttons (no iOS zoom) */
+    --text-input--line-height: 1.5rem;
+    --text-chat: 1rem; /* 16: chat bubbles, tighter than inputs */
+    --text-chat--line-height: 1.375rem;
+    --text-reading: 1.125rem; /* 18 serif 400: event descriptions, measure <= 620px */
+    --text-reading--line-height: 1.75rem;
+    --text-title-4: 1.125rem; /* 18 serif 500: card headings, month name */
+    --text-title-4--line-height: 1.5rem;
+    --text-title-4--font-weight: 500;
+    --text-title-3: 1.25rem; /* 20 serif 500: event-card titles, feed sections, dialogs */
+    --text-title-3--line-height: 1.625rem;
+    --text-title-3--letter-spacing: -0.005em;
+    --text-title-3--font-weight: 500;
+    --text-title-2: 1.625rem; /* 26 serif 500: phone root title, settings panel */
+    --text-title-2--line-height: 1.875rem;
+    --text-title-2--letter-spacing: -0.01em;
+    --text-title-2--font-weight: 500;
+    --text-numeral: 1.75rem; /* 28 serif 500: date-tile day */
+    --text-numeral--line-height: 1.75rem;
+    --text-numeral--font-weight: 500;
+    --text-title-1: 1.875rem; /* 30 serif 500: phone event title, tablet H1, Messages */
+    --text-title-1--line-height: 2.125rem;
+    --text-title-1--letter-spacing: -0.012em;
+    --text-title-1--font-weight: 500;
+    --text-display: 2.5rem; /* 40 serif 500: desktop H1 and event title */
+    --text-display--line-height: 2.75rem;
+    --text-display--letter-spacing: -0.015em;
+    --text-display--font-weight: 500;
+    --text-leaf: 6rem; /* 96 serif 500: the "date leaf" numeral */
+    --text-leaf--line-height: 5.5rem;
+    --text-leaf--letter-spacing: -0.03em;
+    --text-leaf--font-weight: 500;
 
-    --radius-card: 0px;
-    --radius-control: 0px;
+    /* ---------- Radius (rounded-full stays Tailwind's built-in pill) ---------- */
+    --radius-xs: 0.375rem; /* 6: tags, host badge, checkbox */
+    --radius-sm: 0.625rem; /* 10: thumbnails, poster thumbs, icon tiles */
+    --radius-md: 0.875rem; /* 14: date tiles, fields, nav items, menus, toasts */
+    --radius-lg: 1.125rem; /* 18: cards, lists, media */
+    --radius-xl: 1.5rem; /* 24: sheets and dialogs */
+
+    /* ---------- Shadows: only for things that float ----------
+       Tailwind v4 inlines shadow values into the utilities, so a dark-mode
+       override of --shadow-* would be ignored. The colours are variables
+       instead (--shadow-tint*, below), and those do swap per mode. */
+    --shadow-xs: 0 1px 2px var(--shadow-tint-soft);
+    --shadow-sm:
+        0 1px 3px var(--shadow-tint), 0 1px 2px var(--shadow-tint-soft);
+    --shadow-lg:
+        0 14px 36px -10px var(--shadow-tint-strong),
+        0 2px 6px var(--shadow-tint-soft);
+
+    /* ---------- Layout sizes (w-rail, pl-sidebar, max-w-feed, ...) ---------- */
+    --spacing-topbar: 3.5rem; /* 56 + safe-area-inset-top */
+    --spacing-tabbar: 4rem; /* 64 + safe-area-inset-bottom */
+    --spacing-rail: 6.5rem; /* 104: tablet navigation rail */
+    --spacing-sidebar: 16rem; /* 256: desktop sidebar */
+    --spacing-aside: 20rem; /* 320: page asides from xl */
+    --spacing-media: 12.5rem; /* 200: media column of an event card from sm */
+    --container-reading: 38.75rem; /* 620: description and comments measure */
+    --container-panel: 40rem; /* 640: forms, settings panel, phone-width columns */
+    --container-feed: 45rem; /* 720: single-column feeds on tablet and lg */
+    --container-thread: 55rem; /* 880: chat messages on wide screens */
+    --container-page: 69rem; /* 1104: desktop content incl. aside */
+
+    /* ---------- Motion ---------- */
+    --ease-enter: cubic-bezier(0.2, 0.7, 0.2, 1);
+    --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+    --animate-typing: typing 1.2s ease-in-out infinite;
+    --animate-pulse-soft: pulse-soft 1.4s ease-in-out infinite;
+
+    /* ---------- Colour roles: light, "paper and ink" ---------- */
+    --color-canvas: #f7f3ec; /* app background */
+    --color-surface: #fffdf9; /* cards, sheets, bars, inputs */
+    --color-surface-2: #efe8de; /* tracks, date tiles, mats, hover, tag chips */
+    --color-surface-3: #e6ddd0; /* pressed, neutral counts, monogram avatars */
+    --color-line: #e6ddd1; /* hairlines and card borders */
+    --color-line-strong: #d5c9b9; /* outline buttons, chips, search ring */
+    --color-control: #8e8378; /* field border, switch-off, checkbox ring (>= 3:1) */
+    --color-ink: #1f1a17; /* text; selected chip, segment, switch-on */
+    --color-ink-muted: #5e554e; /* secondary text, icons */
+    --color-ink-subtle: #6f655c; /* timestamps, placeholders (>= 4.6:1) */
+    --color-accent: #c23132; /* the one primary action, badges, today, your Going */
+    --color-accent-hover: #a82a2b; /* hover and pressed on accent fills */
+    --color-on-accent: #ffffff; /* text on accent (5.6:1) */
+    --color-accent-ink: #b02b2c; /* accent text and icons on canvas or surface */
+    --color-accent-soft: #f6e3db; /* active tab pill, invitation strip, Going pill */
+    --color-accent-line: #ebcabd; /* border of an invitation card */
+    --color-success: #3d6b47;
+    --color-success-soft: #e2ecdf;
+    --color-warning: #8a5a0b;
+    --color-warning-soft: #f5ead3;
+    --color-danger: #b42318; /* destructive text, errors (never a solid fill) */
+    --color-danger-soft: #fbe4df; /* destructive button fill, error banners */
+    --color-bubble-mine: #f0d3c6;
+    --color-on-bubble-mine: #1f1a17;
+    --color-bubble-theirs: #fffdf9;
+    --color-inverse: #241e1a; /* toasts */
+    --color-on-inverse: #f7f3ec;
+    --color-inverse-accent: #f0846f; /* toast icon and action */
+    --color-mark: #c23132; /* the tripod mark */
+    --color-focus: #b02b2c; /* focus ring */
+    --color-scrim: rgb(31 22 16 / 0.42);
 }
 
+/* Shadow colours (see --shadow-* above). Plain variables, not theme keys. */
 :root {
-    --frame-width: 3px;
+    --shadow-tint: rgb(60 40 25 / 0.1);
+    --shadow-tint-soft: rgb(60 40 25 / 0.05);
+    --shadow-tint-strong: rgb(50 32 20 / 0.28);
     color-scheme: light;
 }
 
-/* Dark: the same brutalist frame, inverted. The root carries data-mode
-   (light or dark, "system" already resolved, see app.blade.php). */
+/* ---------- Dark: "black glaze, red figures" ---------- */
 html[data-mode='dark'] {
-    --color-surface: #0b0b0b;
-    --color-surface-raised: #0b0b0b;
-    --color-surface-inset: #262626;
-    --color-ink: #f2f2f2;
-    --color-edge: #f2f2f2;
-    --color-accent: #f2f2f2;
-    --color-on-accent: #0b0b0b;
+    --color-canvas: #14100d;
+    --color-surface: #1e1814;
+    --color-surface-2: #2a231e;
+    --color-surface-3: #342b25;
+    --color-line: #332a23;
+    --color-line-strong: #463b33;
+    --color-control: #7d7166;
+    --color-ink: #f2ebe1;
+    --color-ink-muted: #bcb0a3;
+    --color-ink-subtle: #9a8e82;
+    --color-accent: #c23132;
+    --color-accent-hover: #a82a2b;
+    --color-on-accent: #ffffff;
+    --color-accent-ink: #f0846f;
+    --color-accent-soft: #35201a;
+    --color-accent-line: #57302a;
+    --color-success: #8dbf94;
+    --color-success-soft: #1f2e22;
+    --color-warning: #e2b45c;
+    --color-warning-soft: #2e2414;
+    --color-danger: #f4877b;
+    --color-danger-soft: #3a1a16;
+    --color-bubble-mine: #56291f;
+    --color-on-bubble-mine: #f7ede6;
+    --color-bubble-theirs: #1e1814;
+    --color-inverse: #ede5da;
+    --color-on-inverse: #1f1a17;
+    --color-inverse-accent: #a82a2b;
+    --color-mark: #e0604b;
+    --color-focus: #f0846f;
+    --color-scrim: rgb(0 0 0 / 0.6);
+    --shadow-tint: rgb(0 0 0 / 0.4);
+    --shadow-tint-soft: rgb(0 0 0 / 0.3);
+    --shadow-tint-strong: rgb(0 0 0 / 0.7);
     color-scheme: dark;
 }
 
-/* The thick frame around panels; carries the card radius with it. */
-@utility border-frame {
-    border-width: var(--frame-width);
-    border-radius: var(--radius-card);
+@keyframes typing {
+    0%,
+    60%,
+    100% {
+        opacity: 0.35;
+        transform: translateY(0);
+    }
+    30% {
+        opacity: 1;
+        transform: translateY(-2px);
+    }
 }
 
-@utility border-x-frame {
-    border-inline-width: var(--frame-width);
+@keyframes pulse-soft {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.55;
+    }
 }
 
-@utility border-b-frame {
-    border-bottom-width: var(--frame-width);
+/* Entrances and exits (see the spec's motion table). Translate and scale are
+   set as their own properties, so they compose with positioning utilities. */
+@keyframes sheet-in {
+    from {
+        opacity: 0;
+        translate: 0 24px;
+    }
 }
 
-@utility border-r-frame {
-    border-right-width: var(--frame-width);
+@keyframes sheet-out {
+    to {
+        opacity: 0;
+        translate: 0 24px;
+    }
+}
+
+@keyframes dialog-in {
+    from {
+        opacity: 0;
+        scale: 0.98;
+    }
+}
+
+@keyframes dialog-out {
+    to {
+        opacity: 0;
+        scale: 0.98;
+    }
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+}
+
+@keyframes fade-out {
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes toast-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+}
+
+@keyframes banner-in {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+}
+
+@keyframes rise-in {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+}
+
+@keyframes pop-in {
+    from {
+        scale: 0.8;
+    }
+}
+
+/* Motion is a confirmation, never decoration: with reduced motion, keep
+   opacity fades and drop every transform and loop. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-property:
+            opacity, color, background-color, border-color, box-shadow !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* For the rare one-off that must differ in dark mode (the map tiles). */
+@custom-variant dark (&:where([data-mode='dark'], [data-mode='dark'] *));
+
+/* A chip row that scrolls sideways inside itself, without a scrollbar. */
+@utility scrollbar-none {
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/* Fades the end of a horizontally scrolling row into the background. */
+@utility fade-end {
+    mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
 }
 
 @layer base {
-    /*
-     * A word that cannot fit on a line (a long username, a pasted URL,
-     * an unbroken message) breaks rather than pushing its box wider.
-     */
+    html {
+        -webkit-text-size-adjust: 100%;
+        -webkit-tap-highlight-color: transparent;
+    }
+
     body {
+        background-color: var(--color-canvas);
+        color: var(--color-ink);
+        font-family: var(--font-sans);
+        font-size: var(--text-body);
+        line-height: var(--text-body--line-height);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+
+        /*
+         * A word that cannot fit on a line (a long username, a pasted URL,
+         * an unbroken message) breaks rather than pushing its box wider.
+         */
         overflow-wrap: anywhere;
     }
 
     /*
-     * Form controls shrink to the row they sit in rather than keeping
-     * their intrinsic width (a select is otherwise as wide as its longest
-     * option, an input about twenty characters) and pushing the row out.
+     * Form controls shrink to the row they sit in rather than keeping their
+     * intrinsic width and pushing the row out.
      */
     input,
     select,
@@ -92,33 +355,26 @@ html[data-mode='dark'] {
         min-width: 0;
     }
 
-    /*
-     * Actions and chips keep their shape in a tight row: buttons never
-     * break mid-word, and neither buttons nor button-like links and chips
-     * shrink. The text beside them (a name, a title) is what gives way,
-     * by truncating or wrapping.
-     */
+    /* Buttons never break mid-word or shrink; the text beside them gives way. */
     button {
         overflow-wrap: normal;
-    }
-
-    button,
-    a.border,
-    span.border {
         flex-shrink: 0;
     }
 
-    /*
-     * Controls take the control radius by element, so no component has to
-     * opt in. `a.border` and `span.border` are links and chips styled as
-     * buttons. A utility such as rounded-full still wins over this.
-     */
-    button,
-    input,
-    select,
-    textarea,
-    a.border,
-    span.border {
-        border-radius: var(--radius-control);
+    ::placeholder {
+        color: var(--color-ink-subtle);
+        opacity: 1;
+    }
+
+    /* One focus ring for everything interactive; text fields draw their own. */
+    :focus-visible {
+        outline: 2px solid var(--color-focus);
+        outline-offset: 2px;
+    }
+
+    [data-reka-collection-item]:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible {
+        outline: none;
     }
 }

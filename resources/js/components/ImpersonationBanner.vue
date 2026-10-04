@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
+import Button from '@/components/ui/Button.vue';
 import { exit as exitImpersonation } from '@/routes/admin/impersonate';
 
+/** Shown above everything while an administrator sees the app as someone else. */
 const { t } = useI18n();
 
 const page = usePage();
@@ -10,18 +12,18 @@ const page = usePage();
 
 <template>
     <div
-        class="flex items-center justify-between gap-4 border-b-frame border-edge bg-yellow-200 px-4 py-2 text-sm"
+        class="flex items-center justify-between gap-3 bg-warning-soft px-4 py-2 pt-[calc(8px+env(safe-area-inset-top))] text-label text-warning"
     >
-        <span>{{
+        <span class="min-w-0">{{
             t('moderation.viewingAs', { name: page.props.auth.user.name })
         }}</span>
-        <Link
+        <Button
+            :as="Link"
             :href="exitImpersonation().url"
             method="post"
-            as="button"
-            class="border border-edge bg-surface-raised px-3 py-1 text-xs font-bold hover:bg-accent hover:text-on-accent"
+            size="sm"
         >
             {{ t('moderation.returnToAdmin') }}
-        </Link>
+        </Button>
     </div>
 </template>

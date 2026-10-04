@@ -13,7 +13,7 @@
  * Bump OFFLINE_CACHE when public/offline.html changes.
  */
 
-const OFFLINE_CACHE = 'manteion-offline-v1';
+const OFFLINE_CACHE = 'manteion-offline-v2';
 const OFFLINE_URL = '/offline.html';
 const DEFAULT_ICON = '/icons/icon-192.png';
 const DEFAULT_BADGE = '/icons/badge-96.png';

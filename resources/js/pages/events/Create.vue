@@ -25,7 +25,7 @@ const props = defineProps<{
 <template>
     <Head :title="t('events.create.title')" />
 
-    <h1 class="mb-6 text-xl font-bold">{{ t('events.create.title') }}</h1>
+    <h1 class="text-xl mb-6 font-bold">{{ t('events.create.title') }}</h1>
 
     <Form
         v-bind="store.form()"
@@ -33,7 +33,7 @@ const props = defineProps<{
         class="flex max-w-xl flex-col gap-4"
     >
         <div>
-            <label for="name" class="mb-1 block text-sm font-bold">{{
+            <label for="name" class="text-sm mb-1 block font-bold">{{
                 t('events.create.name')
             }}</label>
             <input
@@ -41,20 +41,20 @@ const props = defineProps<{
                 type="text"
                 name="name"
                 required
-                class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+                class="border-edge bg-surface-raised text-sm w-full border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
             />
             <FieldError :message="errors.name" />
         </div>
 
         <div>
-            <label for="place" class="mb-1 block text-sm font-bold">{{
+            <label for="place" class="text-sm mb-1 block font-bold">{{
                 t('events.create.placeOptional')
             }}</label>
             <input
                 id="place"
                 type="text"
                 name="place"
-                class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+                class="border-edge bg-surface-raised text-sm w-full border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
             />
             <FieldError :message="errors.place" />
         </div>
@@ -65,7 +65,7 @@ const props = defineProps<{
         </div>
 
         <div>
-            <label for="description" class="mb-1 block text-sm font-bold">{{
+            <label for="description" class="text-sm mb-1 block font-bold">{{
                 t('events.create.description')
             }}</label>
             <textarea
@@ -73,13 +73,13 @@ const props = defineProps<{
                 name="description"
                 required
                 rows="4"
-                class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+                class="border-edge bg-surface-raised text-sm w-full border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
             ></textarea>
             <FieldError :message="errors.description" />
         </div>
 
         <div>
-            <p class="mb-1 text-sm font-bold">
+            <p class="text-sm mb-1 font-bold">
                 {{ t('events.create.starts') }}
             </p>
             <DateTimeField name="starts_at" required />
@@ -87,7 +87,7 @@ const props = defineProps<{
         </div>
 
         <div>
-            <p class="mb-1 text-sm font-bold">
+            <p class="text-sm mb-1 font-bold">
                 {{ t('events.create.endsOptional') }}
             </p>
             <DateTimeField name="ends_at" />
@@ -95,13 +95,13 @@ const props = defineProps<{
         </div>
 
         <div>
-            <p class="mb-1 text-sm font-bold">{{ t('events.create.tags') }}</p>
+            <p class="text-sm mb-1 font-bold">{{ t('events.create.tags') }}</p>
             <CategoryPicker :categories="props.categories" />
             <FieldError :message="errors.tag_ids" />
         </div>
 
         <div>
-            <p class="mb-1 text-sm font-bold">
+            <p class="text-sm mb-1 font-bold">
                 {{ t('events.create.imageOptional') }}
             </p>
             <ImageCropper
@@ -114,50 +114,50 @@ const props = defineProps<{
         </div>
 
         <fieldset class="border-frame border-edge p-3">
-            <legend class="px-1 text-xs font-bold uppercase">
+            <legend class="text-xs px-1 font-bold uppercase">
                 {{ t('events.create.visibility') }}
             </legend>
-            <label class="mb-1 flex items-center gap-2 text-sm">
+            <label class="text-sm mb-1 flex items-center gap-2">
                 <input
                     type="radio"
                     name="visibility"
                     value="private"
                     checked
-                    class="border border-edge"
+                    class="border-edge border"
                 />
                 {{ t('events.create.visibilityPrivate') }}
             </label>
-            <label class="flex items-center gap-2 text-sm">
+            <label class="text-sm flex items-center gap-2">
                 <input
                     type="radio"
                     name="visibility"
                     value="public"
-                    class="border border-edge"
+                    class="border-edge border"
                 />
                 {{ t('events.create.visibilityPublic') }}
             </label>
             <FieldError :message="errors.visibility" />
         </fieldset>
 
-        <label class="flex items-start gap-2 text-sm">
+        <label class="text-sm flex items-start gap-2">
             <input type="hidden" name="allow_invitee_invites" value="0" />
             <input
                 type="checkbox"
                 name="allow_invitee_invites"
                 value="1"
-                class="mt-0.5 border border-edge"
+                class="border-edge mt-0.5 border"
             />
             {{ t('events.create.allowInviteeInvites') }}
         </label>
 
-        <label class="flex items-start gap-2 text-sm">
+        <label class="text-sm flex items-start gap-2">
             <input type="hidden" name="allow_invitee_comments" value="0" />
             <input
                 type="checkbox"
                 name="allow_invitee_comments"
                 value="1"
                 checked
-                class="mt-0.5 border border-edge"
+                class="border-edge mt-0.5 border"
             />
             {{ t('events.create.allowInviteeComments') }}
         </label>
@@ -165,7 +165,7 @@ const props = defineProps<{
         <button
             type="submit"
             :disabled="processing"
-            class="w-fit border border-edge bg-accent px-4 py-2 text-sm font-bold text-on-accent hover:bg-surface-raised hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
+            class="border-edge text-sm hover:bg-surface-raised w-fit border bg-accent px-4 py-2 font-bold text-on-accent hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
         >
             {{
                 processing

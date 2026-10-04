@@ -54,7 +54,7 @@ function applyFilters(query: EventFilterQuery): void {
             <EventViewSwitch active="list" />
             <Link
                 :href="eventsCreate().url"
-                class="border border-edge bg-accent px-3 py-2 text-sm text-on-accent hover:bg-surface-raised hover:text-ink"
+                class="border-edge text-sm hover:bg-surface-raised border bg-accent px-3 py-2 text-on-accent hover:text-ink"
             >
                 {{ t('events.index.createEvent') }}
             </Link>
@@ -64,7 +64,7 @@ function applyFilters(query: EventFilterQuery): void {
     <Link
         v-if="unreadNotificationsCount"
         :href="notificationsIndex().url"
-        class="mb-6 flex items-center justify-between border-frame border-edge px-4 py-3 text-sm font-bold hover:bg-accent hover:text-on-accent"
+        class="border-frame border-edge text-sm mb-6 flex items-center justify-between px-4 py-3 font-bold hover:bg-accent hover:text-on-accent"
     >
         {{
             t(

@@ -1,0 +1,11 @@
+{
+    "unreadChats": "{n} ulest samtale | {n} uleste samtaler",
+    "pendingRequests": "{n} ventende forespørsel | {n} ventende forespørsler",
+    "unreadActivity": "{n} ulest varsel | {n} uleste varsler",
+    "openSettings": "Innstillinger",
+    "yourProfile": "Profilen og innstillingene dine",
+    "cancel": "Avbryt",
+    "viewingAs": "Du ser Manteion som {name}.",
+    "returnToAdmin": "Tilbake til admin",
+    "newMessage": "Ny melding"
+}

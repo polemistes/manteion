@@ -12,11 +12,18 @@ export default defineConfig({
             input: ['resources/css/app.css', 'resources/js/app.ts'],
             refresh: true,
             fonts: [
-                bunny('Instrument Sans', {
+                bunny('Schibsted Grotesk', {
                     weights: [400, 500, 600],
+                    fallbacks: ['ui-sans-serif', 'system-ui', 'sans-serif'],
+                    optimizedFallbacks: false,
+                    preload: [{ weight: 400 }, { weight: 600 }],
                 }),
-                bunny('Nunito', {
-                    weights: [400, 600, 700],
+                bunny('Newsreader', {
+                    weights: [400, 500],
+                    styles: ['normal', 'italic'],
+                    fallbacks: ['Iowan Old Style', 'Georgia', 'serif'],
+                    optimizedFallbacks: false,
+                    preload: [{ weight: 500 }],
                 }),
             ],
         }),

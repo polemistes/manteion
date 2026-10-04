@@ -162,7 +162,7 @@ async function deleteMessage(message: MessageItem): Promise<void> {
             :href="conversationParticipants.destroy(props.conversation.id).url"
             method="delete"
             as="button"
-            class="shrink-0 border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent"
+            class="border-edge text-sm shrink-0 border px-3 py-2 hover:bg-accent hover:text-on-accent"
         >
             {{ t('messages.show.leave') }}
         </Link>
@@ -170,16 +170,16 @@ async function deleteMessage(message: MessageItem): Promise<void> {
 
     <section
         v-if="props.conversation.type === 'group'"
-        class="mb-6 border-frame border-edge p-3"
+        class="border-frame border-edge mb-6 p-3"
     >
-        <h2 class="mb-2 text-xs font-bold uppercase">
+        <h2 class="text-xs mb-2 font-bold uppercase">
             {{ t('messages.show.inThisConversation') }}
         </h2>
         <ul class="mb-3 flex flex-wrap gap-3">
             <li
                 v-for="person in props.participants"
                 :key="person.id"
-                class="flex items-center gap-2 text-sm"
+                class="text-sm flex items-center gap-2"
             >
                 <Avatar :url="person.avatar_url" :name="person.name" />
                 {{ person.is_me ? t('messages.show.you') : person.name }}
@@ -195,7 +195,7 @@ async function deleteMessage(message: MessageItem): Promise<void> {
             <select
                 name="user_id"
                 required
-                class="flex-1 border border-edge bg-surface-raised px-2 py-1 font-sans text-sm"
+                class="border-edge bg-surface-raised text-sm flex-1 border px-2 py-1 font-sans"
             >
                 <option
                     v-for="candidate in props.addCandidates"
@@ -208,7 +208,7 @@ async function deleteMessage(message: MessageItem): Promise<void> {
             <button
                 type="submit"
                 :disabled="processing"
-                class="border border-edge px-2 py-1 text-xs hover:bg-accent hover:text-on-accent"
+                class="border-edge text-xs border px-2 py-1 hover:bg-accent hover:text-on-accent"
             >
                 {{ t('messages.show.add') }}
             </button>
@@ -220,7 +220,7 @@ async function deleteMessage(message: MessageItem): Promise<void> {
         <button
             type="button"
             :disabled="loadingOlder"
-            class="border border-edge px-3 py-2 text-sm hover:bg-accent hover:text-on-accent disabled:opacity-50"
+            class="border-edge text-sm border px-3 py-2 hover:bg-accent hover:text-on-accent disabled:opacity-50"
             @click="loadOlder"
         >
             {{
@@ -261,7 +261,7 @@ async function deleteMessage(message: MessageItem): Promise<void> {
                 </button>
             </div>
             <p
-                class="ml-10 font-sans text-sm whitespace-pre-line"
+                class="text-sm ml-10 font-sans whitespace-pre-line"
                 :class="{ 'text-ink/50 italic': message.is_deleted }"
             >
                 {{
@@ -294,13 +294,13 @@ async function deleteMessage(message: MessageItem): Promise<void> {
             required
             rows="3"
             :placeholder="t('messages.show.messagePlaceholder')"
-            class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+            class="border-edge bg-surface-raised text-sm w-full border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
         ></textarea>
         <FieldError :message="errors.body" />
         <button
             type="submit"
             :disabled="processing"
-            class="w-fit border border-edge bg-accent px-3 py-2 text-sm text-on-accent hover:bg-surface-raised hover:text-ink"
+            class="border-edge text-sm hover:bg-surface-raised w-fit border bg-accent px-3 py-2 text-on-accent hover:text-ink"
         >
             {{
                 processing

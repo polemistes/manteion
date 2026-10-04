@@ -228,7 +228,7 @@ function inMonth(date: Date): boolean {
             <EventViewSwitch active="calendar" />
             <Link
                 :href="eventsCreate().url"
-                class="border border-edge bg-accent px-3 py-2 text-sm text-on-accent hover:bg-surface-raised hover:text-ink"
+                class="border-edge text-sm hover:bg-surface-raised border bg-accent px-3 py-2 text-on-accent hover:text-ink"
             >
                 {{ t('events.index.createEvent') }}
             </Link>
@@ -250,20 +250,20 @@ function inMonth(date: Date): boolean {
         <div class="flex items-center gap-1">
             <Link
                 :href="urlFor(calendar.view, shifted(-1))"
-                class="border border-edge px-3 py-1 text-sm hover:bg-accent hover:text-on-accent"
+                class="border-edge text-sm border px-3 py-1 hover:bg-accent hover:text-on-accent"
                 :aria-label="t('events.calendar.previous')"
             >
                 ‹
             </Link>
             <Link
                 :href="urlFor(calendar.view, calendar.today)"
-                class="border border-edge px-3 py-1 text-xs hover:bg-accent hover:text-on-accent"
+                class="border-edge text-xs border px-3 py-1 hover:bg-accent hover:text-on-accent"
             >
                 {{ t('events.calendar.today') }}
             </Link>
             <Link
                 :href="urlFor(calendar.view, shifted(1))"
-                class="border border-edge px-3 py-1 text-sm hover:bg-accent hover:text-on-accent"
+                class="border-edge text-sm border px-3 py-1 hover:bg-accent hover:text-on-accent"
                 :aria-label="t('events.calendar.next')"
             >
                 ›
@@ -277,7 +277,7 @@ function inMonth(date: Date): boolean {
                 v-for="(view, index) in views"
                 :key="view"
                 :href="urlFor(view, calendar.date)"
-                class="border border-edge px-3 py-1 text-xs"
+                class="border-edge text-xs border px-3 py-1"
                 :class="[
                     index > 0 ? '-ml-px' : '',
                     calendar.view === view
@@ -295,7 +295,7 @@ function inMonth(date: Date): boolean {
         <!-- Month: a seven-column grid; on small screens each day shows a count and opens the day view. -->
         <div v-if="calendar.view === 'month'" class="border-frame border-edge">
             <div
-                class="grid grid-cols-7 border-b border-edge text-center text-xs font-bold uppercase"
+                class="border-edge text-xs grid grid-cols-7 border-b text-center font-bold uppercase"
             >
                 <div v-for="label in weekdayLabels" :key="label" class="py-1">
                     {{ label }}
@@ -305,12 +305,12 @@ function inMonth(date: Date): boolean {
                 <div
                     v-for="day in days"
                     :key="toDateKey(day)"
-                    class="min-h-16 min-w-0 border-b border-l border-edge/50 p-1 first:border-l-0 md:min-h-28 [&:nth-child(7n+1)]:border-l-0"
+                    class="border-edge/50 min-h-16 min-w-0 border-b border-l p-1 first:border-l-0 md:min-h-28 [&:nth-child(7n+1)]:border-l-0"
                     :class="inMonth(day) ? '' : 'text-ink/50'"
                 >
                     <Link
                         :href="urlFor('day', toDateKey(day))"
-                        class="mb-1 inline-block px-1 text-xs"
+                        class="text-xs mb-1 inline-block px-1"
                         :class="
                             toDateKey(day) === todayKey
                                 ? 'bg-accent font-bold text-on-accent'
@@ -328,7 +328,7 @@ function inMonth(date: Date): boolean {
                         >
                             <Link
                                 :href="`/events/${event.id}`"
-                                class="block truncate border px-1 text-xs"
+                                class="text-xs block truncate border px-1"
                                 :class="chipClass(event)"
                                 :title="event.name"
                             >
@@ -339,7 +339,7 @@ function inMonth(date: Date): boolean {
                         <li v-if="eventsOn(day).length > 3">
                             <Link
                                 :href="urlFor('day', toDateKey(day))"
-                                class="block px-1 text-xs text-ink/70 hover:underline"
+                                class="text-xs block px-1 text-ink/70 hover:underline"
                             >
                                 {{
                                     t('events.calendar.more', {
@@ -353,7 +353,7 @@ function inMonth(date: Date): boolean {
                     <Link
                         v-if="eventsOn(day).length"
                         :href="urlFor('day', toDateKey(day))"
-                        class="mx-auto block w-fit border border-edge px-1.5 text-xs md:hidden"
+                        class="border-edge text-xs mx-auto block w-fit border px-1.5 md:hidden"
                     >
                         {{ eventsOn(day).length }}
                     </Link>
@@ -369,11 +369,11 @@ function inMonth(date: Date): boolean {
             <section
                 v-for="day in days"
                 :key="toDateKey(day)"
-                class="min-w-0 border-frame border-edge p-2"
+                class="border-frame border-edge min-w-0 p-2"
             >
                 <Link
                     :href="urlFor('day', toDateKey(day))"
-                    class="mb-2 block text-xs font-bold uppercase hover:underline"
+                    class="text-xs mb-2 block font-bold uppercase hover:underline"
                     :class="{ 'text-accent': toDateKey(day) === todayKey }"
                 >
                     {{
@@ -391,7 +391,7 @@ function inMonth(date: Date): boolean {
                     >
                         <Link
                             :href="`/events/${event.id}`"
-                            class="block border px-2 py-1 text-xs"
+                            class="text-xs block border px-2 py-1"
                             :class="chipClass(event)"
                         >
                             <span class="font-bold">{{

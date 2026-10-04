@@ -21,7 +21,7 @@ function onLoad(event: Event): void {
 </script>
 
 <template>
-    <div class="aspect-[3/2] w-full overflow-hidden bg-gray-200">
+    <div class="bg-gray-200 aspect-[3/2] w-full overflow-hidden">
         <img
             v-if="url"
             :src="url"

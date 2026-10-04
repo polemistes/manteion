@@ -56,3 +56,17 @@ test('while impersonating, deleting the users content is still allowed', functio
 
     expect(EventComment::find($comment->id))->toBeNull();
 });
+
+test('while impersonating, subscribing to live updates is still allowed', function () {
+    $admin = User::factory()->create(['role' => UserRole::Administrator]);
+    $member = User::factory()->create(['role' => UserRole::Member]);
+
+    $this->actingAs($admin)->post("/admin/users/{$member->id}/impersonate");
+
+    $response = $this->post('/broadcasting/auth', [
+        'socket_id' => '1234.5678',
+        'channel_name' => "private-App.Models.User.{$member->id}",
+    ]);
+
+    expect($response->status())->not->toBe(403);
+});

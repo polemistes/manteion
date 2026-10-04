@@ -134,7 +134,7 @@ function onVisibilityChange(event: Event): void {
 
 <template>
     <div
-        class="event-card h-full min-w-0 border-frame border-edge p-3"
+        class="event-card border-frame border-edge h-full min-w-0 p-3"
         :class="{ 'event-card--no-image': !props.event.cover_image_url }"
     >
         <Link
@@ -157,14 +157,14 @@ function onVisibilityChange(event: Event): void {
             </div>
         </Link>
 
-        <p class="event-card__meta truncate text-xs text-ink/70">
+        <p class="event-card__meta text-xs truncate text-ink/70">
             {{ formatEventDateTime(props.event.starts_at) }}
             <template v-if="locationLabel">: {{ locationLabel }}</template>
         </p>
 
         <Link
             :href="`/events/${props.event.id}`"
-            class="event-card__title overflow-hidden text-base font-bold text-ellipsis whitespace-nowrap md:line-clamp-2 md:text-2xl md:text-clip md:whitespace-normal"
+            class="event-card__title text-base md:text-2xl overflow-hidden font-bold text-ellipsis whitespace-nowrap md:line-clamp-2 md:text-clip md:whitespace-normal"
         >
             {{ props.event.name }}
         </Link>
@@ -173,7 +173,7 @@ function onVisibilityChange(event: Event): void {
             <span
                 v-for="tag in props.event.tags"
                 :key="tag.id"
-                class="border border-edge px-2 py-0.5 text-xs"
+                class="border-edge text-xs border px-2 py-0.5"
             >
                 {{ categoryLabel(tag) }}
             </span>
@@ -181,7 +181,7 @@ function onVisibilityChange(event: Event): void {
 
         <div class="event-card__response flex flex-wrap items-center gap-2">
             <select
-                class="w-fit border border-edge bg-surface-raised px-2 py-1 text-xs"
+                class="border-edge bg-surface-raised text-xs w-fit border px-2 py-1"
                 :value="props.event.my_status ?? 'no_response'"
                 @change="onStatusChange"
             >
@@ -200,7 +200,7 @@ function onVisibilityChange(event: Event): void {
             </select>
 
             <select
-                class="w-fit border border-edge bg-surface-raised px-2 py-1 text-xs"
+                class="border-edge bg-surface-raised text-xs w-fit border px-2 py-1"
                 :value="props.event.my_attendance_visibility ?? 'everyone'"
                 @change="onVisibilityChange"
             >
@@ -217,7 +217,7 @@ function onVisibilityChange(event: Event): void {
         </div>
 
         <div
-            class="event-card__counts flex flex-wrap items-center gap-2 text-xs text-ink/70"
+            class="event-card__counts text-xs flex flex-wrap items-center gap-2 text-ink/70"
         >
             <span>
                 {{
@@ -246,7 +246,7 @@ function onVisibilityChange(event: Event): void {
             </span>
         </div>
 
-        <div class="event-card__organizer flex items-center text-xs">
+        <div class="event-card__organizer text-xs flex items-center">
             <PersonSummary v-bind="props.event.owner" />
         </div>
     </div>

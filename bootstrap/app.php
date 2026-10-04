@@ -24,6 +24,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // so trust all proxies for X-Forwarded-* headers (https detection, client IP).
         $middleware->trustProxies(at: '*');
 
+        // Set by the browser when the alpha notice is dismissed, and read on
+        // the server so the first paint already leaves it out.
+        $middleware->encryptCookies(except: ['alpha_notice_dismissed']);
+
         $middleware->web(append: [
             SetLocale::class,
             EnsureUserIsNotSuspended::class,

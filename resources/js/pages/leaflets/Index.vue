@@ -32,10 +32,10 @@ function scopeUrl(scope: LeafletVisibility | null): string {
 <template>
     <Head :title="t('leaflets.index.title')" />
 
-    <h1 class="mb-6 text-xl font-bold">{{ t('leaflets.index.title') }}</h1>
+    <h1 class="text-xl mb-6 font-bold">{{ t('leaflets.index.title') }}</h1>
 
-    <section class="mb-8 border-frame border-edge p-4">
-        <h2 class="mb-3 text-sm font-bold uppercase">
+    <section class="border-frame border-edge mb-8 p-4">
+        <h2 class="text-sm mb-3 font-bold uppercase">
             {{ t('leaflets.index.compose') }}
         </h2>
         <LeafletForm
@@ -56,7 +56,7 @@ function scopeUrl(scope: LeafletVisibility | null): string {
             :href="scopeUrl(scope)"
             :only="['leaflets', 'pagination', 'scope']"
             preserve-scroll
-            class="border border-edge px-2 py-1 text-xs"
+            class="border-edge text-xs border px-2 py-1"
             :class="
                 scope === props.scope
                     ? 'bg-accent text-on-accent'

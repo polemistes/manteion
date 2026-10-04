@@ -153,7 +153,7 @@ function clearNear(): void {
     <section class="border-frame border-edge p-4">
         <button
             type="button"
-            class="flex w-full items-center justify-between text-sm font-bold uppercase"
+            class="text-sm flex w-full items-center justify-between font-bold uppercase"
             :class="{ 'mb-3': open }"
             @click="open = !open"
         >
@@ -191,12 +191,12 @@ function clearNear(): void {
             </template>
 
             <div class="max-w-full min-w-0">
-                <p class="mb-1 text-xs font-bold">
+                <p class="text-xs mb-1 font-bold">
                     {{ t('events.index.specificGroup') }}
                 </p>
                 <select
                     v-model="groupId"
-                    class="max-w-full border border-edge bg-surface-raised px-2 py-1 text-sm"
+                    class="border-edge bg-surface-raised text-sm max-w-full border px-2 py-1"
                     @change="apply"
                 >
                     <option value="">{{ t('events.index.anyGroup') }}</option>
@@ -222,10 +222,10 @@ function clearNear(): void {
             </div>
 
             <div v-if="props.showNear">
-                <p class="mb-1 text-xs font-bold">{{ t('location.near') }}</p>
+                <p class="text-xs mb-1 font-bold">{{ t('location.near') }}</p>
                 <div
                     v-if="nearLat !== null && nearLng !== null"
-                    class="flex items-center gap-2 text-sm"
+                    class="text-sm flex items-center gap-2"
                 >
                     <span>{{ t('location.sortingByDistance') }}</span>
                     <button type="button" class="underline" @click="clearNear">
@@ -238,12 +238,12 @@ function clearNear(): void {
                             type="text"
                             :value="nearQuery"
                             :placeholder="t('location.searchPlaceholder')"
-                            class="border border-edge bg-surface-raised px-2 py-1 text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+                            class="border-edge bg-surface-raised text-sm border px-2 py-1 focus:ring-1 focus:ring-accent focus:outline-none"
                             @input="onNearSearchInput"
                         />
                         <button
                             type="button"
-                            class="border border-edge px-2 py-1 text-xs hover:bg-accent hover:text-on-accent"
+                            class="border-edge text-xs border px-2 py-1 hover:bg-accent hover:text-on-accent"
                             @click="useCurrentLocation"
                         >
                             {{ t('location.useCurrentLocation') }}
@@ -251,7 +251,7 @@ function clearNear(): void {
                     </div>
                     <ul
                         v-if="nearResults.length"
-                        class="absolute z-10 mt-1 w-full border border-edge bg-surface-raised"
+                        class="border-edge bg-surface-raised absolute z-10 mt-1 w-full border"
                     >
                         <li
                             v-for="result in nearResults"
@@ -259,7 +259,7 @@ function clearNear(): void {
                         >
                             <button
                                 type="button"
-                                class="block w-full px-3 py-2 text-left text-xs hover:bg-accent hover:text-on-accent"
+                                class="text-xs block w-full px-3 py-2 text-left hover:bg-accent hover:text-on-accent"
                                 @click="selectNearResult(result)"
                             >
                                 {{ result.display_name }}
@@ -268,14 +268,14 @@ function clearNear(): void {
                     </ul>
                     <p
                         v-else-if="nearSearchError"
-                        class="mt-1 text-xs text-ink/70"
+                        class="text-xs mt-1 text-ink/70"
                     >
                         {{ t('location.searchError') }}
                     </p>
                 </div>
                 <p
                     v-if="geolocationErrorMessage"
-                    class="mt-1 text-xs text-ink/70"
+                    class="text-xs mt-1 text-ink/70"
                 >
                     {{ geolocationErrorMessage }}
                 </p>

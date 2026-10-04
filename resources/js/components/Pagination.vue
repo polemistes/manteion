@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
+import { ChevronLeft, ChevronRight } from '@lucide/vue';
 import { useI18n } from 'vue-i18n';
+import Button from '@/components/ui/Button.vue';
 
 export interface PaginationSummary {
     current_page: number;
@@ -21,21 +23,23 @@ const { t } = useI18n();
 <template>
     <nav
         v-if="props.pagination.last_page > 1"
-        class="mt-6 flex items-center justify-between text-sm"
+        class="mt-8 flex items-center justify-between gap-3"
         :aria-label="t('pagination.label')"
     >
-        <Link
+        <Button
             v-if="props.pagination.previous_url"
+            :as="Link"
             :href="props.pagination.previous_url"
             :only="props.only"
             preserve-scroll
-            class="border border-edge px-3 py-2 hover:bg-accent hover:text-on-accent"
+            :icon="ChevronLeft"
+            size="sm"
         >
             {{ t('pagination.previous') }}
-        </Link>
+        </Button>
         <span v-else />
 
-        <span class="text-xs text-ink/70">
+        <span class="text-meta text-ink-muted tabular-nums">
             {{
                 t('pagination.pageOf', {
                     page: props.pagination.current_page,
@@ -44,15 +48,17 @@ const { t } = useI18n();
             }}
         </span>
 
-        <Link
+        <Button
             v-if="props.pagination.next_url"
+            :as="Link"
             :href="props.pagination.next_url"
             :only="props.only"
             preserve-scroll
-            class="border border-edge px-3 py-2 hover:bg-accent hover:text-on-accent"
+            :icon-end="ChevronRight"
+            size="sm"
         >
             {{ t('pagination.next') }}
-        </Link>
+        </Button>
         <span v-else />
     </nav>
 </template>

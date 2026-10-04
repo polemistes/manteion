@@ -133,9 +133,9 @@ function select(date: Date): void {
 </script>
 
 <template>
-    <div class="w-fit border border-edge">
+    <div class="border-edge w-fit border">
         <div
-            class="flex items-center justify-between border-b border-edge px-2 py-1"
+            class="border-edge flex items-center justify-between border-b px-2 py-1"
         >
             <button
                 type="button"
@@ -153,18 +153,18 @@ function select(date: Date): void {
                 ›
             </button>
         </div>
-        <table class="border-collapse text-center text-xs">
+        <table class="text-xs border-collapse text-center">
             <thead>
                 <tr>
                     <th
-                        class="w-8 border-r border-b border-edge px-1 py-1 font-normal text-ink/50"
+                        class="border-edge w-8 border-r border-b px-1 py-1 font-normal text-ink/50"
                     >
                         {{ t('calendar.weekAbbreviation') }}
                     </th>
                     <th
                         v-for="label in weekdayLabels"
                         :key="label"
-                        class="w-8 border-b border-edge px-1 py-1 font-normal"
+                        class="border-edge w-8 border-b px-1 py-1 font-normal"
                     >
                         {{ label }}
                     </th>
@@ -172,7 +172,7 @@ function select(date: Date): void {
             </thead>
             <tbody>
                 <tr v-for="row in weeks" :key="row.week">
-                    <td class="border-r border-edge px-1 py-1 text-ink/50">
+                    <td class="border-edge border-r px-1 py-1 text-ink/50">
                         {{ row.week }}
                     </td>
                     <td

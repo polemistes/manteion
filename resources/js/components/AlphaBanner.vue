@@ -6,7 +6,7 @@ const { t } = useI18n();
 
 <template>
     <div
-        class="w-full bg-accent px-4 py-2 text-center text-xs font-bold text-on-accent"
+        class="text-xs w-full bg-accent px-4 py-2 text-center font-bold text-on-accent"
     >
         {{ t('common.alphaNotice') }}
     </div>

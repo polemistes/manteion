@@ -1,0 +1,11 @@
+{
+    "unreadChats": "{n} unread chat | {n} unread chats",
+    "pendingRequests": "{n} pending request | {n} pending requests",
+    "unreadActivity": "{n} unread notification | {n} unread notifications",
+    "openSettings": "Settings",
+    "yourProfile": "Your profile and settings",
+    "cancel": "Cancel",
+    "viewingAs": "You're viewing Manteion as {name}.",
+    "returnToAdmin": "Back to admin",
+    "newMessage": "New message"
+}

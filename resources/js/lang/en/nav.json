@@ -2,6 +2,14 @@
     "events": "Events",
     "leaflets": "Leaflets",
     "messages": "Messages",
-    "contacts": "Contacts",
-    "logOut": "Log out"
+    "contacts": "People",
+    "activity": "Activity",
+    "me": "Me",
+    "settings": "Settings",
+    "home": "Manteion, home",
+    "logOut": "Log out",
+    "createEvent": "Create event",
+    "newLeaflet": "New leaflet",
+    "newMessage": "New message",
+    "findPeople": "Find people"
 }

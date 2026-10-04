@@ -8,8 +8,8 @@
     "start_url": "/events",
     "scope": "/",
     "display": "standalone",
-    "background_color": "#FFFFFF",
-    "theme_color": "#FFFFFF",
+    "background_color": "#F7F3EC",
+    "theme_color": "#F7F3EC",
     "categories": ["social", "lifestyle"],
     "icons": [
         {

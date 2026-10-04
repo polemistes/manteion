@@ -15,7 +15,7 @@ const { t } = useI18n();
     <nav class="flex" :aria-label="t('events.calendar.viewSwitch')">
         <Link
             :href="eventsIndex().url"
-            class="border border-edge px-3 py-1 text-xs"
+            class="border-edge text-xs border px-3 py-1"
             :class="
                 props.active === 'list'
                     ? 'bg-accent text-on-accent'
@@ -27,7 +27,7 @@ const { t } = useI18n();
         </Link>
         <Link
             :href="eventsCalendar().url"
-            class="-ml-px border border-edge px-3 py-1 text-xs"
+            class="border-edge text-xs -ml-px border px-3 py-1"
             :class="
                 props.active === 'calendar'
                     ? 'bg-accent text-on-accent'

@@ -19,9 +19,9 @@ const { t } = useI18n();
 <template>
     <Head :title="t('auth.resetPassword.title')" />
 
-    <h1 class="mb-6 text-lg font-bold">{{ t('auth.resetPassword.title') }}</h1>
+    <h1 class="text-lg mb-6 font-bold">{{ t('auth.resetPassword.title') }}</h1>
 
-    <p class="mb-6 text-sm">
+    <p class="text-sm mb-6">
         {{
             props.username
                 ? t('auth.resetPassword.forAccount', {
@@ -40,7 +40,7 @@ const { t } = useI18n();
         <FieldError :message="errors.token" />
 
         <div>
-            <label for="password" class="mb-1 block text-sm font-bold">{{
+            <label for="password" class="text-sm mb-1 block font-bold">{{
                 t('auth.resetPassword.newPassword')
             }}</label>
             <PasswordField
@@ -50,7 +50,7 @@ const { t } = useI18n();
                 autofocus
                 autocomplete="new-password"
             />
-            <p class="mt-1 text-xs text-ink/70">
+            <p class="text-xs mt-1 text-ink/70">
                 {{ t('common.passphraseHint') }}
             </p>
             <FieldError :message="errors.password" />
@@ -59,7 +59,7 @@ const { t } = useI18n();
         <div>
             <label
                 for="password_confirmation"
-                class="mb-1 block text-sm font-bold"
+                class="text-sm mb-1 block font-bold"
                 >{{ t('auth.resetPassword.confirmNewPassword') }}</label
             >
             <PasswordField
@@ -74,7 +74,7 @@ const { t } = useI18n();
         <button
             type="submit"
             :disabled="processing"
-            class="w-full border border-edge bg-accent px-3 py-2 text-sm font-bold text-on-accent hover:bg-surface-raised hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
+            class="border-edge text-sm hover:bg-surface-raised w-full border bg-accent px-3 py-2 font-bold text-on-accent hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
         >
             {{
                 processing

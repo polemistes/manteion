@@ -20,11 +20,15 @@
     "suspendUser": "Suspender bruker",
     "report": "Rapporter",
     "reportTitle": "Rapporter dette innholdet",
-    "reportReasonPlaceholder": "Hvorfor rapporterer du dette? (valgfritt)",
+    "reportReasonPlaceholder": "For eksempel: det er spam, eller det er sårende.",
     "reported": "Rapportert",
     "deleteWithPlaceholder": "Slett og la stå «Slettet av en moderator»",
     "deleteWithoutPlaceholder": "Slett helt",
     "confirmDeleteContent": "Slett dette innholdet, eller slett det og la stå en plassholdertekst i stedet?",
     "viewingAs": "Viser som {name} — du kan bla gjennom og slette innhold, men ikke poste eller endre noe.",
-    "returnToAdmin": "Tilbake til admin"
+    "returnToAdmin": "Tilbake til admin",
+    "reportThanks": "Takk. En moderator ser på det.",
+    "reportDescription": "Moderatorene ser hva du rapporterer og hvem som rapporterte. Personen du rapporterer, ser det ikke.",
+    "reportReason": "Hva er galt?",
+    "reporting": "Rapporterer …"
 }

@@ -75,20 +75,20 @@ function onSuccess(): void {
                 maxlength="2000"
                 v-model="body"
                 :placeholder="t('leaflets.form.bodyPlaceholder')"
-                class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+                class="border-edge bg-surface-raised text-sm w-full border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
             ></textarea>
             <FieldError :message="errors.body" />
         </div>
 
         <div class="flex flex-wrap items-end gap-3">
-            <label class="flex flex-col gap-1 text-sm">
+            <label class="text-sm flex flex-col gap-1">
                 <span class="text-xs font-bold">{{
                     t('leaflets.form.visibility')
                 }}</span>
                 <select
                     v-model="visibility"
                     name="visibility"
-                    class="border border-edge bg-surface-raised px-2 py-1 font-sans text-sm"
+                    class="border-edge bg-surface-raised text-sm border px-2 py-1 font-sans"
                 >
                     <option
                         v-for="option in leafletVisibilities"
@@ -100,13 +100,13 @@ function onSuccess(): void {
                 </select>
             </label>
 
-            <label class="flex flex-col gap-1 text-sm">
+            <label class="text-sm flex flex-col gap-1">
                 <span class="text-xs font-bold">{{
                     t('leaflets.form.attachment')
                 }}</span>
                 <select
                     v-model="attachment"
-                    class="border border-edge bg-surface-raised px-2 py-1 font-sans text-sm"
+                    class="border-edge bg-surface-raised text-sm border px-2 py-1 font-sans"
                 >
                     <option value="none">
                         {{ t('leaflets.form.attachmentNone') }}
@@ -142,7 +142,7 @@ function onSuccess(): void {
         />
 
         <div v-if="attachment === 'link'">
-            <label for="leaflet-link" class="mb-1 block text-xs font-bold">{{
+            <label for="leaflet-link" class="text-xs mb-1 block font-bold">{{
                 t('leaflets.form.link')
             }}</label>
             <input
@@ -151,7 +151,7 @@ function onSuccess(): void {
                 type="url"
                 name="link_url"
                 placeholder="https://"
-                class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+                class="border-edge bg-surface-raised text-sm w-full border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
             />
             <FieldError :message="errors.link_url" />
         </div>
@@ -159,7 +159,7 @@ function onSuccess(): void {
         <button
             type="submit"
             :disabled="processing"
-            class="w-fit border border-edge bg-accent px-4 py-2 text-sm font-bold text-on-accent hover:bg-surface-raised hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
+            class="border-edge text-sm hover:bg-surface-raised w-fit border bg-accent px-4 py-2 font-bold text-on-accent hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
         >
             {{ processing ? props.submittingLabel : props.submitLabel }}
         </button>

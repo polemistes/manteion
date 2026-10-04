@@ -6,12 +6,13 @@ export interface Theme {
 
 /**
  * The browser UI colour (address bar, an installed app's title bar, the
- * Android task switcher) for each resolved mode. Provisional brand values;
- * the `theme-color` metas in resources/views/app.blade.php use the same.
+ * Android task switcher) for each resolved mode: the canvas token, paper in
+ * light mode and black glaze in dark. The `theme-color` metas in
+ * resources/views/app.blade.php use the same pair.
  */
 export const themeColors = {
-    light: '#FFFFFF',
-    dark: '#131211',
+    light: '#F7F3EC',
+    dark: '#14100D',
 } as const;
 
 const darkQuery = (): MediaQueryList | null =>

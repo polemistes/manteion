@@ -245,7 +245,7 @@ async function confirmCrop(): Promise<void> {
         >
             <div
                 ref="viewport"
-                class="relative touch-none overflow-hidden border border-edge bg-gray-200"
+                class="border-edge bg-gray-200 relative touch-none overflow-hidden border"
                 :style="{
                     width: VIEWPORT_WIDTH + 'px',
                     height: viewportHeight + 'px',
@@ -280,14 +280,14 @@ async function confirmCrop(): Promise<void> {
             <div class="flex gap-2">
                 <button
                     type="button"
-                    class="border border-edge bg-accent px-3 py-1.5 text-xs font-bold text-on-accent hover:bg-surface-raised hover:text-ink"
+                    class="border-edge text-xs hover:bg-surface-raised border bg-accent px-3 py-1.5 font-bold text-on-accent hover:text-ink"
                     @click="confirmCrop"
                 >
                     {{ t('imageCropper.usePhoto') }}
                 </button>
                 <button
                     type="button"
-                    class="border border-edge px-3 py-1.5 text-xs hover:bg-accent hover:text-on-accent"
+                    class="border-edge text-xs border px-3 py-1.5 hover:bg-accent hover:text-on-accent"
                     @click="cancelCropping"
                 >
                     {{ t('common.cancel') }}
@@ -300,12 +300,12 @@ async function confirmCrop(): Promise<void> {
                 v-if="previewUrl"
                 :src="previewUrl"
                 alt=""
-                class="h-24 border border-edge object-cover"
+                class="border-edge h-24 border object-cover"
                 :style="{ aspectRatio: String(props.aspectRatio) }"
             />
             <div
                 v-else
-                class="h-24 border border-edge bg-gray-200"
+                class="border-edge bg-gray-200 h-24 border"
                 :style="{ aspectRatio: String(props.aspectRatio) }"
             ></div>
 

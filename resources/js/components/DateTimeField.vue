@@ -77,19 +77,19 @@ function clear(): void {
             <div class="flex flex-col gap-2">
                 <p class="text-sm">{{ displayDate }}</p>
                 <div>
-                    <label class="mb-1 block text-xs font-bold">{{
+                    <label class="text-xs mb-1 block font-bold">{{
                         t('calendar.time')
                     }}</label>
                     <input
                         v-model="timeValue"
                         type="time"
-                        class="border border-edge bg-surface-raised px-2 py-1 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+                        class="border-edge bg-surface-raised text-sm border px-2 py-1 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
                     />
                 </div>
                 <button
                     v-if="!props.required && selectedDate"
                     type="button"
-                    class="w-fit text-xs underline"
+                    class="text-xs w-fit underline"
                     @click="clear"
                 >
                     {{ t('calendar.clearDate') }}

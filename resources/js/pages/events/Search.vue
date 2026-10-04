@@ -161,7 +161,7 @@ function formatDate(value: string): string {
 <template>
     <Head :title="t('events.search.title')" />
 
-    <h1 class="mb-6 text-xl font-bold">{{ t('events.search.title') }}</h1>
+    <h1 class="text-xl mb-6 font-bold">{{ t('events.search.title') }}</h1>
 
     <form class="mb-4 flex gap-2" @submit.prevent="submit">
         <input
@@ -169,11 +169,11 @@ function formatDate(value: string): string {
             type="text"
             :placeholder="t('events.search.placeholder')"
             autofocus
-            class="flex-1 border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+            class="border-edge bg-surface-raised text-sm flex-1 border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
         />
         <button
             type="submit"
-            class="border border-edge px-4 py-2 text-sm hover:bg-accent hover:text-on-accent"
+            class="border-edge text-sm border px-4 py-2 hover:bg-accent hover:text-on-accent"
         >
             {{ t('events.search.search') }}
         </button>
@@ -188,10 +188,10 @@ function formatDate(value: string): string {
     </div>
 
     <div class="mb-6">
-        <p class="mb-1 text-xs font-bold">{{ t('location.near') }}</p>
+        <p class="text-xs mb-1 font-bold">{{ t('location.near') }}</p>
         <div
             v-if="nearLat !== null && nearLng !== null"
-            class="flex items-center gap-2 text-sm"
+            class="text-sm flex items-center gap-2"
         >
             <span>{{ t('location.sortingByDistance') }}</span>
             <button type="button" class="underline" @click="clearNear">
@@ -204,12 +204,12 @@ function formatDate(value: string): string {
                     type="text"
                     :value="nearQuery"
                     :placeholder="t('location.searchPlaceholder')"
-                    class="border border-edge bg-surface-raised px-2 py-1 text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+                    class="border-edge bg-surface-raised text-sm border px-2 py-1 focus:ring-1 focus:ring-accent focus:outline-none"
                     @input="onNearSearchInput"
                 />
                 <button
                     type="button"
-                    class="border border-edge px-2 py-1 text-xs hover:bg-accent hover:text-on-accent"
+                    class="border-edge text-xs border px-2 py-1 hover:bg-accent hover:text-on-accent"
                     @click="useCurrentLocation"
                 >
                     {{ t('location.useCurrentLocation') }}
@@ -217,23 +217,23 @@ function formatDate(value: string): string {
             </div>
             <ul
                 v-if="nearResults.length"
-                class="absolute z-10 mt-1 w-full border border-edge bg-surface-raised"
+                class="border-edge bg-surface-raised absolute z-10 mt-1 w-full border"
             >
                 <li v-for="result in nearResults" :key="result.display_name">
                     <button
                         type="button"
-                        class="block w-full px-3 py-2 text-left text-xs hover:bg-accent hover:text-on-accent"
+                        class="text-xs block w-full px-3 py-2 text-left hover:bg-accent hover:text-on-accent"
                         @click="selectNearResult(result)"
                     >
                         {{ result.display_name }}
                     </button>
                 </li>
             </ul>
-            <p v-else-if="nearSearchError" class="mt-1 text-xs text-ink/70">
+            <p v-else-if="nearSearchError" class="text-xs mt-1 text-ink/70">
                 {{ t('location.searchError') }}
             </p>
         </div>
-        <p v-if="geolocationErrorMessage" class="mt-1 text-xs text-ink/70">
+        <p v-if="geolocationErrorMessage" class="text-xs mt-1 text-ink/70">
             {{ geolocationErrorMessage }}
         </p>
     </div>
@@ -268,7 +268,7 @@ function formatDate(value: string): string {
                     }}
                 </template>
             </p>
-            <p class="mt-1 text-sm">
+            <p class="text-sm mt-1">
                 {{ t('events.search.by') }}
                 <PersonSummary v-bind="event.owner" />
             </p>
@@ -276,7 +276,7 @@ function formatDate(value: string): string {
                 <span
                     v-for="tag in event.tags"
                     :key="tag.id"
-                    class="border border-edge px-2 py-0.5 text-xs"
+                    class="border-edge text-xs border px-2 py-0.5"
                 >
                     {{ categoryLabel(tag) }}
                 </span>

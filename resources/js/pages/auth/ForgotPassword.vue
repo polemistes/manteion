@@ -13,8 +13,8 @@ const { t } = useI18n();
 <template>
     <Head :title="t('auth.forgotPassword.title')" />
 
-    <h1 class="mb-2 text-lg font-bold">{{ t('auth.forgotPassword.title') }}</h1>
-    <p class="mb-6 text-sm text-ink/70">
+    <h1 class="text-lg mb-2 font-bold">{{ t('auth.forgotPassword.title') }}</h1>
+    <p class="text-sm mb-6 text-ink/70">
         {{ t('auth.forgotPassword.description') }}
     </p>
 
@@ -24,7 +24,7 @@ const { t } = useI18n();
         class="flex flex-col gap-4"
     >
         <div>
-            <label for="email" class="mb-1 block text-sm font-bold">{{
+            <label for="email" class="text-sm mb-1 block font-bold">{{
                 t('auth.forgotPassword.email')
             }}</label>
             <input
@@ -34,7 +34,7 @@ const { t } = useI18n();
                 required
                 autofocus
                 autocomplete="username"
-                class="w-full border border-edge bg-surface-raised px-3 py-2 font-sans text-sm focus:ring-1 focus:ring-accent focus:outline-none"
+                class="border-edge bg-surface-raised text-sm w-full border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
             />
             <FieldError :message="errors.email" />
         </div>
@@ -42,7 +42,7 @@ const { t } = useI18n();
         <button
             type="submit"
             :disabled="processing"
-            class="w-full border border-edge bg-accent px-3 py-2 text-sm font-bold text-on-accent hover:bg-surface-raised hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
+            class="border-edge text-sm hover:bg-surface-raised w-full border bg-accent px-3 py-2 font-bold text-on-accent hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
         >
             {{
                 processing
@@ -56,7 +56,7 @@ const { t } = useI18n();
         </p>
     </Form>
 
-    <div class="mt-6 text-sm">
+    <div class="text-sm mt-6">
         <Link href="/login" class="underline">{{
             t('auth.forgotPassword.backToLogin')
         }}</Link>

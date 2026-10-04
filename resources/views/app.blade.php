@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 @php($theme = \App\Http\Middleware\HandleInertiaRequests::themeFor(auth()->user()))
 {{-- The browser UI colour (address bar, installed app's title bar) per mode:
-     provisional brand values, the same as themeColors in resources/js/theme.ts.
+     the canvas token, the same pair as themeColors in resources/js/theme.ts.
      "system" leaves each meta to its media query; a forced mode paints both. --}}
-@php($themeColors = ['light' => '#FFFFFF', 'dark' => '#131211'])
+@php($themeColors = ['light' => '#F7F3EC', 'dark' => '#14100D'])
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-mode="{{ $theme['mode'] }}">
     <head>
         <meta charset="utf-8">

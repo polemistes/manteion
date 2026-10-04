@@ -10,8 +10,9 @@ class RestrictImpersonatedRequests
 {
     /**
      * While an administrator is impersonating another user, they may browse
-     * freely (GET/HEAD) and delete that user's content, but nothing else —
-     * they cannot post, change settings, or otherwise act as the user.
+     * freely (GET/HEAD), follow live updates and delete that user's content,
+     * but nothing else — they cannot post, change settings, or otherwise act
+     * as the user.
      *
      * @var list<string>
      */
@@ -39,6 +40,11 @@ class RestrictImpersonatedRequests
         }
 
         if (in_array($request->route()?->getName(), self::ALLOWED_ROUTES, true)) {
+            return $next($request);
+        }
+
+        // Subscribing to the user's private channels only reads, like a GET.
+        if ($request->is('broadcasting/auth')) {
             return $next($request);
         }
 
