@@ -43,6 +43,10 @@ return [
             ],
             'client_options' => [
                 // Guzzle client options: https://docs.guzzlephp.org/en/stable/request-options.html
+                // Broadcasts go out while the request waits (a message sent,
+                // a badge changed), so a stuck Reverb must not hold it long.
+                'connect_timeout' => 2,
+                'timeout' => 5,
             ],
         ],
 
