@@ -5,7 +5,11 @@ import type { Component } from 'vue';
 export interface Segment {
     value: string;
     label: string;
-    /** Shown instead of the label on a phone, where the full one won't fit. */
+    /**
+     * Shown instead of the label on a phone, where the full one won't fit.
+     * The accessible name carries both ("NB, Norsk bokmål"), so it always
+     * holds the words on screen (voice control: "click NB").
+     */
     shortLabel?: string;
     count?: number;
     icon?: Component;
@@ -44,9 +48,11 @@ function select(value: unknown): void {
             :key="segment.value"
             :value="segment.value"
             :aria-label="
-                segment.iconOnly || segment.shortLabel
+                segment.iconOnly
                     ? segment.label
-                    : undefined
+                    : segment.shortLabel
+                      ? `${segment.shortLabel}, ${segment.label}`
+                      : undefined
             "
             :title="segment.iconOnly ? segment.label : undefined"
             class="group relative inline-flex h-[38px] items-center justify-center gap-1.5 rounded-full text-label font-semibold whitespace-nowrap text-ink-muted transition-[background-color,color,box-shadow] duration-200 after:absolute after:inset-x-0 after:-inset-y-[3px] hover:text-ink data-[state=on]:bg-surface data-[state=on]:text-ink data-[state=on]:shadow-sm dark:data-[state=on]:bg-surface-3"

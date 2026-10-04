@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import { Map as MapIcon } from '@lucide/vue';
+import type { Map as LeafletMap } from 'leaflet';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Button from '@/components/ui/Button.vue';
 
 /**
  * A small, still map of the event's place with a terracotta pin, and a
- * button that opens it in a maps app. The map loads in the browser only.
+ * button that opens it in a maps app. The map loads in the browser only,
+ * and only once its box has a size: a copy hidden at this breakpoint (the
+ * event page has one in the column and one in the aside) waits until it
+ * shows, so Leaflet never lays out tiles in an empty box.
  */
 const props = defineProps<{
     latitude: number;
@@ -18,19 +22,24 @@ const props = defineProps<{
 const { t } = useI18n();
 
 const container = ref<HTMLElement | null>(null);
-let destroy: (() => void) | null = null;
+let map: LeafletMap | null = null;
+let observer: ResizeObserver | null = null;
+let starting = false;
+let unmounted = false;
 
 const mapUrl = `https://www.openstreetmap.org/?mlat=${props.latitude}&mlon=${props.longitude}#map=16/${props.latitude}/${props.longitude}`;
 
-onMounted(async () => {
+async function start(element: HTMLElement): Promise<void> {
+    starting = true;
+
     const { default: L } = await import('leaflet');
     await import('leaflet/dist/leaflet.css');
 
-    if (!container.value) {
+    if (unmounted) {
         return;
     }
 
-    const map = L.map(container.value, {
+    map = L.map(element, {
         center: [props.latitude, props.longitude],
         zoom: 15,
         zoomControl: false,
@@ -62,11 +71,35 @@ onMounted(async () => {
         keyboard: false,
         interactive: false,
     }).addTo(map);
+}
 
-    destroy = () => map.remove();
+onMounted(() => {
+    const element = container.value;
+
+    if (!element) {
+        return;
+    }
+
+    observer = new ResizeObserver(() => {
+        if (element.clientWidth === 0 || element.clientHeight === 0) {
+            return;
+        }
+
+        if (map) {
+            map.invalidateSize();
+        } else if (!starting) {
+            void start(element);
+        }
+    });
+    observer.observe(element);
 });
 
-onBeforeUnmount(() => destroy?.());
+onBeforeUnmount(() => {
+    unmounted = true;
+    observer?.disconnect();
+    map?.remove();
+    map = null;
+});
 </script>
 
 <template>

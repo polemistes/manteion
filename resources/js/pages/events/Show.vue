@@ -697,8 +697,7 @@ const showMenu = computed(
                 <!-- Who's coming, About and the map. Phone: in that order.
                      640–767: guests, map, About. 768–1279: guests and map
                      side by side, then About. xl: guests and map move to
-                     the aside. One map either way (Leaflet can't start in
-                     a hidden box). -->
+                     the aside (the map card hidden here waits to start). -->
                 <div
                     class="mt-8 grid gap-y-8 md:grid-cols-2 md:gap-x-6 md:gap-y-8 xl:block"
                 >

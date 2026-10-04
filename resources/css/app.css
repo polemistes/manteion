@@ -404,6 +404,13 @@ html[data-mode='dark'] {
     background-color: var(--color-surface-2);
 }
 
+/* Zoomed all the way in or out. */
+.map-tiles.leaflet-container .leaflet-bar a.leaflet-disabled {
+    background-color: var(--color-surface);
+    color: var(--color-ink-subtle);
+    cursor: default;
+}
+
 .map-tiles.leaflet-container .leaflet-control-attribution {
     background-color: color-mix(in srgb, var(--color-surface) 85%, transparent);
     color: var(--color-ink-muted);

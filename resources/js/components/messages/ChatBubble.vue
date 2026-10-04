@@ -66,6 +66,11 @@ const corners = computed(
 
 const canAct = computed(() => !deleted.value && !props.message.pending);
 
+/** The time (or "Seen") line under the bubble. */
+const hasFoot = computed(
+    () => !props.message.pending && (props.showTime || props.seenBy.length > 0),
+);
+
 // Long-press on touch opens the actions sheet.
 let pressTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -89,7 +94,13 @@ onBeforeUnmount(cancelPress);
         class="group/msg flex items-end gap-2"
         :class="[
             mine ? 'flex-row-reverse' : '',
-            props.message.reactions.length ? 'mb-[13px]' : '',
+            // Room under the pills for their hit area, clear of the next
+            // bubble (with a time line under it, the line makes the room).
+            props.message.reactions.length
+                ? hasFoot
+                    ? 'mb-[13px]'
+                    : 'mb-[21px]'
+                : '',
         ]"
     >
         <!-- Level with the bubble's foot, not the time line under it. -->
@@ -193,7 +204,7 @@ onBeforeUnmount(cancelPress);
                                     emoji: reaction.emoji,
                                 })
                             "
-                            class="relative inline-flex h-6 animate-[pop-in_160ms_var(--ease-enter)] items-center gap-0.5 rounded-full px-[7px] text-caption font-semibold tabular-nums shadow-xs ring-1 after:absolute after:-inset-x-0.5 after:-inset-y-2.5"
+                            class="relative inline-flex h-6 animate-[pop-in_160ms_var(--ease-enter)] items-center gap-0.5 rounded-full px-[7px] text-caption font-semibold tabular-nums shadow-xs ring-1 after:absolute after:-inset-x-0.5 after:top-0 after:-bottom-2"
                             :class="
                                 reaction.reacted
                                     ? 'bg-accent-soft text-accent-ink ring-accent-line'
@@ -215,7 +226,7 @@ onBeforeUnmount(cancelPress);
                      above the bubble so they take none of its width. -->
                 <div
                     v-if="canAct"
-                    class="invisible absolute bottom-full z-10 mb-1 flex items-center gap-0.5 rounded-full bg-surface p-0.5 opacity-0 shadow-sm ring-1 ring-line transition-opacity duration-120 group-focus-within/msg:visible group-focus-within/msg:opacity-100 group-hover/msg:visible group-hover/msg:opacity-100 has-[[data-state=open]]:visible has-[[data-state=open]]:opacity-100 pointer-coarse:hidden"
+                    class="invisible absolute bottom-full z-10 mb-1 flex items-center gap-0.5 rounded-full bg-surface p-0.5 opacity-0 shadow-sm ring-1 ring-line transition-opacity duration-120 group-hover/msg:visible group-hover/msg:opacity-100 group-has-[:focus-visible]/msg:visible group-has-[:focus-visible]/msg:opacity-100 has-[[data-state=open]]:visible has-[[data-state=open]]:opacity-100 pointer-coarse:hidden"
                     :class="mine ? 'right-0' : 'left-0'"
                     role="toolbar"
                     :aria-label="t('messages.show.actions')"

@@ -6,7 +6,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | --- | --- |
 | app/Http/Controllers/EventController.php | .ai/rules/controllers.md |
 | resources/css/app.css | .ai/rules/css.md |
-| resources/js/pages/events/Show.vue | .ai/rules/events.md |
+| resources/js/components/events/EventMapCard.vue, resources/js/components/LocationPicker.vue, resources/js/pages/events/Show.vue | .ai/rules/maps.md |
 | database/factories/UserFactory.php | .ai/rules/factories.md |
 | app/Actions/Fortify/** | .ai/rules/fortify.md |
 | resources/js/lang/** | .ai/rules/js-lang.md |

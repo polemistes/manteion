@@ -233,10 +233,12 @@ onUnmounted(() => {
                 @input="onSearchInput"
                 @keydown.enter.prevent
             />
-            <!-- The map below is isolated, so a small z-index clears it. -->
+            <!-- The map below is isolated, so its layers stay under this;
+                 z-40 clears the phone's top and submit bars (z-30) and
+                 stays under dialogs (z-50). -->
             <ul
                 v-if="results.length"
-                class="absolute z-20 mt-1 w-full overflow-hidden rounded-md bg-surface shadow-lg ring-1 ring-line"
+                class="absolute z-40 mt-1 w-full overflow-hidden rounded-md bg-surface shadow-lg ring-1 ring-line"
             >
                 <li v-for="result in results" :key="result.display_name">
                     <button

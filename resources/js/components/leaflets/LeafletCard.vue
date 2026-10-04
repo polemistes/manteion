@@ -179,7 +179,7 @@ async function remove(): Promise<void> {
             <Link
                 v-if="cut"
                 :href="showUrl"
-                class="relative mt-1 inline-block text-label font-semibold text-ink underline underline-offset-2 after:absolute after:-inset-x-1 after:-inset-y-3"
+                class="relative mt-2 inline-block text-label font-semibold text-ink underline underline-offset-2 after:absolute after:-inset-x-1 after:-top-2 after:-bottom-1"
             >
                 {{ t('leaflets.card.readMore') }}
             </Link>

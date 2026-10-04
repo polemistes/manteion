@@ -23,6 +23,13 @@ const props = withDefaults(
 
 const inner = computed(() => Math.round(props.size * 0.72));
 const shown = computed(() => props.members.slice(0, 2));
+
+// The face behind is mostly covered: without a photo, its initial moves
+// into the corner that shows, a little smaller.
+const behindStyle = computed(() => ({
+    padding: `0 ${Math.round(inner.value * 0.38)}px ${Math.round(inner.value * 0.38)}px 0`,
+    fontSize: `${Math.round(inner.value * 0.32)}px`,
+}));
 </script>
 
 <template>
@@ -40,6 +47,7 @@ const shown = computed(() => props.members.slice(0, 2));
                 decorative
                 single
                 class="absolute top-0 left-0"
+                :style="shown[0].avatar_url ? undefined : behindStyle"
             />
             <Avatar
                 :name="shown[1].name"

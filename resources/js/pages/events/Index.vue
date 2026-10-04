@@ -491,7 +491,7 @@ usePressedChipInView(chipRow, () => props.filters);
                     <p class="font-display text-input text-ink-muted italic">
                         {{ t('events.index.endNote') }}
                     </p>
-                    <p class="flex flex-wrap justify-center gap-x-5 gap-y-1">
+                    <p class="flex flex-wrap justify-center gap-x-5 gap-y-6">
                         <Link
                             :href="eventsCalendar().url"
                             class="relative text-label font-semibold text-ink underline underline-offset-2 after:absolute after:-inset-x-1 after:-inset-y-3"
