@@ -1,0 +1,1 @@
+import{$t as e,Kt as t,Nn as n}from"./routes-B_kyM3kw.js";function r(r,i){function a(){r.value?.querySelector(`[aria-pressed="true"]`)?.scrollIntoView({block:`nearest`,inline:`nearest`})}e(a),n(i,()=>t(a))}export{r as t};

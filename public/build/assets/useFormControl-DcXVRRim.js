@@ -1,0 +1,1 @@
+import{_r as e,st as t}from"./routes-B_kyM3kw.js";import{a as n}from"./usePrimitiveElement-1xYCnsLS.js";function r(r){return t(()=>!e(r)||!!n(r)?.closest(`form`))}export{r as t};

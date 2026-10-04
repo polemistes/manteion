@@ -1,0 +1,1 @@
+import{t as e}from"./is-equal-8VOV02sH.js";import{t}from"./nullish-DHihWhf5.js";function n(n,r){return t(n)?!1:Array.isArray(n)?n.some(t=>e(t,r)):e(n,r)}export{n as t};

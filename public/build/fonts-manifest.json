@@ -1,92 +1,67 @@
 {
   "version": 1,
   "style": {
-    "file": "assets/fonts-BwZ1MZNe.css",
+    "file": "assets/fonts-CxkUxpq9.css",
     "familyStyles": {
-      "instrument-sans": "@font-face {\n  font-family: \"Instrument Sans\";\n  font-style: normal;\n  font-weight: 400;\n  font-display: swap;\n  src: url(\"/build/assets/instrument-sans-400-normal-DRC__1Mx.woff2\") format(\"woff2\");\n  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;\n}\n\n@font-face {\n  font-family: \"Instrument Sans\";\n  font-style: normal;\n  font-weight: 400;\n  font-display: swap;\n  src: url(\"/build/assets/instrument-sans-400-normal-D1W7dsQl.woff\") format(\"woff\");\n  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;\n}\n\n@font-face {\n  font-family: \"Instrument Sans\";\n  font-style: normal;\n  font-weight: 500;\n  font-display: swap;\n  src: url(\"/build/assets/instrument-sans-500-normal-Dk9ku72i.woff2\") format(\"woff2\");\n  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;\n}\n\n@font-face {\n  font-family: \"Instrument Sans\";\n  font-style: normal;\n  font-weight: 500;\n  font-display: swap;\n  src: url(\"/build/assets/instrument-sans-500-normal-Z6ESRlEs.woff\") format(\"woff\");\n  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;\n}\n\n@font-face {\n  font-family: \"Instrument Sans\";\n  font-style: normal;\n  font-weight: 600;\n  font-display: swap;\n  src: url(\"/build/assets/instrument-sans-600-normal-B7fBEWYG.woff2\") format(\"woff2\");\n  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;\n}\n\n@font-face {\n  font-family: \"Instrument Sans\";\n  font-style: normal;\n  font-weight: 600;\n  font-display: swap;\n  src: url(\"/build/assets/instrument-sans-600-normal-B9e8oLYv.woff\") format(\"woff\");\n  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;\n}\n\n.font-instrument-sans {\n  font-family: var(--font-instrument-sans);\n}",
-      "nunito": "@font-face {\n  font-family: \"Nunito\";\n  font-style: normal;\n  font-weight: 400;\n  font-display: swap;\n  src: url(\"/build/assets/nunito-400-normal-r8SDr6Up.woff2\") format(\"woff2\");\n  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;\n}\n\n@font-face {\n  font-family: \"Nunito\";\n  font-style: normal;\n  font-weight: 400;\n  font-display: swap;\n  src: url(\"/build/assets/nunito-400-normal-DKg4f3fz.woff\") format(\"woff\");\n  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;\n}\n\n@font-face {\n  font-family: \"Nunito\";\n  font-style: normal;\n  font-weight: 600;\n  font-display: swap;\n  src: url(\"/build/assets/nunito-600-normal-Br8yIETf.woff2\") format(\"woff2\");\n  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;\n}\n\n@font-face {\n  font-family: \"Nunito\";\n  font-style: normal;\n  font-weight: 600;\n  font-display: swap;\n  src: url(\"/build/assets/nunito-600-normal-Cd0eNu1l.woff\") format(\"woff\");\n  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;\n}\n\n@font-face {\n  font-family: \"Nunito\";\n  font-style: normal;\n  font-weight: 700;\n  font-display: swap;\n  src: url(\"/build/assets/nunito-700-normal-Dort48En.woff2\") format(\"woff2\");\n  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;\n}\n\n@font-face {\n  font-family: \"Nunito\";\n  font-style: normal;\n  font-weight: 700;\n  font-display: swap;\n  src: url(\"/build/assets/nunito-700-normal-OcDqTBcA.woff\") format(\"woff\");\n  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;\n}\n\n.font-nunito {\n  font-family: var(--font-nunito);\n}"
+      "schibsted-grotesk": "@font-face {\n  font-family: \"Schibsted Grotesk\";\n  font-style: normal;\n  font-weight: 400;\n  font-display: swap;\n  src: url(\"/build/assets/schibsted-grotesk-400-normal-DPhJBilQ.woff2\") format(\"woff2\");\n  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;\n}\n\n@font-face {\n  font-family: \"Schibsted Grotesk\";\n  font-style: normal;\n  font-weight: 400;\n  font-display: swap;\n  src: url(\"/build/assets/schibsted-grotesk-400-normal-BkiRe4WW.woff\") format(\"woff\");\n  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;\n}\n\n@font-face {\n  font-family: \"Schibsted Grotesk\";\n  font-style: normal;\n  font-weight: 500;\n  font-display: swap;\n  src: url(\"/build/assets/schibsted-grotesk-500-normal-rf9C4Thp.woff2\") format(\"woff2\");\n  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;\n}\n\n@font-face {\n  font-family: \"Schibsted Grotesk\";\n  font-style: normal;\n  font-weight: 500;\n  font-display: swap;\n  src: url(\"/build/assets/schibsted-grotesk-500-normal-Ba39e-CX.woff\") format(\"woff\");\n  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;\n}\n\n@font-face {\n  font-family: \"Schibsted Grotesk\";\n  font-style: normal;\n  font-weight: 600;\n  font-display: swap;\n  src: url(\"/build/assets/schibsted-grotesk-600-normal-Czv9Obfv.woff2\") format(\"woff2\");\n  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;\n}\n\n@font-face {\n  font-family: \"Schibsted Grotesk\";\n  font-style: normal;\n  font-weight: 600;\n  font-display: swap;\n  src: url(\"/build/assets/schibsted-grotesk-600-normal-BieE9YjJ.woff\") format(\"woff\");\n  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;\n}\n\n.font-schibsted-grotesk {\n  font-family: var(--font-schibsted-grotesk);\n}",
+      "newsreader": "@font-face {\n  font-family: \"Newsreader\";\n  font-style: italic;\n  font-weight: 400;\n  font-display: swap;\n  src: url(\"/build/assets/newsreader-400-italic-CEihAR-f.woff2\") format(\"woff2\");\n  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;\n}\n\n@font-face {\n  font-family: \"Newsreader\";\n  font-style: italic;\n  font-weight: 400;\n  font-display: swap;\n  src: url(\"/build/assets/newsreader-400-italic-CNZoH1hn.woff\") format(\"woff\");\n  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;\n}\n\n@font-face {\n  font-family: \"Newsreader\";\n  font-style: italic;\n  font-weight: 500;\n  font-display: swap;\n  src: url(\"/build/assets/newsreader-500-italic-Bsgye1qA.woff2\") format(\"woff2\");\n  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;\n}\n\n@font-face {\n  font-family: \"Newsreader\";\n  font-style: italic;\n  font-weight: 500;\n  font-display: swap;\n  src: url(\"/build/assets/newsreader-500-italic-m-xI0GeS.woff\") format(\"woff\");\n  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;\n}\n\n@font-face {\n  font-family: \"Newsreader\";\n  font-style: normal;\n  font-weight: 400;\n  font-display: swap;\n  src: url(\"/build/assets/newsreader-400-normal-BFBkh4jY.woff2\") format(\"woff2\");\n  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;\n}\n\n@font-face {\n  font-family: \"Newsreader\";\n  font-style: normal;\n  font-weight: 400;\n  font-display: swap;\n  src: url(\"/build/assets/newsreader-400-normal-gRTjlS2D.woff\") format(\"woff\");\n  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;\n}\n\n@font-face {\n  font-family: \"Newsreader\";\n  font-style: normal;\n  font-weight: 500;\n  font-display: swap;\n  src: url(\"/build/assets/newsreader-500-normal-B66TYsaK.woff2\") format(\"woff2\");\n  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;\n}\n\n@font-face {\n  font-family: \"Newsreader\";\n  font-style: normal;\n  font-weight: 500;\n  font-display: swap;\n  src: url(\"/build/assets/newsreader-500-normal-DFwuUcdu.woff\") format(\"woff\");\n  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;\n}\n\n.font-newsreader {\n  font-family: var(--font-newsreader);\n}"
     },
     "variables": {
-      "instrument-sans": "--font-instrument-sans: \"Instrument Sans\";",
-      "nunito": "--font-nunito: \"Nunito\";"
+      "schibsted-grotesk": "--font-schibsted-grotesk: \"Schibsted Grotesk\", ui-sans-serif, system-ui, sans-serif;",
+      "newsreader": "--font-newsreader: \"Newsreader\", Iowan Old Style, Georgia, serif;"
     }
   },
   "preloads": [
     {
-      "alias": "instrument-sans",
-      "family": "Instrument Sans",
+      "alias": "schibsted-grotesk",
+      "family": "Schibsted Grotesk",
       "weight": 400,
       "style": "normal",
-      "file": "assets/instrument-sans-400-normal-DRC__1Mx.woff2",
+      "file": "assets/schibsted-grotesk-400-normal-DPhJBilQ.woff2",
       "as": "font",
       "type": "font/woff2",
       "crossorigin": "anonymous"
     },
     {
-      "alias": "instrument-sans",
-      "family": "Instrument Sans",
+      "alias": "schibsted-grotesk",
+      "family": "Schibsted Grotesk",
+      "weight": 600,
+      "style": "normal",
+      "file": "assets/schibsted-grotesk-600-normal-Czv9Obfv.woff2",
+      "as": "font",
+      "type": "font/woff2",
+      "crossorigin": "anonymous"
+    },
+    {
+      "alias": "newsreader",
+      "family": "Newsreader",
       "weight": 500,
       "style": "normal",
-      "file": "assets/instrument-sans-500-normal-Dk9ku72i.woff2",
-      "as": "font",
-      "type": "font/woff2",
-      "crossorigin": "anonymous"
-    },
-    {
-      "alias": "instrument-sans",
-      "family": "Instrument Sans",
-      "weight": 600,
-      "style": "normal",
-      "file": "assets/instrument-sans-600-normal-B7fBEWYG.woff2",
-      "as": "font",
-      "type": "font/woff2",
-      "crossorigin": "anonymous"
-    },
-    {
-      "alias": "nunito",
-      "family": "Nunito",
-      "weight": 400,
-      "style": "normal",
-      "file": "assets/nunito-400-normal-r8SDr6Up.woff2",
-      "as": "font",
-      "type": "font/woff2",
-      "crossorigin": "anonymous"
-    },
-    {
-      "alias": "nunito",
-      "family": "Nunito",
-      "weight": 600,
-      "style": "normal",
-      "file": "assets/nunito-600-normal-Br8yIETf.woff2",
-      "as": "font",
-      "type": "font/woff2",
-      "crossorigin": "anonymous"
-    },
-    {
-      "alias": "nunito",
-      "family": "Nunito",
-      "weight": 700,
-      "style": "normal",
-      "file": "assets/nunito-700-normal-Dort48En.woff2",
+      "file": "assets/newsreader-500-normal-B66TYsaK.woff2",
       "as": "font",
       "type": "font/woff2",
       "crossorigin": "anonymous"
     }
   ],
   "families": {
-    "instrument-sans": {
-      "family": "Instrument Sans",
-      "variable": "--font-instrument-sans",
+    "schibsted-grotesk": {
+      "family": "Schibsted Grotesk",
+      "variable": "--font-schibsted-grotesk",
+      "fallbacks": [
+        "ui-sans-serif",
+        "system-ui",
+        "sans-serif"
+      ],
       "variants": {
         "400:normal": {
           "files": [
             {
-              "file": "assets/instrument-sans-400-normal-DRC__1Mx.woff2",
+              "file": "assets/schibsted-grotesk-400-normal-DPhJBilQ.woff2",
               "format": "woff2",
               "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
             },
             {
-              "file": "assets/instrument-sans-400-normal-D1W7dsQl.woff",
+              "file": "assets/schibsted-grotesk-400-normal-BkiRe4WW.woff",
               "format": "woff",
               "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
             }
@@ -95,12 +70,12 @@
         "500:normal": {
           "files": [
             {
-              "file": "assets/instrument-sans-500-normal-Dk9ku72i.woff2",
+              "file": "assets/schibsted-grotesk-500-normal-rf9C4Thp.woff2",
               "format": "woff2",
               "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
             },
             {
-              "file": "assets/instrument-sans-500-normal-Z6ESRlEs.woff",
+              "file": "assets/schibsted-grotesk-500-normal-Ba39e-CX.woff",
               "format": "woff",
               "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
             }
@@ -109,12 +84,12 @@
         "600:normal": {
           "files": [
             {
-              "file": "assets/instrument-sans-600-normal-B7fBEWYG.woff2",
+              "file": "assets/schibsted-grotesk-600-normal-Czv9Obfv.woff2",
               "format": "woff2",
               "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
             },
             {
-              "file": "assets/instrument-sans-600-normal-B9e8oLYv.woff",
+              "file": "assets/schibsted-grotesk-600-normal-BieE9YjJ.woff",
               "format": "woff",
               "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
             }
@@ -122,47 +97,66 @@
         }
       }
     },
-    "nunito": {
-      "family": "Nunito",
-      "variable": "--font-nunito",
+    "newsreader": {
+      "family": "Newsreader",
+      "variable": "--font-newsreader",
+      "fallbacks": [
+        "Iowan Old Style",
+        "Georgia",
+        "serif"
+      ],
       "variants": {
+        "400:italic": {
+          "files": [
+            {
+              "file": "assets/newsreader-400-italic-CEihAR-f.woff2",
+              "format": "woff2",
+              "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+            },
+            {
+              "file": "assets/newsreader-400-italic-CNZoH1hn.woff",
+              "format": "woff",
+              "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+            }
+          ]
+        },
+        "500:italic": {
+          "files": [
+            {
+              "file": "assets/newsreader-500-italic-Bsgye1qA.woff2",
+              "format": "woff2",
+              "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+            },
+            {
+              "file": "assets/newsreader-500-italic-m-xI0GeS.woff",
+              "format": "woff",
+              "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+            }
+          ]
+        },
         "400:normal": {
           "files": [
             {
-              "file": "assets/nunito-400-normal-r8SDr6Up.woff2",
+              "file": "assets/newsreader-400-normal-BFBkh4jY.woff2",
               "format": "woff2",
               "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
             },
             {
-              "file": "assets/nunito-400-normal-DKg4f3fz.woff",
+              "file": "assets/newsreader-400-normal-gRTjlS2D.woff",
               "format": "woff",
               "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
             }
           ]
         },
-        "600:normal": {
+        "500:normal": {
           "files": [
             {
-              "file": "assets/nunito-600-normal-Br8yIETf.woff2",
+              "file": "assets/newsreader-500-normal-B66TYsaK.woff2",
               "format": "woff2",
               "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
             },
             {
-              "file": "assets/nunito-600-normal-Cd0eNu1l.woff",
-              "format": "woff",
-              "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
-            }
-          ]
-        },
-        "700:normal": {
-          "files": [
-            {
-              "file": "assets/nunito-700-normal-Dort48En.woff2",
-              "format": "woff2",
-              "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
-            },
-            {
-              "file": "assets/nunito-700-normal-OcDqTBcA.woff",
+              "file": "assets/newsreader-500-normal-DFwuUcdu.woff",
               "format": "woff",
               "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
             }

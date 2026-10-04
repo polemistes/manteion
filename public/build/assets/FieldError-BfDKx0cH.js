@@ -1,1 +1,0 @@
-import{V as e,b as t,k as n,w as r,x as i}from"./wayfinder-EjxJmgWQ.js";var a={key:0,class:`mt-1 text-xs font-bold`},o=r({__name:`FieldError`,props:{message:{}},setup(r){return(o,s)=>r.message?(n(),i(`p`,a,`! `+e(r.message),1)):t(``,!0)}});export{o as t};
