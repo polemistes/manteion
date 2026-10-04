@@ -231,7 +231,7 @@ async function remove(comment: EventCommentItem): Promise<void> {
                         <button
                             v-if="props.canComment"
                             type="button"
-                            class="h-9 rounded-full px-2 text-label font-semibold text-ink-muted hover:bg-surface-2 hover:text-ink"
+                            class="relative h-9 rounded-full px-2 text-label font-semibold text-ink-muted after:absolute after:inset-x-0 after:-inset-y-1 hover:bg-surface-2 hover:text-ink"
                             @click="reply(comment)"
                         >
                             {{ t('events.show.reply') }}
@@ -244,7 +244,7 @@ async function remove(comment: EventCommentItem): Promise<void> {
                                     ? t('events.show.unlike')
                                     : t('events.show.like')
                             "
-                            class="inline-flex h-9 min-w-11 items-center justify-center gap-1 rounded-full px-2 text-label font-semibold tabular-nums hover:bg-surface-2"
+                            class="relative inline-flex h-9 min-w-11 items-center justify-center gap-1 rounded-full px-2 text-label font-semibold tabular-nums after:absolute after:inset-x-0 after:-inset-y-1 hover:bg-surface-2"
                             :class="
                                 heart(comment).mine
                                     ? 'text-accent-ink'
@@ -276,7 +276,7 @@ async function remove(comment: EventCommentItem): Promise<void> {
                                     :aria-label="
                                         t('events.show.commentActions')
                                     "
-                                    class="grid size-9 place-items-center rounded-full text-ink-subtle hover:bg-surface-2 hover:text-ink"
+                                    class="relative grid h-9 w-11 place-items-center rounded-full text-ink-subtle after:absolute after:inset-x-0 after:-inset-y-1 hover:bg-surface-2 hover:text-ink"
                                 >
                                     <Ellipsis
                                         :size="16"
@@ -344,7 +344,7 @@ async function remove(comment: EventCommentItem): Promise<void> {
                         type="submit"
                         :disabled="processing || !text.trim()"
                         :aria-label="t('events.show.send')"
-                        class="mb-0.5 grid size-10 shrink-0 place-items-center rounded-full text-ink hover:bg-surface-2 disabled:text-ink-subtle"
+                        class="relative mb-0.5 grid size-10 shrink-0 place-items-center rounded-full text-ink after:absolute after:-inset-0.5 hover:bg-surface-2 disabled:text-ink-subtle"
                     >
                         <SendHorizontal
                             :size="20"

@@ -2,6 +2,7 @@
     "title": "Kontakter",
     "lede": "Vennene dine, folk du følger og folk som følger deg.",
     "search": "Søk blant venner, folk du følger og følgere",
+    "searchPlaceholder": "Søk etter navn",
     "tabs": {
         "friends": "Venner",
         "following": "Følger",

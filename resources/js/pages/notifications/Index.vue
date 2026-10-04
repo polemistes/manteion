@@ -242,6 +242,7 @@ usePressedChipInView(chipRow, kind);
         :lede="t('notifications.lede')"
         :back="previousTab.href"
         :back-label="previousTab.label"
+        phone-back-only
         width="wide"
     >
         <template #phone-actions>
@@ -336,7 +337,7 @@ usePressedChipInView(chipRow, kind);
                 </p>
             </div>
 
-            <aside class="hidden xl:sticky xl:top-6 xl:mt-7 xl:block">
+            <aside class="hidden xl:sticky xl:top-6 xl:block">
                 <section class="rounded-lg border border-line bg-surface p-5">
                     <span
                         class="grid size-10 place-items-center rounded-full bg-surface-2 text-ink-muted"

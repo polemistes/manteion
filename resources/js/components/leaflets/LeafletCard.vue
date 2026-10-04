@@ -82,8 +82,10 @@ async function remove(): Promise<void> {
                 <p class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                     <Link
                         :href="usersShow(props.leaflet.owner.id).url"
-                        class="truncate font-semibold text-ink hover:underline"
-                        >{{ props.leaflet.owner.name }}</Link
+                        class="relative min-w-0 font-semibold text-ink after:absolute after:-inset-x-1 after:-top-3 after:bottom-0 hover:underline"
+                        ><span class="block truncate">{{
+                            props.leaflet.owner.name
+                        }}</span></Link
                     >
                     <Tag tone="host">{{
                         t(`leaflets.visibility.${props.leaflet.visibility}`)
@@ -93,7 +95,7 @@ async function remove(): Promise<void> {
                     <Link
                         v-if="!props.full"
                         :href="showUrl"
-                        class="hover:underline"
+                        class="relative after:absolute after:-inset-x-1 after:top-0 after:-bottom-3 hover:underline"
                         ><time :datetime="props.leaflet.created_at">{{
                             dates.ago(props.leaflet.created_at)
                         }}</time></Link
@@ -177,7 +179,7 @@ async function remove(): Promise<void> {
             <Link
                 v-if="cut"
                 :href="showUrl"
-                class="mt-1 inline-block text-label font-semibold text-ink underline underline-offset-2"
+                class="relative mt-1 inline-block text-label font-semibold text-ink underline underline-offset-2 after:absolute after:-inset-x-1 after:-inset-y-3"
             >
                 {{ t('leaflets.card.readMore') }}
             </Link>
@@ -238,7 +240,7 @@ async function remove(): Promise<void> {
             <Link
                 v-if="!props.full"
                 :href="`${showUrl}#responses`"
-                class="ml-auto inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-label font-semibold text-ink-muted hover:bg-surface-2 hover:text-ink"
+                class="relative ml-auto inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-label font-semibold text-ink-muted after:absolute after:inset-x-0 after:-inset-y-1 hover:bg-surface-2 hover:text-ink"
             >
                 <MessageSquare
                     :size="16"

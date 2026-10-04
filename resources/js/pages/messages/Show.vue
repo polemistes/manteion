@@ -680,7 +680,7 @@ async function leave(): Promise<void> {
                     <Link
                         :href="messagesIndex().url"
                         :aria-label="t('messages.show.back')"
-                        class="flex h-11 shrink-0 items-center gap-0.5 rounded-full pr-1.5 pl-1 text-ink hover:bg-surface-2 md:hidden"
+                        class="flex h-11 min-w-11 shrink-0 items-center gap-0.5 rounded-full pr-1.5 pl-1 text-ink hover:bg-surface-2 md:hidden"
                     >
                         <ChevronLeft
                             :size="22"

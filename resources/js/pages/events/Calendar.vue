@@ -72,6 +72,12 @@ usePoll(60_000, { only: ['events'] });
 
 const view = computed(() => props.calendar.view);
 const today = computed(() => dates.todayKey());
+
+/** This week and month, as over the list, so switching views keeps the header still. */
+const kicker = computed(
+    () =>
+        `${dates.weekLabel(noonOf(today.value))} · ${dates.monthYear(noonOf(today.value))}`,
+);
 const state = computed(() => stateFromFilters(props.filters, today.value));
 const mine = computed(() => props.filters.mine ?? '');
 
@@ -208,6 +214,8 @@ usePressedChipInView(chipRow, mine);
     <PageHeader
         :title="t('events.calendar.title')"
         :document-title="`${periodTitle} · ${t('events.calendar.title')}`"
+        :kicker="kicker"
+        :lede="t('events.index.lede')"
         width="wide"
         root
     >
@@ -262,7 +270,7 @@ usePressedChipInView(chipRow, mine);
 
                 <div class="flex items-center gap-1">
                     <h2
-                        class="min-w-0 flex-1 truncate font-display text-title-3 first-letter:uppercase sm:text-title-2"
+                        class="min-w-0 flex-1 font-display text-title-3 text-balance first-letter:uppercase sm:text-title-2"
                     >
                         <span class="sm:hidden">{{ periodTitleShort }}</span>
                         <span class="hidden sm:inline">{{ periodTitle }}</span>

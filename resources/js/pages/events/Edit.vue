@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
-import { Trash } from '@lucide/vue';
+import { Check, Trash } from '@lucide/vue';
+import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import EventForm from '@/components/events/EventForm.vue';
+import EventForm, { EVENT_FORM_ID } from '@/components/events/EventForm.vue';
 import PageContainer from '@/components/shell/PageContainer.vue';
 import PageHeader from '@/components/shell/PageHeader.vue';
 import Button from '@/components/ui/Button.vue';
@@ -37,6 +38,8 @@ const props = defineProps<{
 
 const { t } = useI18n();
 
+const processing = ref(false);
+
 async function removeImage(): Promise<void> {
     const image = props.event.image;
 
@@ -66,12 +69,34 @@ async function removeImage(): Promise<void> {
         :close="eventsShow(props.event.id).url"
         :back="eventsShow(props.event.id).url"
         :back-label="props.event.name"
-        width="panel"
-    />
+        width="compose"
+    >
+        <template #actions>
+            <Button
+                :as="Link"
+                :href="eventsShow(props.event.id).url"
+                variant="ghost"
+            >
+                {{ t('events.form.cancel') }}
+            </Button>
+            <Button
+                type="submit"
+                :form="EVENT_FORM_ID"
+                variant="primary"
+                :icon="Check"
+                :disabled="processing"
+            >
+                {{
+                    processing ? t('events.form.saving') : t('events.form.save')
+                }}
+            </Button>
+        </template>
+    </PageHeader>
 
-    <PageContainer width="panel" class="pt-5 sm:pt-0">
+    <PageContainer width="compose" class="pt-5 sm:pt-0">
         <EventForm
             :key="props.event.image?.id ?? 'no-image'"
+            v-model:processing="processing"
             :form="update.form(props.event.id)"
             :categories="props.categories"
             :values="{

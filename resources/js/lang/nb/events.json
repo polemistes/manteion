@@ -213,7 +213,7 @@
         "time": "klokkeslett",
         "place": "Sted",
         "placeName": "Navn på stedet",
-        "placeNamePlaceholder": "For eksempel hos Alice, eller Kafé Hærverk",
+        "placeNamePlaceholder": "For eksempel Kafé Hærverk",
         "categories": "Kategorier",
         "subcategories": "{category}, mer presist (valgfritt)",
         "whoCanSee": "Hvem kan se det",
@@ -232,6 +232,17 @@
         "save": "Lagre endringene",
         "saving": "Lagrer …",
         "inviteNext": "Du kan invitere folk etterpå.",
+        "preview": {
+            "title": "Forhåndsvisning",
+            "lede": "Slik ser gjestene arrangementet i feeden sin.",
+            "noDate": "Velg en dato",
+            "untitled": "Arrangementet ditt",
+            "noGuests": "Ingen gjester ennå"
+        },
+        "next": {
+            "title": "Neste: inviter folk",
+            "body": "Når det er opprettet, velger du venner eller en hel gruppe å invitere."
+        },
         "cancel": "Avbryt",
         "imageRemoved": "Bildet er fjernet",
         "confirmRemoveImageTitle": "Fjerne bildet?",

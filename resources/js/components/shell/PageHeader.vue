@@ -16,7 +16,8 @@ import { useNavigation } from './useNavigation';
  *   one contextual action (`phone-actions` slot) in the top bar, and the
  *   alpha notice under it.
  * - Pushed pages get a back link (`back`, optional `backLabel`), creation
- *   flows a Cancel × (`close`).
+ *   flows a Cancel × (`close`). `phoneBackOnly` keeps the back link to the
+ *   phone, for pages the rail and sidebar already lead to.
  * - From 640 the header shows an optional crumb, `kicker`, the title, the
  *   `actions` slot and a `lede`.
  */
@@ -27,12 +28,13 @@ const props = withDefaults(
         root?: boolean;
         back?: string;
         backLabel?: string;
+        phoneBackOnly?: boolean;
         close?: string;
         kicker?: string;
         lede?: string;
         phoneHidden?: boolean;
         headerHidden?: boolean;
-        width?: 'feed' | 'wide' | 'panel';
+        width?: 'feed' | 'wide' | 'panel' | 'compose';
         alpha?: boolean;
     }>(),
     {
@@ -40,6 +42,7 @@ const props = withDefaults(
         root: false,
         back: undefined,
         backLabel: undefined,
+        phoneBackOnly: false,
         close: undefined,
         kicker: undefined,
         lede: undefined,
@@ -132,7 +135,7 @@ const { activity } = useNavigation();
 
         <div v-if="!props.headerHidden" class="pt-7 pb-4.5 lg:pt-9 lg:pb-5.5">
             <Link
-                v-if="props.back && !props.root"
+                v-if="props.back && !props.root && !props.phoneBackOnly"
                 :href="props.back"
                 class="mb-3 -ml-3 inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-label font-semibold text-ink-muted hover:bg-surface-2 hover:text-ink"
             >

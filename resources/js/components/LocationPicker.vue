@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
     cityFromAddress,
@@ -31,7 +31,7 @@ const DEFAULT_CENTER: L.LatLngTuple = [60.472, 8.4689];
 const DEFAULT_ZOOM = 5;
 const PIN_ZOOM = 15;
 
-interface LocationValue {
+export interface LocationValue {
     latitude: number | null;
     longitude: number | null;
     city: string | null;
@@ -46,6 +46,9 @@ const props = withDefaults(
     { initialValue: null },
 );
 
+/** The pin and the place found for it, whenever either changes. */
+const emit = defineEmits<{ change: [value: LocationValue] }>();
+
 const { t, locale } = useI18n();
 const { cityAndCountry } = usePlaces();
 
@@ -57,6 +60,16 @@ const countryCode = ref<string | null>(
     props.initialValue?.country_code ?? null,
 );
 const searchQuery = ref('');
+
+watch([latitude, longitude, city, country, countryCode], () =>
+    emit('change', {
+        latitude: latitude.value,
+        longitude: longitude.value,
+        city: city.value,
+        country: country.value,
+        country_code: countryCode.value,
+    }),
+);
 // True once a result has been picked: the field then holds the chosen
 // address, which is not an unanswered search.
 const picked = ref(false);

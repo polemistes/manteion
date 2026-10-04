@@ -213,7 +213,7 @@
         "time": "time",
         "place": "Place",
         "placeName": "Place name",
-        "placeNamePlaceholder": "For example Alice’s apartment, or Kafé Hærverk",
+        "placeNamePlaceholder": "For example Kafé Hærverk",
         "categories": "Categories",
         "subcategories": "{category}, more precisely (optional)",
         "whoCanSee": "Who can see it",
@@ -232,6 +232,17 @@
         "save": "Save changes",
         "saving": "Saving…",
         "inviteNext": "You can invite people next.",
+        "preview": {
+            "title": "Preview",
+            "lede": "How the event shows up in your guests’ feeds.",
+            "noDate": "Pick a date",
+            "untitled": "Your event",
+            "noGuests": "No guests yet"
+        },
+        "next": {
+            "title": "Next: invite people",
+            "body": "Once it’s created, pick friends or a whole group to invite."
+        },
         "cancel": "Cancel",
         "imageRemoved": "Image removed",
         "confirmRemoveImageTitle": "Remove the image?",

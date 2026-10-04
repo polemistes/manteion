@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
 import { CircleAlert } from '@lucide/vue';
-import { computed, ref, useId } from 'vue';
+import { computed, ref, useId, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { utcToZoned, zonedToUtc } from '@/lib/dates';
 
 /**
  * A date and a time, as the phone's own pickers, read as wall-clock time
  * in the app's display time zone and submitted as a UTC instant in a
- * hidden input named `name`.
+ * hidden input named `name`. `change` reports the instant ('' for none).
  */
 const props = withDefaults(
     defineProps<{
@@ -28,6 +28,8 @@ const props = withDefaults(
         error: undefined,
     },
 );
+
+const emit = defineEmits<{ change: [value: string] }>();
 
 const { t } = useI18n();
 const page = usePage();
@@ -55,6 +57,8 @@ const value = computed(() => {
         timeZone.value,
     ).toISOString();
 });
+
+watch(value, (next) => emit('change', next));
 </script>
 
 <template>

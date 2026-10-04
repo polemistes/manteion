@@ -193,7 +193,7 @@ onBeforeUnmount(cancelPress);
                                     emoji: reaction.emoji,
                                 })
                             "
-                            class="inline-flex h-6 animate-[pop-in_160ms_var(--ease-enter)] items-center gap-0.5 rounded-full px-[7px] text-caption font-semibold tabular-nums shadow-xs ring-1"
+                            class="relative inline-flex h-6 animate-[pop-in_160ms_var(--ease-enter)] items-center gap-0.5 rounded-full px-[7px] text-caption font-semibold tabular-nums shadow-xs ring-1 after:absolute after:-inset-x-0.5 after:-inset-y-2.5"
                             :class="
                                 reaction.reacted
                                     ? 'bg-accent-soft text-accent-ink ring-accent-line'

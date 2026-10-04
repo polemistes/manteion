@@ -11,7 +11,8 @@ import SegmentedControl from '@/components/ui/SegmentedControl.vue';
  * with drag and zoom. With `allowWhole`, the uploader may instead keep the
  * whole picture ("Show it whole", for posters and flyers): the default
  * follows the picture's shape, and the choice travels as `image_fit`.
- * The prepared file is put in a hidden file input named `name`.
+ * The prepared file is put in a hidden file input named `name`. `preview`
+ * reports the picture shown and its fit as they change.
  */
 const props = withDefaults(
     defineProps<{
@@ -34,7 +35,10 @@ const props = withDefaults(
     },
 );
 
-const emit = defineEmits<{ remove: [] }>();
+const emit = defineEmits<{
+    remove: [];
+    preview: [value: { url: string | null; fit: 'cover' | 'contain' }];
+}>();
 
 const { t } = useI18n();
 
@@ -107,6 +111,10 @@ const previewUrl = computed(() =>
 );
 
 const hasImage = computed(() => previewUrl.value !== null);
+
+watch([previewUrl, fit], ([url, nextFit]) =>
+    emit('preview', { url, fit: nextFit }),
+);
 
 function clamp(value: number, min: number, max: number): number {
     return Math.min(Math.max(value, min), max);
@@ -455,12 +463,14 @@ const fitSegments = computed(() => [
                 type="button"
                 class="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-line-strong bg-surface text-ink-muted transition-colors duration-120 hover:bg-surface-2 hover:text-ink"
                 :class="
-                    props.round ? 'size-28 rounded-full' : 'rounded-lg py-8'
+                    props.round
+                        ? 'size-28 rounded-full'
+                        : 'aspect-(--cover-ratio) rounded-lg py-8 sm:aspect-auto sm:h-44'
                 "
                 :style="
                     props.round
                         ? undefined
-                        : { aspectRatio: String(props.aspectRatio) }
+                        : { '--cover-ratio': String(props.aspectRatio) }
                 "
                 @click="pickerInput?.click()"
             >

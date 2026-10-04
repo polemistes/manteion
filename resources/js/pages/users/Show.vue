@@ -4,6 +4,8 @@ import {
     ArrowLeft,
     Check,
     ChevronDown,
+    Eye,
+    EyeOff,
     MessageCircle,
     Pencil,
     UserCheck,
@@ -20,6 +22,7 @@ import Button from '@/components/ui/Button.vue';
 import DateBadge from '@/components/ui/DateBadge.vue';
 import Menu from '@/components/ui/Menu.vue';
 import MenuItem from '@/components/ui/MenuItem.vue';
+import MenuSeparator from '@/components/ui/MenuSeparator.vue';
 import SectionHeader from '@/components/ui/SectionHeader.vue';
 import Tag from '@/components/ui/Tag.vue';
 import { confirmAction } from '@/composables/useConfirm';
@@ -296,6 +299,31 @@ function eventStatus(status: AttendanceStatus | null): string | null {
                                     />
                                 </Button>
                             </template>
+                            <!-- Following a friend lives in this menu, so a
+                                 friend's actions fit one row on a phone. -->
+                            <MenuItem
+                                v-if="props.follow_status === 'none'"
+                                :icon="Eye"
+                                :disabled="busy"
+                                @select="follow"
+                            >
+                                {{ t('people.find.follow') }}
+                            </MenuItem>
+                            <MenuItem
+                                v-else
+                                :icon="EyeOff"
+                                :disabled="busy"
+                                @select="stopFollowing"
+                            >
+                                {{
+                                    props.follow_status === 'pending'
+                                        ? t(
+                                              'people.profile.cancelFollowRequest',
+                                          )
+                                        : t('people.menu.unfollow')
+                                }}
+                            </MenuItem>
+                            <MenuSeparator />
                             <MenuItem
                                 :icon="UserMinus"
                                 danger
@@ -313,25 +341,29 @@ function eventStatus(status: AttendanceStatus | null): string | null {
                             {{ t('people.profile.message') }}
                         </Button>
 
-                        <Button
-                            v-if="props.follow_status === 'none'"
-                            :disabled="busy"
-                            @click="follow"
-                        >
-                            {{ t('people.find.follow') }}
-                        </Button>
-                        <Button
-                            v-else
-                            variant="ghost"
-                            :disabled="busy"
-                            @click="stopFollowing"
-                        >
-                            {{
-                                props.follow_status === 'pending'
-                                    ? t('people.profile.cancelFollowRequest')
-                                    : t('people.find.following')
-                            }}
-                        </Button>
+                        <template v-if="props.friend_status !== 'friends'">
+                            <Button
+                                v-if="props.follow_status === 'none'"
+                                :disabled="busy"
+                                @click="follow"
+                            >
+                                {{ t('people.find.follow') }}
+                            </Button>
+                            <Button
+                                v-else
+                                variant="ghost"
+                                :disabled="busy"
+                                @click="stopFollowing"
+                            >
+                                {{
+                                    props.follow_status === 'pending'
+                                        ? t(
+                                              'people.profile.cancelFollowRequest',
+                                          )
+                                        : t('people.find.following')
+                                }}
+                            </Button>
+                        </template>
                     </template>
                 </div>
             </div>

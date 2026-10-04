@@ -48,7 +48,7 @@ const heading = computed(() => {
             <Link
                 v-if="props.events.length"
                 :href="props.dayHref"
-                class="shrink-0 text-meta font-semibold text-ink underline underline-offset-2"
+                class="relative shrink-0 text-meta font-semibold text-ink underline underline-offset-2 after:absolute after:-inset-x-2 after:-inset-y-3"
             >
                 {{ t('events.calendar.openDay') }}
             </Link>

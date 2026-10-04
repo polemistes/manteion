@@ -10,6 +10,7 @@ import {
 } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { noonOf } from '@/components/events/calendar';
 import ComingUp from '@/components/events/ComingUp.vue';
 import EventCard from '@/components/events/EventCard.vue';
 import EventFiltersForm from '@/components/events/EventFiltersForm.vue';
@@ -253,9 +254,12 @@ const hasNarrowing = computed(
     () => !isAll.value || filterCount.value > 0 || query.value.trim() !== '',
 );
 
-const kicker = computed(
-    () => `${dates.weekLabel(new Date())} · ${dates.monthYear(new Date())}`,
-);
+// Today by the shared clock, so the server's render and the browser's agree.
+const kicker = computed(() => {
+    const today = noonOf(dates.todayKey());
+
+    return `${dates.weekLabel(today)} · ${dates.monthYear(today)}`;
+});
 
 const views = computed(() => [
     {
@@ -467,7 +471,7 @@ usePressedChipInView(chipRow, () => props.filters);
                 <p v-if="query.trim()" class="mt-6 text-center">
                     <Link
                         :href="eventsSearch({ query: { q: query.trim() } }).url"
-                        class="text-label font-semibold text-ink underline underline-offset-2"
+                        class="relative text-label font-semibold text-ink underline underline-offset-2 after:absolute after:-inset-x-1 after:-inset-y-3"
                     >
                         {{
                             t('events.search.fromFeed', { query: query.trim() })
@@ -490,13 +494,13 @@ usePressedChipInView(chipRow, () => props.filters);
                     <p class="flex flex-wrap justify-center gap-x-5 gap-y-1">
                         <Link
                             :href="eventsCalendar().url"
-                            class="text-label font-semibold text-ink underline underline-offset-2"
+                            class="relative text-label font-semibold text-ink underline underline-offset-2 after:absolute after:-inset-x-1 after:-inset-y-3"
                         >
                             {{ t('events.index.seeCalendar') }}
                         </Link>
                         <Link
                             :href="eventsSearch().url"
-                            class="text-label font-semibold text-ink underline underline-offset-2"
+                            class="relative text-label font-semibold text-ink underline underline-offset-2 after:absolute after:-inset-x-1 after:-inset-y-3"
                         >
                             {{ t('events.search.browse') }}
                         </Link>
@@ -505,7 +509,7 @@ usePressedChipInView(chipRow, () => props.filters);
             </div>
 
             <aside class="hidden xl:block">
-                <div class="flex flex-col gap-4 pt-7">
+                <div class="flex flex-col gap-4">
                     <MiniMonth
                         :month="props.calendarDays.month"
                         :days="props.calendarDays.days"

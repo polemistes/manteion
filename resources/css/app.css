@@ -384,3 +384,37 @@ html[data-mode='dark'] {
 [data-mode='dark'] .map-tiles .leaflet-tile-pane {
     filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9);
 }
+
+/* Leaflet's zoom buttons and credit in the app's colours (its own are white
+   in dark mode too), and the buttons a full 44px where fingers tap them. */
+.map-tiles .leaflet-bar {
+    border-color: var(--color-line);
+}
+
+.map-tiles .leaflet-bar a {
+    background-color: var(--color-surface);
+    border-bottom-color: var(--color-line);
+    color: var(--color-ink);
+}
+
+.map-tiles .leaflet-bar a:hover,
+.map-tiles .leaflet-bar a:focus-visible {
+    background-color: var(--color-surface-2);
+}
+
+.map-tiles .leaflet-control-attribution {
+    background-color: color-mix(in srgb, var(--color-surface) 85%, transparent);
+    color: var(--color-ink-muted);
+}
+
+.map-tiles .leaflet-control-attribution a {
+    color: var(--color-ink);
+}
+
+@media (pointer: coarse) {
+    .map-tiles.leaflet-touch .leaflet-bar a {
+        width: 44px;
+        height: 44px;
+        line-height: 44px;
+    }
+}

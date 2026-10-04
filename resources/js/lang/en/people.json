@@ -2,6 +2,7 @@
     "title": "People",
     "lede": "Your friends, the people you follow and the people who follow you.",
     "search": "Search friends, following and followers",
+    "searchPlaceholder": "Search by name",
     "tabs": {
         "friends": "Friends",
         "following": "Following",

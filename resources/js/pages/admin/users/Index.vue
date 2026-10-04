@@ -337,6 +337,8 @@ function submit(): void {
                             {{ t('admin.users.deleteAction') }}
                         </MenuItem>
                     </Menu>
+                    <!-- Your own row has no actions: keep its select in line. -->
+                    <span v-else class="size-11" aria-hidden="true" />
                 </div>
             </li>
         </ul>

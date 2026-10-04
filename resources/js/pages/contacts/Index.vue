@@ -530,6 +530,7 @@ usePressedChipInView(chipRow, tab);
                 <SearchField
                     v-model="query"
                     :label="t('people.search')"
+                    :placeholder="t('people.searchPlaceholder')"
                     class="sm:max-w-[26rem]"
                 />
 
@@ -920,7 +921,7 @@ usePressedChipInView(chipRow, tab);
                 </template>
             </div>
 
-            <aside class="hidden xl:sticky xl:top-6 xl:mt-7 xl:block">
+            <aside class="hidden xl:sticky xl:top-6 xl:block">
                 <div class="flex flex-col gap-4">
                     <section
                         class="overflow-hidden rounded-lg border border-line bg-surface"

@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
+import { Check } from '@lucide/vue';
+import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import EventForm from '@/components/events/EventForm.vue';
+import EventForm, { EVENT_FORM_ID } from '@/components/events/EventForm.vue';
 import PageContainer from '@/components/shell/PageContainer.vue';
 import PageHeader from '@/components/shell/PageHeader.vue';
 import Button from '@/components/ui/Button.vue';
@@ -13,6 +15,8 @@ const props = defineProps<{
 }>();
 
 const { t } = useI18n();
+
+const processing = ref(false);
 </script>
 
 <template>
@@ -21,11 +25,31 @@ const { t } = useI18n();
         :close="eventsIndex().url"
         :back="eventsIndex().url"
         :back-label="t('events.show.back')"
-        width="panel"
-    />
+        width="compose"
+    >
+        <template #actions>
+            <Button :as="Link" :href="eventsIndex().url" variant="ghost">
+                {{ t('events.form.cancel') }}
+            </Button>
+            <Button
+                type="submit"
+                :form="EVENT_FORM_ID"
+                variant="primary"
+                :icon="Check"
+                :disabled="processing"
+            >
+                {{
+                    processing
+                        ? t('events.form.creating')
+                        : t('events.form.create')
+                }}
+            </Button>
+        </template>
+    </PageHeader>
 
-    <PageContainer width="panel" class="pt-5 sm:pt-0">
+    <PageContainer width="compose" class="pt-5 sm:pt-0">
         <EventForm
+            v-model:processing="processing"
             :form="store.form()"
             :categories="props.categories"
             :values="{
@@ -48,6 +72,7 @@ const { t } = useI18n();
             :submit-label="t('events.form.create')"
             :processing-label="t('events.form.creating')"
             :note="t('events.form.inviteNext')"
+            is-new
         >
             <template #cancel>
                 <Button :as="Link" :href="eventsIndex().url" variant="ghost">
