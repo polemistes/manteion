@@ -23,10 +23,16 @@ test('anyone who can read a leaflet can respond to it', function () {
 
     $this->actingAs($author)->get('/leaflets')
         ->assertInertia(fn ($page) => $page
-            ->where('leaflets.0.responses.0.body', 'Sounds good!')
-            ->where('leaflets.0.responses.0.user.id', $friend->id)
-            ->where('leaflets.0.responses.0.can_delete', true)
-            ->where('leaflets.0.responses.0.reactions', []));
+            ->where('leaflets.0.responses_count', 1)
+            ->where('leaflets.0.responses', null));
+
+    $this->actingAs($author)->get("/leaflets/{$leaflet->id}")
+        ->assertInertia(fn ($page) => $page
+            ->where('leaflet.responses_count', 1)
+            ->where('leaflet.responses.0.body', 'Sounds good!')
+            ->where('leaflet.responses.0.user.id', $friend->id)
+            ->where('leaflet.responses.0.can_delete', true)
+            ->where('leaflet.responses.0.reactions', []));
 });
 
 test('someone who cannot read the leaflet cannot respond', function () {

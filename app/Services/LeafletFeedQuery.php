@@ -27,7 +27,8 @@ class LeafletFeedQuery
         $friendIds = $this->viewer->friendIds()->all();
 
         return Leaflet::query()
-            ->with(['owner', 'reactions', 'responses.user', 'responses.reactions'])
+            ->with(['owner', 'reactions'])
+            ->withCount('responses')
             ->where(function (Builder $query) use ($viewerId, $friendIds) {
                 $query->where('user_id', $viewerId)
                     ->orWhere('visibility', LeafletVisibility::Official)

@@ -34,7 +34,9 @@ export interface LeafletSummary {
     can_delete: boolean;
     can_report: boolean;
     reactions: ReactionSummary[];
-    responses: LeafletResponseSummary[];
+    responses_count: number;
+    /** The thread, on the leaflet's own page only. */
+    responses: LeafletResponseSummary[] | null;
 }
 
 export interface LeafletResponseSummary {

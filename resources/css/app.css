@@ -31,7 +31,8 @@
         system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Noto Color Emoji';
     --font-display:
-        'Newsreader', 'Newsreader fallback', 'Iowan Old Style', Georgia, serif;
+        'Newsreader', 'Newsreader fallback', 'Iowan Old Style', Georgia, serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji';
 
     /* ---------- Type scale (13 steps, whole pixels, rem so user zoom works) ----------
        Sans roles set no weight; pick font-normal/medium/semibold per component.

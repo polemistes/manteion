@@ -90,8 +90,8 @@ test('you can react to a response on a leaflet you can read, and not otherwise',
     $this->actingAs($friend)->post('/reactions', ['reactable_type' => 'leaflet_response', 'reactable_id' => $response->id, 'emoji' => '😂'])->assertRedirect();
     $this->actingAs($stranger)->post('/reactions', ['reactable_type' => 'leaflet_response', 'reactable_id' => $response->id, 'emoji' => '😂'])->assertForbidden();
 
-    $this->actingAs($friend)->get('/leaflets')
-        ->assertInertia(fn ($page) => $page->where('leaflets.0.responses.0.reactions.0.emoji', '😂'));
+    $this->actingAs($friend)->get("/leaflets/{$leaflet->id}")
+        ->assertInertia(fn ($page) => $page->where('leaflet.responses.0.reactions.0.emoji', '😂'));
 });
 
 test('participants can react to messages, staff who are not participants cannot', function () {

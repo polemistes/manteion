@@ -20,8 +20,13 @@ const props = withDefaults(
         reactableId: number;
         reactions: ReactionSummary[];
         addable?: boolean;
+        /**
+         * One pill for all of them (the three most used and the total),
+         * opening the picker: for cards in a feed.
+         */
+        compact?: boolean;
     }>(),
-    { addable: true },
+    { addable: true, compact: false },
 );
 
 const emit = defineEmits<{ changed: [reactions: ReactionSummary[]] }>();
@@ -42,6 +47,25 @@ watch(
 );
 
 const mine = computed(() => reactions.value.find((r) => r.reacted) ?? null);
+
+const total = computed(() =>
+    reactions.value.reduce((sum, reaction) => sum + reaction.count, 0),
+);
+
+const topEmojis = computed(() =>
+    [...reactions.value]
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 3)
+        .map((reaction) => reaction.emoji),
+);
+
+const summaryLabel = computed(() =>
+    t('reactions.summary', {
+        list: reactions.value
+            .map((reaction) => `${nameOf(reaction.emoji)} ${reaction.count}`)
+            .join(', '),
+    }),
+);
 
 function nameOf(emoji: string): string {
     const name = names.value?.get(emoji);
@@ -106,7 +130,25 @@ defineExpose({ toggle });
         @pointerenter="ensureNames"
     >
         <button
-            v-for="reaction in reactions"
+            v-if="props.compact && reactions.length"
+            type="button"
+            :aria-label="summaryLabel"
+            :title="summaryLabel"
+            class="relative inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-caption font-semibold tabular-nums ring-1 transition-colors duration-120 ring-inset after:absolute after:inset-x-0 after:-inset-y-1.5"
+            :class="
+                mine
+                    ? 'bg-accent-soft text-accent-ink ring-accent-line'
+                    : 'bg-surface text-ink-muted ring-line hover:bg-surface-2'
+            "
+            @click="pickerOpen = true"
+        >
+            <span class="flex text-[15px] leading-none">
+                <span v-for="emoji in topEmojis" :key="emoji">{{ emoji }}</span>
+            </span>
+            {{ total }}
+        </button>
+        <button
+            v-for="reaction in props.compact ? [] : reactions"
             :key="reaction.emoji"
             type="button"
             :aria-pressed="reaction.reacted"
@@ -130,7 +172,7 @@ defineExpose({ toggle });
             {{ reaction.count }}
         </button>
         <IconButton
-            v-if="props.addable"
+            v-if="props.addable && !(props.compact && reactions.length)"
             :icon="SmilePlus"
             :label="t('reactions.pick')"
             size="sm"

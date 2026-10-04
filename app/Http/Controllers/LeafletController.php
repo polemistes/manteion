@@ -72,7 +72,7 @@ class LeafletController extends Controller
     {
         Gate::authorize('view', $leaflet);
 
-        $leaflet->load(['owner', 'reactions', 'responses.user', 'responses.reactions']);
+        $leaflet->load(['owner', 'reactions', 'responses.user', 'responses.reactions'])->loadCount('responses');
         $this->retryMissingLinkPreview($leaflet);
 
         // Opening the leaflet means the replies to it have been seen.
@@ -164,7 +164,10 @@ class LeafletController extends Controller
             'can_delete' => Gate::forUser($viewer)->allows('delete', $leaflet),
             'can_report' => $leaflet->user_id !== $viewer->id,
             'reactions' => Reaction::summarize($leaflet->reactions, $viewer),
-            'responses' => $leaflet->responses->map(fn (LeafletResponse $response) => [
+            'responses_count' => (int) $leaflet->responses_count,
+            // The thread itself only on the leaflet's own page; the feed
+            // shows how many there are.
+            'responses' => ! $leaflet->relationLoaded('responses') ? null : $leaflet->responses->map(fn (LeafletResponse $response) => [
                 'id' => $response->id,
                 'body' => $response->body,
                 'created_at' => $response->created_at->toIso8601String(),

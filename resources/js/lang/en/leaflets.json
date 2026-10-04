@@ -1,22 +1,32 @@
 {
     "index": {
         "title": "Leaflets",
-        "compose": "Write a leaflet",
+        "lede": "Short notes to your friends and followers: a question, a tip, something to lend.",
+        "compose": "New leaflet",
+        "prompt": "Write a leaflet…",
         "scope": "Show",
         "scopeAll": "All",
-        "empty": "No leaflets here yet."
+        "emptyTitle": "No leaflets here yet",
+        "empty": "Write the first one: ask, offer or tell people something."
     },
     "form": {
         "body": "Message",
         "bodyPlaceholder": "What do you want to say?",
         "visibility": "Who can read it",
-        "attachment": "Attach",
-        "attachmentNone": "Nothing",
-        "attachmentImage": "An image",
-        "attachmentLink": "A link",
+        "visibilityHints": {
+            "official": "Everyone on Manteion",
+            "friends_and_followers": "Your friends and the people who follow you",
+            "friends": "Only your friends",
+            "private": "Only you, as a note to yourself"
+        },
+        "addImage": "Add a picture",
+        "removeImage": "Remove the picture",
+        "addLink": "Add a link",
+        "removeLink": "Remove the link",
         "link": "Link",
-        "send": "Send leaflet",
-        "sending": "Sending…"
+        "linkHint": "A preview of the page shows once it is saved.",
+        "send": "Post leaflet",
+        "sending": "Posting…"
     },
     "visibility": {
         "official": "Official",
@@ -28,7 +38,13 @@
         "edited": "edited",
         "edit": "Edit",
         "delete": "Delete",
-        "confirmDelete": "Delete this leaflet?"
+        "report": "Report",
+        "actions": "Leaflet actions",
+        "readMore": "Read the whole leaflet",
+        "responses": "{n} response | {n} responses",
+        "respond": "Respond",
+        "confirmDeleteTitle": "Delete this leaflet?",
+        "confirmDelete": "It goes for good, with its responses."
     },
     "edit": {
         "title": "Edit leaflet",
@@ -37,13 +53,16 @@
     },
     "responses": {
         "heading": "Responses",
+        "none": "No responses yet. Be the first.",
         "placeholder": "Write a response…",
         "send": "Respond",
         "sending": "Sending…",
         "delete": "Delete",
-        "confirmDelete": "Delete this response?"
+        "actions": "Response actions",
+        "confirmDeleteTitle": "Delete this response?",
+        "confirmDelete": "It goes for good."
     },
     "show": {
-        "backToFeed": "Back to all leaflets"
+        "title": "Leaflet from {name}"
     }
 }

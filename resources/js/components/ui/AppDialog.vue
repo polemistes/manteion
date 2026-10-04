@@ -40,6 +40,9 @@ const open = defineModel<boolean>('open', { default: false });
             <DialogContent
                 class="fixed inset-x-0 bottom-0 z-50 max-h-[90dvh] w-full overflow-auto overscroll-contain rounded-t-xl bg-surface px-4 pt-2 pb-[calc(16px+env(safe-area-inset-bottom))] text-ink shadow-lg focus:outline-none data-[state=closed]:animate-[sheet-out_200ms_var(--ease-exit)] data-[state=open]:animate-[sheet-in_280ms_var(--ease-enter)] sm:inset-auto sm:top-1/2 sm:left-1/2 sm:w-[calc(100vw-32px)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:p-6 sm:data-[state=closed]:animate-[dialog-out_200ms_var(--ease-exit)] sm:data-[state=open]:animate-[dialog-in_280ms_var(--ease-enter)]"
                 :class="props.size === 'lg' ? 'sm:max-w-[560px]' : 'sm:max-w-[440px]'"
+                v-bind="
+                    props.description ? {} : { 'aria-describedby': undefined }
+                "
             >
                 <div
                     class="mx-auto mb-3.5 h-1 w-9 rounded-full bg-line-strong sm:hidden"

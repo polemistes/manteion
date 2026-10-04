@@ -1,22 +1,32 @@
 {
     "index": {
         "title": "Flyveblad",
-        "compose": "Skriv et flyveblad",
+        "lede": "Korte beskjeder til venner og følgere: et spørsmål, et tips, noe å låne bort.",
+        "compose": "Nytt flyveblad",
+        "prompt": "Skriv et flyveblad…",
         "scope": "Vis",
         "scopeAll": "Alle",
-        "empty": "Ingen flyveblad her ennå."
+        "emptyTitle": "Ingen flyveblad her ennå",
+        "empty": "Skriv det første: spør om noe, tilby noe eller fortell noe."
     },
     "form": {
         "body": "Melding",
         "bodyPlaceholder": "Hva vil du si?",
         "visibility": "Hvem kan lese det",
-        "attachment": "Legg ved",
-        "attachmentNone": "Ingenting",
-        "attachmentImage": "Et bilde",
-        "attachmentLink": "En lenke",
+        "visibilityHints": {
+            "official": "Alle på Manteion",
+            "friends_and_followers": "Vennene dine og folk som følger deg",
+            "friends": "Bare vennene dine",
+            "private": "Bare deg, som et notat til deg selv"
+        },
+        "addImage": "Legg til et bilde",
+        "removeImage": "Fjern bildet",
+        "addLink": "Legg til en lenke",
+        "removeLink": "Fjern lenken",
         "link": "Lenke",
-        "send": "Send flyveblad",
-        "sending": "Sender…"
+        "linkHint": "En forhåndsvisning av siden vises når det er lagret.",
+        "send": "Publiser flyveblad",
+        "sending": "Publiserer…"
     },
     "visibility": {
         "official": "Offisielt",
@@ -28,7 +38,13 @@
         "edited": "redigert",
         "edit": "Rediger",
         "delete": "Slett",
-        "confirmDelete": "Slette dette flyvebladet?"
+        "report": "Rapporter",
+        "actions": "Handlinger for flyvebladet",
+        "readMore": "Les hele flyvebladet",
+        "responses": "{n} svar | {n} svar",
+        "respond": "Svar",
+        "confirmDeleteTitle": "Slette dette flyvebladet?",
+        "confirmDelete": "Det forsvinner for godt, med svarene."
     },
     "edit": {
         "title": "Rediger flyveblad",
@@ -37,13 +53,16 @@
     },
     "responses": {
         "heading": "Svar",
+        "none": "Ingen svar ennå. Bli den første.",
         "placeholder": "Skriv et svar…",
         "send": "Svar",
         "sending": "Sender…",
         "delete": "Slett",
-        "confirmDelete": "Slette dette svaret?"
+        "actions": "Handlinger for svaret",
+        "confirmDeleteTitle": "Slette dette svaret?",
+        "confirmDelete": "Det forsvinner for godt."
     },
     "show": {
-        "backToFeed": "Tilbake til alle flyveblad"
+        "title": "Flyveblad fra {name}"
     }
 }
