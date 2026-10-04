@@ -1,69 +1,68 @@
 <script setup lang="ts">
-import { Form, Head, Link, router, usePoll } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { router, usePage, usePoll } from '@inertiajs/vue3';
+import {
+    BellOff,
+    ChevronRight,
+    MessageCircle,
+    Plus,
+    UserCheck,
+    UserPlus,
+    Users,
+} from '@lucide/vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import ContactSearchResult from '@/components/ContactSearchResult.vue';
-import GroupMembershipDropdown from '@/components/GroupMembershipDropdown.vue';
-import PersonSummary from '@/components/PersonSummary.vue';
-import TagPreferencePicker from '@/components/TagPreferencePicker.vue';
-import * as contactGroups from '@/routes/contact-groups';
-import * as contactGroupMembers from '@/routes/contact-groups/members';
-import { index as contactsIndex } from '@/routes/contacts';
-import * as follows from '@/routes/follows';
-import * as friendships from '@/routes/friendships';
-import { store as startConversation } from '@/routes/messages';
+import FindPeople from '@/components/people/FindPeople.vue';
+import GroupDialog from '@/components/people/GroupDialog.vue';
+import GroupPickerDialog from '@/components/people/GroupPickerDialog.vue';
+import MuteDialog from '@/components/people/MuteDialog.vue';
+import NewGroupDialog from '@/components/people/NewGroupDialog.vue';
+import { messagePerson, PEOPLE_PROPS } from '@/components/people/people';
+import type {
+    FindResult,
+    FollowEntry,
+    FriendEntry,
+    FriendRequestEntry,
+    GroupEntry,
+    GroupType,
+    Person,
+} from '@/components/people/people';
+import PersonMenu from '@/components/people/PersonMenu.vue';
+import PersonRow from '@/components/people/PersonRow.vue';
+import RequestRow from '@/components/people/RequestRow.vue';
+import PageContainer from '@/components/shell/PageContainer.vue';
+import PageHeader from '@/components/shell/PageHeader.vue';
+import AppDialog from '@/components/ui/AppDialog.vue';
+import AvatarStack from '@/components/ui/AvatarStack.vue';
+import Button from '@/components/ui/Button.vue';
+import EmptyState from '@/components/ui/EmptyState.vue';
+import FilterChip from '@/components/ui/FilterChip.vue';
+import IconButton from '@/components/ui/IconButton.vue';
+import SearchField from '@/components/ui/SearchField.vue';
+import SectionHeader from '@/components/ui/SectionHeader.vue';
+import { confirmAction } from '@/composables/useConfirm';
+import type { CategoryOption, TagOption } from '@/events';
+import { useDates } from '@/lib/dates';
+import { toast, toastError } from '@/lib/toast';
+import { useBadges } from '@/realtime';
+import {
+    destroy as destroyFollow,
+    store as storeFollow,
+    update as approveFollowRequest,
+} from '@/routes/follows';
+import {
+    destroy as destroyFriendship,
+    update as answerFriendRequest,
+} from '@/routes/friendships';
 
-const { t } = useI18n();
-
-interface CategoryOption {
-    id: number;
-    name: string;
-    slug: string;
-    children: { id: number; name: string; slug: string }[];
-}
-
-interface ContactSummary {
-    id: number;
-    name: string;
-    username: string;
-    avatar_url: string | null;
-    tag_preference_ids?: number[];
-    muted?: boolean;
-}
-
-interface FriendshipEntry {
-    friendship_id: number;
-    user: ContactSummary;
-}
-
-interface FollowEntry {
-    follow_id: number;
-    user: ContactSummary;
-    tag_preference_ids?: number[];
-    muted?: boolean;
-}
-
-interface GroupEntry {
-    id: number;
-    name: string;
-    members: ContactSummary[];
-}
-
-interface FindResult {
-    id: number;
-    name: string;
-    username: string;
-    avatar_url: string | null;
-    friend_status: 'none' | 'request_sent' | 'request_received' | 'friends';
-    friendship_id: number | null;
-    follow_status: 'none' | 'pending' | 'following';
-    follow_id: number | null;
-}
-
+/**
+ * People: friends, the people you follow and who follow you, the requests
+ * waiting both ways, and your groups (which filter the events feed). From
+ * xl the groups and finding someone new sit beside the list.
+ */
 const props = defineProps<{
-    friends: ContactSummary[];
-    pendingFriendRequests: FriendshipEntry[];
-    sentFriendRequests: FriendshipEntry[];
+    friends: FriendEntry[];
+    pendingFriendRequests: FriendRequestEntry[];
+    sentFriendRequests: FriendRequestEntry[];
     following: FollowEntry[];
     pendingFollowRequestsSent: FollowEntry[];
     followers: FollowEntry[];
@@ -75,704 +74,959 @@ const props = defineProps<{
     findResults: FindResult[];
 }>();
 
-usePoll(20000, {
-    only: [
-        'friends',
-        'pendingFriendRequests',
-        'sentFriendRequests',
-        'following',
-        'pendingFollowRequestsSent',
-        'followers',
-        'pendingFollowerRequests',
-        'friendGroups',
-        'followingGroups',
-    ],
-});
+const { t, te } = useI18n();
+const dates = useDates();
+const page = usePage();
 
-function groupsAvailableFor(
-    personId: number,
-    groups: GroupEntry[],
-): GroupEntry[] {
-    return groups.filter(
-        (group) => !group.members.some((member) => member.id === personId),
-    );
+// Fresh within a minute, and at once when a request arrives or is answered.
+usePoll(60_000, { only: PEOPLE_PROPS });
+
+const { badges } = useBadges();
+
+watch(
+    () => badges.value.requests,
+    () => router.reload({ only: PEOPLE_PROPS }),
+);
+
+type Tab = 'friends' | 'following' | 'followers' | 'requests' | 'groups';
+
+const TABS: Tab[] = ['friends', 'following', 'followers', 'requests', 'groups'];
+
+function initialTab(): Tab {
+    const wanted = new URLSearchParams(page.url.split('?')[1] ?? '').get('tab');
+
+    return TABS.includes(wanted as Tab) ? (wanted as Tab) : 'friends';
 }
 
-function matchesQuery(contact: ContactSummary, query: string): boolean {
-    const term = query.trim().toLowerCase();
+const tab = ref<Tab>(initialTab());
 
-    if (term === '') {
-        return true;
+function showTab(next: Tab): void {
+    tab.value = next;
+
+    if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+
+        if (next === 'friends') {
+            url.searchParams.delete('tab');
+        } else {
+            url.searchParams.set('tab', next);
+        }
+
+        window.history.replaceState(window.history.state, '', url);
     }
+}
+
+const incomingCount = computed(
+    () =>
+        props.pendingFriendRequests.length +
+        props.pendingFollowerRequests.length,
+);
+
+const groups = computed(() => [
+    ...props.friendGroups.map((group) => ({
+        ...group,
+        type: 'friend' as GroupType,
+    })),
+    ...props.followingGroups.map((group) => ({
+        ...group,
+        type: 'following' as GroupType,
+    })),
+]);
+
+const tabs = computed(() => [
+    {
+        key: 'friends' as const,
+        label: t('people.tabs.friends'),
+        count: props.friends.length,
+        badge: 0,
+    },
+    {
+        key: 'following' as const,
+        label: t('people.tabs.following'),
+        count: props.following.length,
+        badge: 0,
+    },
+    {
+        key: 'followers' as const,
+        label: t('people.tabs.followers'),
+        count: props.followers.length,
+        badge: 0,
+    },
+    {
+        key: 'requests' as const,
+        label: t('people.tabs.requests'),
+        count: 0,
+        badge: incomingCount.value,
+    },
+    {
+        key: 'groups' as const,
+        label: t('people.tabs.groups'),
+        count: groups.value.length,
+        badge: 0,
+    },
+]);
+
+// Narrowing the lists by name.
+const query = ref('');
+
+function matches(person: Person): boolean {
+    const term = query.value.trim().toLocaleLowerCase();
 
     return (
-        contact.name.toLowerCase().includes(term) ||
-        contact.username.toLowerCase().includes(term)
+        term === '' ||
+        person.name.toLocaleLowerCase().includes(term) ||
+        person.username.toLocaleLowerCase().includes(term)
     );
 }
 
-const contactsQuery = ref('');
-const groupsOpen = ref(false);
-const findOpen = ref(false);
-const findQueryInput = ref(props.findQuery);
+const SHOWN = 50;
+const showAll = ref(false);
 
-function submitFind(): void {
-    router.get(
-        contactsIndex().url,
-        { find: findQueryInput.value },
-        {
-            preserveState: true,
-            preserveScroll: true,
-            only: ['findQuery', 'findResults'],
+watch([tab, query], () => {
+    showAll.value = false;
+});
+
+function limited<T>(items: T[]): T[] {
+    return showAll.value || query.value ? items : items.slice(0, SHOWN);
+}
+
+const friends = computed(() => props.friends.filter(matches));
+const following = computed(() =>
+    props.following.filter((entry) => matches(entry.user)),
+);
+const followers = computed(() =>
+    props.followers.filter((entry) => matches(entry.user)),
+);
+
+// The requests waiting for you, newest first.
+type Incoming =
+    | { kind: 'friend'; key: string; request: FriendRequestEntry }
+    | { kind: 'follow'; key: string; request: FollowEntry };
+
+const incoming = computed<Incoming[]>(() =>
+    [
+        ...props.pendingFriendRequests.map((request): Incoming => ({
+            kind: 'friend',
+            key: `friend-${request.friendship_id}`,
+            request,
+        })),
+        ...props.pendingFollowerRequests.map((request): Incoming => ({
+            kind: 'follow',
+            key: `follow-${request.follow_id}`,
+            request,
+        })),
+    ]
+        .filter((item) => matches(item.request.user))
+        .sort((a, b) => createdOf(b).localeCompare(createdOf(a))),
+);
+
+function createdOf(item: Incoming): string {
+    return item.kind === 'friend'
+        ? (item.request.created_at ?? '')
+        : (item.request.since ?? '');
+}
+
+// Sub lines.
+const tagsById = computed(() => {
+    const map = new Map<number, TagOption>();
+
+    for (const category of props.categories) {
+        map.set(category.id, category);
+        category.children.forEach((child) => map.set(child.id, child));
+    }
+
+    return map;
+});
+
+function tagLabel(tag: TagOption): string {
+    const key = `categories.${tag.slug}`;
+
+    return te(key) ? t(key) : tag.name;
+}
+
+function mutedText(entry: {
+    muted?: boolean;
+    tag_preference_ids?: number[];
+}): string | null {
+    if (entry.muted) {
+        return t('people.mutedAll');
+    }
+
+    const names = (entry.tag_preference_ids ?? [])
+        .map((id) => tagsById.value.get(id))
+        .filter((tag): tag is TagOption => tag !== undefined)
+        .map(tagLabel);
+
+    return names.length ? t('people.muted', { names: names.join(', ') }) : null;
+}
+
+function groupNames(person: Person, type: GroupType): string[] {
+    return (type === 'friend' ? props.friendGroups : props.followingGroups)
+        .filter((group) =>
+            group.members.some((member) => member.id === person.id),
+        )
+        .map((group) => group.name);
+}
+
+function since(value: string | null): string | null {
+    if (!value) {
+        return null;
+    }
+
+    const year = dates.dayKey(value).slice(0, 4);
+
+    return year === dates.todayKey().slice(0, 4)
+        ? t('people.friendsSinceMonth', { month: dates.monthName(value) })
+        : t('people.friendsSince', { year });
+}
+
+function friendSub(friend: FriendEntry): string {
+    return [
+        ...groupNames(friend, 'friend'),
+        friend.mutual_count ? t('people.mutual', friend.mutual_count) : null,
+        since(friend.friends_since),
+    ]
+        .filter(Boolean)
+        .join(' · ');
+}
+
+function followingSub(entry: FollowEntry): string {
+    return groupNames(entry.user, 'following').join(' · ');
+}
+
+function followerSub(entry: FollowEntry): string {
+    return [
+        entry.follows_back === 'following' ? t('people.eachOther') : null,
+        entry.mutual_count ? t('people.mutual', entry.mutual_count) : null,
+    ]
+        .filter(Boolean)
+        .join(' · ');
+}
+
+// Messages are between friends only.
+const friendIds = computed(
+    () => new Set(props.friends.map((friend) => friend.id)),
+);
+
+// Answering and ending.
+const busy = ref<string | null>(null);
+
+function visitOptions(key: string, done?: () => void) {
+    busy.value = key;
+
+    return {
+        preserveScroll: true,
+        preserveState: true,
+        only: PEOPLE_PROPS,
+        onSuccess: () => done?.(),
+        onError: () => toastError(t('settings.saveFailed')),
+        onFinish: () => {
+            busy.value = null;
         },
+    };
+}
+
+function answerFriend(request: FriendRequestEntry, accept: boolean): void {
+    router.patch(
+        answerFriendRequest(request.friendship_id).url,
+        { action: accept ? 'accept' : 'decline' },
+        visitOptions(`friend-${request.friendship_id}`, () =>
+            toast(
+                accept
+                    ? {
+                          title: t('notifications.savedAccepted', {
+                              name: request.user.name,
+                          }),
+                          icon: UserCheck,
+                      }
+                    : { title: t('notifications.savedDeclined') },
+            ),
+        ),
     );
 }
 
-const filteredFriends = computed(() =>
-    props.friends.filter((friend) => matchesQuery(friend, contactsQuery.value)),
+function answerFollow(request: FollowEntry, approve: boolean): void {
+    const key = `follow-${request.follow_id}`;
+    const done = () =>
+        toast(
+            approve
+                ? {
+                      title: t('notifications.savedApproved', {
+                          name: request.user.name,
+                      }),
+                      icon: UserCheck,
+                  }
+                : { title: t('notifications.savedDeclined') },
+        );
+
+    if (approve) {
+        router.patch(
+            approveFollowRequest(request.follow_id).url,
+            {},
+            visitOptions(key, done),
+        );
+    } else {
+        router.delete(
+            destroyFollow(request.follow_id).url,
+            visitOptions(key, done),
+        );
+    }
+}
+
+async function unfriend(friend: FriendEntry): Promise<void> {
+    const confirmed = await confirmAction({
+        title: t('people.confirm.unfriendTitle', { name: friend.name }),
+        message: t('people.confirm.unfriendBody', { name: friend.name }),
+        confirmLabel: t('people.menu.unfriend'),
+    });
+
+    if (confirmed) {
+        router.delete(
+            destroyFriendship(friend.friendship_id).url,
+            visitOptions(`friendship-${friend.friendship_id}`),
+        );
+    }
+}
+
+async function endFollow(
+    entry: FollowEntry,
+    kind: 'unfollow' | 'removeFollower',
+): Promise<void> {
+    const confirmed = await confirmAction({
+        title: t(`people.confirm.${kind}Title`, { name: entry.user.name }),
+        message: t(`people.confirm.${kind}Body`, { name: entry.user.name }),
+        confirmLabel:
+            kind === 'unfollow'
+                ? t('people.menu.unfollow')
+                : t('people.menu.removeFollower'),
+    });
+
+    if (confirmed) {
+        router.delete(
+            destroyFollow(entry.follow_id).url,
+            visitOptions(`follow-${entry.follow_id}`),
+        );
+    }
+}
+
+function followBack(entry: FollowEntry): void {
+    router.post(
+        storeFollow().url,
+        { user_id: entry.user.id },
+        visitOptions(`back-${entry.user.id}`, () =>
+            toast({
+                title: t('notifications.savedFollowing', {
+                    name: entry.user.name,
+                }),
+                icon: UserCheck,
+            }),
+        ),
+    );
+}
+
+function cancelFriendRequest(request: FriendRequestEntry): void {
+    router.delete(
+        destroyFriendship(request.friendship_id).url,
+        visitOptions(`sent-${request.friendship_id}`, () =>
+            toast({ title: t('people.find.requestCancelled') }),
+        ),
+    );
+}
+
+function cancelFollowRequest(entry: FollowEntry): void {
+    router.delete(
+        destroyFollow(entry.follow_id).url,
+        visitOptions(`sent-follow-${entry.follow_id}`, () =>
+            toast({ title: t('people.find.requestCancelled') }),
+        ),
+    );
+}
+
+// Dialogs.
+const muteOpen = ref(false);
+const muteFor = ref<{
+    person: Person;
+    tagIds: number[];
+    muteAll: boolean;
+} | null>(null);
+
+function openMute(
+    person: Person,
+    entry: { tag_preference_ids?: number[]; muted?: boolean },
+): void {
+    muteFor.value = {
+        person,
+        tagIds: entry.tag_preference_ids ?? [],
+        muteAll: entry.muted ?? false,
+    };
+    muteOpen.value = true;
+}
+
+const pickerOpen = ref(false);
+const pickerFor = ref<{ person: Person; type: GroupType } | null>(null);
+
+function openGroupPicker(person: Person, type: GroupType): void {
+    pickerFor.value = { person, type };
+    pickerOpen.value = true;
+}
+
+const groupOpen = ref(false);
+const openGroupId = ref<{ id: number; type: GroupType } | null>(null);
+const openGroup = computed(
+    () =>
+        groups.value.find(
+            (group) =>
+                group.id === openGroupId.value?.id &&
+                group.type === openGroupId.value?.type,
+        ) ?? null,
 );
-const filteredFollowing = computed(() =>
-    props.following.filter((entry) =>
-        matchesQuery(entry.user, contactsQuery.value),
-    ),
+const groupCandidates = computed<Person[]>(() =>
+    openGroup.value?.type === 'following'
+        ? props.following.map((entry) => entry.user)
+        : props.friends,
 );
-const filteredFollowers = computed(() =>
-    props.followers.filter((entry) =>
-        matchesQuery(entry.user, contactsQuery.value),
-    ),
-);
+
+function showGroup(group: { id: number; type: GroupType }): void {
+    openGroupId.value = { id: group.id, type: group.type };
+    groupOpen.value = true;
+}
+
+const newGroupOpen = ref(false);
+const findOpen = ref(Boolean(props.findQuery));
 </script>
 
 <template>
-    <Head :title="t('contacts.index.title')" />
-
-    <h1 class="text-xl mb-6 font-bold">{{ t('contacts.index.title') }}</h1>
-
-    <div class="contacts-layout">
-        <aside class="contacts-layout__find lg:sticky lg:top-6">
-            <button
-                type="button"
-                class="text-sm mb-3 flex w-full items-center justify-between font-bold uppercase lg:hidden"
-                @click="findOpen = !findOpen"
-            >
-                {{ t('contacts.index.findHeading') }}
-                <span>{{ findOpen ? '▲' : '▼' }}</span>
-            </button>
-
-            <div :class="findOpen ? '' : 'hidden lg:block'">
-                <h2 class="text-sm mb-3 hidden font-bold uppercase lg:block">
-                    {{ t('contacts.index.findHeading') }}
-                </h2>
-
-                <form class="mb-4 flex gap-2" @submit.prevent="submitFind">
-                    <input
-                        v-model="findQueryInput"
-                        type="text"
-                        :placeholder="t('contacts.index.findPlaceholder')"
-                        class="border-edge bg-surface-raised text-sm flex-1 border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
-                    />
-                    <button
-                        type="submit"
-                        class="border-edge text-sm border px-3 py-2 hover:bg-accent hover:text-on-accent"
-                    >
-                        {{ t('contacts.index.find') }}
-                    </button>
-                </form>
-
-                <div class="lg:hidden">
-                    <p
-                        v-if="findQuery && !findResults.length"
-                        class="text-sm text-ink/70"
-                    >
-                        {{
-                            t('contacts.index.findNoResults', {
-                                query: findQuery,
-                            })
-                        }}
-                    </p>
-
-                    <ul v-else class="flex flex-col gap-2">
-                        <ContactSearchResult
-                            v-for="result in findResults"
-                            :key="result.id"
-                            :result="result"
-                        />
-                    </ul>
-                </div>
-            </div>
-        </aside>
-
-        <aside class="contacts-layout__groups lg:sticky lg:top-6">
-            <button
-                type="button"
-                class="text-sm mb-3 flex w-full items-center justify-between font-bold uppercase lg:hidden"
-                @click="groupsOpen = !groupsOpen"
-            >
-                {{ t('contacts.index.groupsHeading') }}
-                <span>{{ groupsOpen ? '▲' : '▼' }}</span>
-            </button>
-
-            <div :class="groupsOpen ? '' : 'hidden lg:block'">
-                <section class="mb-10">
-                    <h2 class="text-sm mb-3 font-bold uppercase">
-                        {{ t('contacts.index.friendGroups') }}
-                    </h2>
-                    <p class="text-xs mb-3 text-ink/70">
-                        {{ t('contacts.index.friendGroupsDescription') }}
-                    </p>
-
-                    <Form
-                        v-bind="contactGroups.store.form()"
-                        #default="{ errors, processing }"
-                        class="mb-4 flex items-end gap-2"
-                    >
-                        <input type="hidden" name="type" value="friend" />
-                        <div class="flex-1">
-                            <label
-                                for="friend_group_name"
-                                class="text-xs mb-1 block font-bold"
-                                >{{ t('contacts.index.newGroupName') }}</label
-                            >
-                            <input
-                                id="friend_group_name"
-                                type="text"
-                                name="name"
-                                required
-                                class="border-edge bg-surface-raised text-sm w-full border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
-                            />
-                            <p
-                                v-if="errors.name"
-                                class="text-xs mt-1 font-bold"
-                            >
-                                ! {{ errors.name }}
-                            </p>
-                        </div>
-                        <button
-                            type="submit"
-                            :disabled="processing"
-                            class="border-edge text-sm border px-3 py-2 hover:bg-accent hover:text-on-accent"
-                        >
-                            {{ t('contacts.index.create') }}
-                        </button>
-                    </Form>
-
-                    <div
-                        v-for="group in friendGroups"
-                        :key="group.id"
-                        class="border-frame border-edge mb-4 p-3"
-                    >
-                        <div
-                            class="mb-2 flex items-center justify-between gap-3"
-                        >
-                            <span class="text-sm min-w-0 font-bold">{{
-                                group.name
-                            }}</span>
-                            <Link
-                                :href="contactGroups.destroy(group.id).url"
-                                method="delete"
-                                as="button"
-                                preserve-scroll
-                                class="text-xs underline"
-                            >
-                                {{ t('contacts.index.deleteGroup') }}
-                            </Link>
-                        </div>
-
-                        <ul class="mb-2 flex flex-col gap-1">
-                            <li
-                                v-for="member in group.members"
-                                :key="member.id"
-                                class="text-sm flex items-center justify-between gap-3"
-                            >
-                                <PersonSummary v-bind="member" />
-                                <Link
-                                    :href="
-                                        contactGroupMembers.destroy({
-                                            contact_group: group.id,
-                                            member: member.id,
-                                        }).url
-                                    "
-                                    method="delete"
-                                    as="button"
-                                    preserve-scroll
-                                    class="text-xs underline"
-                                >
-                                    {{ t('contacts.index.remove') }}
-                                </Link>
-                            </li>
-                        </ul>
-                    </div>
-                </section>
-
-                <section>
-                    <h2 class="text-sm mb-3 font-bold uppercase">
-                        {{ t('contacts.index.followingGroups') }}
-                    </h2>
-                    <p class="text-xs mb-3 text-ink/70">
-                        {{ t('contacts.index.followingGroupsDescription') }}
-                    </p>
-
-                    <Form
-                        v-bind="contactGroups.store.form()"
-                        #default="{ errors, processing }"
-                        class="mb-4 flex items-end gap-2"
-                    >
-                        <input type="hidden" name="type" value="following" />
-                        <div class="flex-1">
-                            <label
-                                for="following_group_name"
-                                class="text-xs mb-1 block font-bold"
-                                >{{ t('contacts.index.newGroupName') }}</label
-                            >
-                            <input
-                                id="following_group_name"
-                                type="text"
-                                name="name"
-                                required
-                                class="border-edge bg-surface-raised text-sm w-full border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
-                            />
-                            <p
-                                v-if="errors.name"
-                                class="text-xs mt-1 font-bold"
-                            >
-                                ! {{ errors.name }}
-                            </p>
-                        </div>
-                        <button
-                            type="submit"
-                            :disabled="processing"
-                            class="border-edge text-sm border px-3 py-2 hover:bg-accent hover:text-on-accent"
-                        >
-                            {{ t('contacts.index.create') }}
-                        </button>
-                    </Form>
-
-                    <div
-                        v-for="group in followingGroups"
-                        :key="group.id"
-                        class="border-frame border-edge mb-4 p-3"
-                    >
-                        <div
-                            class="mb-2 flex items-center justify-between gap-3"
-                        >
-                            <span class="text-sm min-w-0 font-bold">{{
-                                group.name
-                            }}</span>
-                            <Link
-                                :href="contactGroups.destroy(group.id).url"
-                                method="delete"
-                                as="button"
-                                preserve-scroll
-                                class="text-xs underline"
-                            >
-                                {{ t('contacts.index.deleteGroup') }}
-                            </Link>
-                        </div>
-
-                        <ul class="mb-2 flex flex-col gap-1">
-                            <li
-                                v-for="member in group.members"
-                                :key="member.id"
-                                class="text-sm flex items-center justify-between gap-3"
-                            >
-                                <PersonSummary v-bind="member" />
-                                <Link
-                                    :href="
-                                        contactGroupMembers.destroy({
-                                            contact_group: group.id,
-                                            member: member.id,
-                                        }).url
-                                    "
-                                    method="delete"
-                                    as="button"
-                                    preserve-scroll
-                                    class="text-xs underline"
-                                >
-                                    {{ t('contacts.index.remove') }}
-                                </Link>
-                            </li>
-                        </ul>
-                    </div>
-                </section>
-            </div>
-        </aside>
-
-        <div class="contacts-layout__search">
-            <h2 class="text-sm mb-3 font-bold uppercase">
-                {{ t('contacts.index.filterHeading') }}
-            </h2>
-            <input
-                v-model="contactsQuery"
-                type="text"
-                :placeholder="t('contacts.index.filterPlaceholder')"
-                class="border-edge bg-surface-raised text-sm w-full border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
+    <PageHeader
+        :title="t('people.title')"
+        :lede="t('people.lede')"
+        width="wide"
+        root
+    >
+        <template #phone-actions>
+            <IconButton
+                :icon="UserPlus"
+                :label="t('people.find.title')"
+                @click="findOpen = true"
             />
-        </div>
+        </template>
+        <template #actions>
+            <Button :icon="UserPlus" class="xl:hidden" @click="findOpen = true">
+                {{ t('people.find.title') }}
+            </Button>
+        </template>
+    </PageHeader>
 
-        <div class="contacts-layout__main">
-            <section v-if="findQuery" class="mb-10 hidden lg:block">
-                <h2 class="text-sm mb-3 font-bold uppercase">
-                    {{ t('contacts.index.searchResultsHeading') }}
-                </h2>
-                <p v-if="!findResults.length" class="text-sm text-ink/70">
-                    {{
-                        t('contacts.index.findNoResults', { query: findQuery })
-                    }}
-                </p>
-                <ul v-else class="flex flex-col gap-2">
-                    <ContactSearchResult
-                        v-for="result in findResults"
-                        :key="result.id"
-                        :result="result"
+    <PageContainer width="wide" class="pt-3 pb-16 sm:pt-0">
+        <div
+            class="xl:grid xl:grid-cols-[minmax(0,1fr)_var(--spacing-aside)] xl:items-start xl:gap-12"
+        >
+            <div class="min-w-0">
+                <SearchField
+                    v-model="query"
+                    :label="t('people.search')"
+                    class="sm:max-w-[26rem]"
+                />
+
+                <div
+                    class="-mx-4 mt-3 scrollbar-none flex gap-2 overflow-x-auto fade-end px-4 pb-1 sm:mx-0 sm:flex-wrap sm:[mask-image:none] sm:px-0"
+                    role="group"
+                    :aria-label="t('people.title')"
+                >
+                    <FilterChip
+                        v-for="item in tabs"
+                        :key="item.key"
+                        :pressed="tab === item.key"
+                        :count="item.count || undefined"
+                        :badge="item.badge"
+                        @update:pressed="showTab(item.key)"
+                    >
+                        {{ item.label }}
+                    </FilterChip>
+                </div>
+
+                <!-- Waiting for you: on Friends and Requests. -->
+                <template
+                    v-if="
+                        (tab === 'friends' || tab === 'requests') &&
+                        incoming.length
+                    "
+                >
+                    <SectionHeader
+                        :title="t('people.waiting')"
+                        :count="incoming.length"
                     />
-                </ul>
-            </section>
-
-            <section v-if="pendingFriendRequests.length" class="mb-10">
-                <h2 class="text-sm mb-3 font-bold uppercase">
-                    {{ t('contacts.index.friendRequests') }}
-                </h2>
-                <ul class="flex flex-col gap-2">
-                    <li
-                        v-for="request in pendingFriendRequests"
-                        :key="request.friendship_id"
-                        class="border-frame border-edge text-sm flex items-center justify-between gap-3 px-3 py-2"
+                    <div
+                        class="overflow-hidden rounded-lg border border-line bg-surface"
                     >
-                        <PersonSummary v-bind="request.user" />
-                        <span class="flex shrink-0 gap-2">
-                            <Form
-                                v-bind="
-                                    friendships.update.form(
-                                        request.friendship_id,
-                                    )
-                                "
-                                #default="{ processing }"
-                            >
-                                <input
-                                    type="hidden"
-                                    name="action"
-                                    value="accept"
-                                />
-                                <button
-                                    type="submit"
-                                    :disabled="processing"
-                                    class="border-edge border px-2 py-1 hover:bg-accent hover:text-on-accent"
-                                >
-                                    {{ t('contacts.index.accept') }}
-                                </button>
-                            </Form>
-                            <Form
-                                v-bind="
-                                    friendships.update.form(
-                                        request.friendship_id,
-                                    )
-                                "
-                                #default="{ processing }"
-                            >
-                                <input
-                                    type="hidden"
-                                    name="action"
-                                    value="decline"
-                                />
-                                <button
-                                    type="submit"
-                                    :disabled="processing"
-                                    class="border-edge border px-2 py-1 hover:bg-accent hover:text-on-accent"
-                                >
-                                    {{ t('contacts.index.decline') }}
-                                </button>
-                            </Form>
-                        </span>
-                    </li>
-                </ul>
-            </section>
-
-            <section v-if="pendingFollowerRequests.length" class="mb-10">
-                <h2 class="text-sm mb-3 font-bold uppercase">
-                    {{ t('contacts.index.followRequests') }}
-                </h2>
-                <ul class="flex flex-col gap-2">
-                    <li
-                        v-for="request in pendingFollowerRequests"
-                        :key="request.follow_id"
-                        class="border-frame border-edge text-sm flex items-center justify-between gap-3 px-3 py-2"
-                    >
-                        <PersonSummary v-bind="request.user" />
-                        <span class="flex shrink-0 gap-2">
-                            <Link
-                                :href="follows.update(request.follow_id).url"
-                                method="patch"
-                                as="button"
-                                preserve-scroll
-                                class="border-edge border px-2 py-1 hover:bg-accent hover:text-on-accent"
-                            >
-                                {{ t('contacts.index.approve') }}
-                            </Link>
-                            <Link
-                                :href="follows.destroy(request.follow_id).url"
-                                method="delete"
-                                as="button"
-                                preserve-scroll
-                                class="border-edge border px-2 py-1 hover:bg-accent hover:text-on-accent"
-                            >
-                                {{ t('contacts.index.reject') }}
-                            </Link>
-                        </span>
-                    </li>
-                </ul>
-            </section>
-
-            <section class="mb-10">
-                <h2 class="text-sm mb-3 font-bold uppercase">
-                    {{ t('contacts.index.friends') }}
-                </h2>
-                <p v-if="!friends.length" class="text-sm text-ink/70">
-                    {{ t('contacts.index.noFriends') }}
-                </p>
-                <template v-else>
-                    <p
-                        v-if="!filteredFriends.length"
-                        class="text-sm text-ink/70"
-                    >
-                        {{ t('contacts.index.noMatches') }}
-                    </p>
-                    <ul v-else class="flex flex-col gap-2">
-                        <li
-                            v-for="friend in filteredFriends"
-                            :key="friend.id"
-                            class="border-frame border-edge text-sm px-3 py-2"
-                        >
-                            <PersonSummary
-                                :id="friend.id"
-                                :name="friend.name"
-                                :username="friend.username"
-                                :avatar_url="friend.avatar_url"
+                        <template v-for="item in incoming" :key="item.key">
+                            <RequestRow
+                                v-if="item.kind === 'friend'"
+                                :person="item.request.user"
+                                kind="friend"
+                                :created-at="item.request.created_at"
+                                :mutual-count="item.request.mutual_count"
+                                :busy="busy === item.key"
+                                @accept="answerFriend(item.request, true)"
+                                @decline="answerFriend(item.request, false)"
                             />
-                            <div class="mt-2 flex flex-wrap items-center gap-2">
-                                <TagPreferencePicker
-                                    :contact-id="friend.id"
-                                    :categories="categories"
-                                    :excluded-tag-ids="
-                                        friend.tag_preference_ids ?? []
-                                    "
-                                    :mute-all="friend.muted ?? false"
-                                />
-                                <GroupMembershipDropdown
-                                    :person-id="friend.id"
-                                    :groups="
-                                        groupsAvailableFor(
-                                            friend.id,
-                                            friendGroups,
-                                        )
-                                    "
-                                />
-                                <Link
-                                    :href="startConversation().url"
-                                    method="post"
-                                    :data="{ user_ids: [friend.id] }"
-                                    as="button"
-                                    class="border-edge text-xs border px-2 py-1 hover:bg-accent hover:text-on-accent"
-                                >
-                                    {{ t('contacts.index.message') }}
-                                </Link>
-                            </div>
-                        </li>
-                    </ul>
+                            <RequestRow
+                                v-else
+                                :person="item.request.user"
+                                kind="follow"
+                                :created-at="item.request.since"
+                                :mutual-count="item.request.mutual_count"
+                                :busy="busy === item.key"
+                                @accept="answerFollow(item.request, true)"
+                                @decline="answerFollow(item.request, false)"
+                            />
+                        </template>
+                    </div>
                 </template>
 
-                <div v-if="sentFriendRequests.length" class="mt-4">
-                    <h3 class="text-xs mb-2 font-bold text-ink/70 uppercase">
-                        {{ t('contacts.index.requestsSent') }}
-                    </h3>
-                    <ul class="flex flex-col gap-2">
-                        <li
-                            v-for="request in sentFriendRequests"
-                            :key="request.friendship_id"
-                            class="border-frame border-edge text-sm flex items-center justify-between gap-3 px-3 py-2"
-                        >
-                            <PersonSummary v-bind="request.user" />
-                            <Link
-                                :href="
-                                    friendships.destroy(request.friendship_id)
-                                        .url
-                                "
-                                method="delete"
-                                as="button"
-                                preserve-scroll
-                                class="border-edge border px-2 py-1 hover:bg-accent hover:text-on-accent"
-                            >
-                                {{ t('contacts.index.cancel') }}
-                            </Link>
-                        </li>
-                    </ul>
-                </div>
-            </section>
-
-            <section class="mb-10">
-                <h2 class="text-sm mb-3 font-bold uppercase">
-                    {{ t('contacts.index.following') }}
-                </h2>
-                <p v-if="!following.length" class="text-sm text-ink/70">
-                    {{ t('contacts.index.notFollowingAnyone') }}
-                </p>
-                <template v-else>
-                    <p
-                        v-if="!filteredFollowing.length"
-                        class="text-sm text-ink/70"
+                <!-- Friends -->
+                <template v-if="tab === 'friends'">
+                    <SectionHeader
+                        :title="t('people.tabs.friends')"
+                        :meta="String(props.friends.length)"
+                    />
+                    <div
+                        v-if="friends.length"
+                        class="overflow-hidden rounded-lg border border-line bg-surface"
                     >
-                        {{ t('contacts.index.noMatches') }}
-                    </p>
-                    <ul v-else class="flex flex-col gap-2">
-                        <li
-                            v-for="entry in filteredFollowing"
-                            :key="entry.follow_id"
-                            class="border-frame border-edge text-sm px-3 py-2"
+                        <PersonRow
+                            v-for="friend in limited(friends)"
+                            :key="friend.id"
+                            :person="friend"
                         >
-                            <PersonSummary v-bind="entry.user" />
-                            <div class="mt-2 flex flex-wrap items-center gap-2">
-                                <TagPreferencePicker
-                                    :contact-id="entry.user.id"
-                                    :categories="categories"
-                                    :excluded-tag-ids="
-                                        entry.tag_preference_ids ?? []
-                                    "
-                                    :mute-all="entry.muted ?? false"
-                                />
-                                <GroupMembershipDropdown
-                                    :person-id="entry.user.id"
-                                    :groups="
-                                        groupsAvailableFor(
-                                            entry.user.id,
-                                            followingGroups,
-                                        )
-                                    "
-                                />
-                                <Link
-                                    :href="follows.destroy(entry.follow_id).url"
-                                    method="delete"
-                                    as="button"
-                                    preserve-scroll
-                                    class="border-edge border px-2 py-1 hover:bg-accent hover:text-on-accent"
+                            <template #sub>
+                                <span
+                                    v-if="mutedText(friend)"
+                                    class="inline-flex items-center gap-1"
                                 >
-                                    {{ t('contacts.index.unfollow') }}
-                                </Link>
-                            </div>
-                        </li>
-                    </ul>
-                </template>
-
-                <div v-if="pendingFollowRequestsSent.length" class="mt-4">
-                    <h3 class="text-xs mb-2 font-bold text-ink/70 uppercase">
-                        {{ t('contacts.index.requestsAwaitingApproval') }}
-                    </h3>
-                    <ul class="flex flex-col gap-2">
-                        <li
-                            v-for="entry in pendingFollowRequestsSent"
-                            :key="entry.follow_id"
-                            class="border-frame border-edge text-sm flex items-center justify-between gap-3 px-3 py-2"
-                        >
-                            <PersonSummary v-bind="entry.user" />
-                            <Link
-                                :href="follows.destroy(entry.follow_id).url"
-                                method="delete"
-                                as="button"
-                                preserve-scroll
-                                class="border-edge border px-2 py-1 hover:bg-accent hover:text-on-accent"
-                            >
-                                {{ t('contacts.index.cancel') }}
-                            </Link>
-                        </li>
-                    </ul>
-                </div>
-            </section>
-
-            <section class="mb-10">
-                <h2 class="text-sm mb-3 font-bold uppercase">
-                    {{ t('contacts.index.followers') }}
-                </h2>
-                <p v-if="!followers.length" class="text-sm text-ink/70">
-                    {{ t('contacts.index.noFollowers') }}
-                </p>
-                <template v-else>
-                    <p
-                        v-if="!filteredFollowers.length"
-                        class="text-sm text-ink/70"
+                                    <BellOff
+                                        :size="14"
+                                        :stroke-width="2"
+                                        aria-hidden="true"
+                                    />
+                                    {{ mutedText(friend) }}
+                                    <template v-if="friendSub(friend)">
+                                        ·
+                                    </template>
+                                </span>
+                                {{ friendSub(friend) }}
+                            </template>
+                            <template #actions>
+                                <IconButton
+                                    class="hidden sm:inline-flex"
+                                    :icon="MessageCircle"
+                                    :label="
+                                        t('people.menu.messageName', {
+                                            name: friend.name,
+                                        })
+                                    "
+                                    size="sm"
+                                    @click="messagePerson(friend)"
+                                />
+                                <PersonMenu
+                                    :person="friend"
+                                    kind="friend"
+                                    can-message
+                                    :muted-hint="mutedText(friend) ?? undefined"
+                                    @add-to-group="
+                                        openGroupPicker(friend, 'friend')
+                                    "
+                                    @mute="openMute(friend, friend)"
+                                    @remove="unfriend(friend)"
+                                />
+                            </template>
+                        </PersonRow>
+                    </div>
+                    <EmptyState
+                        v-else-if="query"
+                        :title="t('people.noMatches')"
+                    />
+                    <EmptyState
+                        v-else
+                        :icon="Users"
+                        :title="t('people.empty.friendsTitle')"
+                        :body="t('people.empty.friendsBody')"
                     >
-                        {{ t('contacts.index.noMatches') }}
-                    </p>
-                    <ul v-else class="flex flex-col gap-2">
-                        <li
-                            v-for="entry in filteredFollowers"
-                            :key="entry.follow_id"
-                            class="border-frame border-edge text-sm flex items-center justify-between gap-3 px-3 py-2"
+                        <Button :icon="UserPlus" @click="findOpen = true">
+                            {{ t('people.find.title') }}
+                        </Button>
+                    </EmptyState>
+                    <p
+                        v-if="!showAll && !query && friends.length > SHOWN"
+                        class="mt-5 text-center"
+                    >
+                        <button
+                            type="button"
+                            class="min-h-11 text-label font-semibold text-ink underline underline-offset-2"
+                            @click="showAll = true"
                         >
-                            <PersonSummary v-bind="entry.user" />
-                            <Link
-                                :href="follows.destroy(entry.follow_id).url"
-                                method="delete"
-                                as="button"
-                                preserve-scroll
-                                class="border-edge border px-2 py-1 hover:bg-accent hover:text-on-accent"
-                            >
-                                {{ t('contacts.index.remove') }}
-                            </Link>
-                        </li>
-                    </ul>
+                            {{ t('people.showAll', { n: friends.length }) }}
+                        </button>
+                    </p>
                 </template>
-            </section>
+
+                <!-- Following -->
+                <template v-if="tab === 'following'">
+                    <SectionHeader
+                        :title="t('people.tabs.following')"
+                        :meta="String(props.following.length)"
+                    />
+                    <div
+                        v-if="following.length"
+                        class="overflow-hidden rounded-lg border border-line bg-surface"
+                    >
+                        <PersonRow
+                            v-for="entry in limited(following)"
+                            :key="entry.follow_id"
+                            :person="entry.user"
+                        >
+                            <template #sub>
+                                <span
+                                    v-if="mutedText(entry)"
+                                    class="inline-flex items-center gap-1"
+                                >
+                                    <BellOff
+                                        :size="14"
+                                        :stroke-width="2"
+                                        aria-hidden="true"
+                                    />
+                                    {{ mutedText(entry) }}
+                                    <template v-if="followingSub(entry)">
+                                        ·
+                                    </template>
+                                </span>
+                                {{ followingSub(entry) }}
+                            </template>
+                            <template #actions>
+                                <PersonMenu
+                                    :person="entry.user"
+                                    kind="following"
+                                    :can-message="friendIds.has(entry.user.id)"
+                                    :muted-hint="mutedText(entry) ?? undefined"
+                                    @add-to-group="
+                                        openGroupPicker(entry.user, 'following')
+                                    "
+                                    @mute="openMute(entry.user, entry)"
+                                    @remove="endFollow(entry, 'unfollow')"
+                                />
+                            </template>
+                        </PersonRow>
+                    </div>
+                    <EmptyState
+                        v-else-if="query"
+                        :title="t('people.noMatches')"
+                    />
+                    <EmptyState
+                        v-else
+                        :icon="UserCheck"
+                        :title="t('people.empty.followingTitle')"
+                        :body="t('people.empty.followingBody')"
+                    />
+                </template>
+
+                <!-- Followers -->
+                <template v-if="tab === 'followers'">
+                    <SectionHeader
+                        :title="t('people.tabs.followers')"
+                        :meta="String(props.followers.length)"
+                    />
+                    <div
+                        v-if="followers.length"
+                        class="overflow-hidden rounded-lg border border-line bg-surface"
+                    >
+                        <PersonRow
+                            v-for="entry in limited(followers)"
+                            :key="entry.follow_id"
+                            :person="entry.user"
+                            :sub="followerSub(entry)"
+                        >
+                            <template #actions>
+                                <Button
+                                    v-if="entry.follows_back === null"
+                                    size="sm"
+                                    :icon="UserPlus"
+                                    class="hidden sm:inline-flex"
+                                    :disabled="busy === `back-${entry.user.id}`"
+                                    @click="followBack(entry)"
+                                >
+                                    {{ t('people.menu.followBack') }}
+                                </Button>
+                                <PersonMenu
+                                    :person="entry.user"
+                                    kind="follower"
+                                    :can-message="friendIds.has(entry.user.id)"
+                                    :can-follow-back="
+                                        entry.follows_back === null
+                                    "
+                                    @follow-back="followBack(entry)"
+                                    @remove="endFollow(entry, 'removeFollower')"
+                                />
+                            </template>
+                        </PersonRow>
+                    </div>
+                    <EmptyState
+                        v-else-if="query"
+                        :title="t('people.noMatches')"
+                    />
+                    <EmptyState
+                        v-else
+                        :icon="Users"
+                        :title="t('people.empty.followersTitle')"
+                        :body="t('people.empty.followersBody')"
+                    />
+                </template>
+
+                <!-- Requests: the ones you sent (the incoming ones are above). -->
+                <template v-if="tab === 'requests'">
+                    <template
+                        v-if="
+                            props.sentFriendRequests.length ||
+                            props.pendingFollowRequestsSent.length
+                        "
+                    >
+                        <SectionHeader :title="t('people.sent')" />
+                        <div
+                            class="overflow-hidden rounded-lg border border-line bg-surface"
+                        >
+                            <PersonRow
+                                v-for="request in props.sentFriendRequests"
+                                :key="`sent-${request.friendship_id}`"
+                                :person="request.user"
+                                :sub="t('people.sentFriendRequest')"
+                            >
+                                <template #actions>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        :disabled="
+                                            busy ===
+                                            `sent-${request.friendship_id}`
+                                        "
+                                        @click="cancelFriendRequest(request)"
+                                    >
+                                        {{ t('people.cancel') }}
+                                    </Button>
+                                </template>
+                            </PersonRow>
+                            <PersonRow
+                                v-for="entry in props.pendingFollowRequestsSent"
+                                :key="`sent-follow-${entry.follow_id}`"
+                                :person="entry.user"
+                                :sub="t('people.sentFollowRequest')"
+                            >
+                                <template #actions>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        :disabled="
+                                            busy ===
+                                            `sent-follow-${entry.follow_id}`
+                                        "
+                                        @click="cancelFollowRequest(entry)"
+                                    >
+                                        {{ t('people.cancel') }}
+                                    </Button>
+                                </template>
+                            </PersonRow>
+                        </div>
+                    </template>
+                    <EmptyState
+                        v-if="
+                            !incoming.length &&
+                            !props.sentFriendRequests.length &&
+                            !props.pendingFollowRequestsSent.length
+                        "
+                        :icon="UserCheck"
+                        :title="t('people.empty.requestsTitle')"
+                        :body="t('people.empty.requestsBody')"
+                    />
+                </template>
+
+                <!-- Groups (beside the list from xl as well). -->
+                <template v-if="tab === 'groups'">
+                    <div
+                        class="mt-7 mb-3 flex items-center justify-between gap-3"
+                    >
+                        <p class="text-meta text-ink-muted">
+                            {{ t('people.groups.hint') }}
+                        </p>
+                        <Button
+                            size="sm"
+                            :icon="Plus"
+                            @click="newGroupOpen = true"
+                        >
+                            {{ t('people.groups.new') }}
+                        </Button>
+                    </div>
+                    <div
+                        v-if="groups.length"
+                        class="overflow-hidden rounded-lg border border-line bg-surface"
+                    >
+                        <button
+                            v-for="group in groups"
+                            :key="`${group.type}-${group.id}`"
+                            type="button"
+                            class="group/row relative flex min-h-16 w-full items-center gap-3.5 px-4 text-left hover:bg-surface-2/55"
+                            @click="showGroup(group)"
+                        >
+                            <span
+                                class="pointer-events-none absolute top-0 right-0 left-4 h-px bg-line group-first/row:hidden"
+                                aria-hidden="true"
+                            />
+                            <AvatarStack
+                                :people="group.members"
+                                :size="28"
+                                :max="3"
+                            />
+                            <span class="min-w-0 flex-1">
+                                <span
+                                    class="block truncate font-medium text-ink"
+                                    >{{ group.name }}</span
+                                >
+                                <span class="block text-meta text-ink-muted">{{
+                                    t(
+                                        group.type === 'friend'
+                                            ? 'people.groups.ofFriendsCount'
+                                            : 'people.groups.ofFollowingCount',
+                                        group.members.length,
+                                    )
+                                }}</span>
+                            </span>
+                            <ChevronRight
+                                :size="18"
+                                :stroke-width="1.75"
+                                class="shrink-0 text-ink-subtle"
+                                aria-hidden="true"
+                            />
+                        </button>
+                    </div>
+                    <EmptyState
+                        v-else
+                        :icon="Users"
+                        :title="t('people.empty.groupsTitle')"
+                        :body="t('people.empty.groupsBody')"
+                    />
+                </template>
+            </div>
+
+            <aside class="hidden xl:sticky xl:top-6 xl:mt-7 xl:block">
+                <div class="flex flex-col gap-4">
+                    <section
+                        class="overflow-hidden rounded-lg border border-line bg-surface"
+                    >
+                        <div class="flex items-center gap-2 px-4 pt-4 pb-2">
+                            <h2
+                                class="min-w-0 flex-1 text-kicker text-ink-muted uppercase"
+                            >
+                                {{ t('people.tabs.groups') }}
+                            </h2>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                :icon="Plus"
+                                @click="newGroupOpen = true"
+                            >
+                                {{ t('people.groups.new') }}
+                            </Button>
+                        </div>
+                        <button
+                            v-for="group in groups"
+                            :key="`${group.type}-${group.id}`"
+                            type="button"
+                            class="group/row relative flex min-h-14 w-full items-center gap-3 px-4 text-left hover:bg-surface-2/55"
+                            @click="showGroup(group)"
+                        >
+                            <span
+                                class="pointer-events-none absolute top-0 right-0 left-4 h-px bg-line"
+                                aria-hidden="true"
+                            />
+                            <AvatarStack
+                                :people="group.members"
+                                :size="24"
+                                :max="3"
+                            />
+                            <span class="min-w-0 flex-1">
+                                <span
+                                    class="block truncate text-label font-medium text-ink"
+                                    >{{ group.name }}</span
+                                >
+                                <span class="block text-meta text-ink-muted">{{
+                                    t(
+                                        'people.groups.count',
+                                        group.members.length,
+                                    )
+                                }}</span>
+                            </span>
+                            <ChevronRight
+                                :size="18"
+                                :stroke-width="1.75"
+                                class="shrink-0 text-ink-subtle"
+                                aria-hidden="true"
+                            />
+                        </button>
+                        <p
+                            class="border-t border-line px-4 py-3 text-meta text-ink-muted"
+                        >
+                            {{ t('people.groups.hint') }}
+                        </p>
+                    </section>
+
+                    <section
+                        class="rounded-lg border border-line bg-surface p-4"
+                    >
+                        <h2 class="font-display text-title-3">
+                            {{ t('people.find.title') }}
+                        </h2>
+                        <p class="mt-1 mb-3 text-meta text-ink-muted">
+                            {{ t('people.find.hint') }}
+                        </p>
+                        <FindPeople
+                            :query="props.findQuery"
+                            :results="props.findResults"
+                        />
+                    </section>
+                </div>
+            </aside>
         </div>
-    </div>
+    </PageContainer>
+
+    <AppDialog
+        v-model:open="findOpen"
+        :title="t('people.find.title')"
+        :description="t('people.find.hint')"
+        size="lg"
+    >
+        <FindPeople :query="props.findQuery" :results="props.findResults" />
+    </AppDialog>
+
+    <MuteDialog
+        v-model:open="muteOpen"
+        :person="muteFor?.person ?? null"
+        :categories="props.categories"
+        :tag-ids="muteFor?.tagIds ?? []"
+        :mute-all="muteFor?.muteAll ?? false"
+    />
+
+    <GroupPickerDialog
+        v-model:open="pickerOpen"
+        :person="pickerFor?.person ?? null"
+        :type="pickerFor?.type ?? 'friend'"
+        :groups="
+            pickerFor?.type === 'following'
+                ? props.followingGroups
+                : props.friendGroups
+        "
+    />
+
+    <GroupDialog
+        v-model:open="groupOpen"
+        :group="openGroup"
+        :candidates="groupCandidates"
+    />
+
+    <NewGroupDialog v-model:open="newGroupOpen" />
 </template>
-
-<style scoped>
-/*
- * On mobile, "find new contacts" and the groups panel are collapsed
- * toggles stacked above the filter field and the main list — find comes
- * first since it's the more common reason to open the page, and its
- * results appear inline within its own toggle. On desktop, three equal
- * columns: "search" and "find" sit side by side directly above "main"
- * (together spanning the same width as "main", so each is half of it),
- * while "groups" spans the full height of its own column with nothing
- * above it. Find's results appear in the main column under their own
- * "Search results" heading rather than in the find column itself.
- * That's a genuine reorder, not just a resize, so this mirrors
- * EventCard.vue's use of grid-template-areas instead of pure utility
- * classes.
- */
-.contacts-layout {
-    display: grid;
-    gap: 2rem;
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-        'find'
-        'groups'
-        'search'
-        'main';
-}
-
-.contacts-layout__find {
-    grid-area: find;
-}
-
-.contacts-layout__groups {
-    grid-area: groups;
-}
-
-.contacts-layout__search {
-    grid-area: search;
-}
-
-.contacts-layout__main {
-    grid-area: main;
-}
-
-@media (min-width: 1024px) {
-    .contacts-layout {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        align-items: start;
-        grid-template-areas:
-            'search find groups'
-            'main main groups';
-    }
-}
-</style>

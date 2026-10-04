@@ -3,16 +3,23 @@
 namespace App\Http\Controllers;
 
 use App\Enums\FollowStatus;
+use App\Models\Event;
 use App\Models\Follow;
 use App\Models\Friendship;
 use App\Models\User;
 use App\Services\ActivityFeed;
+use App\Services\EventFeedQuery;
+use App\Services\MutualFriends;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class UserProfileController extends Controller
 {
+    /** How many of their upcoming events the profile lists. */
+    public const UPCOMING_EVENTS = 6;
+
     public function show(Request $request, User $user): Response
     {
         $viewer = $request->user();
@@ -40,6 +47,14 @@ class UserProfileController extends Controller
             ? $user->friends()->filter(fn (User $friend) => $friend->appear_in_friends_lists)->values()
             : collect();
 
+        // What they have coming up that the viewer may see.
+        $feed = new EventFeedQuery($viewer);
+        $today = CarbonImmutable::now((string) config('app.display_timezone'))->toDateString();
+        $events = $feed->happeningBetween($feed->ofOwner($user), $today, null)
+            ->orderBy('starts_at')
+            ->limit(self::UPCOMING_EVENTS)
+            ->get();
+
         // Opening someone's profile means their friend and follow
         // notifications have been seen.
         if (ActivityFeed::seenByUser($request)) {
@@ -64,6 +79,17 @@ class UserProfileController extends Controller
                 'name' => $friend->name,
                 'username' => $friend->username,
                 'avatar_url' => $friend->avatar_url,
+            ])->all(),
+            'mutual_count' => $viewer->is($user) ? null : (MutualFriends::counts($viewer, collect([$user->id]))[$user->id] ?? null),
+            'events' => $events->map(fn (Event $event) => [
+                'id' => $event->id,
+                'name' => $event->name,
+                'starts_at' => $event->starts_at->toIso8601String(),
+                'ends_at' => $event->ends_at?->toIso8601String(),
+                'place' => $event->place,
+                'city' => $event->city,
+                'cover' => $event->images->first()?->presentation(),
+                'my_status' => $event->attendees->first()?->status->value,
             ])->all(),
         ]);
     }

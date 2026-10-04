@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Event;
+use App\Models\EventAttendee;
 use App\Models\Follow;
 use App\Models\Friendship;
 use App\Models\User;
@@ -71,4 +73,37 @@ test('a friend who opted out is excluded from friends list displays', function (
     $response->assertInertia(fn ($page) => $page
         ->has('friends', 1)
         ->where('friends.0.id', $visibleFriend->id));
+});
+
+test('a profile lists the upcoming events of theirs the viewer may see', function () {
+    $viewer = User::factory()->create();
+    $owner = User::factory()->create();
+    Follow::factory()->create(['follower_id' => $viewer->id, 'followed_id' => $owner->id]);
+
+    $public = Event::factory()->public()->create(['user_id' => $owner->id, 'name' => 'Public', 'starts_at' => now()->addDays(2)]);
+    $searchable = Event::factory()->searchable()->create(['user_id' => $owner->id, 'name' => 'Searchable', 'starts_at' => now()->addDays(3)]);
+    $invited = Event::factory()->create(['user_id' => $owner->id, 'name' => 'Invited', 'starts_at' => now()->addDays(4)]);
+    EventAttendee::factory()->create(['event_id' => $invited->id, 'user_id' => $viewer->id]);
+    Event::factory()->create(['user_id' => $owner->id, 'name' => 'Private', 'starts_at' => now()->addDays(5)]);
+    Event::factory()->public()->create(['user_id' => $owner->id, 'name' => 'Over', 'starts_at' => now()->subWeek()]);
+    Event::factory()->public()->create(['user_id' => User::factory()->create()->id, 'name' => 'Someone else']);
+
+    $this->actingAs($viewer)->get("/users/{$owner->id}")
+        ->assertInertia(fn ($page) => $page
+            ->where('events', fn ($events) => collect($events)->pluck('id')->all() === [$public->id, $searchable->id, $invited->id])
+            ->where('events.2.my_status', 'no_response'));
+});
+
+test('a profile counts the friends you have in common', function () {
+    $viewer = User::factory()->create();
+    $owner = User::factory()->create();
+    $shared = User::factory()->create();
+    Friendship::factory()->accepted()->create(['requester_id' => $viewer->id, 'addressee_id' => $shared->id]);
+    Friendship::factory()->accepted()->create(['requester_id' => $owner->id, 'addressee_id' => $shared->id]);
+
+    $this->actingAs($viewer)->get("/users/{$owner->id}")
+        ->assertInertia(fn ($page) => $page->where('mutual_count', 1));
+
+    $this->actingAs($owner)->get("/users/{$owner->id}")
+        ->assertInertia(fn ($page) => $page->where('mutual_count', null));
 });

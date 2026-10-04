@@ -66,6 +66,21 @@ class EventFeedQuery
     }
 
     /**
+     * One person's events that the viewer may see, for their profile: the
+     * ones the list would show, and their searchable ones.
+     *
+     * @return Builder<Event>
+     */
+    public function ofOwner(User $owner): Builder
+    {
+        return $this->base()
+            ->where('user_id', $owner->id)
+            ->where(fn (Builder $query) => $query
+                ->whereIn('events.id', $this->visible()->select('events.id'))
+                ->orWhere('visibility', EventVisibility::Searchable));
+    }
+
+    /**
      * Events anyone may find: those on the searchable tier.
      *
      * @return Builder<Event>

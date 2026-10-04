@@ -10,6 +10,8 @@ use App\Models\Follow;
 use App\Models\Friendship;
 use App\Models\Tag;
 use App\Models\User;
+use App\Services\MutualFriends;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Inertia\Inertia;
@@ -17,6 +19,11 @@ use Inertia\Response;
 
 class ContactsController extends Controller
 {
+    /**
+     * People: friends (with how long, and the friends in common), the people
+     * the user follows and who follow them, open requests both ways, the
+     * user's groups, and people to find by name.
+     */
     public function index(Request $request): Response
     {
         $user = $request->user();
@@ -34,36 +41,114 @@ class ContactsController extends Controller
             fn (Collection $rows) => $rows->contains(fn (ContactTagPreference $row) => $row->tag_id === null)
         )->keys();
 
+        $friendships = Friendship::query()
+            ->accepted()
+            ->where(fn (Builder $query) => $query->where('requester_id', $user->id)->orWhere('addressee_id', $user->id))
+            ->with(['requester', 'addressee'])
+            ->get()
+            ->map(fn (Friendship $friendship) => [
+                'friendship' => $friendship,
+                'friend' => $friendship->requester_id === $user->id ? $friendship->addressee : $friendship->requester,
+            ])
+            ->sortBy(fn (array $row) => mb_strtolower($row['friend']->name))
+            ->values();
+
+        $pendingFriendRequests = $user->pendingFriendRequests()->with('requester')->latest()->get();
+        $followers = Follow::query()->where('followed_id', $user->id)->accepted()->with('follower')->latest()->get();
+        $pendingFollowerRequests = Follow::query()->where('followed_id', $user->id)->pending()->with('follower')->latest()->get();
+        $outgoingFollows = Follow::query()->where('follower_id', $user->id)->with('followed')->latest()->get();
+
         $findQuery = trim((string) $request->string('find'));
+        $findResults = $this->findNewContacts($findQuery, $user);
+
+        $mutualCounts = MutualFriends::counts($user, collect([
+            ...$friendships->pluck('friend.id'),
+            ...$pendingFriendRequests->pluck('requester_id'),
+            ...$followers->pluck('follower_id'),
+            ...$pendingFollowerRequests->pluck('follower_id'),
+            ...array_column($findResults, 'id'),
+        ]));
+
+        $followsBack = $outgoingFollows->mapWithKeys(fn (Follow $follow) => [
+            $follow->followed_id => $follow->status === FollowStatus::Accepted ? 'following' : 'pending',
+        ]);
+
+        $contactExtras = fn (User $contact) => [
+            'tag_preference_ids' => $preferencesByContact->get($contact->id, []),
+            'muted' => $mutedContactIds->contains($contact->id),
+        ];
 
         return Inertia::render('contacts/Index', [
-            'friends' => $this->summarizeUsers($user->friends(), $preferencesByContact, $mutedContactIds),
-            'pendingFriendRequests' => $this->summarizeFriendships($user->pendingFriendRequests()->with('requester')->get(), 'requester'),
-            'sentFriendRequests' => $this->summarizeFriendships($user->sentFriendRequests()->with('addressee')->get(), 'addressee'),
-            'following' => $this->summarizeFollows(
-                Follow::query()->where('follower_id', $user->id)->accepted()->with('followed')->get(),
-                'followed',
-                $preferencesByContact,
-                $mutedContactIds
-            ),
-            'pendingFollowRequestsSent' => $this->summarizeFollows(
-                Follow::query()->where('follower_id', $user->id)->pending()->with('followed')->get(),
-                'followed'
-            ),
-            'followers' => $this->summarizeFollows(
-                Follow::query()->where('followed_id', $user->id)->accepted()->with('follower')->get(),
-                'follower'
-            ),
-            'pendingFollowerRequests' => $this->summarizeFollows(
-                Follow::query()->where('followed_id', $user->id)->pending()->with('follower')->get(),
-                'follower'
-            ),
+            'friends' => $friendships->map(fn (array $row) => [
+                ...$this->person($row['friend']),
+                ...$contactExtras($row['friend']),
+                'friendship_id' => $row['friendship']->id,
+                'friends_since' => $row['friendship']->updated_at?->toIso8601String(),
+                'mutual_count' => $mutualCounts[$row['friend']->id] ?? null,
+            ])->all(),
+            'pendingFriendRequests' => $pendingFriendRequests->map(fn (Friendship $friendship) => [
+                'friendship_id' => $friendship->id,
+                'created_at' => $friendship->created_at?->toIso8601String(),
+                'mutual_count' => $mutualCounts[$friendship->requester_id] ?? null,
+                'user' => $this->person($friendship->requester),
+            ])->values()->all(),
+            'sentFriendRequests' => $user->sentFriendRequests()->with('addressee')->latest()->get()
+                ->map(fn (Friendship $friendship) => [
+                    'friendship_id' => $friendship->id,
+                    'created_at' => $friendship->created_at?->toIso8601String(),
+                    'user' => $this->person($friendship->addressee),
+                ])->values()->all(),
+            'following' => $outgoingFollows->where('status', FollowStatus::Accepted)
+                ->sortBy(fn (Follow $follow) => mb_strtolower($follow->followed->name))
+                ->map(fn (Follow $follow) => [
+                    'follow_id' => $follow->id,
+                    'since' => $follow->updated_at?->toIso8601String(),
+                    'user' => $this->person($follow->followed),
+                    ...$contactExtras($follow->followed),
+                ])->values()->all(),
+            'pendingFollowRequestsSent' => $outgoingFollows->where('status', FollowStatus::Pending)
+                ->map(fn (Follow $follow) => [
+                    'follow_id' => $follow->id,
+                    'since' => $follow->created_at?->toIso8601String(),
+                    'user' => $this->person($follow->followed),
+                ])->values()->all(),
+            'followers' => $followers
+                ->sortBy(fn (Follow $follow) => mb_strtolower($follow->follower->name))
+                ->map(fn (Follow $follow) => [
+                    'follow_id' => $follow->id,
+                    'since' => $follow->updated_at?->toIso8601String(),
+                    'follows_back' => $followsBack->get($follow->follower_id),
+                    'mutual_count' => $mutualCounts[$follow->follower_id] ?? null,
+                    'user' => $this->person($follow->follower),
+                ])->values()->all(),
+            'pendingFollowerRequests' => $pendingFollowerRequests->map(fn (Follow $follow) => [
+                'follow_id' => $follow->id,
+                'since' => $follow->created_at?->toIso8601String(),
+                'mutual_count' => $mutualCounts[$follow->follower_id] ?? null,
+                'user' => $this->person($follow->follower),
+            ])->values()->all(),
             'friendGroups' => $this->summarizeGroups($user->contactGroups()->ofType(ContactGroupType::Friend)->with('members')->get()),
             'followingGroups' => $this->summarizeGroups($user->contactGroups()->ofType(ContactGroupType::Following)->with('members')->get()),
             'categories' => Tag::categoriesTree(),
             'findQuery' => $findQuery,
-            'findResults' => $this->findNewContacts($findQuery, $user),
+            'findResults' => array_map(fn (array $result) => [
+                ...$result,
+                'mutual_count' => $mutualCounts[$result['id']] ?? null,
+            ], $findResults),
         ]);
+    }
+
+    /**
+     * @return array{id: int, name: string, username: string, avatar_url: string|null}
+     */
+    private function person(User $user): array
+    {
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'username' => $user->username,
+            'avatar_url' => $user->avatar_url,
+        ];
     }
 
     /**
@@ -124,75 +209,18 @@ class ContactsController extends Controller
     }
 
     /**
-     * @param  Collection<int, User>  $users
-     * @param  Collection<int|string, array<int, int>>|null  $preferencesByContact
-     * @param  Collection<int, int>|null  $mutedContactIds
-     * @return array<int, array{id: int, name: string, username: string, avatar_url: string|null, tag_preference_ids?: array<int>, muted?: bool}>
-     */
-    private function summarizeUsers(Collection $users, ?Collection $preferencesByContact = null, ?Collection $mutedContactIds = null): array
-    {
-        return $users->map(fn (User $user) => [
-            'id' => $user->id,
-            'name' => $user->name,
-            'username' => $user->username,
-            'avatar_url' => $user->avatar_url,
-            ...($preferencesByContact === null ? [] : [
-                'tag_preference_ids' => $preferencesByContact->get($user->id, []),
-                'muted' => $mutedContactIds !== null && $mutedContactIds->contains($user->id),
-            ]),
-        ])->values()->all();
-    }
-
-    /**
-     * @param  Collection<int, Friendship>  $friendships
-     * @return array<int, array{friendship_id: int, user: array{id: int, name: string, username: string, avatar_url: string|null}}>
-     */
-    private function summarizeFriendships(Collection $friendships, string $relation): array
-    {
-        return $friendships->map(fn (Friendship $friendship) => [
-            'friendship_id' => $friendship->id,
-            'user' => [
-                'id' => $friendship->{$relation}->id,
-                'name' => $friendship->{$relation}->name,
-                'username' => $friendship->{$relation}->username,
-                'avatar_url' => $friendship->{$relation}->avatar_url,
-            ],
-        ])->values()->all();
-    }
-
-    /**
-     * @param  Collection<int, Follow>  $follows
-     * @param  Collection<int|string, array<int, int>>|null  $preferencesByContact
-     * @param  Collection<int, int>|null  $mutedContactIds
-     * @return array<int, array{follow_id: int, user: array{id: int, name: string, username: string, avatar_url: string|null}, tag_preference_ids?: array<int>, muted?: bool}>
-     */
-    private function summarizeFollows(Collection $follows, string $relation, ?Collection $preferencesByContact = null, ?Collection $mutedContactIds = null): array
-    {
-        return $follows->map(fn (Follow $follow) => [
-            'follow_id' => $follow->id,
-            'user' => [
-                'id' => $follow->{$relation}->id,
-                'name' => $follow->{$relation}->name,
-                'username' => $follow->{$relation}->username,
-                'avatar_url' => $follow->{$relation}->avatar_url,
-            ],
-            ...($preferencesByContact === null ? [] : [
-                'tag_preference_ids' => $preferencesByContact->get($follow->{$relation}->id, []),
-                'muted' => $mutedContactIds !== null && $mutedContactIds->contains($follow->{$relation}->id),
-            ]),
-        ])->values()->all();
-    }
-
-    /**
      * @param  Collection<int, ContactGroup>  $groups
-     * @return array<int, array{id: int, name: string, members: array<int, array{id: int, name: string, username: string}>}>
+     * @return array<int, array{id: int, name: string, members: array<int, array{id: int, name: string, username: string, avatar_url: string|null}>}>
      */
     private function summarizeGroups(Collection $groups): array
     {
         return $groups->map(fn (ContactGroup $group) => [
             'id' => $group->id,
             'name' => $group->name,
-            'members' => $this->summarizeUsers($group->members),
+            'members' => $group->members->sortBy(fn (User $member) => mb_strtolower($member->name))
+                ->map(fn (User $member) => $this->person($member))
+                ->values()
+                ->all(),
         ])->values()->all();
     }
 }
