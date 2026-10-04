@@ -106,4 +106,6 @@ export type ConversationParticipantSummary = {
     username: string;
     avatar_url: string | null;
     is_me: boolean;
+    /** When they last read the conversation, for "Seen". */
+    last_read_at: string | null;
 };

@@ -66,7 +66,9 @@
         "leave": "Leave conversation",
         "confirmLeaveTitle": "Leave this conversation?",
         "confirmLeave": "You stop getting its messages. Someone in it can add you again.",
-        "noMessagesYet": "No messages yet. Say hello."
+        "noMessagesYet": "No messages yet. Say hello.",
+        "seen": "Seen",
+        "seenBy": "Seen by {names}"
     },
     "create": {
         "title": "New message",

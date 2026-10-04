@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Carbon\CarbonInterface;
 use Database\Factories\ConversationParticipantFactory;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -72,5 +73,24 @@ class ConversationParticipant extends Model
     public function markRead(): void
     {
         $this->update(['last_read_at' => now()]);
+    }
+
+    /**
+     * The own channels of a conversation's participants as they are now, for
+     * what concerns its messages: someone who left stops hearing at once,
+     * whatever they still have open (a subscription to the conversation's
+     * channel lasts as long as the socket does).
+     *
+     * @return list<PrivateChannel>
+     */
+    public static function channelsFor(int $conversationId, ?int $exceptUserId = null): array
+    {
+        return array_values(self::query()
+            ->where('conversation_id', $conversationId)
+            ->when($exceptUserId !== null, fn (Builder $query) => $query->where('user_id', '!=', $exceptUserId))
+            ->orderBy('user_id')
+            ->pluck('user_id')
+            ->map(fn (int $userId) => new PrivateChannel("App.Models.User.{$userId}"))
+            ->all());
     }
 }

@@ -84,12 +84,15 @@ function chatBroadcastConversation(array $participants, ?string $name = null): C
 }
 
 test('chat events go out right away on their channels under the names the client listens for', function () {
-    $message = Message::factory()->create();
-    $channel = "private-conversations.{$message->conversation_id}";
+    [$a, $b] = User::factory()->count(2)->create()->sortBy('id')->values()->all();
+    $conversation = chatBroadcastConversation([$a, $b]);
+    $message = Message::factory()->create(['conversation_id' => $conversation->id, 'user_id' => $a->id]);
+    $channel = "private-conversations.{$conversation->id}";
+    $participants = ["private-App.Models.User.{$a->id}", "private-App.Models.User.{$b->id}"];
 
     $events = [
-        [new MessageSent($message), [$channel], 'message.sent'],
-        [new MessageUpdated($message), [$channel], 'message.updated'],
+        [new MessageSent($message), $participants, 'message.sent'],
+        [new MessageUpdated($message), $participants, 'message.updated'],
         [new ParticipantsUpdated($message->conversation_id), [$channel], 'participants.updated'],
         [new IncomingMessage(42, $message), ['private-App.Models.User.42'], 'message.received'],
     ];
@@ -186,7 +189,7 @@ test('sending a message broadcasts to the thread, the recipient and both badges 
 
     $sent = $broadcaster->named('message.sent');
     expect($sent)->toHaveCount(1);
-    expect($sent[0]['channels'])->toBe(["private-conversations.{$conversation->id}"]);
+    expect($sent[0]['channels'])->toBe(collect([$sender->id, $recipient->id])->sort()->map(fn (int $id) => "private-App.Models.User.{$id}")->values()->all());
     expect($sent[0]['payload']['message']['body'])->toBe('Live!');
     // The sending tab has the message from the response already.
     expect($sent[0]['payload']['socket'])->toBe('1234.5678');
@@ -216,4 +219,44 @@ test('an unreachable WebSocket server does not fail sending, deleting or reactin
 
     Exceptions::assertReported(BroadcastException::class);
     expect($message->fresh()->is_deleted)->toBeTrue();
+});
+
+test('someone who left a group no longer gets its messages, whatever they still have open', function () {
+    [$a, $b, $c] = User::factory()->count(3)->create()->all();
+    $conversation = chatBroadcastConversation([$a, $b, $c], 'Hikers');
+
+    $this->actingAs($c)->delete("/messages/{$conversation->id}/participants")->assertRedirect();
+
+    $message = Message::factory()->create(['conversation_id' => $conversation->id, 'user_id' => $a->id]);
+
+    expect(array_map('strval', (new MessageSent($message))->broadcastOn()))
+        ->not->toContain("private-App.Models.User.{$c->id}")
+        ->toContain("private-App.Models.User.{$a->id}", "private-App.Models.User.{$b->id}");
+});
+
+test('reading a conversation tells the others when, for their "Seen"', function () {
+    $broadcaster = chatBroadcaster();
+    [$sender, $reader] = User::factory()->count(2)->create()->all();
+    $conversation = chatBroadcastConversation([$sender, $reader]);
+    Message::factory()->create(['conversation_id' => $conversation->id, 'user_id' => $sender->id]);
+
+    $this->actingAs($reader)->postJson("/messages/{$conversation->id}/read")->assertNoContent();
+
+    $read = $broadcaster->named('conversation.read');
+    expect($read)->toHaveCount(1)
+        ->and($read[0]['channels'])->toBe(["private-App.Models.User.{$sender->id}"])
+        ->and($read[0]['payload']['conversation_id'])->toBe($conversation->id)
+        ->and($read[0]['payload']['user_id'])->toBe($reader->id)
+        ->and($read[0]['payload']['read_at'])->not->toBeNull();
+});
+
+test('opening a conversation with something new in it tells the others it was read', function () {
+    $broadcaster = chatBroadcaster();
+    [$sender, $reader] = User::factory()->count(2)->create()->all();
+    $conversation = chatBroadcastConversation([$sender, $reader]);
+    Message::factory()->create(['conversation_id' => $conversation->id, 'user_id' => $sender->id]);
+
+    $this->actingAs($reader)->get("/messages/{$conversation->id}")->assertOk();
+
+    expect($broadcaster->named('conversation.read'))->toHaveCount(1);
 });

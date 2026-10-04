@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\BadgesUpdated;
+use App\Events\ConversationRead;
 use App\Models\Conversation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -22,6 +23,7 @@ class ConversationReadController extends Controller
         $participant->markRead();
 
         BadgesUpdated::dispatch($participant->user_id);
+        ConversationRead::dispatch($participant);
 
         return response()->noContent();
     }

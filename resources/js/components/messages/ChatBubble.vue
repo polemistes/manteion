@@ -17,14 +17,21 @@ import type { BubblePosition, ChatMessage } from './chat';
  * above the first bubble (others, in groups), the face and the time beside
  * and under the last.
  */
-const props = defineProps<{
-    message: ChatMessage;
-    position: BubblePosition;
-    showName: boolean;
-    showAvatar: boolean;
-    reserveAvatar: boolean;
-    showTime: boolean;
-}>();
+const props = withDefaults(
+    defineProps<{
+        message: ChatMessage;
+        position: BubblePosition;
+        showName: boolean;
+        showAvatar: boolean;
+        reserveAvatar: boolean;
+        showTime: boolean;
+        /** Who has read this one (your newest message only). */
+        seenBy?: { id: number; name: string; avatar_url: string | null }[];
+        /** "Seen" in a direct chat, the readers' faces in a group. */
+        seenAs?: 'caption' | 'faces';
+    }>(),
+    { seenBy: () => [], seenAs: 'caption' },
+);
 
 const emit = defineEmits<{
     react: [emoji: string];
@@ -36,10 +43,18 @@ const emit = defineEmits<{
     retry: [];
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const { time } = useDates();
 
 const mine = computed(() => props.message.is_mine);
+
+const seenLabel = computed(() =>
+    t('messages.show.seenBy', {
+        names: new Intl.ListFormat(locale.value === 'nb' ? 'nb' : 'en', {
+            type: 'conjunction',
+        }).format(props.seenBy.map((person) => person.name)),
+    }),
+);
 const deleted = computed(() => props.message.is_deleted);
 const body = computed(() => props.message.body ?? '');
 const emojiOnly = computed(() => !deleted.value && isEmojiOnly(body.value));
@@ -277,11 +292,45 @@ onBeforeUnmount(cancelPress);
                 {{ t('messages.show.sending') }}
             </p>
             <p
-                v-else-if="props.showTime"
-                class="px-1 text-caption text-ink-subtle"
-                :class="props.message.reactions.length ? 'mt-[19px]' : 'mt-1'"
+                v-else-if="props.showTime || props.seenBy.length"
+                class="flex items-center gap-1.5 px-1 text-caption text-ink-subtle"
+                :class="[
+                    props.message.reactions.length ? 'mt-[19px]' : 'mt-1',
+                    mine ? 'justify-end' : '',
+                ]"
             >
-                {{ time(props.message.created_at) }}
+                <span>{{ time(props.message.created_at) }}</span>
+                <template v-if="props.seenBy.length">
+                    <span
+                        v-if="props.seenAs === 'caption'"
+                        :aria-label="seenLabel"
+                        >· {{ t('messages.show.seen') }}</span
+                    >
+                    <span
+                        v-else
+                        class="flex items-center"
+                        role="img"
+                        :aria-label="seenLabel"
+                        :title="seenLabel"
+                    >
+                        <Avatar
+                            v-for="(person, index) in props.seenBy.slice(0, 3)"
+                            :key="person.id"
+                            :name="person.name"
+                            :src="person.avatar_url"
+                            :size="16"
+                            ring
+                            decorative
+                            :class="index > 0 ? '-ml-1' : ''"
+                        />
+                        <span
+                            v-if="props.seenBy.length > 3"
+                            class="ml-1 tabular-nums"
+                            aria-hidden="true"
+                            >+{{ props.seenBy.length - 3 }}</span
+                        >
+                    </span>
+                </template>
             </p>
         </div>
     </div>

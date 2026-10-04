@@ -11,7 +11,7 @@ import {
     SmilePlus,
     Trash,
 } from '@lucide/vue';
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import EmojiPicker from '@/components/EmojiPicker.vue';
 import { QUICK_REACTIONS } from '@/components/messages/chat';
@@ -92,6 +92,24 @@ const others = computed(() =>
     props.participants.filter((person) => !person.is_me),
 );
 
+// When each of the others last read the conversation: from the page, then
+// live as they read.
+const readTimes = ref(new Map<number, string | null>());
+
+watch(
+    others,
+    (people) => {
+        readTimes.value = new Map(
+            people.map((person) => [person.id, person.last_read_at]),
+        );
+    },
+    { immediate: true },
+);
+
+function read(userId: number, readAt: string | null): void {
+    readTimes.value = new Map(readTimes.value).set(userId, readAt);
+}
+
 const subtitle = computed(() => {
     if (!isGroup.value) {
         const other = others.value[0];
@@ -129,6 +147,28 @@ const messages = computed<ChatMessage[]>(() => {
     }
 
     return [...byId.values()].sort((a, b) => a.id - b.id).concat(pending.value);
+});
+
+// Under your message when it is the newest: who has read it since. In a
+// direct chat that is "Seen"; in a group, their faces.
+const seenBy = computed(() => {
+    const last = messages.value.at(-1);
+
+    if (!last || !last.is_mine || last.pending || last.is_deleted) {
+        return [];
+    }
+
+    const sentAt = Date.parse(last.created_at);
+
+    return others.value.filter((person) => {
+        const readAt = readTimes.value.get(person.id);
+
+        return (
+            readAt !== null &&
+            readAt !== undefined &&
+            Date.parse(readAt) >= sentAt
+        );
+    });
 });
 
 const newestId = computed(() =>
@@ -323,6 +363,7 @@ const { typingUsers, whisperTyping, markRead } = useConversationChannel(
     {
         onMessage: arrived,
         onUpdate: (message) => setExtra(message),
+        onRead: read,
         onParticipants: () =>
             router.reload({
                 only: [
@@ -754,6 +795,10 @@ async function leave(): Promise<void> {
                                     index === group.messages.length - 1
                                 "
                                 :reserve-avatar="isGroup && !group.mine"
+                                :seen-by="
+                                    message === messages.at(-1) ? seenBy : []
+                                "
+                                :seen-as="isGroup ? 'faces' : 'caption'"
                                 :show-time="index === group.messages.length - 1"
                                 @react="react(message, $event)"
                                 @pick-reaction="pickerFor = message"

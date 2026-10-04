@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Models\ConversationParticipant;
 use App\Models\Message;
 use App\Services\MessageSummary;
 use Illuminate\Broadcasting\InteractsWithSockets;
@@ -26,11 +27,15 @@ class MessageUpdated implements ShouldBroadcastNow, ShouldRescue
     ) {}
 
     /**
-     * @return array<int, PrivateChannel>
+     * Each participant's own channel, not the conversation's: the message
+     * carries its text, and only the people in the conversation now may get
+     * it (see ConversationParticipant::channelsFor).
+     *
+     * @return list<PrivateChannel>
      */
     public function broadcastOn(): array
     {
-        return [new PrivateChannel("conversations.{$this->message->conversation_id}")];
+        return ConversationParticipant::channelsFor($this->message->conversation_id);
     }
 
     public function broadcastAs(): string

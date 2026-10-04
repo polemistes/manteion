@@ -238,8 +238,8 @@ test('a conversation page has the conversation from the viewers side, its partic
                 'muted' => true,
             ])
             ->where('participants', [
-                ['id' => $user->id, 'name' => 'Me', 'username' => $user->username, 'avatar_url' => null, 'is_me' => true],
-                ['id' => $friend->id, 'name' => 'Ola', 'username' => $friend->username, 'avatar_url' => $friend->avatar_url, 'is_me' => false],
+                ['id' => $user->id, 'name' => 'Me', 'username' => $user->username, 'avatar_url' => null, 'is_me' => true, 'last_read_at' => null],
+                ['id' => $friend->id, 'name' => 'Ola', 'username' => $friend->username, 'avatar_url' => $friend->avatar_url, 'is_me' => false, 'last_read_at' => null],
             ])
             ->has('messages', 0)
             ->where('hasOlder', false)
@@ -317,4 +317,15 @@ test('a conversation page costs the same few queries however many messages and r
     $withTwentyTwo = $queriesFor();
 
     expect($withTwentyTwo)->toBe($withTwo);
+});
+
+test('the conversation page says when each participant last read it, for "Seen"', function () {
+    $user = User::factory()->create();
+    $friend = User::factory()->create();
+    $conversation = chatListConversation([$user, $friend]);
+    ConversationParticipant::query()->where('user_id', $friend->id)->update(['last_read_at' => '2026-10-04 12:00:00']);
+
+    $this->actingAs($user)->get("/messages/{$conversation->id}")
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('participants', fn ($participants) => collect($participants)->firstWhere('id', $friend->id)['last_read_at'] === '2026-10-04T12:00:00+00:00'));
 });

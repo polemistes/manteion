@@ -45,6 +45,8 @@ export type ConversationChannelOptions = {
     onUpdate?: (message: MessageSummary) => void;
     /** Someone joined or left: reload the participants. */
     onParticipants?: () => void;
+    /** Someone else read the conversation up to `readAt`, for "Seen". */
+    onRead?: (userId: number, readAt: string | null) => void;
     /** Someone else started (or is still) typing. typingUsers tracks the same. */
     onTyping?: (user: TypingUser) => void;
     /**
@@ -179,6 +181,9 @@ export function useConversationChannel(
 
     let current: number | null = null;
     let joined: { channel: PrivateChannel; release: () => void } | null = null;
+    // Messages and reads come on the user's own channel, which only the
+    // conversation's participants get (see ConversationParticipant::channelsFor).
+    let mine: { channel: PrivateChannel; release: () => void } | null = null;
     let stopSubscribed: (() => void) | null = null;
     let stopPush: (() => void) | null = null;
     let lastDeliveredId = 0;
@@ -228,11 +233,25 @@ export function useConversationChannel(
     }
 
     const handleSent = (payload: { message: BroadcastMessage }): void => {
-        deliver(toMessageSummary(payload.message, viewer()));
+        if (payload.message.conversation_id === current) {
+            deliver(toMessageSummary(payload.message, viewer()));
+        }
     };
 
     const handleUpdated = (payload: { message: BroadcastMessage }): void => {
-        options.onUpdate?.(toMessageSummary(payload.message, viewer()));
+        if (payload.message.conversation_id === current) {
+            options.onUpdate?.(toMessageSummary(payload.message, viewer()));
+        }
+    };
+
+    const handleRead = (payload: {
+        conversation_id: number;
+        user_id: number;
+        read_at: string | null;
+    }): void => {
+        if (payload.conversation_id === current) {
+            options.onRead?.(payload.user_id, payload.read_at);
+        }
     };
 
     const handleParticipants = (): void => {
@@ -420,14 +439,18 @@ export function useConversationChannel(
 
         if (joined) {
             joined.channel
-                .listen('.message.sent', handleSent)
-                .listen('.message.updated', handleUpdated)
                 .listen('.participants.updated', handleParticipants)
                 .listenForWhisper('typing', handleTyping);
             stopSubscribed = onSubscribed(joined.channel, () => {
                 void recover();
             });
         }
+
+        mine = joinPrivateChannel(`App.Models.User.${viewer().id}`);
+        mine?.channel
+            .listen('.message.sent', handleSent)
+            .listen('.message.updated', handleUpdated)
+            .listen('.conversation.read', handleRead);
 
         startViewing();
     }
@@ -439,12 +462,19 @@ export function useConversationChannel(
 
         if (joined) {
             joined.channel
-                .stopListening('.message.sent', handleSent)
-                .stopListening('.message.updated', handleUpdated)
                 .stopListening('.participants.updated', handleParticipants)
                 .stopListeningForWhisper('typing', handleTyping);
             joined.release();
             joined = null;
+        }
+
+        if (mine) {
+            mine.channel
+                .stopListening('.message.sent', handleSent)
+                .stopListening('.message.updated', handleUpdated)
+                .stopListening('.conversation.read', handleRead);
+            mine.release();
+            mine = null;
         }
 
         typingTimers.forEach((timer) => clearTimeout(timer));
