@@ -13,6 +13,9 @@ const FALLBACK_POLL_MS = 60_000;
 /** Focus and visibility changes come in bursts; ask at most this often. */
 const AMBIENT_REFRESH_MS = 3_000;
 
+/** How long a higher Messages count waits while the chat on screen reads it. */
+const READ_HOLD_MS = 1_500;
+
 const none: Badges = { messages: 0, activity: 0, requests: 0 };
 
 const store = ref<Badges>({ ...none });
@@ -32,6 +35,9 @@ let refreshAgain = false;
 let lastRefreshAt = 0;
 let refreshTimer: ReturnType<typeof setTimeout> | undefined;
 let pollTimer: ReturnType<typeof setInterval> | undefined;
+let holdUntil = 0;
+let held: Badges | null = null;
+let holdTimer: ReturnType<typeof setTimeout> | undefined;
 
 function count(value: unknown): number {
     const number = Number(value);
@@ -58,10 +64,52 @@ function same(a: Badges, b: Badges): boolean {
     );
 }
 
-function set(next: Badges): void {
+function apply(next: Badges): void {
     if (!same(next, store.value)) {
         store.value = next;
     }
+}
+
+function set(next: Badges): void {
+    if (Date.now() < holdUntil && next.messages > store.value.messages) {
+        // The other counts stay live; only the higher Messages one waits.
+        held = next;
+        apply({ ...next, messages: store.value.messages });
+
+        return;
+    }
+
+    held = null;
+    apply(next);
+}
+
+function releaseHold(): void {
+    clearTimeout(holdTimer);
+    holdUntil = 0;
+
+    const next = held;
+
+    held = null;
+
+    if (next) {
+        apply(next);
+    }
+}
+
+/**
+ * A message arrived in the chat on screen, which marks it read at once.
+ * For a moment a higher Messages count waits, so the badge doesn't go up
+ * and straight back down; if it is still higher when the moment is over
+ * (the read failed, or another chat got a message), it shows then.
+ */
+export function holdMessagesBadge(): void {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    holdUntil = Date.now() + READ_HOLD_MS;
+    clearTimeout(holdTimer);
+    holdTimer = setTimeout(releaseHold, READ_HOLD_MS);
 }
 
 /**
@@ -175,6 +223,9 @@ export function resetBadges(page: Page, isSignedIn: boolean): void {
     signedIn = isSignedIn;
     lastPageBadges = page.props.badges;
     pendingPageBadges = null;
+    clearTimeout(holdTimer);
+    holdUntil = 0;
+    held = null;
     set(isSignedIn ? normalize(page.props.badges) : { ...none });
 }
 

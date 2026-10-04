@@ -11,11 +11,13 @@ import {
 } from './activity';
 import { setupAttention } from './attention';
 import {
+    holdMessagesBadge,
     receiveBadges,
     resetBadges,
     setupBadges,
     syncBadgesFromPage,
 } from './badges';
+import { viewedConversationId } from './conversation';
 import { joinPrivateChannel, setupEcho } from './echo';
 import type { ReverbClient } from './echo';
 import type { PrivateChannel } from './echo';
@@ -46,8 +48,15 @@ let signingOut = false;
 
 const handleBadges = (counts: Badges): void => receiveBadges(counts);
 
-const handleIncomingMessage = (message: IncomingMessage): void =>
+const handleIncomingMessage = (message: IncomingMessage): void => {
+    // The chat on screen reads it straight away; the badge update that
+    // follows this event would otherwise blink the Messages count.
+    if (viewedConversationId.value === message.conversation_id) {
+        holdMessagesBadge();
+    }
+
     emitIncomingMessage(message);
+};
 
 const handleNotification = (notification: Record<string, unknown>): void =>
     emitActivity(notification);
