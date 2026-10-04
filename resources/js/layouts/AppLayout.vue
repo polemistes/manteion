@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
 import { Settings } from '@lucide/vue';
-import { computed, watch } from 'vue';
+import { computed, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import ImpersonationBanner from '@/components/ImpersonationBanner.vue';
@@ -13,6 +13,7 @@ import Avatar from '@/components/ui/Avatar.vue';
 import CountBadge from '@/components/ui/CountBadge.vue';
 import Mark from '@/components/ui/Mark.vue';
 import Toaster from '@/components/ui/Toaster.vue';
+import { startClock } from '@/lib/dates';
 import { showMessageBanner } from '@/lib/toast';
 import {
     onIncomingMessage,
@@ -28,6 +29,9 @@ const page = usePage();
 const { items, tabItems } = useNavigation();
 
 watch(() => page.url, rememberTab, { immediate: true });
+
+// Relative times follow the browser's clock from here on (see lib/dates).
+onMounted(startClock);
 
 const user = computed(() => page.props.auth.user);
 

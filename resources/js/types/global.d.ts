@@ -31,6 +31,15 @@ declare module '@inertiajs/core' {
             availableLocales: Record<string, string>;
             theme: Theme;
             vapidPublicKey: string | null;
+            /** Where to open the WebSocket; null without Reverb. */
+            reverb: {
+                key: string;
+                host: string | null;
+                port: number;
+                scheme: string;
+            } | null;
+            /** The server's clock, for relative times during hydration. */
+            now: string;
             impersonating: boolean;
             alphaNoticeDismissed: boolean;
             [key: string]: unknown;

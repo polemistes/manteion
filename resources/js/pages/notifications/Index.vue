@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
 import { BellRing, CheckCheck, Inbox, ListFilter } from '@lucide/vue';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ActivityRow from '@/components/activity/ActivityRow.vue';
 import PageContainer from '@/components/shell/PageContainer.vue';
@@ -13,7 +13,7 @@ import FilterChip from '@/components/ui/FilterChip.vue';
 import IconButton from '@/components/ui/IconButton.vue';
 import SectionHeader from '@/components/ui/SectionHeader.vue';
 import { addDays, isoWeekday, useDates } from '@/lib/dates';
-import { onActivity } from '@/realtime';
+import { onActivity, onReconnect } from '@/realtime';
 import { requestJson } from '@/realtime/http';
 import { read as readNotification } from '@/routes/notifications';
 import { notifications as notificationSettings } from '@/routes/settings';
@@ -97,11 +97,36 @@ const kinds = computed(() => [
     { key: 'follows' as const, label: t('notifications.follows'), badge: 0 },
 ]);
 
-// What shows as new: unread when the page loaded or since, until cleared.
+// What shows as new: what was unread when the page loaded and what has
+// arrived since, until cleared. The server marks everything read as the
+// page loads, so later reloads of the list call those items read.
+const newIds = ref(
+    new Set(
+        props.notifications
+            .filter((item) => item.unread)
+            .map((item) => item.id),
+    ),
+);
 const cleared = ref(new Set<string>());
 
+watch(
+    () => props.notifications,
+    (items) => {
+        const arrived = items.filter(
+            (item) => item.unread && !newIds.value.has(item.id),
+        );
+
+        if (arrived.length) {
+            newIds.value = new Set([
+                ...newIds.value,
+                ...arrived.map((item) => item.id),
+            ]);
+        }
+    },
+);
+
 function isNew(item: ActivityItem): boolean {
-    return item.unread && !cleared.value.has(item.id);
+    return newIds.value.has(item.id) && !cleared.value.has(item.id);
 }
 
 const newItems = computed(() => props.notifications.filter(isNew));
@@ -124,6 +149,9 @@ function markAllRead(): void {
 
     cleared.value = next;
 }
+
+// Back from a dropped connection: fetch whatever arrived meanwhile.
+onReconnect(() => router.reload({ only: ['notifications'] }));
 
 // Something new arrived: fetch it with what's needed to answer it. The
 // user is looking at it, so it counts as read (but shows as new).

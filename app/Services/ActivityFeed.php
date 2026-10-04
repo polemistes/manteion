@@ -123,7 +123,7 @@ class ActivityFeed
                     'cover' => $event->images->first()?->presentation(),
                     'host_name' => $event->owner->name,
                     'is_host' => $event->user_id === $user->id,
-                    'is_over' => ($event->ends_at ?? $event->starts_at)->isPast(),
+                    'is_over' => $event->isOver(),
                     'my_status' => $attendee?->status->value,
                     'my_attendance_visibility' => $attendee?->attendance_visibility->value,
                 ],

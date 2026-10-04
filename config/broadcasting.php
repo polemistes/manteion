@@ -41,6 +41,14 @@ return [
                 'scheme' => env('REVERB_SCHEME', 'https'),
                 'useTLS' => env('REVERB_SCHEME', 'https') === 'https',
             ],
+            // Where browsers open the WebSocket (shared with every page, so
+            // the built assets carry no address). Defaults to where this
+            // server reaches Reverb; set REVERB_PUBLIC_* when that differs.
+            'client' => [
+                'host' => env('REVERB_PUBLIC_HOST', env('REVERB_HOST')),
+                'port' => (int) env('REVERB_PUBLIC_PORT', env('REVERB_PORT', 443)),
+                'scheme' => env('REVERB_PUBLIC_SCHEME', env('REVERB_SCHEME', 'https')),
+            ],
             'client_options' => [
                 // Guzzle client options: https://docs.guzzlephp.org/en/stable/request-options.html
                 // Broadcasts go out while the request waits (a message sent,

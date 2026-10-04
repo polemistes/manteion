@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\EventVisibility;
+use Carbon\CarbonImmutable;
 use Database\Factories\EventFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -104,6 +105,29 @@ class Event extends Model
     public function reports(): MorphMany
     {
         return $this->morphMany(Report::class, 'reportable');
+    }
+
+    /**
+     * When the event is over: its end, or for one without an end time, the
+     * end of the day it starts on (in the display time zone), so a pub
+     * quiz at 19:00 can still be answered at 20:00.
+     */
+    public function endsAtOrEndOfDay(): CarbonImmutable
+    {
+        if ($this->ends_at !== null) {
+            return CarbonImmutable::instance($this->ends_at);
+        }
+
+        return CarbonImmutable::instance($this->starts_at)
+            ->setTimezone((string) config('app.display_timezone'))
+            ->addDay()
+            ->startOfDay()
+            ->utc();
+    }
+
+    public function isOver(): bool
+    {
+        return $this->endsAtOrEndOfDay()->isPast();
     }
 
     public function attendeeFor(User $user): ?EventAttendee

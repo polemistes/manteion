@@ -17,6 +17,7 @@ import {
     syncBadgesFromPage,
 } from './badges';
 import { joinPrivateChannel, setupEcho } from './echo';
+import type { ReverbClient } from './echo';
 import type { PrivateChannel } from './echo';
 
 export {
@@ -115,7 +116,7 @@ export function setupRealtime(initialPage: Page): void {
 
     started = true;
 
-    setupEcho();
+    setupEcho((initialPage.props.reverb as ReverbClient | undefined) ?? null);
     follow(initialPage);
     setupBadges();
     setupAttention();

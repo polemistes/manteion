@@ -41,11 +41,20 @@ function toConnectionState(pusherState: string): ConnectionState {
     }
 }
 
+export type ReverbClient = {
+    key: string;
+    host: string | null;
+    port: number;
+    scheme: string;
+};
+
 /**
- * Connects Echo to Reverb with the VITE_REVERB_* values baked into the build.
- * Client only, once; app.ts calls it through setupRealtime().
+ * Connects Echo to Reverb: where the server says (the shared `reverb` page
+ * prop), so the same build works on any host; failing that, the
+ * VITE_REVERB_* values baked into the build. Client only, once; app.ts
+ * calls it through setupRealtime().
  */
-export function setupEcho(): void {
+export function setupEcho(client: ReverbClient | null = null): void {
     if (typeof window === 'undefined' || started) {
         return;
     }
@@ -53,7 +62,7 @@ export function setupEcho(): void {
     started = true;
 
     const env = import.meta.env;
-    const key = env.VITE_REVERB_APP_KEY;
+    const key = client?.key ?? env.VITE_REVERB_APP_KEY;
 
     if (!key) {
         // No Reverb here: report "disconnected" (after hydration) so the
@@ -65,13 +74,17 @@ export function setupEcho(): void {
         return;
     }
 
-    const forceTLS = (env.VITE_REVERB_SCHEME || 'https') === 'https';
-    const port = Number(env.VITE_REVERB_PORT) || (forceTLS ? 443 : 80);
+    const scheme = client?.scheme ?? (env.VITE_REVERB_SCHEME || 'https');
+    const forceTLS = scheme === 'https';
+    const port =
+        (client ? client.port : Number(env.VITE_REVERB_PORT)) ||
+        (forceTLS ? 443 : 80);
+    const host = client ? client.host : env.VITE_REVERB_HOST;
 
     configureEcho({
         broadcaster: 'reverb',
         key,
-        wsHost: env.VITE_REVERB_HOST || window.location.hostname,
+        wsHost: host || window.location.hostname,
         wsPort: port,
         wssPort: port,
         forceTLS,

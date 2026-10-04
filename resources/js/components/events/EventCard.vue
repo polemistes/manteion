@@ -36,10 +36,8 @@ const dates = useDates();
 const shape = computed(() => props.event.cover?.shape ?? 'none');
 const href = computed(() => eventsShow(props.event.id).url);
 
-const isPast = computed(
-    () =>
-        new Date(props.event.ends_at ?? props.event.starts_at).getTime() <
-        Date.now(),
+const isPast = computed(() =>
+    dates.isOver(props.event.starts_at, props.event.ends_at),
 );
 
 const rsvp = useRsvp({

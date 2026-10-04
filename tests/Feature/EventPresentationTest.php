@@ -292,3 +292,21 @@ test('someone who may not invite gets no one to invite', function () {
         ->where('event.can_invite', false)
         ->where('inviteCandidates', []));
 });
+
+test('an event without an end time runs until the end of its day', function () {
+    // 14:00 in Oslo.
+    Carbon::setTestNow('2026-09-18 12:00:00');
+    $host = User::factory()->create();
+
+    $startedToday = Event::factory()->create(['user_id' => $host->id, 'starts_at' => '2026-09-18 10:00:00', 'ends_at' => null]);
+    $yesterday = Event::factory()->create(['user_id' => $host->id, 'starts_at' => '2026-09-17 18:00:00', 'ends_at' => null]);
+    $endedEarlier = Event::factory()->create(['user_id' => $host->id, 'starts_at' => '2026-09-18 08:00:00', 'ends_at' => '2026-09-18 09:00:00']);
+
+    expect($startedToday->isOver())->toBeFalse()
+        ->and($yesterday->isOver())->toBeTrue()
+        ->and($endedEarlier->isOver())->toBeTrue();
+
+    $this->actingAs($host)->get('/events')->assertInertia(fn (Assert $page) => $page
+        ->where('comingUp', fn ($events) => collect($events)->pluck('id')->contains($startedToday->id)
+            && ! collect($events)->pluck('id')->contains($yesterday->id)));
+});

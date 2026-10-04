@@ -1,5 +1,5 @@
 import { usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 /** The Intl locale for each app locale: both 24-hour, weeks from Monday. */
@@ -40,6 +40,28 @@ function toDate(value: string | Date): Date {
  */
 function plainSpaces(text: string): string {
     return text.replace(/[\u00a0\u2009\u202f]/g, ' ');
+}
+
+/**
+ * The browser's clock once the app runs, ticking every 30 seconds. Until
+ * then (on the server, and while the first page hydrates) relative times
+ * count from the server's clock instead (the shared `now` prop), so both
+ * renders write the same "2 min ago".
+ */
+const clock = ref<number | null>(null);
+let ticking = false;
+
+/** Switches relative times to the browser's clock. Call once, after mount. */
+export function startClock(): void {
+    if (typeof window === 'undefined' || ticking) {
+        return;
+    }
+
+    ticking = true;
+    clock.value = Date.now();
+    setInterval(() => {
+        clock.value = Date.now();
+    }, 30_000);
 }
 
 /** The calendar day of an instant in a time zone, as YYYY-MM-DD. */
@@ -106,8 +128,18 @@ export function useDates() {
             ),
         );
 
+    const now = (): number => {
+        if (clock.value !== null) {
+            return clock.value;
+        }
+
+        const serverNow = page.props.now as string | undefined;
+
+        return serverNow ? Date.parse(serverNow) : Date.now();
+    };
+
     const dayKey = (value: string | Date) => dayKeyIn(value, timeZone.value);
-    const todayKey = () => dayKeyIn(new Date(), timeZone.value);
+    const todayKey = () => dayKeyIn(new Date(now()), timeZone.value);
 
     /** Calendar days from today to the given instant (0 today, 1 tomorrow). */
     const daysFromToday = (value: string | Date) =>
@@ -198,7 +230,7 @@ export function useDates() {
 
     /** "2 hr ago", "yesterday", "for 2 t siden". */
     const ago = (value: string | Date) => {
-        const seconds = (toDate(value).getTime() - Date.now()) / 1000;
+        const seconds = (toDate(value).getTime() - now()) / 1000;
         const relative = new Intl.RelativeTimeFormat(intlLocale.value, {
             numeric: 'auto',
             style: 'short',
@@ -284,6 +316,20 @@ export function useDates() {
         return days <= daysLeftThisWeek + 7 ? 'nextWeek' : 'later';
     };
 
+    /**
+     * Whether an event is over: past its end, or for one without an end
+     * time, past the end of the day it starts on (as Event::isOver).
+     */
+    const isOver = (startsAt: string, endsAt: string | null) => {
+        if (endsAt) {
+            return Date.parse(endsAt) < now();
+        }
+
+        const nextDay = addDays(dayKey(startsAt), 1);
+
+        return zonedToUtc(nextDay, '00:00', timeZone.value).getTime() <= now();
+    };
+
     /** "Week 40" / "Uke 40" */
     const weekLabel = (value: string | Date) =>
         t('dates.week', { week: isoWeekOfDay(dayKey(value)) });
@@ -311,6 +357,7 @@ export function useDates() {
         dayDivider,
         section,
         weekLabel,
+        isOver,
         isoWeek: (value: string | Date) => isoWeekOfDay(dayKey(value)),
     };
 }

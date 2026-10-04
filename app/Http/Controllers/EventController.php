@@ -498,9 +498,14 @@ class EventController extends Controller
                 ->orWhereHas('attendees', fn (Builder $attendees) => $attendees
                     ->where('user_id', $user->id)
                     ->whereIn('status', [AttendanceStatus::Attending, AttendanceStatus::Interested])))
+            // Not over yet: still to start, still running, or without an
+            // end and started today (see Event::isOver).
             ->where(fn (Builder $query) => $query
                 ->where('starts_at', '>=', now())
-                ->orWhere('ends_at', '>=', now()))
+                ->orWhere('ends_at', '>=', now())
+                ->orWhere(fn (Builder $query) => $query
+                    ->whereNull('ends_at')
+                    ->where('starts_at', '>=', CarbonImmutable::parse($this->today(), (string) config('app.display_timezone'))->utc())))
             ->orderBy('starts_at')
             ->limit(3)
             ->get();

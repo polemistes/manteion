@@ -54,8 +54,36 @@ class HandleInertiaRequests extends Middleware
             'theme' => self::themeFor($user),
             'availableLocales' => config('app.supported_locales'),
             'vapidPublicKey' => config('webpush.vapid.public_key'),
+            'reverb' => self::reverbClient(),
+            // The clock relative times ("2 min ago") count from while the
+            // page renders on the server and hydrates in the browser, so
+            // both write the same.
+            'now' => now()->toIso8601String(),
             'impersonating' => $request->session()->has('impersonator_id'),
             'alphaNoticeDismissed' => $request->cookie('alpha_notice_dismissed') === '1',
+        ];
+    }
+
+    /**
+     * Where the browser connects to Reverb, or null when broadcasting runs
+     * through something else. The key is public by design; the secret stays
+     * on the server.
+     *
+     * @return array{key: string, host: string|null, port: int, scheme: string}|null
+     */
+    public static function reverbClient(): ?array
+    {
+        $key = config('broadcasting.connections.reverb.key');
+
+        if (config('broadcasting.default') !== 'reverb' || ! is_string($key) || $key === '') {
+            return null;
+        }
+
+        return [
+            'key' => $key,
+            'host' => config('broadcasting.connections.reverb.client.host'),
+            'port' => (int) config('broadcasting.connections.reverb.client.port'),
+            'scheme' => (string) config('broadcasting.connections.reverb.client.scheme'),
         ];
     }
 

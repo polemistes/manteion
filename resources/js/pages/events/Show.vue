@@ -110,10 +110,8 @@ const shape = computed<'photo' | 'poster' | 'none'>(
     () => cover.value?.shape ?? 'none',
 );
 
-const isPast = computed(
-    () =>
-        new Date(props.event.ends_at ?? props.event.starts_at).getTime() <
-        Date.now(),
+const isPast = computed(() =>
+    dates.isOver(props.event.starts_at, props.event.ends_at),
 );
 
 const canAnswer = computed(
