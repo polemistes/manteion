@@ -42,7 +42,6 @@
         "loadOlder": "Load earlier messages",
         "loadingOlder": "Loading…",
         "newMessages": "New messages",
-        "jumpToLatest": "Jump to the latest",
         "deleted": "Message deleted",
         "failed": "Not sent.",
         "retry": "Try again",
@@ -67,8 +66,7 @@
         "leave": "Leave conversation",
         "confirmLeaveTitle": "Leave this conversation?",
         "confirmLeave": "You stop getting its messages. Someone in it can add you again.",
-        "noMessagesYet": "No messages yet. Say hello.",
-        "sendFailed": "Your message wasn’t sent. Check your connection and try again."
+        "noMessagesYet": "No messages yet. Say hello."
     },
     "create": {
         "title": "New message",

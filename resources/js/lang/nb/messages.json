@@ -42,7 +42,6 @@
         "loadOlder": "Last inn tidligere meldinger",
         "loadingOlder": "Laster …",
         "newMessages": "Nye meldinger",
-        "jumpToLatest": "Gå til de nyeste",
         "deleted": "Meldingen er slettet",
         "failed": "Ikke sendt.",
         "retry": "Prøv igjen",
@@ -67,8 +66,7 @@
         "leave": "Forlat samtalen",
         "confirmLeaveTitle": "Forlate samtalen?",
         "confirmLeave": "Du slutter å få meldingene herfra. Noen i samtalen kan legge deg til igjen.",
-        "noMessagesYet": "Ingen meldinger ennå. Si hei.",
-        "sendFailed": "Meldingen ble ikke sendt. Sjekk tilkoblingen og prøv igjen."
+        "noMessagesYet": "Ingen meldinger ennå. Si hei."
     },
     "create": {
         "title": "Ny melding",

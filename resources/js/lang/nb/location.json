@@ -5,11 +5,6 @@
     "noResults": "Ingen treff",
     "searchError": "Kunne ikke søke akkurat nå. Prøv igjen.",
     "clear": "Fjern plassering",
-    "near": "Nær",
-    "sortingByDistance": "Sorterer etter avstand",
-    "useCurrentLocation": "Bruk min posisjon",
-    "geolocationError": "Kunne ikke hente posisjonen din.",
-    "distanceAway": "{distance} km unna",
     "pinPlaced": "Nålen står på kartet",
     "tapToPlace": "Trykk på kartet for å plassere nålen, eller søk over."
 }

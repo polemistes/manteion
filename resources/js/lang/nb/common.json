@@ -1,14 +1,7 @@
 {
-    "save": "Lagre",
     "cancel": "Avbryt",
     "delete": "Slett",
-    "remove": "Fjern",
-    "create": "Opprett",
-    "add": "Legg til",
-    "search": "Søk",
-    "message": "Melding",
     "showPassword": "Vis passord",
     "hidePassword": "Skjul passord",
-    "passphraseHint": "Minst 10 tegn. Ingen spesielle krav — noen tilfeldige ord fungerer bra, f.eks. «korrekt hest batteri stift».",
-    "alphaNotice": "Alfatest — ting kan gå i stykker, og data kan bli slettet når som helst."
+    "passphraseHint": "Minst 10 tegn. Ingen spesielle krav — noen tilfeldige ord fungerer bra, f.eks. «korrekt hest batteri stift»."
 }
