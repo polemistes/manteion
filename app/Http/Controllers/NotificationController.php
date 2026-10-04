@@ -29,6 +29,10 @@ class NotificationController extends Controller
 
         return Inertia::render('notifications/Index', [
             'notifications' => $notifications,
+            'push' => fn () => [
+                'categories' => array_keys(array_filter($user->notificationSettings()['push'])),
+                'has_device' => $user->pushSubscriptions()->exists(),
+            ],
         ]);
     }
 

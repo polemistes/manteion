@@ -1,10 +1,14 @@
 <?php
 
+use App\Enums\AttendanceStatus;
+use App\Enums\AttendanceVisibility;
+use App\Enums\FriendshipStatus;
 use App\Enums\UserRole;
 use App\Events\BadgesUpdated;
 use App\Models\Event;
 use App\Models\EventAttendee;
 use App\Models\EventComment;
+use App\Models\EventImage;
 use App\Models\Follow;
 use App\Models\Friendship;
 use App\Models\Leaflet;
@@ -51,7 +55,8 @@ test('the activity page lists each notification as an activity item, newest firs
                 ->where('pending', true)
                 ->where('url', "/users/{$follower->id}")
                 ->where('unread', true)
-                ->where('created_at', $followRequest->created_at->toIso8601String()))
+                ->where('created_at', $followRequest->created_at->toIso8601String())
+                ->where('context', ['event' => null, 'request' => ['id' => $followRequest->data['follow_id'], 'status' => 'pending'], 'following_actor' => null]))
             ->has('notifications.1', fn (Assert $item) => $item
                 ->where('id', $invitation->id)
                 ->where('type', 'InvitedToEvent')
@@ -64,7 +69,9 @@ test('the activity page lists each notification as an activity item, newest firs
                 ->where('pending', null)
                 ->where('url', "/events/{$event->id}")
                 ->where('unread', false)
-                ->where('created_at', $invitation->created_at->toIso8601String())));
+                ->where('created_at', $invitation->created_at->toIso8601String())
+                // Someone else's private event, without an invitation row: out of sight.
+                ->where('context', ['event' => null, 'request' => null, 'following_actor' => null])));
 });
 
 test('the activity page shows the newest hundred notifications', function () {
@@ -99,8 +106,76 @@ test('the activity page loads every actor in one query', function () {
     $this->actingAs($user)->get('/notifications')->assertOk();
 
     $actorQueries = collect(DB::getQueryLog())
-        ->filter(fn (array $query) => str_contains($query['query'], 'from "users" where "users"."id" in'));
+        ->filter(fn (array $query) => str_contains($query['query'], 'select "id", "name", "username", "avatar_path" from "users"'));
     expect($actorQueries)->toHaveCount(1);
+});
+
+test('an invitation brings the event, its cover and the answer so far, to answer in place', function () {
+    $user = User::factory()->create();
+    $host = User::factory()->create(['name' => 'Ada']);
+    $event = Event::factory()->create(['user_id' => $host->id, 'starts_at' => now()->addWeek()->startOfMinute(), 'ends_at' => null]);
+    $image = EventImage::factory()->create(['event_id' => $event->id]);
+    EventAttendee::factory()->visibility(AttendanceVisibility::Friends)->create([
+        'event_id' => $event->id,
+        'user_id' => $user->id,
+        'status' => AttendanceStatus::Interested,
+    ]);
+    $user->notify(new InvitedToEvent($event, $host));
+
+    $this->actingAs($user)->get('/notifications')
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('notifications.0.context.event', [
+                'starts_at' => $event->starts_at->toIso8601String(),
+                'ends_at' => null,
+                'cover' => $image->fresh()->presentation(),
+                'host_name' => 'Ada',
+                'is_host' => false,
+                'is_over' => false,
+                'my_status' => 'interested',
+                'my_attendance_visibility' => 'friends',
+            ]));
+});
+
+test('an event that was deleted leaves its notifications without event context', function () {
+    $user = User::factory()->create();
+    $host = User::factory()->create();
+    $event = Event::factory()->create(['user_id' => $host->id]);
+    EventAttendee::factory()->create(['event_id' => $event->id, 'user_id' => $user->id]);
+    $user->notify(new InvitedToEvent($event, $host));
+    $event->update(['is_deleted' => true]);
+
+    $this->actingAs($user)->get('/notifications')
+        ->assertInertia(fn (Assert $page) => $page->where('notifications.0.context.event', null));
+});
+
+test('a friend request says whether it is still open', function () {
+    $user = User::factory()->create();
+    $friendship = Friendship::factory()->create(['addressee_id' => $user->id]);
+    $user->notify(new FriendRequestReceived($friendship));
+
+    $this->actingAs($user)->get('/notifications')
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('notifications.0.context.request', ['id' => $friendship->id, 'status' => 'pending']));
+
+    $friendship->update(['status' => FriendshipStatus::Accepted]);
+
+    $this->actingAs($user)->get('/notifications')
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('notifications.0.context.request', ['id' => $friendship->id, 'status' => 'accepted']));
+});
+
+test('a new follower says whether the user follows them back', function () {
+    $user = User::factory()->create();
+    $follower = User::factory()->create();
+    $user->notify(new NewFollower(Follow::factory()->create(['follower_id' => $follower->id, 'followed_id' => $user->id])));
+
+    $this->actingAs($user)->get('/notifications')
+        ->assertInertia(fn (Assert $page) => $page->where('notifications.0.context.following_actor', null));
+
+    Follow::factory()->pending()->create(['follower_id' => $user->id, 'followed_id' => $follower->id]);
+
+    $this->actingAs($user)->get('/notifications')
+        ->assertInertia(fn (Assert $page) => $page->where('notifications.0.context.following_actor', 'pending'));
 });
 
 test('the activity page only shows the users own notifications', function () {
@@ -329,4 +404,18 @@ test('an administrator browsing as a member marks none of the members activity r
 
     expect($user->unreadNotifications()->count())->toBe(1);
     Events::assertNotDispatched(BadgesUpdated::class);
+});
+
+test('the activity page says which notifications reach the phone', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->get('/notifications')
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('push.categories', ['direct_messages', 'group_messages'])
+            ->where('push.has_device', false));
+
+    $user->updatePushSubscription('https://push.example.test/abc', 'key', 'token');
+
+    $this->actingAs($user)->get('/notifications')
+        ->assertInertia(fn (Assert $page) => $page->where('push.has_device', true));
 });

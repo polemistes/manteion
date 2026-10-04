@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
 import { Settings } from '@lucide/vue';
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import ImpersonationBanner from '@/components/ImpersonationBanner.vue';
 import ReportDialog from '@/components/ReportDialog.vue';
 import AlphaNotice from '@/components/shell/AlphaNotice.vue';
-import { useNavigation } from '@/components/shell/useNavigation';
+import { rememberTab, useNavigation } from '@/components/shell/useNavigation';
 import StaffDeleteDialog from '@/components/StaffDeleteDialog.vue';
 import Avatar from '@/components/ui/Avatar.vue';
 import CountBadge from '@/components/ui/CountBadge.vue';
@@ -25,7 +25,9 @@ import { index as settingsIndex } from '@/routes/settings';
 
 const { t } = useI18n();
 const page = usePage();
-const { items } = useNavigation();
+const { items, tabItems } = useNavigation();
+
+watch(() => page.url, rememberTab, { immediate: true });
 
 const user = computed(() => page.props.auth.user);
 
@@ -52,10 +54,6 @@ const toastBottom = computed(
     () =>
         ownBottomBar[page.component] ??
         'calc(var(--spacing-tabbar) + env(safe-area-inset-bottom) + 12px)',
-);
-
-const tabItems = computed(() =>
-    items.value.filter((item) => item.key !== 'activity'),
 );
 
 const meItem = computed(() => items.value.find((item) => item.key === 'me')!);

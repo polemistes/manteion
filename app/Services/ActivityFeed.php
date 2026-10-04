@@ -3,11 +3,18 @@
 namespace App\Services;
 
 use App\Events\BadgesUpdated;
+use App\Models\Event;
+use App\Models\Follow;
+use App\Models\Friendship;
 use App\Models\User;
 use App\Notifications\ActivityNotification;
+use App\Notifications\FriendRequestReceived;
+use App\Notifications\NewFollower;
 use Carbon\CarbonInterface;
+use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Support\Collection;
 use Inertia\Support\Header;
 
 /**
@@ -21,7 +28,9 @@ class ActivityFeed
     public const LIMIT = 100;
 
     /**
-     * The newest notifications, with every actor loaded in one query.
+     * The newest notifications, each with what the Activity page needs to
+     * answer it in place (see context()). Actors, events and requests load
+     * in one query each.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -34,17 +43,94 @@ class ActivityFeed
             ->get(['id', 'name', 'username', 'avatar_path'])
             ->keyBy('id');
 
+        $context = self::context($user, $notifications);
+
         return $notifications
-            ->map(fn (DatabaseNotification $notification) => self::item(
-                id: $notification->id,
-                type: $notification->type,
-                data: $notification->data,
-                actor: $actors->get($notification->data['actor_id'] ?? null),
-                unread: $notification->read_at === null,
-                createdAt: $notification->created_at,
-            ))
+            ->map(fn (DatabaseNotification $notification) => [
+                ...self::item(
+                    id: $notification->id,
+                    type: $notification->type,
+                    data: $notification->data,
+                    actor: $actors->get($notification->data['actor_id'] ?? null),
+                    unread: $notification->read_at === null,
+                    createdAt: $notification->created_at,
+                ),
+                'context' => $context($notification),
+            ])
             ->values()
             ->all();
+    }
+
+    /**
+     * For each notification: the event it is about as the user may still
+     * see it (date, cover, their answer; null once deleted or out of
+     * sight), the friend or follow request it brought and whether that is
+     * still open (null once withdrawn), and, for a new follower, whether
+     * the user follows them back.
+     *
+     * @param  Collection<int, DatabaseNotification>  $notifications
+     * @return Closure(DatabaseNotification): array{event: array<string, mixed>|null, request: array{id: int, status: string}|null, following_actor: string|null}
+     */
+    private static function context(User $user, Collection $notifications): Closure
+    {
+        $about = fn (string $subjectType) => $notifications
+            ->filter(fn (DatabaseNotification $notification) => ($notification->data['subject_type'] ?? null) === $subjectType)
+            ->pluck('data.subject_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        $events = (new EventFeedQuery($user))->visible()
+            ->whereKey($about('event'))
+            ->get()
+            ->keyBy('id');
+
+        $friendships = Friendship::query()
+            ->whereKey($notifications->pluck('data.friendship_id')->filter()->unique()->values())
+            ->get(['id', 'status'])
+            ->keyBy('id');
+
+        $follows = Follow::query()
+            ->whereKey($notifications->pluck('data.follow_id')->filter()->unique()->values())
+            ->get(['id', 'status'])
+            ->keyBy('id');
+
+        $followingActors = Follow::query()
+            ->where('follower_id', $user->id)
+            ->whereIn('followed_id', $notifications->pluck('data.actor_id')->filter()->unique()->values())
+            ->get(['followed_id', 'status'])
+            ->mapWithKeys(fn (Follow $follow) => [$follow->followed_id => $follow->status->value]);
+
+        return function (DatabaseNotification $notification) use ($user, $events, $friendships, $follows, $followingActors): array {
+            $data = $notification->data;
+            $event = ($data['subject_type'] ?? null) === 'event' ? $events->get($data['subject_id'] ?? null) : null;
+            $attendee = $event?->attendees->first();
+
+            $request = match ($notification->type) {
+                FriendRequestReceived::class => $friendships->get($data['friendship_id'] ?? null),
+                NewFollower::class => $follows->get($data['follow_id'] ?? null),
+                default => null,
+            };
+
+            $following = $notification->type === NewFollower::class
+                ? $followingActors->get($data['actor_id'] ?? null)
+                : null;
+
+            return [
+                'event' => $event === null ? null : [
+                    'starts_at' => $event->starts_at->toIso8601String(),
+                    'ends_at' => $event->ends_at?->toIso8601String(),
+                    'cover' => $event->images->first()?->presentation(),
+                    'host_name' => $event->owner->name,
+                    'is_host' => $event->user_id === $user->id,
+                    'is_over' => ($event->ends_at ?? $event->starts_at)->isPast(),
+                    'my_status' => $attendee?->status->value,
+                    'my_attendance_visibility' => $attendee?->attendance_visibility->value,
+                ],
+                'request' => $request === null ? null : ['id' => $request->id, 'status' => $request->status->value],
+                'following_actor' => $following,
+            ];
+        };
     }
 
     /**

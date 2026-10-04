@@ -1,7 +1,7 @@
 import { usePage } from '@inertiajs/vue3';
 import { Bell, Calendar, MessageCircle, Newspaper, Users } from '@lucide/vue';
 import type { Component } from 'vue';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useBadges } from '@/realtime';
 import { index as contactsIndex } from '@/routes/contacts';
@@ -40,6 +40,27 @@ function inSection(url: string, key: NavKey): boolean {
     return sections[key].some(
         (prefix) => path === prefix || path.startsWith(`${prefix}/`),
     );
+}
+
+const TABS: NavKey[] = ['events', 'leaflets', 'messages', 'people', 'me'];
+
+/**
+ * The tab last visited, so Activity (opened from the bell, not a tab of its
+ * own) keeps it selected on a phone and goes back to it. Only the browser
+ * remembers: a server render starts from Events, as a fresh load does.
+ */
+const lastTab = ref<NavKey>('events');
+
+export function rememberTab(url: string): void {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    const tab = TABS.find((key) => inSection(url, key));
+
+    if (tab) {
+        lastTab.value = tab;
+    }
 }
 
 /**
@@ -112,5 +133,22 @@ export function useNavigation() {
         items.value.find((item) => item.key === 'activity')!,
     );
 
-    return { items, activity, badges };
+    /** The phone's tab bar: Activity is the bell, so it keeps the last tab lit. */
+    const tabItems = computed(() => {
+        const onActivity = inSection(page.url, 'activity');
+
+        return items.value
+            .filter((item) => item.key !== 'activity')
+            .map((item) =>
+                onActivity
+                    ? { ...item, active: item.key === lastTab.value }
+                    : item,
+            );
+    });
+
+    const previousTab = computed(() =>
+        items.value.find((item) => item.key === lastTab.value)!,
+    );
+
+    return { items, tabItems, activity, previousTab, badges };
 }
