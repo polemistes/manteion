@@ -19,3 +19,6 @@ Vue casts a declared boolean prop that the parent omits to false, so `props.flag
 
 ## Messages are between friends only
 StoreConversationRequest rejects anyone who is not the sender's friend, so a "Message" action may only be offered for friends (People lists pass canMessage from the friends set; profiles show it when friend_status is 'friends'). Staff write to anyone through moderation.users.message instead.
+
+## Small targets get an after: hit area, and truncate clips it
+Touch targets under 44px get an invisible hit area instead of growing: `relative after:absolute after:inset-x-0 after:-inset-y-1` (see FilterChip, Button size sm, CommentThread). Size the inset so neighbours' areas don't overlap. `truncate`/`overflow-hidden` on the same element (or an ancestor) clips the ::after, so put `truncate` on an inner span (LeafletCard author link).
