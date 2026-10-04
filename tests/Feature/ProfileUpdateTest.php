@@ -1,101 +1,87 @@
 <?php
 
+use App\Enums\NotificationCategory;
 use App\Enums\ThemeMode;
-use App\Enums\ThemeStyle;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
-test('a user can update their profile information and privacy setting', function () {
-    $user = User::factory()->create(['allow_public_follow' => true]);
+test('a user can update their name, username and email', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->put('/user/profile-information', [
+            'name' => 'New Name',
+            'username' => 'new_username',
+            'email' => 'new@example.com',
+        ])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    $user->refresh();
+    expect($user->name)->toBe('New Name');
+    expect($user->username)->toBe('new_username');
+    expect($user->email)->toBe('new@example.com');
+});
+
+test('the profile endpoint leaves privacy and appearance to their own settings', function () {
+    $user = User::factory()->create([
+        'allow_public_follow' => true,
+        'show_friends_list' => true,
+        'appear_in_friends_lists' => true,
+        'searchable' => true,
+        'theme_mode' => ThemeMode::Light,
+    ]);
+
+    $this->actingAs($user)
+        ->put('/user/profile-information', [
+            'name' => 'New Name',
+            'username' => $user->username,
+            'email' => $user->email,
+            'allow_public_follow' => '0',
+            'show_friends_list' => '0',
+            'appear_in_friends_lists' => '0',
+            'searchable' => '0',
+            'theme_mode' => 'dark',
+        ])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    $user->refresh();
+    expect($user->name)->toBe('New Name');
+    expect($user->allow_public_follow)->toBeTrue();
+    expect($user->show_friends_list)->toBeTrue();
+    expect($user->appear_in_friends_lists)->toBeTrue();
+    expect($user->searchable)->toBeTrue();
+    expect($user->theme_mode)->toBe(ThemeMode::Light);
+});
+
+test('updating the profile leaves the notification settings untouched', function () {
+    $user = User::factory()
+        ->pushDisabledFor(NotificationCategory::DirectMessages)
+        ->pushEnabledFor(NotificationCategory::EventInvites)
+        ->create();
 
     $response = $this->actingAs($user)->put('/user/profile-information', [
         'name' => 'New Name',
         'username' => $user->username,
         'email' => $user->email,
-        'allow_public_follow' => '0',
-        'show_friends_list' => '1',
-        'appear_in_friends_lists' => '1',
-        'searchable' => '1',
-        'push_notifications_enabled' => '1',
-        'notify_event_invites' => '1',
-        'notify_messages' => '1',
-        'notify_friend_requests' => '1',
-        'notify_follow_requests' => '1',
-        'theme_style' => 'classic',
-        'theme_mode' => 'system',
-    ]);
-
-    $response->assertRedirect();
-    expect($user->fresh()->name)->toBe('New Name');
-    expect($user->fresh()->allow_public_follow)->toBeFalse();
-});
-
-test('a user can update their friends-list and search privacy settings', function () {
-    $user = User::factory()->create([
-        'show_friends_list' => true,
-        'appear_in_friends_lists' => true,
-        'searchable' => true,
-    ]);
-
-    $response = $this->actingAs($user)->put('/user/profile-information', [
-        'name' => $user->name,
-        'username' => $user->username,
-        'email' => $user->email,
-        'allow_public_follow' => '1',
-        'show_friends_list' => '0',
-        'appear_in_friends_lists' => '0',
-        'searchable' => '0',
-        'push_notifications_enabled' => '1',
-        'notify_event_invites' => '1',
-        'notify_messages' => '1',
-        'notify_friend_requests' => '1',
-        'notify_follow_requests' => '1',
-        'theme_style' => 'classic',
-        'theme_mode' => 'system',
     ]);
 
     $response->assertRedirect();
     $user->refresh();
-    expect($user->show_friends_list)->toBeFalse();
-    expect($user->appear_in_friends_lists)->toBeFalse();
-    expect($user->searchable)->toBeFalse();
+    expect($user->name)->toBe('New Name');
+    expect($user->wantsPush(NotificationCategory::DirectMessages))->toBeFalse();
+    expect($user->wantsPush(NotificationCategory::EventInvites))->toBeTrue();
 });
 
-test('a user can update their push notification preferences', function () {
-    $user = User::factory()->create([
-        'push_notifications_enabled' => true,
-        'notify_event_invites' => true,
-        'notify_messages' => true,
-        'notify_friend_requests' => true,
-        'notify_follow_requests' => true,
-    ]);
+test('the name, username and email are required', function () {
+    $user = User::factory()->create();
 
-    $response = $this->actingAs($user)->put('/user/profile-information', [
-        'name' => $user->name,
-        'username' => $user->username,
-        'email' => $user->email,
-        'allow_public_follow' => '1',
-        'show_friends_list' => '1',
-        'appear_in_friends_lists' => '1',
-        'searchable' => '1',
-        'push_notifications_enabled' => '0',
-        'notify_event_invites' => '0',
-        'notify_messages' => '0',
-        'notify_friend_requests' => '0',
-        'notify_follow_requests' => '0',
-        'theme_style' => 'classic',
-        'theme_mode' => 'system',
-    ]);
-
-    $response->assertRedirect();
-    $user->refresh();
-    expect($user->push_notifications_enabled)->toBeFalse();
-    expect($user->notify_event_invites)->toBeFalse();
-    expect($user->notify_messages)->toBeFalse();
-    expect($user->notify_friend_requests)->toBeFalse();
-    expect($user->notify_follow_requests)->toBeFalse();
+    $this->actingAs($user)
+        ->put('/user/profile-information', ['name' => '', 'username' => '', 'email' => ''])
+        ->assertSessionHasErrorsIn('updateProfileInformation', ['name', 'username', 'email']);
 });
 
 test('a user cannot take an existing username', function () {
@@ -106,21 +92,24 @@ test('a user cannot take an existing username', function () {
         'name' => $user->name,
         'username' => 'taken',
         'email' => $user->email,
-        'allow_public_follow' => '1',
-        'show_friends_list' => '1',
-        'appear_in_friends_lists' => '1',
-        'searchable' => '1',
-        'push_notifications_enabled' => '1',
-        'notify_event_invites' => '1',
-        'notify_messages' => '1',
-        'notify_friend_requests' => '1',
-        'notify_follow_requests' => '1',
-        'theme_style' => 'classic',
-        'theme_mode' => 'system',
     ]);
 
     $response->assertSessionHasErrorsIn('updateProfileInformation', ['username']);
 });
+
+test('a username may only hold letters, numbers, dashes and underscores', function (string $username) {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->put('/user/profile-information', [
+            'name' => $user->name,
+            'username' => $username,
+            'email' => $user->email,
+        ])
+        ->assertSessionHasErrorsIn('updateProfileInformation', ['username']);
+
+    expect($user->fresh()->username)->not->toBe($username);
+})->with(['first.last', 'two words', 'semi;colon']);
 
 test('a user can upload an avatar and set a bio', function () {
     Storage::fake('public');
@@ -130,17 +119,6 @@ test('a user can upload an avatar and set a bio', function () {
         'name' => $user->name,
         'username' => $user->username,
         'email' => $user->email,
-        'allow_public_follow' => '1',
-        'show_friends_list' => '1',
-        'appear_in_friends_lists' => '1',
-        'searchable' => '1',
-        'push_notifications_enabled' => '1',
-        'notify_event_invites' => '1',
-        'notify_messages' => '1',
-        'notify_friend_requests' => '1',
-        'notify_follow_requests' => '1',
-        'theme_style' => 'classic',
-        'theme_mode' => 'system',
         'bio' => 'Hello, I like board games.',
         'avatar' => UploadedFile::fake()->image('avatar.jpg'),
     ]);
@@ -153,6 +131,22 @@ test('a user can upload an avatar and set a bio', function () {
     Storage::disk('public')->assertExists($user->avatar_path);
 });
 
+test('an avatar must be an image', function () {
+    Storage::fake('public');
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->put('/user/profile-information', [
+            'name' => $user->name,
+            'username' => $user->username,
+            'email' => $user->email,
+            'avatar' => UploadedFile::fake()->create('notes.pdf', 10, 'application/pdf'),
+        ])
+        ->assertSessionHasErrorsIn('updateProfileInformation', ['avatar']);
+
+    expect($user->fresh()->avatar_path)->toBeNull();
+});
+
 test('uploading a new avatar replaces and deletes the old one', function () {
     Storage::fake('public');
     $user = User::factory()->create(['avatar_path' => 'avatars/old.jpg']);
@@ -162,17 +156,6 @@ test('uploading a new avatar replaces and deletes the old one', function () {
         'name' => $user->name,
         'username' => $user->username,
         'email' => $user->email,
-        'allow_public_follow' => '1',
-        'show_friends_list' => '1',
-        'appear_in_friends_lists' => '1',
-        'searchable' => '1',
-        'push_notifications_enabled' => '1',
-        'notify_event_invites' => '1',
-        'notify_messages' => '1',
-        'notify_friend_requests' => '1',
-        'notify_follow_requests' => '1',
-        'theme_style' => 'classic',
-        'theme_mode' => 'system',
         'avatar' => UploadedFile::fake()->image('new.jpg'),
     ])->assertRedirect();
 
@@ -191,17 +174,6 @@ test('a user can remove their avatar', function () {
         'name' => $user->name,
         'username' => $user->username,
         'email' => $user->email,
-        'allow_public_follow' => '1',
-        'show_friends_list' => '1',
-        'appear_in_friends_lists' => '1',
-        'searchable' => '1',
-        'push_notifications_enabled' => '1',
-        'notify_event_invites' => '1',
-        'notify_messages' => '1',
-        'notify_friend_requests' => '1',
-        'notify_follow_requests' => '1',
-        'theme_style' => 'classic',
-        'theme_mode' => 'system',
         'remove_avatar' => '1',
     ])->assertRedirect();
 
@@ -221,62 +193,4 @@ test('a user can update their password', function () {
 
     $response->assertRedirect();
     expect(Hash::check('new-password', $user->fresh()->password))->toBeTrue();
-});
-
-test('a user can choose a visual style and light or dark mode, and the choice is shared with every page', function () {
-    $user = User::factory()->create();
-
-    $this->actingAs($user)->put('/user/profile-information', [
-        'name' => $user->name,
-        'username' => $user->username,
-        'email' => $user->email,
-        'allow_public_follow' => '1',
-        'show_friends_list' => '1',
-        'appear_in_friends_lists' => '1',
-        'searchable' => '1',
-        'push_notifications_enabled' => '1',
-        'notify_event_invites' => '1',
-        'notify_messages' => '1',
-        'notify_friend_requests' => '1',
-        'notify_follow_requests' => '1',
-        'theme_style' => 'soft',
-        'theme_mode' => 'dark',
-    ])->assertRedirect()->assertValid();
-
-    expect($user->fresh()->theme_style)->toBe(ThemeStyle::Soft);
-    expect($user->fresh()->theme_mode)->toBe(ThemeMode::Dark);
-
-    $this->actingAs($user->fresh())->get('/events')
-        ->assertInertia(fn ($page) => $page
-            ->where('theme.style', 'soft')
-            ->where('theme.mode', 'dark'))
-        ->assertSee('data-style="soft"', false)
-        ->assertSee('data-mode="dark"', false);
-});
-
-test('an unknown style or mode is rejected', function () {
-    $user = User::factory()->create();
-
-    $this->actingAs($user)->put('/user/profile-information', [
-        'name' => $user->name,
-        'username' => $user->username,
-        'email' => $user->email,
-        'allow_public_follow' => '1',
-        'show_friends_list' => '1',
-        'appear_in_friends_lists' => '1',
-        'searchable' => '1',
-        'push_notifications_enabled' => '1',
-        'notify_event_invites' => '1',
-        'notify_messages' => '1',
-        'notify_friend_requests' => '1',
-        'notify_follow_requests' => '1',
-        'theme_style' => 'neon',
-        'theme_mode' => 'dim',
-    ])->assertInvalid(['theme_style', 'theme_mode'], 'updateProfileInformation');
-});
-
-test('guests get the classic style following the system', function () {
-    $this->get('/login')
-        ->assertSee('data-style="classic"', false)
-        ->assertSee('data-mode="system"', false);
 });

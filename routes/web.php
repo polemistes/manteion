@@ -4,13 +4,11 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\UserPasswordController;
+use App\Http\Controllers\BadgeController;
 use App\Http\Controllers\ContactGroupController;
 use App\Http\Controllers\ContactGroupMemberController;
 use App\Http\Controllers\ContactsController;
 use App\Http\Controllers\ContactTagPreferenceController;
-use App\Http\Controllers\ConversationController;
-use App\Http\Controllers\ConversationMessageController;
-use App\Http\Controllers\ConversationParticipantController;
 use App\Http\Controllers\EventAttendanceController;
 use App\Http\Controllers\EventCommentController;
 use App\Http\Controllers\EventController;
@@ -116,17 +114,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'update'])->name('notifications.read');
 
-    Route::get('/messages', [ConversationController::class, 'index'])->name('messages.index');
-    Route::get('/messages/create', [ConversationController::class, 'create'])->name('messages.create');
-    Route::post('/messages', [ConversationController::class, 'store'])->name('messages.store');
-    Route::get('/messages/{conversation}', [ConversationController::class, 'show'])->name('messages.show');
-    Route::post('/messages/{conversation}/send', [ConversationMessageController::class, 'store'])->name('messages.send');
-    Route::get('/messages/{conversation}/messages', [ConversationMessageController::class, 'index'])->name('messages.messages.index');
-    Route::delete('/messages/{conversation}/messages/{message}', [ConversationMessageController::class, 'destroy'])
-        ->name('messages.messages.destroy')
-        ->scopeBindings();
-    Route::post('/messages/{conversation}/participants', [ConversationParticipantController::class, 'store'])->name('messages.participants.store');
-    Route::delete('/messages/{conversation}/participants', [ConversationParticipantController::class, 'destroy'])->name('messages.participants.destroy');
+    Route::get('/badges', BadgeController::class)->name('badges.show');
+
+    require __DIR__.'/chat.php';
+    require __DIR__.'/settings.php';
 
     Route::post('/reports', [ReportController::class, 'store'])->name('reports.store');
 

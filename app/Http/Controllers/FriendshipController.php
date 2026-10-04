@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Enums\FriendshipStatus;
+use App\Events\BadgesUpdated;
 use App\Http\Requests\StoreFriendshipRequest;
 use App\Http\Requests\UpdateFriendshipRequest;
 use App\Models\Friendship;
+use App\Notifications\FriendRequestAccepted;
 use App\Notifications\FriendRequestReceived;
+use App\Services\ActivityFeed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 
@@ -32,16 +35,28 @@ class FriendshipController extends Controller
             (new FriendRequestReceived($friendship))->locale($friendship->addressee->locale ?? 'en')
         );
 
+        $this->updateBadges($friendship);
+
         return back();
     }
 
     public function update(UpdateFriendshipRequest $request, Friendship $friendship): RedirectResponse
     {
+        $accepted = $request->input('action') === 'accept';
+
         $friendship->update([
-            'status' => $request->input('action') === 'accept'
-                ? FriendshipStatus::Accepted
-                : FriendshipStatus::Declined,
+            'status' => $accepted ? FriendshipStatus::Accepted : FriendshipStatus::Declined,
         ]);
+
+        // Declining is never announced: the requester keeps seeing the
+        // request as sent.
+        if ($accepted) {
+            $friendship->requester->notify(
+                (new FriendRequestAccepted($friendship))->locale($friendship->requester->locale ?? 'en')
+            );
+        }
+
+        $this->updateBadges($friendship);
 
         return back();
     }
@@ -52,6 +67,23 @@ class FriendshipController extends Controller
 
         $friendship->delete();
 
+        // A cancelled request takes its notification with it.
+        if ($friendship->status !== FriendshipStatus::Accepted) {
+            ActivityFeed::withdraw($friendship->addressee, FriendRequestReceived::class, 'friendship_id', $friendship->id);
+        }
+
+        $this->updateBadges($friendship);
+
         return back();
+    }
+
+    /**
+     * An open request counts on the addressee's badge, so creating,
+     * answering or withdrawing one updates both sides' devices.
+     */
+    private function updateBadges(Friendship $friendship): void
+    {
+        BadgesUpdated::dispatch($friendship->requester_id);
+        BadgesUpdated::dispatch($friendship->addressee_id);
     }
 }

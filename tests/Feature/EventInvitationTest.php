@@ -75,3 +75,18 @@ test('inviting an already-attending user does not duplicate the attendee row or 
     expect(EventAttendee::query()->where('event_id', $event->id)->where('user_id', $friend->id)->count())->toBe(1);
     Notification::assertNothingSent();
 });
+
+test('an invitation is worded in the invitees language and names who invited them', function () {
+    Notification::fake();
+    $owner = User::factory()->create();
+    $friend = User::factory()->create(['locale' => 'nb']);
+    Friendship::factory()->accepted()->create(['requester_id' => $owner->id, 'addressee_id' => $friend->id]);
+    $event = Event::factory()->create(['user_id' => $owner->id]);
+
+    $this->actingAs($owner)->post("/events/{$event->id}/invitations", ['user_ids' => [$friend->id]])->assertRedirect();
+
+    Notification::assertSentTo($friend, InvitedToEvent::class, fn (InvitedToEvent $notification) => $notification->event->is($event)
+        && $notification->invitedBy->is($owner)
+        && $notification->locale === 'nb');
+    Notification::assertNotSentTo($owner, InvitedToEvent::class);
+});

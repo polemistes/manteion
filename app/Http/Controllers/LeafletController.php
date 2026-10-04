@@ -11,6 +11,7 @@ use App\Models\Leaflet;
 use App\Models\LeafletResponse;
 use App\Models\Reaction;
 use App\Models\User;
+use App\Services\ActivityFeed;
 use App\Services\ImageProcessor;
 use App\Services\LeafletFeedQuery;
 use Illuminate\Http\RedirectResponse;
@@ -73,6 +74,11 @@ class LeafletController extends Controller
 
         $leaflet->load(['owner', 'reactions', 'responses.user', 'responses.reactions']);
         $this->retryMissingLinkPreview($leaflet);
+
+        // Opening the leaflet means the replies to it have been seen.
+        if (ActivityFeed::seenByUser($request)) {
+            ActivityFeed::markRead($request->user(), 'leaflet', $leaflet->id);
+        }
 
         return Inertia::render('leaflets/Show', [
             'leaflet' => $this->summarize($leaflet, $request->user()),

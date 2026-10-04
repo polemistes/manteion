@@ -2,8 +2,6 @@
 
 namespace App\Actions\Fortify;
 
-use App\Enums\ThemeMode;
-use App\Enums\ThemeStyle;
 use App\Http\Requests\StoreEventRequest;
 use App\Models\User;
 use App\Services\ImageProcessor;
@@ -15,6 +13,11 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Contracts\UpdatesUserProfileInformation;
 
+/**
+ * The account details only (name, username, email, bio, photo). Privacy,
+ * notifications and appearance are saved by their own settings endpoints,
+ * so whatever else the request carries is ignored here.
+ */
 class UpdateUserProfileInformation implements UpdatesUserProfileInformation
 {
     public function __construct(private ImageProcessor $imageProcessor) {}
@@ -46,17 +49,6 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
                 'max:255',
             ],
 
-            'allow_public_follow' => ['required', 'boolean'],
-            'show_friends_list' => ['required', 'boolean'],
-            'appear_in_friends_lists' => ['required', 'boolean'],
-            'searchable' => ['required', 'boolean'],
-            'push_notifications_enabled' => ['required', 'boolean'],
-            'notify_event_invites' => ['required', 'boolean'],
-            'notify_messages' => ['required', 'boolean'],
-            'notify_friend_requests' => ['required', 'boolean'],
-            'notify_follow_requests' => ['required', 'boolean'],
-            'theme_style' => ['required', Rule::enum(ThemeStyle::class)],
-            'theme_mode' => ['required', Rule::enum(ThemeMode::class)],
             'bio' => ['nullable', 'string', 'max:1000'],
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048', Rule::dimensions()->maxWidth(StoreEventRequest::MAX_UPLOAD_EDGE)->maxHeight(StoreEventRequest::MAX_UPLOAD_EDGE)],
             'remove_avatar' => ['nullable', 'boolean'],
@@ -66,17 +58,6 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
             'name' => $input['name'],
             'username' => $input['username'],
             'email' => $input['email'],
-            'allow_public_follow' => $input['allow_public_follow'],
-            'show_friends_list' => $input['show_friends_list'],
-            'appear_in_friends_lists' => $input['appear_in_friends_lists'],
-            'searchable' => $input['searchable'],
-            'push_notifications_enabled' => $input['push_notifications_enabled'],
-            'notify_event_invites' => $input['notify_event_invites'],
-            'notify_messages' => $input['notify_messages'],
-            'notify_friend_requests' => $input['notify_friend_requests'],
-            'notify_follow_requests' => $input['notify_follow_requests'],
-            'theme_style' => ThemeStyle::from($input['theme_style']),
-            'theme_mode' => ThemeMode::from($input['theme_mode']),
             'bio' => $input['bio'] ?? null,
             'avatar_path' => $this->resolveAvatarPath($user, $input),
         ];

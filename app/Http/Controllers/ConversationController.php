@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ConversationType;
+use App\Events\BadgesUpdated;
 use App\Http\Requests\StoreConversationRequest;
 use App\Models\Conversation;
 use App\Models\ConversationParticipant;
@@ -13,51 +14,16 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use Inertia\Support\Header;
 
 class ConversationController extends Controller
 {
     public function index(Request $request): Response
     {
-        $user = $request->user();
-
-        $conversations = Conversation::query()
-            ->whereHas('participants', fn ($query) => $query->where('user_id', $user->id))
-            ->with(['participants.user', 'messages' => fn ($query) => $query->latest()->limit(1)])
-            ->get()
-            ->map(function (Conversation $conversation) use ($user) {
-                $myParticipant = $conversation->participantFor($user);
-                $lastMessage = $conversation->messages->first();
-                $others = $conversation->participants
-                    ->reject(fn (ConversationParticipant $participant) => $participant->user_id === $user->id)
-                    ->map(fn (ConversationParticipant $participant) => $participant->user);
-
-                $unread = $lastMessage !== null
-                    && $lastMessage->user_id !== $user->id
-                    && ($myParticipant?->last_read_at === null || $lastMessage->created_at->gt($myParticipant->last_read_at));
-
-                $activityAt = $lastMessage === null ? $conversation->created_at : $lastMessage->created_at;
-
-                return [
-                    'id' => $conversation->id,
-                    'type' => $conversation->type->value,
-                    'title' => $this->title($conversation, $others),
-                    'avatar_url' => $conversation->type === ConversationType::Direct ? $others->first()?->avatar_url : null,
-                    'last_message' => $lastMessage === null ? null : [
-                        'body' => Str::limit($lastMessage->body, 80),
-                        'is_mine' => $lastMessage->user_id === $user->id,
-                    ],
-                    'unread' => $unread,
-                    'activity_at' => $activityAt->toIso8601String(),
-                ];
-            })
-            ->sortByDesc('activity_at')
-            ->values();
-
         return Inertia::render('messages/Index', [
-            'conversations' => $conversations,
+            'conversations' => $this->conversationList($request->user()),
         ]);
     }
 
@@ -84,50 +50,132 @@ class ConversationController extends Controller
         return redirect()->route('messages.show', $conversation);
     }
 
+    /**
+     * The thread, with the conversation list beside it for the two-pane
+     * layout. Opening it marks it read, but only when the user really looked:
+     * not on a partial reload (a background tab refreshing a prop), a hover
+     * prefetch, or an administrator browsing as them.
+     */
     public function show(Request $request, Conversation $conversation): Response
     {
         Gate::authorize('view', $conversation);
 
         $user = $request->user();
-        $conversation->load([
-            'participants.user',
-            'messages' => fn ($query) => $query->with(['sender', 'reactions'])->latest('id')->limit(ConversationMessageController::PAGE_SIZE),
-        ]);
+        $conversation->loadMissing('participants.user');
+        $participant = $conversation->participantFor($user);
 
-        $oldestLoadedId = $conversation->messages->min('id');
-        $hasOlder = $oldestLoadedId !== null
-            && $conversation->messages()->where('id', '<', $oldestLoadedId)->exists();
+        $seenByUser = $request->header(Header::PARTIAL_COMPONENT) !== 'messages/Show'
+            && ! $request->prefetch()
+            && ! $request->session()->has('impersonator_id');
 
-        $conversation->participantFor($user)?->update(['last_read_at' => now()]);
+        if ($participant !== null && $seenByUser && $participant->hasUnreadMessages()) {
+            $participant->markRead();
 
-        $others = $conversation->participants
-            ->reject(fn (ConversationParticipant $participant) => $participant->user_id === $user->id)
-            ->map(fn (ConversationParticipant $participant) => $participant->user);
-
-        $alreadyInIds = $conversation->participants->pluck('user_id');
+            BadgesUpdated::dispatch($user->id);
+        }
 
         return Inertia::render('messages/Show', [
             'conversation' => [
                 'id' => $conversation->id,
                 'type' => $conversation->type->value,
-                'title' => $this->title($conversation, $others),
+                'title' => $conversation->titleFor($user),
+                'avatar_url' => $this->avatarUrl($conversation, $user),
+                'muted' => $participant?->isMuted() ?? false,
             ],
-            'participants' => $conversation->participants->map(fn (ConversationParticipant $participant) => [
-                'id' => $participant->user->id,
-                'name' => $participant->user->name,
-                'username' => $participant->user->username,
-                'avatar_url' => $participant->user->avatar_url,
-                'is_me' => $participant->user_id === $user->id,
-            ])->values(),
-            'messages' => $conversation->messages->sortBy('id')->values()->map(fn (Message $message) => MessageSummary::for($message, $user)),
-            'hasOlder' => $hasOlder,
+            'participants' => $conversation->participants->sortBy('id')->values()->map(fn (ConversationParticipant $member) => [
+                'id' => $member->user->id,
+                'name' => $member->user->name,
+                'username' => $member->user->username,
+                'avatar_url' => $member->user->avatar_url,
+                'is_me' => $member->user_id === $user->id,
+            ]),
+            'messages' => fn () => $conversation->messages()
+                ->with(['sender', 'reactions'])
+                ->latest('id')
+                ->limit(ConversationMessageController::PAGE_SIZE)
+                ->get()
+                ->sortBy('id')
+                ->map(fn (Message $message) => MessageSummary::for($message, $user))
+                ->values()
+                ->all(),
+            // Older messages exist when there are more than one page's worth.
+            'hasOlder' => fn () => $conversation->messages()->skip(ConversationMessageController::PAGE_SIZE)->take(1)->exists(),
             'canAddParticipant' => Gate::allows('addParticipant', $conversation),
             'canLeave' => Gate::allows('leave', $conversation),
-            'addCandidates' => $user->friends()
-                ->reject(fn (User $friend) => $alreadyInIds->contains($friend->id))
+            'addCandidates' => fn () => $user->friends()
+                ->reject(fn (User $friend) => $conversation->participants->contains('user_id', $friend->id))
                 ->map(fn (User $friend) => ['id' => $friend->id, 'name' => $friend->name, 'username' => $friend->username, 'avatar_url' => $friend->avatar_url])
-                ->values(),
+                ->values()
+                ->all(),
+            'conversations' => fn () => $this->conversationList($user),
         ]);
+    }
+
+    /**
+     * The user's conversations as the list shows them, most recent activity
+     * first. A fixed handful of queries however many conversations there
+     * are: the newest message and the unread count come with the main query
+     * (see Conversation::scopeListedFor), participants and senders are eager
+     * loaded.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function conversationList(User $user): array
+    {
+        return Conversation::query()
+            ->listedFor($user)
+            ->with('participants.user:id,name,avatar_path')
+            ->get()
+            ->sortByDesc(fn (Conversation $conversation) => [
+                ($conversation->latestMessage->created_at ?? $conversation->created_at)->getTimestamp(),
+                $conversation->id,
+            ])
+            ->map(fn (Conversation $conversation) => $this->listItem($conversation, $user))
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function listItem(Conversation $conversation, User $user): array
+    {
+        $lastMessage = $conversation->latestMessage;
+
+        return [
+            'id' => $conversation->id,
+            'type' => $conversation->type->value,
+            'title' => $conversation->titleFor($user),
+            'avatar_url' => $this->avatarUrl($conversation, $user),
+            // A few faces for a group's avatar stack.
+            'avatars' => $conversation->otherParticipants($user)
+                ->take(3)
+                ->map(fn (User $other) => ['id' => $other->id, 'name' => $other->name, 'avatar_url' => $other->avatar_url])
+                ->values()
+                ->all(),
+            'last_message' => $lastMessage === null ? null : [
+                'body' => MessageSummary::preview($lastMessage),
+                'is_mine' => $lastMessage->user_id === $user->id,
+                'sender_name' => $lastMessage->sender->name,
+                'is_deleted' => $lastMessage->is_deleted,
+                'created_at' => $lastMessage->created_at->toIso8601String(),
+            ],
+            'unread' => $conversation->unread_count > 0,
+            'unread_count' => $conversation->unread_count,
+            'muted' => $conversation->participantFor($user)?->isMuted() ?? false,
+            'activity_at' => ($lastMessage->created_at ?? $conversation->created_at)->toIso8601String(),
+        ];
+    }
+
+    /**
+     * A direct conversation shows the other person's picture; a group has
+     * none of its own.
+     */
+    private function avatarUrl(Conversation $conversation, User $user): ?string
+    {
+        return $conversation->type === ConversationType::Direct
+            ? $conversation->otherParticipants($user)->first()?->avatar_url
+            : null;
     }
 
     /**
@@ -148,17 +196,5 @@ class ConversationController extends Controller
         );
 
         return $conversation;
-    }
-
-    /**
-     * @param  Collection<int, User>  $others
-     */
-    private function title(Conversation $conversation, Collection $others): string
-    {
-        if ($conversation->type === ConversationType::Direct) {
-            return $others->first()->name;
-        }
-
-        return $conversation->name ?? $others->pluck('name')->join(', ');
     }
 }

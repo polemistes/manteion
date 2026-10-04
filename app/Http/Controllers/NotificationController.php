@@ -2,32 +2,47 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\BadgesUpdated;
+use App\Services\ActivityFeed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class NotificationController extends Controller
 {
+    /**
+     * The Activity page. Opening it counts as having seen everything on it:
+     * the items still say what was unread when the page loaded, but they are
+     * all read from then on. A partial reload (a live update), a prefetch or
+     * an administrator browsing as the user marks nothing.
+     */
     public function index(Request $request): Response
     {
-        $notifications = $request->user()->notifications()->latest()->limit(50)->get();
+        $user = $request->user();
+        $notifications = ActivityFeed::for($user);
+
+        if (ActivityFeed::seenByUser($request)) {
+            ActivityFeed::markRead($user);
+        }
 
         return Inertia::render('notifications/Index', [
-            'notifications' => $notifications->map(fn ($notification) => [
-                'id' => $notification->id,
-                'type' => class_basename($notification->type),
-                'data' => $notification->data,
-                'read_at' => $notification->read_at?->toIso8601String(),
-                'created_at' => $notification->created_at->toIso8601String(),
-            ])->values(),
+            'notifications' => $notifications,
         ]);
     }
 
-    public function update(Request $request, string $notification): RedirectResponse
+    public function update(Request $request, string $notification): RedirectResponse|HttpResponse
     {
-        $request->user()->notifications()->findOrFail($notification)->markAsRead();
+        $user = $request->user();
+        $notification = $user->notifications()->findOrFail($notification);
 
-        return back();
+        if ($notification->read_at === null) {
+            $notification->markAsRead();
+
+            BadgesUpdated::dispatch($user->id);
+        }
+
+        return $request->wantsJson() ? response()->noContent() : back();
     }
 }

@@ -5,8 +5,8 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\FollowStatus;
 use App\Enums\FriendshipStatus;
+use App\Enums\NotificationCategory;
 use App\Enums\ThemeMode;
-use App\Enums\ThemeStyle;
 use App\Enums\UserRole;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -35,15 +35,10 @@ use NotificationChannels\WebPush\HasPushSubscriptions;
  * @property bool $show_friends_list
  * @property bool $appear_in_friends_lists
  * @property bool $searchable
- * @property bool $push_notifications_enabled
- * @property bool $notify_event_invites
- * @property bool $notify_messages
- * @property bool $notify_friend_requests
- * @property bool $notify_follow_requests
+ * @property array<string, mixed>|null $notification_settings
  * @property string|null $avatar_path
  * @property string|null $bio
  * @property string|null $locale
- * @property ThemeStyle $theme_style
  * @property ThemeMode $theme_mode
  * @property Carbon|null $suspended_at
  * @property string|null $suspended_reason
@@ -53,7 +48,7 @@ use NotificationChannels\WebPush\HasPushSubscriptions;
  * @property Carbon|null $updated_at
  * @property-read string|null $avatar_url
  */
-#[Fillable(['name', 'username', 'email', 'password', 'role', 'allow_public_follow', 'show_friends_list', 'appear_in_friends_lists', 'searchable', 'push_notifications_enabled', 'notify_event_invites', 'notify_messages', 'notify_friend_requests', 'notify_follow_requests', 'avatar_path', 'bio', 'locale', 'theme_style', 'theme_mode', 'suspended_at', 'suspended_reason', 'suspended_by'])]
+#[Fillable(['name', 'username', 'email', 'password', 'role', 'allow_public_follow', 'show_friends_list', 'appear_in_friends_lists', 'searchable', 'notification_settings', 'avatar_path', 'bio', 'locale', 'theme_mode', 'suspended_at', 'suspended_reason', 'suspended_by'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -64,6 +59,19 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $appends = ['avatar_url'];
+
+    /**
+     * Push subscriptions (each device's endpoint, keys and user agent) and
+     * stored notifications hang off polymorphic relations, which no foreign
+     * key cascades, so they go when the account goes.
+     */
+    protected static function booted(): void
+    {
+        static::deleting(function (User $user) {
+            $user->pushSubscriptions()->delete();
+            $user->notifications()->delete();
+        });
+    }
 
     /**
      * Get the attributes that should be cast.
@@ -80,13 +88,8 @@ class User extends Authenticatable
             'show_friends_list' => 'boolean',
             'appear_in_friends_lists' => 'boolean',
             'searchable' => 'boolean',
-            'push_notifications_enabled' => 'boolean',
-            'notify_event_invites' => 'boolean',
-            'notify_messages' => 'boolean',
-            'notify_friend_requests' => 'boolean',
-            'notify_follow_requests' => 'boolean',
+            'notification_settings' => 'array',
             'suspended_at' => 'datetime',
-            'theme_style' => ThemeStyle::class,
             'theme_mode' => ThemeMode::class,
         ];
     }
@@ -109,6 +112,48 @@ class User extends Authenticatable
     public function isSuspended(): bool
     {
         return $this->suspended_at !== null;
+    }
+
+    /**
+     * The user's effective notification settings: the push setting of every
+     * category and the message-preview choice, with the defaults filled in
+     * for whatever the user has not stored.
+     *
+     * @return array{push: array<string, bool>, message_previews: bool}
+     */
+    public function notificationSettings(): array
+    {
+        $stored = $this->notification_settings ?? [];
+        $storedPush = is_array($stored['push'] ?? null) ? $stored['push'] : [];
+
+        $push = [];
+
+        foreach (NotificationCategory::cases() as $category) {
+            $push[$category->value] = (bool) ($storedPush[$category->value] ?? $category->pushDefault());
+        }
+
+        return [
+            'push' => $push,
+            'message_previews' => (bool) ($stored['message_previews'] ?? true),
+        ];
+    }
+
+    /**
+     * Whether this category should reach the user's devices as a push
+     * notification. Each subscribed device gets it while this is on.
+     */
+    public function wantsPush(NotificationCategory $category): bool
+    {
+        return $this->notificationSettings()['push'][$category->value];
+    }
+
+    /**
+     * Whether message pushes may show the message text, rather than only
+     * that a new message arrived.
+     */
+    public function showsMessagePreviews(): bool
+    {
+        return $this->notificationSettings()['message_previews'];
     }
 
     /**

@@ -1,14 +1,31 @@
 <?php
 
 use App\Enums\ConversationType;
+use App\Enums\UserRole;
 use App\Models\Conversation;
 use App\Models\ConversationParticipant;
 use App\Models\Event;
 use App\Models\EventImage;
 use App\Models\Friendship;
 use App\Models\Message;
+use App\Models\PushSubscription;
 use App\Models\User;
+use App\Notifications\InvitedToEvent;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+
+/**
+ * Stores one activity notification for the user, as the queue would.
+ */
+function storeActivityNotificationFor(User $user): void
+{
+    $user->notifications()->create([
+        'id' => (string) Str::uuid(),
+        'type' => InvitedToEvent::class,
+        'data' => ['actor_id' => null, 'subject_type' => 'event', 'subject_id' => 1, 'subject_title' => 'Event', 'url' => '/events/1', 'excerpt' => null, 'pending' => null],
+    ]);
+}
 
 test('a user can delete their account with their password and is logged out', function () {
     $user = User::factory()->create();
@@ -61,6 +78,35 @@ test('deleting an account removes the avatar and owned event images from storage
     expect(Friendship::find($friendship->id))->toBeNull();
     expect(Event::find($event->id))->toBeNull();
     expect(EventImage::find($image->id))->toBeNull();
+});
+
+test('deleting an account removes its push devices and its notifications, and nobody elses', function () {
+    $user = User::factory()->create();
+    $other = User::factory()->create();
+    PushSubscription::factory()->count(2)->create(['subscribable_id' => $user->id]);
+    $othersDevice = PushSubscription::factory()->create(['subscribable_id' => $other->id]);
+    storeActivityNotificationFor($user);
+    storeActivityNotificationFor($other);
+
+    $this->actingAs($user)->delete('/profile', ['password' => 'password'])->assertRedirect('/');
+
+    expect(PushSubscription::query()->pluck('id')->all())->toBe([$othersDevice->id])
+        ->and(DatabaseNotification::query()->pluck('notifiable_id')->all())->toBe([$other->id]);
+});
+
+test('an administrator deleting an account also removes its push devices and notifications', function () {
+    $administrator = User::factory()->create(['role' => UserRole::Administrator]);
+    $member = User::factory()->create();
+    PushSubscription::factory()->create(['subscribable_id' => $member->id]);
+    storeActivityNotificationFor($member);
+
+    $this->actingAs($administrator)
+        ->delete(route('admin.users.destroy', $member), ['password' => 'password'])
+        ->assertRedirect(route('admin.users.index'));
+
+    expect(User::find($member->id))->toBeNull()
+        ->and(PushSubscription::query()->count())->toBe(0)
+        ->and(DatabaseNotification::query()->count())->toBe(0);
 });
 
 test('deleting the account that started a conversation does not delete the conversation for the other participants', function () {

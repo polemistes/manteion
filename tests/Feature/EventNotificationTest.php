@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\NotifyFollowersOfEvent;
 use App\Models\ContactTagPreference;
 use App\Models\Event;
 use App\Models\Follow;
@@ -150,4 +151,25 @@ test('followers are notified once an event created private is later made public,
     $this->actingAs($owner)->put("/events/{$event->id}", [...$payload, 'visibility' => 'private'])->assertRedirect();
     $this->actingAs($owner)->put("/events/{$event->id}", [...$payload, 'visibility' => 'public'])->assertRedirect();
     Notification::assertSentToTimes($follower, FollowedUserPublishedEvent::class, 1);
+});
+
+test('each follower hears about a new event in their own language', function () {
+    Notification::fake();
+    $owner = User::factory()->create();
+    $english = User::factory()->create(['locale' => 'en']);
+    $norwegian = User::factory()->create(['locale' => 'nb']);
+    $pendingFollower = User::factory()->create();
+    Follow::factory()->create(['follower_id' => $english->id, 'followed_id' => $owner->id]);
+    Follow::factory()->create(['follower_id' => $norwegian->id, 'followed_id' => $owner->id]);
+    Follow::factory()->pending()->create(['follower_id' => $pendingFollower->id, 'followed_id' => $owner->id]);
+    $event = Event::factory()->public()->create(['user_id' => $owner->id]);
+
+    (new NotifyFollowersOfEvent($event))->handle();
+
+    Notification::assertSentTo($english, FollowedUserPublishedEvent::class, fn (FollowedUserPublishedEvent $notification) => $notification->event->is($event)
+        && $notification->locale === 'en');
+    Notification::assertSentTo($norwegian, FollowedUserPublishedEvent::class, fn (FollowedUserPublishedEvent $notification) => $notification->locale === 'nb');
+    Notification::assertNotSentTo($pendingFollower, FollowedUserPublishedEvent::class);
+    Notification::assertNotSentTo($owner, FollowedUserPublishedEvent::class);
+    expect($event->fresh()->followers_notified_at)->not->toBeNull();
 });

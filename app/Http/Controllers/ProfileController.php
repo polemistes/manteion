@@ -6,16 +6,16 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class ProfileController extends Controller
 {
-    public function edit(Request $request): Response
+    /**
+     * The profile page became the settings pages; old links to it land on
+     * their hub.
+     */
+    public function edit(): RedirectResponse
     {
-        return Inertia::render('profile/Edit', [
-            'user' => $request->user(),
-        ]);
+        return redirect()->route('settings.index');
     }
 
     public function destroy(Request $request): RedirectResponse

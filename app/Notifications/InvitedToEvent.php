@@ -2,59 +2,45 @@
 
 namespace App\Notifications;
 
+use App\Enums\NotificationCategory;
 use App\Models\Event;
 use App\Models\User;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Notification;
-use Illuminate\Queue\SerializesModels;
-use NotificationChannels\WebPush\WebPushChannel;
-use NotificationChannels\WebPush\WebPushMessage;
 
-class InvitedToEvent extends Notification implements ShouldQueue
+/**
+ * Someone invited the recipient to an event.
+ */
+class InvitedToEvent extends ActivityNotification
 {
-    use Queueable, SerializesModels;
-
     public function __construct(
         public Event $event,
         public User $invitedBy,
     ) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(User $notifiable): array
+    public static function category(): NotificationCategory
     {
-        $channels = ['database'];
-
-        if ($notifiable->push_notifications_enabled && $notifiable->notify_event_invites) {
-            $channels[] = WebPushChannel::class;
-        }
-
-        return $channels;
+        return NotificationCategory::EventInvites;
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function toArray(object $notifiable): array
+    public function actor(): User
     {
-        return [
-            'event_id' => $this->event->id,
-            'event_name' => $this->event->name,
-            'invited_by_user_id' => $this->invitedBy->id,
-            'invited_by_name' => $this->invitedBy->name,
-        ];
+        return $this->invitedBy;
     }
 
-    public function toWebPush(object $notifiable, self $notification): WebPushMessage
+    public function subject(): Event
     {
-        return (new WebPushMessage)
-            ->title(__('messages.push_notification.event_invite_title'))
-            ->body(__('messages.push_notification.event_invite_body', [
-                'name' => $this->invitedBy->name,
-                'event' => $this->event->name,
-            ]))
-            ->data(['url' => "/events/{$this->event->id}"]);
+        return $this->event;
+    }
+
+    protected function pushTitle(): string
+    {
+        return __('notifications.push.invited_to_event.title');
+    }
+
+    protected function pushBody(): string
+    {
+        return __('notifications.push.invited_to_event.body', [
+            'name' => $this->invitedBy->name,
+            'event' => $this->event->name,
+        ]);
     }
 }

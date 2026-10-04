@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\NotificationCategory;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -34,11 +35,6 @@ class UserFactory extends Factory
             'show_friends_list' => true,
             'appear_in_friends_lists' => true,
             'searchable' => true,
-            'push_notifications_enabled' => true,
-            'notify_event_invites' => true,
-            'notify_messages' => true,
-            'notify_friend_requests' => true,
-            'notify_follow_requests' => true,
             'remember_token' => Str::random(10),
         ];
     }
@@ -94,12 +90,39 @@ class UserFactory extends Factory
     }
 
     /**
-     * Indicate that the model has push notifications turned off entirely.
+     * Indicate that the model wants push notifications for the given
+     * categories (only messages are on by default).
      */
-    public function pushNotificationsDisabled(): static
+    public function pushEnabledFor(NotificationCategory ...$categories): static
     {
-        return $this->state(fn (array $attributes) => [
-            'push_notifications_enabled' => false,
-        ]);
+        return $this->withPushSettings(true, $categories);
+    }
+
+    /**
+     * Indicate that the model has turned push notifications off for the
+     * given categories.
+     */
+    public function pushDisabledFor(NotificationCategory ...$categories): static
+    {
+        return $this->withPushSettings(false, $categories);
+    }
+
+    /**
+     * Store a push setting for each given category on top of whatever earlier
+     * states stored, leaving the other categories at their defaults.
+     *
+     * @param  array<NotificationCategory>  $categories
+     */
+    private function withPushSettings(bool $enabled, array $categories): static
+    {
+        return $this->state(function (array $attributes) use ($enabled, $categories) {
+            $settings = $attributes['notification_settings'] ?? [];
+
+            foreach ($categories as $category) {
+                $settings['push'][$category->value] = $enabled;
+            }
+
+            return ['notification_settings' => $settings];
+        });
     }
 }

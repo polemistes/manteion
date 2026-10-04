@@ -10,7 +10,7 @@ test('the pending contact requests count includes incoming friend and follow req
     $follower = User::factory()->create();
 
     $this->actingAs($user)->get('/events')
-        ->assertInertia(fn ($page) => $page->where('pendingContactRequestsCount', 0));
+        ->assertInertia(fn ($page) => $page->where('badges.requests', 0));
 
     Friendship::factory()->create([
         'requester_id' => $friendRequester->id,
@@ -22,7 +22,7 @@ test('the pending contact requests count includes incoming friend and follow req
     ]);
 
     $this->actingAs($user)->get('/events')
-        ->assertInertia(fn ($page) => $page->where('pendingContactRequestsCount', 2));
+        ->assertInertia(fn ($page) => $page->where('badges.requests', 2));
 });
 
 test('outgoing requests do not count toward the pending contact requests badge', function () {
@@ -40,5 +40,5 @@ test('outgoing requests do not count toward the pending contact requests badge',
     ]);
 
     $this->actingAs($user)->get('/events')
-        ->assertInertia(fn ($page) => $page->where('pendingContactRequestsCount', 0));
+        ->assertInertia(fn ($page) => $page->where('badges.requests', 0));
 });

@@ -51,17 +51,4 @@ return [
         'ignore' => "If you didn't request this, you can safely ignore this email.",
     ],
 
-    'push_notification' => [
-        'event_invite_title' => 'Event invitation',
-        'event_invite_body' => ':name invited you to ":event"',
-        'new_message_title' => 'New message',
-        'new_message_body' => ':name sent you a message',
-        'friend_request_title' => 'Friend request',
-        'friend_request_body' => ':name sent you a friend request',
-        'new_follower_title' => 'New follower',
-        'new_follower_body' => ':name started following you',
-        'follow_request_title' => 'Follow request',
-        'follow_request_body' => ':name wants to follow you',
-    ],
-
 ];

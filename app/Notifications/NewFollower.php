@@ -3,46 +3,68 @@
 namespace App\Notifications;
 
 use App\Enums\FollowStatus;
+use App\Enums\NotificationCategory;
 use App\Models\Follow;
 use App\Models\User;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Notification;
-use Illuminate\Queue\SerializesModels;
-use NotificationChannels\WebPush\WebPushChannel;
-use NotificationChannels\WebPush\WebPushMessage;
 
-class NewFollower extends Notification implements ShouldQueue
+/**
+ * Someone started following the recipient, or asked to (`pending`) when
+ * the recipient approves their followers. A request that is withdrawn or
+ * turned down takes its notification with it (see FollowController).
+ */
+class NewFollower extends ActivityNotification
 {
-    use Queueable, SerializesModels;
+    /**
+     * Whether this was a request rather than a follow, as it was when sent:
+     * by the time the queue gets to it, it may already have been approved.
+     */
+    public bool $isRequest;
 
     public function __construct(
         public Follow $follow,
-    ) {}
-
-    /**
-     * @return array<int, string>
-     */
-    public function via(User $notifiable): array
-    {
-        if ($notifiable->push_notifications_enabled && $notifiable->notify_follow_requests) {
-            return [WebPushChannel::class];
-        }
-
-        return [];
+    ) {
+        $this->isRequest = $follow->status === FollowStatus::Pending;
     }
 
-    public function toWebPush(object $notifiable, self $notification): WebPushMessage
+    public static function category(): NotificationCategory
     {
-        $pending = $this->follow->status === FollowStatus::Pending;
+        return NotificationCategory::Followers;
+    }
 
-        return (new WebPushMessage)
-            ->title(__($pending
-                ? 'messages.push_notification.follow_request_title'
-                : 'messages.push_notification.new_follower_title'))
-            ->body(__($pending
-                ? 'messages.push_notification.follow_request_body'
-                : 'messages.push_notification.new_follower_body', ['name' => $this->follow->follower->name]))
-            ->data(['url' => "/users/{$this->follow->follower_id}"]);
+    public function actor(): User
+    {
+        return $this->follow->follower;
+    }
+
+    public function subject(): User
+    {
+        return $this->follow->follower;
+    }
+
+    public function pending(): bool
+    {
+        return $this->isRequest;
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    protected function references(): array
+    {
+        return ['follow_id' => $this->follow->id];
+    }
+
+    protected function pushTitle(): string
+    {
+        return $this->isRequest
+            ? __('notifications.push.follow_request.title')
+            : __('notifications.push.new_follower.title');
+    }
+
+    protected function pushBody(): string
+    {
+        return $this->isRequest
+            ? __('notifications.push.follow_request.body', ['name' => $this->follow->follower->name])
+            : __('notifications.push.new_follower.body', ['name' => $this->follow->follower->name]);
     }
 }

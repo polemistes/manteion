@@ -2,40 +2,50 @@
 
 namespace App\Notifications;
 
+use App\Enums\NotificationCategory;
 use App\Models\Friendship;
 use App\Models\User;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Notification;
-use Illuminate\Queue\SerializesModels;
-use NotificationChannels\WebPush\WebPushChannel;
-use NotificationChannels\WebPush\WebPushMessage;
 
-class FriendRequestReceived extends Notification implements ShouldQueue
+/**
+ * Someone sent the recipient a friend request. Withdrawn when the request
+ * is cancelled (see FriendshipController).
+ */
+class FriendRequestReceived extends ActivityNotification
 {
-    use Queueable, SerializesModels;
-
     public function __construct(
         public Friendship $friendship,
     ) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(User $notifiable): array
+    public static function category(): NotificationCategory
     {
-        if ($notifiable->push_notifications_enabled && $notifiable->notify_friend_requests) {
-            return [WebPushChannel::class];
-        }
-
-        return [];
+        return NotificationCategory::FriendRequests;
     }
 
-    public function toWebPush(object $notifiable, self $notification): WebPushMessage
+    public function actor(): User
     {
-        return (new WebPushMessage)
-            ->title(__('messages.push_notification.friend_request_title'))
-            ->body(__('messages.push_notification.friend_request_body', ['name' => $this->friendship->requester->name]))
-            ->data(['url' => "/users/{$this->friendship->requester_id}"]);
+        return $this->friendship->requester;
+    }
+
+    public function subject(): User
+    {
+        return $this->friendship->requester;
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    protected function references(): array
+    {
+        return ['friendship_id' => $this->friendship->id];
+    }
+
+    protected function pushTitle(): string
+    {
+        return __('notifications.push.friend_request_received.title');
+    }
+
+    protected function pushBody(): string
+    {
+        return __('notifications.push.friend_request_received.body', ['name' => $this->friendship->requester->name]);
     }
 }

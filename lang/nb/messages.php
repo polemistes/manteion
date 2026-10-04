@@ -51,17 +51,4 @@ return [
         'ignore' => 'Hvis du ikke ba om dette, kan du trygt ignorere denne e-posten.',
     ],
 
-    'push_notification' => [
-        'event_invite_title' => 'Arrangementsinvitasjon',
-        'event_invite_body' => ':name inviterte deg til ":event"',
-        'new_message_title' => 'Ny melding',
-        'new_message_body' => ':name sendte deg en melding',
-        'friend_request_title' => 'Venneforespørsel',
-        'friend_request_body' => ':name sendte deg en venneforespørsel',
-        'new_follower_title' => 'Ny følger',
-        'new_follower_body' => ':name begynte å følge deg',
-        'follow_request_title' => 'Følgeforespørsel',
-        'follow_request_body' => ':name ønsker å følge deg',
-    ],
-
 ];

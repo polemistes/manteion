@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\AttendeeSource;
+use App\Events\EventActivity;
 use App\Http\Requests\UpdateEventAttendanceRequest;
 use App\Models\Event;
 use App\Models\EventAttendee;
@@ -19,6 +20,8 @@ class EventAttendanceController extends Controller
 
         $attendee->fill($request->safe()->only(['status', 'attendance_visibility']));
         $attendee->save();
+
+        broadcast(new EventActivity($event->id, 'attendance'))->toOthers();
 
         return back();
     }

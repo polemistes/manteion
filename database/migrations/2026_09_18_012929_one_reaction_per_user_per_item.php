@@ -23,9 +23,15 @@ return new class extends Migration
 
         DB::table('reactions')->whereNotIn('id', $keep)->delete();
 
+        // The new index comes first: on MySQL/MariaDB the old one is what
+        // the user_id foreign key uses, and it can only be dropped once
+        // another index starting with user_id exists.
+        Schema::table('reactions', function (Blueprint $table) {
+            $table->unique(['user_id', 'reactable_type', 'reactable_id'], 'reactions_user_target_unique');
+        });
+
         Schema::table('reactions', function (Blueprint $table) {
             $table->dropUnique('reactions_user_target_emoji_unique');
-            $table->unique(['user_id', 'reactable_type', 'reactable_id'], 'reactions_user_target_unique');
         });
     }
 
@@ -35,8 +41,11 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('reactions', function (Blueprint $table) {
-            $table->dropUnique('reactions_user_target_unique');
             $table->unique(['user_id', 'reactable_type', 'reactable_id', 'emoji'], 'reactions_user_target_emoji_unique');
+        });
+
+        Schema::table('reactions', function (Blueprint $table) {
+            $table->dropUnique('reactions_user_target_unique');
         });
     }
 };

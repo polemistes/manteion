@@ -26,6 +26,16 @@ class Message extends Model
     use HasFactory;
 
     /**
+     * As the column defaults, so a message just created (and broadcast
+     * straight away) already says it is not deleted.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'is_deleted' => false,
+    ];
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array
@@ -33,6 +43,16 @@ class Message extends Model
         return [
             'is_deleted' => 'boolean',
         ];
+    }
+
+    /**
+     * The text anyone may still see: null once wiped by a delete (the
+     * original text is never sent again), while a moderator's placeholder
+     * is meant to be shown and passes through.
+     */
+    public function visibleBody(): ?string
+    {
+        return $this->is_deleted && $this->body === '' ? null : $this->body;
     }
 
     /**

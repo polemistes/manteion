@@ -6,6 +6,7 @@ use App\Enums\FollowStatus;
 use App\Models\Follow;
 use App\Models\Friendship;
 use App\Models\User;
+use App\Services\ActivityFeed;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -38,6 +39,12 @@ class UserProfileController extends Controller
         $friends = $showFriends
             ? $user->friends()->filter(fn (User $friend) => $friend->appear_in_friends_lists)->values()
             : collect();
+
+        // Opening someone's profile means their friend and follow
+        // notifications have been seen.
+        if (ActivityFeed::seenByUser($request)) {
+            ActivityFeed::markRead($viewer, 'user', $user->id);
+        }
 
         return Inertia::render('users/Show', [
             'profile' => [

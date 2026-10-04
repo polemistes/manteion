@@ -2,6 +2,7 @@
 
 use App\Enums\ConversationType;
 use App\Enums\UserRole;
+use App\Events\MessageUpdated;
 use App\Models\Conversation;
 use App\Models\ConversationParticipant;
 use App\Models\Friendship;
@@ -10,6 +11,7 @@ use App\Models\LeafletResponse;
 use App\Models\Message;
 use App\Models\Reaction;
 use App\Models\User;
+use Illuminate\Support\Facades\Event;
 
 test('reacting to a leaflet adds the emoji and reacting again removes it', function () {
     $user = User::factory()->create();
@@ -119,4 +121,43 @@ test('reactions disappear with what they were attached to', function () {
     $this->actingAs($user)->delete("/leaflets/{$leaflet->id}")->assertRedirect();
 
     expect(Reaction::query()->count())->toBe(0);
+});
+
+test('a reaction sent as JSON gets the items reactions back as they now are', function () {
+    $user = User::factory()->create();
+    $other = User::factory()->create();
+    $leaflet = Leaflet::factory()->official()->create();
+    Reaction::factory()->create(['user_id' => $other->id, 'reactable_id' => $leaflet->id, 'emoji' => '❤️']);
+
+    $this->actingAs($user)->postJson('/reactions', ['reactable_type' => 'leaflet', 'reactable_id' => $leaflet->id, 'emoji' => '🎉'])
+        ->assertOk()
+        ->assertExactJson(['reactions' => [
+            ['emoji' => '❤️', 'count' => 1, 'reacted' => false],
+            ['emoji' => '🎉', 'count' => 1, 'reacted' => true],
+        ]]);
+
+    $this->actingAs($user)->postJson('/reactions', ['reactable_type' => 'leaflet', 'reactable_id' => $leaflet->id, 'emoji' => '🎉'])
+        ->assertOk()
+        ->assertExactJson(['reactions' => [['emoji' => '❤️', 'count' => 1, 'reacted' => false]]]);
+});
+
+test('reacting to a message updates it live for the others in the conversation, reacting to a leaflet does not', function () {
+    $user = User::factory()->create();
+    $other = User::factory()->create();
+    $conversation = Conversation::factory()->create(['type' => ConversationType::Direct, 'creator_id' => $user->id]);
+    ConversationParticipant::factory()->create(['conversation_id' => $conversation->id, 'user_id' => $user->id]);
+    ConversationParticipant::factory()->create(['conversation_id' => $conversation->id, 'user_id' => $other->id]);
+    $message = Message::factory()->create(['conversation_id' => $conversation->id, 'user_id' => $other->id]);
+    $leaflet = Leaflet::factory()->official()->create();
+    Event::fake([MessageUpdated::class]);
+
+    $this->actingAs($user)->postJson('/reactions', ['reactable_type' => 'message', 'reactable_id' => $message->id, 'emoji' => '👍'])
+        ->assertOk()
+        ->assertJsonPath('reactions.0', ['emoji' => '👍', 'count' => 1, 'reacted' => true]);
+
+    Event::assertDispatched(MessageUpdated::class, fn (MessageUpdated $event) => $event->message->is($message)
+        && $event->broadcastWith()['message']['reactions'] === [['emoji' => '👍', 'count' => 1, 'user_ids' => [$user->id]]]);
+
+    $this->actingAs($user)->post('/reactions', ['reactable_type' => 'leaflet', 'reactable_id' => $leaflet->id, 'emoji' => '👍'])->assertRedirect();
+    Event::assertDispatchedTimes(MessageUpdated::class, 1);
 });

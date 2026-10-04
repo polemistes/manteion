@@ -6,6 +6,7 @@ use App\Enums\ContactGroupType;
 use App\Enums\EventVisibility;
 use App\Enums\FollowStatus;
 use App\Enums\ReportStatus;
+use App\Events\EventActivity;
 use App\Http\Requests\StoreEventRequest;
 use App\Http\Requests\UpdateEventRequest;
 use App\Jobs\NotifyFollowersOfEvent;
@@ -15,6 +16,7 @@ use App\Models\EventAttendee;
 use App\Models\EventComment;
 use App\Models\Tag;
 use App\Models\User;
+use App\Services\ActivityFeed;
 use App\Services\EventFeedQuery;
 use App\Services\ImageProcessor;
 use Carbon\CarbonImmutable;
@@ -176,6 +178,12 @@ class EventController extends Controller
         $viewer = $request->user();
         $event->load(['owner', 'tags', 'images', 'comments.user', 'attendees.user']);
 
+        // Opening the event means its invitation, comments and so on have
+        // been seen.
+        if (ActivityFeed::seenByUser($request)) {
+            ActivityFeed::markRead($viewer, 'event', $event->id);
+        }
+
         $isOwner = $viewer->is($event->owner);
         $attendee = $event->attendeeFor($viewer);
         $viewerFriendIds = $viewer->friendIds();
@@ -297,6 +305,8 @@ class EventController extends Controller
             NotifyFollowersOfEvent::dispatch($event);
         }
 
+        broadcast(new EventActivity($event->id, 'updated'))->toOthers();
+
         return redirect()->route('events.show', $event);
     }
 
@@ -313,6 +323,8 @@ class EventController extends Controller
                 'resolved_at' => now(),
             ]);
 
+            broadcast(new EventActivity($event->id, 'deleted'))->toOthers();
+
             return redirect()->route('events.index');
         }
 
@@ -327,6 +339,8 @@ class EventController extends Controller
         ]);
 
         $event->delete();
+
+        broadcast(new EventActivity($event->id, 'deleted'))->toOthers();
 
         return redirect()->route('events.index');
     }

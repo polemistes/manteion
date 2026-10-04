@@ -2,38 +2,45 @@
 
 namespace App\Notifications;
 
+use App\Enums\NotificationCategory;
 use App\Models\Event;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Notification;
-use Illuminate\Queue\SerializesModels;
+use App\Models\User;
 
-class FollowedUserPublishedEvent extends Notification implements ShouldQueue
+/**
+ * Someone the recipient follows published an event (see
+ * App\Jobs\NotifyFollowersOfEvent).
+ */
+class FollowedUserPublishedEvent extends ActivityNotification
 {
-    use Queueable, SerializesModels;
-
     public function __construct(
         public Event $event,
     ) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    public static function category(): NotificationCategory
     {
-        return ['database'];
+        return NotificationCategory::FollowedEvents;
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function toArray(object $notifiable): array
+    public function actor(): User
     {
-        return [
-            'event_id' => $this->event->id,
-            'event_name' => $this->event->name,
-            'owner_id' => $this->event->user_id,
-            'owner_name' => $this->event->owner->name,
-        ];
+        return $this->event->owner;
+    }
+
+    public function subject(): Event
+    {
+        return $this->event;
+    }
+
+    protected function pushTitle(): string
+    {
+        return __('notifications.push.followed_user_published_event.title');
+    }
+
+    protected function pushBody(): string
+    {
+        return __('notifications.push.followed_user_published_event.body', [
+            'name' => $this->event->owner->name,
+            'event' => $this->event->name,
+        ]);
     }
 }

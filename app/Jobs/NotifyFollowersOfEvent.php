@@ -10,7 +10,6 @@ use App\Notifications\FollowedUserPublishedEvent;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Notification;
 
 /**
  * Tells the owner's accepted followers about a newly published event,
@@ -57,6 +56,9 @@ class NotifyFollowersOfEvent implements ShouldQueue
 
         $event->forceFill(['followers_notified_at' => now()])->save();
 
-        Notification::send($recipients, new FollowedUserPublishedEvent($event));
+        // One send per follower, so each push is worded in their language.
+        $recipients->each(fn (User $follower) => $follower->notify(
+            (new FollowedUserPublishedEvent($event))->locale($follower->locale ?? 'en')
+        ));
     }
 }

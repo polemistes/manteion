@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\NotificationCategory;
+use App\Models\Conversation;
 use App\Models\Event;
 use App\Models\Follow;
 use App\Models\Friendship;
@@ -11,46 +13,59 @@ use App\Notifications\NewFollower;
 use App\Notifications\NewMessageReceived;
 use NotificationChannels\WebPush\WebPushChannel;
 
-test('NewMessageReceived is sent via webpush only when both the master switch and the category are on', function () {
+test('NewMessageReceived in a direct conversation is sent via webpush unless direct messages are turned off', function () {
     $message = Message::factory()->create();
 
-    $enabled = User::factory()->create(['push_notifications_enabled' => true, 'notify_messages' => true]);
-    expect((new NewMessageReceived($message))->via($enabled))->toBe([WebPushChannel::class]);
+    $byDefault = User::factory()->create();
+    expect((new NewMessageReceived($message))->via($byDefault))->toBe([WebPushChannel::class]);
 
-    $categoryOff = User::factory()->create(['push_notifications_enabled' => true, 'notify_messages' => false]);
-    expect((new NewMessageReceived($message))->via($categoryOff))->toBe([]);
+    $directOff = User::factory()->pushDisabledFor(NotificationCategory::DirectMessages)->create();
+    expect((new NewMessageReceived($message))->via($directOff))->toBe([]);
 
-    $masterOff = User::factory()->pushNotificationsDisabled()->create(['notify_messages' => true]);
-    expect((new NewMessageReceived($message))->via($masterOff))->toBe([]);
+    $groupsOff = User::factory()->pushDisabledFor(NotificationCategory::GroupMessages)->create();
+    expect((new NewMessageReceived($message))->via($groupsOff))->toBe([WebPushChannel::class]);
 });
 
-test('FriendRequestReceived is sent via webpush only when both the master switch and the category are on', function () {
+test('NewMessageReceived in a group conversation follows the group messages category', function () {
+    $message = Message::factory()->for(Conversation::factory()->group())->create();
+
+    $byDefault = User::factory()->create();
+    expect((new NewMessageReceived($message))->via($byDefault))->toBe([WebPushChannel::class]);
+
+    $groupsOff = User::factory()->pushDisabledFor(NotificationCategory::GroupMessages)->create();
+    expect((new NewMessageReceived($message))->via($groupsOff))->toBe([]);
+
+    $directOff = User::factory()->pushDisabledFor(NotificationCategory::DirectMessages)->create();
+    expect((new NewMessageReceived($message))->via($directOff))->toBe([WebPushChannel::class]);
+});
+
+test('FriendRequestReceived is stored and broadcast regardless, and adds webpush only once the friend requests category is turned on', function () {
     $friendship = Friendship::factory()->create();
 
-    $enabled = User::factory()->create(['push_notifications_enabled' => true, 'notify_friend_requests' => true]);
-    expect((new FriendRequestReceived($friendship))->via($enabled))->toBe([WebPushChannel::class]);
+    $byDefault = User::factory()->create();
+    expect((new FriendRequestReceived($friendship))->via($byDefault))->toBe(['database', 'broadcast']);
 
-    $disabled = User::factory()->create(['notify_friend_requests' => false]);
-    expect((new FriendRequestReceived($friendship))->via($disabled))->toBe([]);
+    $enabled = User::factory()->pushEnabledFor(NotificationCategory::FriendRequests)->create();
+    expect((new FriendRequestReceived($friendship))->via($enabled))->toBe(['database', 'broadcast', WebPushChannel::class]);
 });
 
-test('NewFollower is sent via webpush only when both the master switch and the category are on', function () {
+test('NewFollower is stored and broadcast regardless, and adds webpush only once the followers category is turned on', function () {
     $follow = Follow::factory()->create();
 
-    $enabled = User::factory()->create(['push_notifications_enabled' => true, 'notify_follow_requests' => true]);
-    expect((new NewFollower($follow))->via($enabled))->toBe([WebPushChannel::class]);
+    $byDefault = User::factory()->create();
+    expect((new NewFollower($follow))->via($byDefault))->toBe(['database', 'broadcast']);
 
-    $disabled = User::factory()->create(['notify_follow_requests' => false]);
-    expect((new NewFollower($follow))->via($disabled))->toBe([]);
+    $enabled = User::factory()->pushEnabledFor(NotificationCategory::Followers)->create();
+    expect((new NewFollower($follow))->via($enabled))->toBe(['database', 'broadcast', WebPushChannel::class]);
 });
 
-test('InvitedToEvent keeps its database channel regardless, and adds webpush only when enabled', function () {
+test('InvitedToEvent is stored and broadcast regardless, and adds webpush only once event invites are turned on', function () {
     $event = Event::factory()->create();
     $inviter = User::factory()->create();
 
-    $enabled = User::factory()->create(['push_notifications_enabled' => true, 'notify_event_invites' => true]);
-    expect((new InvitedToEvent($event, $inviter))->via($enabled))->toBe(['database', WebPushChannel::class]);
+    $byDefault = User::factory()->create();
+    expect((new InvitedToEvent($event, $inviter))->via($byDefault))->toBe(['database', 'broadcast']);
 
-    $disabled = User::factory()->create(['notify_event_invites' => false]);
-    expect((new InvitedToEvent($event, $inviter))->via($disabled))->toBe(['database']);
+    $enabled = User::factory()->pushEnabledFor(NotificationCategory::EventInvites)->create();
+    expect((new InvitedToEvent($event, $inviter))->via($enabled))->toBe(['database', 'broadcast', WebPushChannel::class]);
 });

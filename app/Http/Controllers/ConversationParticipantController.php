@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\BadgesUpdated;
+use App\Events\ParticipantsUpdated;
 use App\Http\Requests\StoreConversationParticipantRequest;
 use App\Models\Conversation;
 use App\Models\ConversationParticipant;
@@ -11,12 +13,21 @@ use Illuminate\Support\Facades\Gate;
 
 class ConversationParticipantController extends Controller
 {
+    /**
+     * The new member sees the history, so the conversation may count as
+     * unread for them straight away.
+     */
     public function store(StoreConversationParticipantRequest $request, Conversation $conversation): RedirectResponse
     {
-        ConversationParticipant::query()->firstOrCreate([
+        $participant = ConversationParticipant::query()->firstOrCreate([
             'conversation_id' => $conversation->id,
             'user_id' => $request->integer('user_id'),
         ]);
+
+        if ($participant->wasRecentlyCreated) {
+            ParticipantsUpdated::dispatch($conversation->id);
+            BadgesUpdated::dispatch($participant->user_id);
+        }
 
         return back();
     }
@@ -25,7 +36,13 @@ class ConversationParticipantController extends Controller
     {
         Gate::authorize('leave', $conversation);
 
-        $conversation->participantFor($request->user())?->delete();
+        $user = $request->user();
+
+        $conversation->participantFor($user)?->delete();
+        $conversation->setViewing($user, false);
+
+        ParticipantsUpdated::dispatch($conversation->id);
+        BadgesUpdated::dispatch($user->id);
 
         return redirect()->route('messages.index');
     }

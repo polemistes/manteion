@@ -3,10 +3,8 @@
 namespace App\Http\Middleware;
 
 use App\Enums\ThemeMode;
-use App\Enums\ThemeStyle;
-use App\Models\ConversationParticipant;
-use App\Models\Follow;
 use App\Models\User;
+use App\Services\BadgeCounts;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -48,11 +46,9 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $user,
             ],
-            // Closures, so a partial reload that doesn't ask for these badges
-            // (a message poll, a filter change) doesn't run their queries.
-            'unreadNotificationsCount' => fn () => $user?->unreadNotifications()->count() ?? 0,
-            'unreadMessagesCount' => fn () => $user === null ? 0 : $this->unreadMessagesCount($user),
-            'pendingContactRequestsCount' => fn () => $user === null ? 0 : $this->pendingContactRequestsCount($user),
+            // A closure, so a partial reload that doesn't ask for the badges
+            // (a filter change, loading more) doesn't run their queries.
+            'badges' => fn () => $user === null ? BadgeCounts::none() : BadgeCounts::for($user),
             'locale' => app()->getLocale(),
             'theme' => self::themeFor($user),
             'availableLocales' => config('app.supported_locales'),
@@ -62,42 +58,16 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
-     * The visual style and light/dark mode to render for a user — the
-     * classic style following the system for guests. Used both here (so the
-     * client can switch without a reload) and by the root Blade view (so
-     * the first paint is already right).
+     * The light/dark mode to render for a user, following the system for
+     * guests. Used both here (so the client can switch without a reload) and
+     * by the root Blade view (so the first paint is already right).
      *
-     * @return array{style: string, mode: string}
+     * @return array{mode: string}
      */
     public static function themeFor(?User $user): array
     {
         return [
-            'style' => ($user->theme_style ?? ThemeStyle::Classic)->value,
             'mode' => ($user->theme_mode ?? ThemeMode::System)->value,
         ];
-    }
-
-    private function unreadMessagesCount(User $user): int
-    {
-        return ConversationParticipant::query()
-            ->where('conversation_participants.user_id', $user->id)
-            ->join('messages', 'messages.conversation_id', '=', 'conversation_participants.conversation_id')
-            ->where('messages.user_id', '!=', $user->id)
-            ->where(function ($query) {
-                $query->whereNull('conversation_participants.last_read_at')
-                    ->orWhereColumn('messages.created_at', '>', 'conversation_participants.last_read_at');
-            })
-            ->distinct('conversation_participants.conversation_id')
-            ->count('conversation_participants.conversation_id');
-    }
-
-    private function pendingContactRequestsCount(User $user): int
-    {
-        $pendingFollowerRequests = Follow::query()
-            ->where('followed_id', $user->id)
-            ->pending()
-            ->count();
-
-        return $user->pendingFriendRequests()->count() + $pendingFollowerRequests;
     }
 }

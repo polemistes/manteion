@@ -1,11 +1,15 @@
 <?php
 
 use App\Enums\UserRole;
+use App\Events\BadgesUpdated;
 use App\Models\Friendship;
 use App\Models\Leaflet;
 use App\Models\LeafletResponse;
 use App\Models\Report;
 use App\Models\User;
+use App\Notifications\NewLeafletResponse;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Notification;
 
 test('anyone who can read a leaflet can respond to it', function () {
     $author = User::factory()->create();
@@ -78,4 +82,44 @@ test('a response can be reported and deleting it resolves the report', function 
 
     $this->actingAs($moderator)->delete("/leaflets/{$leaflet->id}/responses/{$response->id}")->assertRedirect();
     expect($report->fresh()->status->value)->toBe('resolved');
+});
+
+test('a reply notifies the leaflets author, in their language', function () {
+    Notification::fake();
+    $author = User::factory()->create(['locale' => 'nb']);
+    $responder = User::factory()->create();
+    $leaflet = Leaflet::factory()->official()->create(['user_id' => $author->id]);
+
+    $this->actingAs($responder)->post("/leaflets/{$leaflet->id}/responses", ['body' => 'Count me in!'])->assertRedirect();
+
+    $response = LeafletResponse::query()->sole();
+    Notification::assertSentTo($author, NewLeafletResponse::class, fn (NewLeafletResponse $notification) => $notification->response->is($response)
+        && $notification->locale === 'nb');
+    Notification::assertNotSentTo($responder, NewLeafletResponse::class);
+});
+
+test('the author replying to their own leaflet notifies no one', function () {
+    Notification::fake();
+    $author = User::factory()->create();
+    $leaflet = Leaflet::factory()->create(['user_id' => $author->id]);
+
+    $this->actingAs($author)->post("/leaflets/{$leaflet->id}/responses", ['body' => 'Update: it is on.'])->assertRedirect();
+
+    Notification::assertNothingSent();
+});
+
+test('deleting a reply withdraws the authors notification about it', function () {
+    $author = User::factory()->create();
+    $responder = User::factory()->create();
+    $leaflet = Leaflet::factory()->official()->create(['user_id' => $author->id]);
+    $response = LeafletResponse::factory()->create(['leaflet_id' => $leaflet->id, 'user_id' => $responder->id]);
+    $otherResponse = LeafletResponse::factory()->create(['leaflet_id' => $leaflet->id, 'user_id' => $responder->id]);
+    $author->notify(new NewLeafletResponse($response));
+    $author->notify(new NewLeafletResponse($otherResponse));
+    Event::fake([BadgesUpdated::class]);
+
+    $this->actingAs($responder)->delete("/leaflets/{$leaflet->id}/responses/{$response->id}")->assertRedirect();
+
+    expect($author->notifications()->sole()->data['response_id'])->toBe($otherResponse->id);
+    Event::assertDispatched(BadgesUpdated::class, fn (BadgesUpdated $event) => $event->userId === $author->id);
 });

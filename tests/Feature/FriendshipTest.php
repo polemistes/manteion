@@ -1,9 +1,13 @@
 <?php
 
 use App\Enums\FriendshipStatus;
+use App\Enums\NotificationCategory;
+use App\Events\BadgesUpdated;
 use App\Models\Friendship;
 use App\Models\User;
+use App\Notifications\FriendRequestAccepted;
 use App\Notifications\FriendRequestReceived;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
 
 test('a user can send a friend request', function () {
@@ -23,7 +27,7 @@ test('a user can send a friend request', function () {
 test('sending a friend request notifies the recipient', function () {
     Notification::fake();
     $sender = User::factory()->create();
-    $recipient = User::factory()->create();
+    $recipient = User::factory()->pushEnabledFor(NotificationCategory::FriendRequests)->create();
 
     $this->actingAs($sender)->post('/friendships', ['user_id' => $recipient->id])->assertRedirect();
 
@@ -152,4 +156,101 @@ test('the requester can cancel a declined request', function () {
     $this->actingAs($sender)->delete("/friendships/{$friendship->id}")->assertRedirect();
 
     $this->assertModelMissing($friendship);
+});
+
+test('a friend request reaches the recipients activity in their language, push or not', function () {
+    Notification::fake();
+    $sender = User::factory()->create();
+    $recipient = User::factory()->create(['locale' => 'nb']);
+
+    $this->actingAs($sender)->post('/friendships', ['user_id' => $recipient->id])->assertRedirect();
+
+    Notification::assertSentTo($recipient, FriendRequestReceived::class, fn (FriendRequestReceived $notification, array $channels) => $channels === ['database', 'broadcast']
+        && $notification->locale === 'nb'
+        && $notification->friendship->requester->is($sender));
+});
+
+test('accepting a friend request tells the requester, in their language', function () {
+    Notification::fake();
+    $sender = User::factory()->create(['locale' => 'nb']);
+    $recipient = User::factory()->create();
+    $friendship = Friendship::factory()->create(['requester_id' => $sender->id, 'addressee_id' => $recipient->id]);
+
+    $this->actingAs($recipient)->patch("/friendships/{$friendship->id}", ['action' => 'accept'])->assertRedirect();
+
+    Notification::assertSentTo($sender, FriendRequestAccepted::class, fn (FriendRequestAccepted $notification) => $notification->friendship->is($friendship)
+        && $notification->locale === 'nb');
+    Notification::assertNotSentTo($recipient, FriendRequestAccepted::class);
+});
+
+test('declining a friend request is never announced', function () {
+    Notification::fake();
+    $sender = User::factory()->create();
+    $recipient = User::factory()->create();
+    $friendship = Friendship::factory()->create(['requester_id' => $sender->id, 'addressee_id' => $recipient->id]);
+
+    $this->actingAs($recipient)->patch("/friendships/{$friendship->id}", ['action' => 'decline'])->assertRedirect();
+
+    Notification::assertNothingSent();
+});
+
+test('sending, answering and withdrawing a friend request update both sides badges', function (string $action) {
+    $sender = User::factory()->create();
+    $recipient = User::factory()->create();
+    $friendship = $action === 'send' ? null : Friendship::factory()->create([
+        'requester_id' => $sender->id,
+        'addressee_id' => $recipient->id,
+        'status' => $action === 'remove' ? FriendshipStatus::Accepted : FriendshipStatus::Pending,
+    ]);
+    Event::fake([BadgesUpdated::class]);
+
+    $response = match ($action) {
+        'send' => $this->actingAs($sender)->post('/friendships', ['user_id' => $recipient->id]),
+        'accept', 'decline' => $this->actingAs($recipient)->patch("/friendships/{$friendship->id}", ['action' => $action]),
+        'cancel' => $this->actingAs($sender)->delete("/friendships/{$friendship->id}"),
+        'remove' => $this->actingAs($recipient)->delete("/friendships/{$friendship->id}"),
+    };
+
+    $response->assertRedirect();
+
+    Event::assertDispatched(BadgesUpdated::class, fn (BadgesUpdated $event) => $event->userId === $sender->id);
+    Event::assertDispatched(BadgesUpdated::class, fn (BadgesUpdated $event) => $event->userId === $recipient->id);
+})->with(['send', 'accept', 'decline', 'cancel', 'remove']);
+
+test('a refused friend request change updates no badges', function () {
+    $sender = User::factory()->create();
+    $recipient = User::factory()->create();
+    $friendship = Friendship::factory()->create(['requester_id' => $sender->id, 'addressee_id' => $recipient->id]);
+    Event::fake([BadgesUpdated::class]);
+
+    $this->actingAs($sender)->patch("/friendships/{$friendship->id}", ['action' => 'accept'])->assertForbidden();
+    $this->actingAs(User::factory()->create())->delete("/friendships/{$friendship->id}")->assertForbidden();
+
+    Event::assertNotDispatched(BadgesUpdated::class);
+});
+
+test('cancelling a friend request withdraws the recipients notification about it', function () {
+    $sender = User::factory()->create();
+    $recipient = User::factory()->create();
+    $friendship = Friendship::factory()->create(['requester_id' => $sender->id, 'addressee_id' => $recipient->id]);
+    $otherRequest = Friendship::factory()->create(['addressee_id' => $recipient->id]);
+    $recipient->notify(new FriendRequestReceived($friendship));
+    $recipient->notify(new FriendRequestReceived($otherRequest));
+
+    $this->actingAs($sender)->delete("/friendships/{$friendship->id}")->assertRedirect();
+
+    expect($recipient->notifications()->sole()->data['friendship_id'])->toBe($otherRequest->id);
+});
+
+test('removing a friend keeps the notifications of how the friendship began', function () {
+    $sender = User::factory()->create();
+    $recipient = User::factory()->create();
+    $friendship = Friendship::factory()->accepted()->create(['requester_id' => $sender->id, 'addressee_id' => $recipient->id]);
+    $recipient->notify(new FriendRequestReceived($friendship));
+    $sender->notify(new FriendRequestAccepted($friendship));
+
+    $this->actingAs($recipient)->delete("/friendships/{$friendship->id}")->assertRedirect();
+
+    expect($recipient->notifications()->count())->toBe(1);
+    expect($sender->notifications()->count())->toBe(1);
 });
