@@ -9,5 +9,7 @@
     "sortingByDistance": "Sorting by distance",
     "useCurrentLocation": "Use my location",
     "geolocationError": "Couldn't get your location.",
-    "distanceAway": "{distance} km away"
+    "distanceAway": "{distance} km away",
+    "pinPlaced": "Pin placed on the map",
+    "tapToPlace": "Tap the map to place the pin, or search above."
 }

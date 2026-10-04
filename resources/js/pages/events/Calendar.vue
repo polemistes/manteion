@@ -1,25 +1,57 @@
 <script setup lang="ts">
-import { Head, Link, router, usePoll } from '@inertiajs/vue3';
-import { computed, onMounted, ref } from 'vue';
+import { Link, router, usePoll } from '@inertiajs/vue3';
+import {
+    CalendarDays,
+    CalendarPlus,
+    ChevronLeft,
+    ChevronRight,
+    List,
+    Plus,
+    SlidersHorizontal,
+} from '@lucide/vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import EventCard from '@/components/EventCard.vue';
-import EventFilterPanel from '@/components/EventFilterPanel.vue';
-import EventViewSwitch from '@/components/EventViewSwitch.vue';
+import {
+    daysOfView,
+    eventsByDay,
+    noonOf,
+    shiftDate,
+} from '@/components/events/calendar';
+import type { CalendarView } from '@/components/events/calendar';
+import CalendarDayAgenda from '@/components/events/CalendarDayAgenda.vue';
+import CalendarEventRow from '@/components/events/CalendarEventRow.vue';
+import CalendarMonth from '@/components/events/CalendarMonth.vue';
+import EventCard from '@/components/events/EventCard.vue';
+import EventFiltersForm from '@/components/events/EventFiltersForm.vue';
+import type { EventFilterState } from '@/components/events/EventFiltersForm.vue';
+import EventFilterSheet from '@/components/events/EventFilterSheet.vue';
+import {
+    activeFilterCount,
+    emptyState,
+    queryFromState,
+    stateFromFilters,
+} from '@/components/events/filters';
+import PageContainer from '@/components/shell/PageContainer.vue';
+import PageHeader from '@/components/shell/PageHeader.vue';
+import Button from '@/components/ui/Button.vue';
+import DateBadge from '@/components/ui/DateBadge.vue';
+import EmptyState from '@/components/ui/EmptyState.vue';
+import FilterChip from '@/components/ui/FilterChip.vue';
+import IconButton from '@/components/ui/IconButton.vue';
+import SegmentedLinks from '@/components/ui/SegmentedLinks.vue';
 import type {
     CategoryOption,
     ContactOption,
-    EventFilterQuery,
     EventFilterValues,
     EventSummary,
     GroupOption,
 } from '@/events';
-import { dateFnsLocales } from '@/events';
+import { isoWeekOfDay, useDates } from '@/lib/dates';
 import {
     calendar as eventsCalendar,
     create as eventsCreate,
+    index as eventsIndex,
 } from '@/routes/events';
-
-type CalendarView = 'month' | 'week' | 'day';
 
 const props = defineProps<{
     events: EventSummary[];
@@ -32,398 +64,408 @@ const props = defineProps<{
     filters: EventFilterValues;
 }>();
 
-const { t, locale } = useI18n();
+const { t } = useI18n();
+const dates = useDates();
 
-usePoll(20000, { only: ['events'] });
+usePoll(60_000, { only: ['events'] });
 
-// Days are grouped by the viewer's local date, which only the browser
-// knows, so the grid renders after mount rather than on the server.
-const mounted = ref(false);
-onMounted(() => (mounted.value = true));
+const view = computed(() => props.calendar.view);
+const today = computed(() => dates.todayKey());
+const state = computed(() => stateFromFilters(props.filters, today.value));
+const mine = computed(() => props.filters.mine ?? '');
 
-const views: CalendarView[] = ['month', 'week', 'day'];
-
-function parseDate(value: string): Date {
-    const [year, month, day] = value.split('-').map(Number);
-
-    return new Date(year, month - 1, day);
+/** The filters that travel with every link: the list's and the calendar's. */
+function filterQuery(
+    next: EventFilterState = state.value,
+    nextMine = mine.value,
+): Record<string, string | string[]> {
+    return queryFromState(next, today.value, { mine: nextMine || undefined });
 }
 
-function toDateKey(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-
-    return `${year}-${month}-${day}`;
+function calendarUrl(nextView: CalendarView, date: string): string {
+    return eventsCalendar({
+        query: {
+            ...filterQuery(),
+            view: nextView === 'month' ? undefined : nextView,
+            date: date === today.value ? undefined : date,
+        },
+    }).url;
 }
 
-function addDays(date: Date, days: number): Date {
-    const copy = new Date(date);
-    copy.setDate(copy.getDate() + days);
-
-    return copy;
-}
-
-/** Monday-first weeks. */
-function startOfWeek(date: Date): Date {
-    const offset = (date.getDay() + 6) % 7;
-
-    return addDays(
-        new Date(date.getFullYear(), date.getMonth(), date.getDate()),
-        -offset,
-    );
-}
-
-function isoWeek(date: Date): number {
-    const target = new Date(
-        Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),
-    );
-    const dayNumber = target.getUTCDay() || 7;
-    target.setUTCDate(target.getUTCDate() + 4 - dayNumber);
-    const yearStart = new Date(Date.UTC(target.getUTCFullYear(), 0, 1));
-
-    return Math.ceil(
-        ((target.getTime() - yearStart.getTime()) / 86400000 + 1) / 7,
-    );
-}
-
-const localeCode = computed(() => dateFnsLocales[locale.value] ?? locale.value);
-const anchor = computed(() => parseDate(props.calendar.date));
-const todayKey = computed(() => toDateKey(new Date()));
-
-const days = computed<Date[]>(() => {
-    const view = props.calendar.view;
-
-    if (view === 'day') {
-        return [anchor.value];
-    }
-
-    if (view === 'week') {
-        const start = startOfWeek(anchor.value);
-
-        return Array.from({ length: 7 }, (_, i) => addDays(start, i));
-    }
-
-    const first = new Date(
-        anchor.value.getFullYear(),
-        anchor.value.getMonth(),
-        1,
-    );
-    const last = new Date(
-        anchor.value.getFullYear(),
-        anchor.value.getMonth() + 1,
-        0,
-    );
-    const start = startOfWeek(first);
-    const end = addDays(startOfWeek(last), 6);
-    const count = Math.round((end.getTime() - start.getTime()) / 86400000) + 1;
-
-    return Array.from({ length: count }, (_, i) => addDays(start, i));
-});
-
-const eventsByDay = computed(() => {
-    const map = new Map<string, EventSummary[]>();
-
-    for (const event of props.events) {
-        const key = toDateKey(new Date(event.starts_at));
-        map.set(key, [...(map.get(key) ?? []), event]);
-    }
-
-    return map;
-});
-
-function eventsOn(date: Date): EventSummary[] {
-    return eventsByDay.value.get(toDateKey(date)) ?? [];
-}
-
-const weekdayLabels = computed(() =>
-    days.value
-        .slice(0, 7)
-        .map((day) =>
-            day.toLocaleDateString(localeCode.value, { weekday: 'short' }),
-        ),
-);
-
-const title = computed(() => {
-    const view = props.calendar.view;
-
-    if (view === 'month') {
-        return anchor.value.toLocaleDateString(localeCode.value, {
-            month: 'long',
-            year: 'numeric',
-        });
-    }
-
-    if (view === 'week') {
-        const start = days.value[0];
-        const end = days.value[6];
-        const range = `${start.toLocaleDateString(localeCode.value, { day: 'numeric', month: 'short' })} – ${end.toLocaleDateString(localeCode.value, { day: 'numeric', month: 'short', year: 'numeric' })}`;
-
-        return `${t('events.calendar.weekNumber', { week: isoWeek(anchor.value) })} · ${range}`;
-    }
-
-    return anchor.value.toLocaleDateString(localeCode.value, {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-    });
-});
-
-function formatTime(value: string): string {
-    return new Date(value).toLocaleTimeString(localeCode.value, {
-        hour: '2-digit',
-        minute: '2-digit',
-    });
-}
-
-function urlFor(view: CalendarView, date: string): string {
-    return eventsCalendar({ query: { view, date, ...props.filters } }).url;
-}
-
-function shifted(step: number): string {
-    const view = props.calendar.view;
-    const base = anchor.value;
-
-    if (view === 'month') {
-        return toDateKey(
-            new Date(base.getFullYear(), base.getMonth() + step, 1),
-        );
-    }
-
-    return toDateKey(addDays(base, view === 'week' ? 7 * step : step));
-}
-
-function applyFilters(query: EventFilterQuery): void {
+function visit(next: EventFilterState, nextMine = mine.value): void {
     router.get(
         eventsCalendar().url,
-        { view: props.calendar.view, date: props.calendar.date, ...query },
-        { preserveState: true, replace: true },
+        {
+            ...filterQuery(next, nextMine),
+            ...(view.value === 'month' ? {} : { view: view.value }),
+            ...(props.calendar.date === today.value
+                ? {}
+                : { date: props.calendar.date }),
+        },
+        { preserveState: true, preserveScroll: true, replace: true },
     );
 }
 
-function chipClass(event: EventSummary): string {
-    if (event.my_status === 'attending') {
-        return 'bg-accent text-on-accent';
-    }
-
-    if (event.my_status === 'interested') {
-        return 'border-accent';
-    }
-
-    return 'border-edge';
+function setMine(value: string): void {
+    visit(state.value, mine.value === value ? '' : value);
 }
 
-function inMonth(date: Date): boolean {
-    return date.getMonth() === anchor.value.getMonth();
+const filtersOpen = ref(false);
+const filterCount = computed(() => activeFilterCount(state.value, today.value));
+const hasNarrowing = computed(() => filterCount.value > 0 || mine.value !== '');
+const asideState = computed({
+    get: () => state.value,
+    set: (next: EventFilterState) => visit(next),
+});
+
+function clearAll(): void {
+    visit(emptyState(today.value), '');
 }
+
+// The days on show and what runs on each.
+const days = computed(() => daysOfView(view.value, props.calendar.date));
+const byDay = computed(() =>
+    eventsByDay(props.events, days.value, dates.dayKey),
+);
+const month = computed(() => props.calendar.date.slice(0, 7));
+
+function eventsOf(day: string): EventSummary[] {
+    return byDay.value.get(day) ?? [];
+}
+
+// The month's chosen day: today when it's in the month, else the first
+// day with something on.
+const selected = ref(
+    today.value.startsWith(month.value)
+        ? today.value
+        : (days.value.find(
+              (day) => day.startsWith(month.value) && eventsOf(day).length,
+          ) ?? props.calendar.date),
+);
+
+const periodTitle = computed(() => {
+    if (view.value === 'month') {
+        return dates.monthYear(noonOf(props.calendar.date));
+    }
+
+    if (view.value === 'week') {
+        const first = days.value[0];
+        const last = days.value[6];
+        const range =
+            first.slice(0, 7) === last.slice(0, 7)
+                ? `${dates.dayNumber(noonOf(first))}–${dates.dayMonth(noonOf(last))}`
+                : `${dates.dayMonth(noonOf(first))} – ${dates.dayMonth(noonOf(last))}`;
+
+        return `${t('events.calendar.weekNumber', { week: isoWeekOfDay(first) })} · ${range}`;
+    }
+
+    return dates.longDate(noonOf(props.calendar.date));
+});
+
+/** On a phone the day view's title is "Sat 10 Oct", so it fits beside the arrows. */
+const periodTitleShort = computed(() =>
+    view.value === 'day'
+        ? dates.shortDate(noonOf(props.calendar.date))
+        : periodTitle.value,
+);
+
+const viewLinks = computed(() =>
+    (['month', 'week', 'day'] as const).map((target) => ({
+        href: calendarUrl(
+            target,
+            view.value === 'month' && target !== 'month'
+                ? selected.value
+                : props.calendar.date,
+        ),
+        label: t(`events.calendar.${target}`),
+        active: view.value === target,
+    })),
+);
+
+const pageViews = computed(() => [
+    {
+        href: eventsIndex({ query: filterQuery() }).url,
+        label: t('events.index.list'),
+        icon: List,
+        active: false,
+    },
+    {
+        href: calendarUrl(view.value, props.calendar.date),
+        label: t('events.index.calendar'),
+        icon: CalendarDays,
+        active: true,
+    },
+]);
 </script>
 
 <template>
-    <Head :title="t('events.calendar.title')" />
-
-    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 class="text-xl font-bold">{{ t('events.calendar.title') }}</h1>
-        <div class="flex flex-wrap items-center gap-3">
-            <EventViewSwitch active="calendar" />
-            <Link
+    <PageHeader
+        :title="t('events.calendar.title')"
+        :document-title="`${periodTitle} · ${t('events.calendar.title')}`"
+        width="wide"
+        root
+    >
+        <template #phone-actions>
+            <IconButton
+                :as="Link"
                 :href="eventsCreate().url"
-                class="border-edge text-sm hover:bg-surface-raised border bg-accent px-3 py-2 text-on-accent hover:text-ink"
+                :icon="Plus"
+                :label="t('events.index.createEvent')"
+                variant="create"
+            />
+        </template>
+        <template #actions>
+            <SegmentedLinks
+                :links="pageViews"
+                :label="t('events.index.views')"
+            />
+            <Button
+                :as="Link"
+                :href="eventsCreate().url"
+                :icon="Plus"
+                variant="primary"
             >
                 {{ t('events.index.createEvent') }}
-            </Link>
-        </div>
-    </div>
+            </Button>
+        </template>
+    </PageHeader>
 
-    <EventFilterPanel
-        class="mb-6"
-        :categories="categories"
-        :friends="friends"
-        :following="following"
-        :friend-groups="friendGroups"
-        :following-groups="followingGroups"
-        :filters="filters"
-        @change="applyFilters"
-    />
-
-    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div class="flex items-center gap-1">
-            <Link
-                :href="urlFor(calendar.view, shifted(-1))"
-                class="border-edge text-sm border px-3 py-1 hover:bg-accent hover:text-on-accent"
-                :aria-label="t('events.calendar.previous')"
-            >
-                ‹
-            </Link>
-            <Link
-                :href="urlFor(calendar.view, calendar.today)"
-                class="border-edge text-xs border px-3 py-1 hover:bg-accent hover:text-on-accent"
-            >
-                {{ t('events.calendar.today') }}
-            </Link>
-            <Link
-                :href="urlFor(calendar.view, shifted(1))"
-                class="border-edge text-sm border px-3 py-1 hover:bg-accent hover:text-on-accent"
-                :aria-label="t('events.calendar.next')"
-            >
-                ›
-            </Link>
-        </div>
-
-        <h2 v-if="mounted" class="text-base font-bold">{{ title }}</h2>
-
-        <nav class="flex" :aria-label="t('events.calendar.viewSwitch')">
-            <Link
-                v-for="(view, index) in views"
-                :key="view"
-                :href="urlFor(view, calendar.date)"
-                class="border-edge text-xs border px-3 py-1"
-                :class="[
-                    index > 0 ? '-ml-px' : '',
-                    calendar.view === view
-                        ? 'bg-accent text-on-accent'
-                        : 'hover:bg-accent hover:text-on-accent',
-                ]"
-                :aria-current="calendar.view === view ? 'page' : undefined"
-            >
-                {{ t(`events.calendar.${view}`) }}
-            </Link>
-        </nav>
-    </div>
-
-    <template v-if="mounted">
-        <!-- Month: a seven-column grid; on small screens each day shows a count and opens the day view. -->
-        <div v-if="calendar.view === 'month'" class="border-frame border-edge">
-            <div
-                class="border-edge text-xs grid grid-cols-7 border-b text-center font-bold uppercase"
-            >
-                <div v-for="label in weekdayLabels" :key="label" class="py-1">
-                    {{ label }}
-                </div>
-            </div>
-            <div class="grid grid-cols-7">
-                <div
-                    v-for="day in days"
-                    :key="toDateKey(day)"
-                    class="border-edge/50 min-h-16 min-w-0 border-b border-l p-1 first:border-l-0 md:min-h-28 [&:nth-child(7n+1)]:border-l-0"
-                    :class="inMonth(day) ? '' : 'text-ink/50'"
-                >
-                    <Link
-                        :href="urlFor('day', toDateKey(day))"
-                        class="text-xs mb-1 inline-block px-1"
-                        :class="
-                            toDateKey(day) === todayKey
-                                ? 'bg-accent font-bold text-on-accent'
-                                : 'hover:underline'
-                        "
-                    >
-                        {{ day.getDate() }}
-                    </Link>
-
-                    <ul class="hidden flex-col gap-0.5 md:flex">
-                        <li
-                            v-for="event in eventsOn(day).slice(0, 3)"
-                            :key="event.id"
-                            class="min-w-0"
-                        >
-                            <Link
-                                :href="`/events/${event.id}`"
-                                class="text-xs block truncate border px-1"
-                                :class="chipClass(event)"
-                                :title="event.name"
-                            >
-                                {{ formatTime(event.starts_at) }}
-                                {{ event.name }}
-                            </Link>
-                        </li>
-                        <li v-if="eventsOn(day).length > 3">
-                            <Link
-                                :href="urlFor('day', toDateKey(day))"
-                                class="text-xs block px-1 text-ink/70 hover:underline"
-                            >
-                                {{
-                                    t('events.calendar.more', {
-                                        count: eventsOn(day).length - 3,
-                                    })
-                                }}
-                            </Link>
-                        </li>
-                    </ul>
-
-                    <Link
-                        v-if="eventsOn(day).length"
-                        :href="urlFor('day', toDateKey(day))"
-                        class="border-edge text-xs mx-auto block w-fit border px-1.5 md:hidden"
-                    >
-                        {{ eventsOn(day).length }}
-                    </Link>
-                </div>
-            </div>
-        </div>
-
-        <!-- Week: one column a day on wide screens, stacked on narrow ones. -->
+    <PageContainer width="wide" class="pt-3 sm:pt-0">
         <div
-            v-else-if="calendar.view === 'week'"
-            class="grid grid-cols-1 gap-3 md:grid-cols-7 md:gap-2"
+            class="xl:grid xl:grid-cols-[minmax(0,1fr)_var(--spacing-aside)] xl:gap-12"
         >
-            <section
-                v-for="day in days"
-                :key="toDateKey(day)"
-                class="border-frame border-edge min-w-0 p-2"
-            >
-                <Link
-                    :href="urlFor('day', toDateKey(day))"
-                    class="text-xs mb-2 block font-bold uppercase hover:underline"
-                    :class="{ 'text-accent': toDateKey(day) === todayKey }"
+            <div class="min-w-0">
+                <!-- Phone: the view switches get a row of their own. -->
+                <div
+                    class="mb-4 flex items-center justify-between gap-2 sm:hidden"
                 >
-                    {{
-                        day.toLocaleDateString(localeCode, {
-                            weekday: 'short',
-                            day: 'numeric',
-                        })
-                    }}
-                </Link>
-                <ul class="flex flex-col gap-1">
+                    <SegmentedLinks
+                        :links="viewLinks"
+                        :label="t('events.calendar.viewSwitch')"
+                    />
+                    <SegmentedLinks
+                        :links="
+                            pageViews.map((link) => ({
+                                ...link,
+                                iconOnly: true,
+                            }))
+                        "
+                        :label="t('events.index.views')"
+                    />
+                </div>
+
+                <div class="flex items-center gap-1">
+                    <h2
+                        class="min-w-0 flex-1 truncate font-display text-title-3 first-letter:uppercase sm:text-title-2"
+                    >
+                        <span class="sm:hidden">{{ periodTitleShort }}</span>
+                        <span class="hidden sm:inline">{{ periodTitle }}</span>
+                    </h2>
+                    <IconButton
+                        :as="Link"
+                        :href="
+                            calendarUrl(
+                                view,
+                                shiftDate(view, props.calendar.date, -1),
+                            )
+                        "
+                        :icon="ChevronLeft"
+                        :label="t('events.calendar.previous')"
+                    />
+                    <Button
+                        :as="Link"
+                        :href="calendarUrl(view, today)"
+                        size="sm"
+                    >
+                        {{ t('events.calendar.today') }}
+                    </Button>
+                    <IconButton
+                        :as="Link"
+                        :href="
+                            calendarUrl(
+                                view,
+                                shiftDate(view, props.calendar.date, 1),
+                            )
+                        "
+                        :icon="ChevronRight"
+                        :label="t('events.calendar.next')"
+                    />
+                    <div class="ml-3 hidden sm:block">
+                        <SegmentedLinks
+                            :links="viewLinks"
+                            :label="t('events.calendar.viewSwitch')"
+                        />
+                    </div>
+                </div>
+
+                <div
+                    class="-mx-4 mt-3 scrollbar-none flex gap-2 overflow-x-auto fade-end px-4 pb-1 sm:mx-0 sm:flex-wrap sm:[mask-image:none] sm:px-0"
+                    role="group"
+                    :aria-label="t('events.index.quick')"
+                >
+                    <FilterChip
+                        class="xl:hidden"
+                        :icon="SlidersHorizontal"
+                        :count="filterCount"
+                        :pressed="false"
+                        @update:pressed="filtersOpen = true"
+                    >
+                        {{ t('events.index.filters') }}
+                    </FilterChip>
+                    <FilterChip :pressed="!mine" @update:pressed="setMine('')">
+                        {{ t('events.index.all') }}
+                    </FilterChip>
+                    <FilterChip
+                        :pressed="mine === 'invited'"
+                        @update:pressed="setMine('invited')"
+                    >
+                        {{ t('events.index.invitations') }}
+                    </FilterChip>
+                    <FilterChip
+                        :pressed="mine === 'going'"
+                        @update:pressed="setMine('going')"
+                    >
+                        {{ t('events.index.going') }}
+                    </FilterChip>
+                    <FilterChip
+                        :pressed="mine === 'hosting'"
+                        @update:pressed="setMine('hosting')"
+                    >
+                        {{ t('events.index.hosting') }}
+                    </FilterChip>
+                </div>
+
+                <div
+                    v-if="!props.events.length && hasNarrowing"
+                    class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md bg-surface-2 px-4 py-3 text-meta text-ink-muted"
+                >
+                    <span class="min-w-0 flex-1">{{
+                        t('events.calendar.noMatches')
+                    }}</span>
+                    <Button size="sm" @click="clearAll">
+                        {{ t('events.index.clearFilters') }}
+                    </Button>
+                </div>
+
+                <template v-if="view === 'month'">
+                    <CalendarMonth
+                        v-model:selected="selected"
+                        class="mt-4"
+                        :days="days"
+                        :month="month"
+                        :events-on="byDay"
+                    />
+                    <CalendarDayAgenda
+                        class="mt-6 xl:hidden"
+                        :day="selected"
+                        :events="eventsOf(selected)"
+                        :day-href="calendarUrl('day', selected)"
+                    />
+                </template>
+
+                <ol v-else-if="view === 'week'" class="mt-4">
                     <li
-                        v-for="event in eventsOn(day)"
-                        :key="event.id"
-                        class="min-w-0"
+                        v-for="day in days"
+                        :key="day"
+                        class="flex gap-4 border-t border-line py-3 first:border-t-0"
                     >
                         <Link
-                            :href="`/events/${event.id}`"
-                            class="text-xs block border px-2 py-1"
-                            :class="chipClass(event)"
+                            :href="calendarUrl('day', day)"
+                            class="shrink-0 self-start rounded-sm"
+                            :aria-label="dates.longDate(noonOf(day))"
                         >
-                            <span class="font-bold">{{
-                                formatTime(event.starts_at)
-                            }}</span>
-                            <span class="block truncate">{{ event.name }}</span>
+                            <DateBadge :date="noonOf(day)" size="sm" />
                         </Link>
+                        <ul
+                            v-if="eventsOf(day).length"
+                            class="-mx-3 min-w-0 flex-1"
+                        >
+                            <li v-for="event in eventsOf(day)" :key="event.id">
+                                <CalendarEventRow :event="event" :day="day" />
+                            </li>
+                        </ul>
+                        <p
+                            v-else
+                            class="min-w-0 flex-1 self-center text-meta text-ink-subtle"
+                        >
+                            {{ t('events.calendar.nothingPlanned') }}
+                        </p>
                     </li>
-                    <li
-                        v-if="!eventsOn(day).length"
-                        class="text-xs text-ink/50"
-                    >
-                        {{ t('events.calendar.noEvents') }}
-                    </li>
-                </ul>
-            </section>
-        </div>
+                </ol>
 
-        <!-- Day: the full cards, as in the list. -->
-        <div v-else>
-            <p v-if="!eventsOn(anchor).length" class="text-sm text-ink/70">
-                {{ t('events.calendar.noEvents') }}
-            </p>
-            <ul class="grid grid-cols-1 gap-3 md:gap-4 xl:grid-cols-2">
-                <li
-                    v-for="event in eventsOn(anchor)"
-                    :key="event.id"
-                    class="h-full min-w-0"
-                >
-                    <EventCard :event="event" />
-                </li>
-            </ul>
+                <div v-else class="@container mt-4">
+                    <ul
+                        v-if="eventsOf(props.calendar.date).length"
+                        class="flex flex-col gap-3"
+                    >
+                        <li
+                            v-for="event in eventsOf(props.calendar.date)"
+                            :key="event.id"
+                        >
+                            <EventCard :event="event" />
+                        </li>
+                    </ul>
+                    <EmptyState
+                        v-else
+                        :icon="CalendarPlus"
+                        :title="t('events.calendar.nothingPlanned')"
+                        :body="t('events.calendar.nothingPlannedBody')"
+                    >
+                        <Button
+                            :as="Link"
+                            :href="eventsCreate().url"
+                            :icon="Plus"
+                            variant="primary"
+                        >
+                            {{ t('events.index.createEvent') }}
+                        </Button>
+                    </EmptyState>
+                </div>
+            </div>
+
+            <aside class="hidden xl:block">
+                <div class="flex flex-col gap-4">
+                    <div
+                        v-if="view === 'month'"
+                        class="rounded-lg border border-line bg-surface p-4"
+                    >
+                        <CalendarDayAgenda
+                            :day="selected"
+                            :events="eventsOf(selected)"
+                            :day-href="calendarUrl('day', selected)"
+                        />
+                    </div>
+                    <section
+                        class="rounded-lg border border-line bg-surface p-4"
+                    >
+                        <h2 class="mb-4 text-kicker text-ink-muted uppercase">
+                            {{ t('events.filters.title') }}
+                        </h2>
+                        <EventFiltersForm
+                            v-model="asideState"
+                            compact
+                            :with-place-and-dates="false"
+                            :categories="props.categories"
+                            :friends="props.friends"
+                            :following="props.following"
+                            :friend-groups="props.friendGroups"
+                            :following-groups="props.followingGroups"
+                        />
+                    </section>
+                </div>
+            </aside>
         </div>
-    </template>
+    </PageContainer>
+
+    <EventFilterSheet
+        v-model:open="filtersOpen"
+        :state="state"
+        :with-place-and-dates="false"
+        :categories="props.categories"
+        :friends="props.friends"
+        :following="props.following"
+        :friend-groups="props.friendGroups"
+        :following-groups="props.followingGroups"
+        @apply="visit"
+    />
 </template>

@@ -1,4 +1,11 @@
 {
     "zoom": "Zoom",
-    "usePhoto": "Bruk dette bildet"
+    "usePhoto": "Bruk dette bildet",
+    "choose": "Legg til et bilde eller en plakat",
+    "replace": "Bytt",
+    "remove": "Fjern",
+    "fillFrame": "Fyll rammen",
+    "showWhole": "Vis hele",
+    "fitLabel": "Hvordan bildet vises",
+    "fitHint": "Bilder fyller rammen. Plakater og flygeblad vises hele, så ingen tekst blir kuttet."
 }

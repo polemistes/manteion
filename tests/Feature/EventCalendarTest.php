@@ -9,14 +9,14 @@ beforeEach(function () {
     Carbon::setTestNow('2026-09-18 12:00:00');
 });
 
-test('the month view returns events across the whole grid of weeks, a day wider on each side', function () {
+test('the month view returns every event on the grid of whole weeks, counting days in Oslo', function () {
     $user = User::factory()->create();
-    // September 2026 starts on a Tuesday; the grid runs Mon 31 Aug – Sun 4 Oct.
-    Event::factory()->create(['user_id' => $user->id, 'name' => 'Grid start', 'starts_at' => '2026-08-30 20:00:00']);
+    // September 2026 starts on a Tuesday; the grid runs Mon 31 Aug – Sun 4 Oct, and Oslo is UTC+2.
+    Event::factory()->create(['user_id' => $user->id, 'name' => 'Too early', 'starts_at' => '2026-08-30 21:30:00']);
+    Event::factory()->create(['user_id' => $user->id, 'name' => 'Grid start', 'starts_at' => '2026-08-30 22:30:00']);
     Event::factory()->create(['user_id' => $user->id, 'name' => 'Mid month', 'starts_at' => '2026-09-15 10:00:00']);
-    Event::factory()->create(['user_id' => $user->id, 'name' => 'Grid end', 'starts_at' => '2026-10-05 08:00:00']);
-    Event::factory()->create(['user_id' => $user->id, 'name' => 'Too early', 'starts_at' => '2026-08-29 23:00:00']);
-    Event::factory()->create(['user_id' => $user->id, 'name' => 'Too late', 'starts_at' => '2026-10-06 01:00:00']);
+    Event::factory()->create(['user_id' => $user->id, 'name' => 'Grid end', 'starts_at' => '2026-10-04 21:30:00']);
+    Event::factory()->create(['user_id' => $user->id, 'name' => 'Too late', 'starts_at' => '2026-10-04 22:30:00']);
 
     $this->actingAs($user)->get('/events/calendar')
         ->assertInertia(fn ($page) => $page
@@ -27,6 +27,27 @@ test('the month view returns events across the whole grid of weeks, a day wider 
             ->has('events', 3)
             ->where('events.0.name', 'Grid start')
             ->where('events.2.name', 'Grid end'));
+});
+
+test('an event shows on every day it runs', function () {
+    $user = User::factory()->create();
+    Event::factory()->create(['user_id' => $user->id, 'name' => 'Cabin weekend', 'starts_at' => '2026-09-11 16:00:00', 'ends_at' => '2026-09-13 12:00:00']);
+
+    $this->actingAs($user)->get('/events/calendar?view=day&date=2026-09-12')
+        ->assertInertia(fn ($page) => $page->has('events', 1)->where('events.0.name', 'Cabin weekend'));
+
+    $this->actingAs($user)->get('/events/calendar?view=day&date=2026-09-14')
+        ->assertInertia(fn ($page) => $page->has('events', 0));
+});
+
+test('today is the date in the display time zone', function () {
+    // 00:30 on Saturday 19 September in Oslo.
+    Carbon::setTestNow('2026-09-18 22:30:00');
+
+    $this->actingAs(User::factory()->create())->get('/events/calendar')
+        ->assertInertia(fn ($page) => $page
+            ->where('calendar.today', '2026-09-19')
+            ->where('calendar.date', '2026-09-19'));
 });
 
 test('the week and day views narrow the range accordingly', function () {
@@ -57,6 +78,12 @@ test('an unknown view or a malformed date falls back to this month', function ()
         ->assertInertia(fn ($page) => $page
             ->where('calendar.view', 'month')
             ->where('calendar.date', '2026-09-18'));
+});
+
+test('an impossible date falls back to today rather than erroring', function () {
+    $this->actingAs(User::factory()->create())->get('/events/calendar?date=2026-13-01')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('calendar.date', '2026-09-18'));
 });
 
 test('the calendar honours the same category and organizer filters as the list', function () {

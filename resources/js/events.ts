@@ -23,26 +23,62 @@ export interface GroupOption {
     name: string;
 }
 
+export type AttendanceStatus =
+    'no_response' | 'attending' | 'interested' | 'not_attending';
+
+export type AttendanceVisibility = 'everyone' | 'friends' | 'none';
+
+/** An event image with what a page needs to frame it (EventImage::presentation). */
+export interface EventCover {
+    id: number;
+    url: string;
+    width: number | null;
+    height: number | null;
+    /** A photo may be cropped to fill its frame; a poster is always shown whole. */
+    shape: 'photo' | 'poster';
+    fit: 'cover' | 'contain' | null;
+}
+
+export interface FacePerson {
+    id: number;
+    name: string;
+    avatar_url: string | null;
+}
+
+/** Who invited the viewer, while the invitation is still unanswered. */
+export interface EventInvitation {
+    by: FacePerson | null;
+    at: string;
+}
+
 export interface EventSummary {
     id: number;
     name: string;
+    description: string;
     place: string | null;
     city: string | null;
     country: string | null;
+    latitude: number | null;
+    longitude: number | null;
     starts_at: string;
+    ends_at: string | null;
     visibility: string;
     owner: ContactOption;
+    is_host: boolean;
     tags: TagOption[];
-    my_status: string | null;
-    my_attendance_visibility: string | null;
-    cover_image_url: string | null;
+    my_status: AttendanceStatus | null;
+    my_attendance_visibility: AttendanceVisibility | null;
+    invitation: EventInvitation | null;
+    cover: EventCover | null;
     attending_count: number;
     interested_count: number;
+    going: FacePerson[];
     distance_km: number | null;
 }
 
 /** The filter values as they travel in the query string. */
 export interface EventFilterValues {
+    mine?: string;
     tags?: string[];
     owner_filter?: string[];
     group_id?: string;
@@ -51,20 +87,3 @@ export interface EventFilterValues {
     start_date?: string;
     end_date?: string;
 }
-
-/** What the filter panel emits: ready to pass as a visit's data. */
-export interface EventFilterQuery {
-    [key: string]: string | string[] | number | undefined;
-    tags: string[];
-    owner_filter: string[];
-    group_id: string | undefined;
-    near_lat: number | undefined;
-    near_lng: number | undefined;
-    start_date: string | undefined;
-    end_date: string | undefined;
-}
-
-export const dateFnsLocales: Record<string, string> = {
-    en: 'en-GB',
-    nb: 'nb-NO',
-};

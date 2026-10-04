@@ -378,3 +378,8 @@ html[data-mode='dark'] {
         outline: none;
     }
 }
+
+/* Map tiles have no dark style of their own: invert them in dark mode. */
+[data-mode='dark'] .map-tiles .leaflet-tile-pane {
+    filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9);
+}

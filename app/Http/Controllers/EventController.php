@@ -58,15 +58,16 @@ class EventController extends Controller
 
         $query = $this->applyContactFilters($feed->withAnyTag($feed->visible(), $request->array('tags')), $request, $user, $followedIds);
 
-        $startDateFilter = $request->has('start_date') ? $this->dateFrom($request, 'start_date') : now()->toDateString();
-        if ($startDateFilter !== '') {
-            $query->whereDate('starts_at', '>=', $startDateFilter);
+        $term = trim((string) $request->string('q'));
+        if ($term !== '') {
+            $query->where(fn (Builder $query) => $query
+                ->where('name', 'like', "%{$term}%")
+                ->orWhere('place', 'like', "%{$term}%"));
         }
 
+        $startDateFilter = $request->has('start_date') ? $this->dateFrom($request, 'start_date') : $this->today();
         $endDateFilter = $this->dateFrom($request, 'end_date');
-        if ($endDateFilter !== '') {
-            $query->whereDate('starts_at', '<=', $endDateFilter);
-        }
+        $feed->happeningBetween($query, $startDateFilter ?: null, $endDateFilter ?: null);
 
         $events = $feed->ordered($query, $nearPoint)->paginate(self::PER_PAGE)->withQueryString();
 
@@ -78,7 +79,7 @@ class EventController extends Controller
             'calendarDays' => fn () => $this->eventDaysThisMonth($feed),
             ...$this->filterPanelProps($user, $followedIds),
             'filters' => [
-                ...$request->only(['tags', 'owner_filter', 'group_id', 'near_lat', 'near_lng', 'mine']),
+                ...$request->only(['tags', 'owner_filter', 'group_id', 'near_lat', 'near_lng', 'near_label', 'mine', 'q']),
                 'start_date' => $startDateFilter,
                 'end_date' => $endDateFilter,
             ],
@@ -86,10 +87,9 @@ class EventController extends Controller
     }
 
     /**
-     * The same events as the list, laid out by date. The range fetched is a
-     * day wider than the view on each side, because the browser groups
-     * events by the viewer's local date and the server does not know their
-     * timezone.
+     * The same events as the list, laid out by date: every event running on
+     * a day of the month grid (whole weeks), the week or the day, with days
+     * in the display time zone.
      */
     public function calendar(Request $request): Response
     {
@@ -100,20 +100,21 @@ class EventController extends Controller
         $view = in_array($request->string('view')->toString(), self::CALENDAR_VIEWS, true)
             ? $request->string('view')->toString()
             : 'month';
-        $date = $this->dateFrom($request, 'date') ?: now()->toDateString();
-        $anchor = CarbonImmutable::parse($date);
+        $today = $this->today();
+        $anchor = CarbonImmutable::parse($this->dateFrom($request, 'date') ?: $today);
 
-        [$rangeStart, $rangeEnd] = match ($view) {
+        [$firstDay, $lastDay] = match ($view) {
             'month' => [
                 $anchor->startOfMonth()->startOfWeek(CarbonInterface::MONDAY),
                 $anchor->endOfMonth()->endOfWeek(CarbonInterface::SUNDAY),
             ],
             'week' => [$anchor->startOfWeek(CarbonInterface::MONDAY), $anchor->endOfWeek(CarbonInterface::SUNDAY)],
-            default => [$anchor->startOfDay(), $anchor->endOfDay()],
+            default => [$anchor, $anchor],
         };
 
-        $events = $this->applyContactFilters($feed->withAnyTag($feed->visible(), $request->array('tags')), $request, $user, $followedIds)
-            ->whereBetween('starts_at', [$rangeStart->subDay(), $rangeEnd->addDay()])
+        $query = $this->applyContactFilters($feed->withAnyTag($feed->visible(), $request->array('tags')), $request, $user, $followedIds);
+
+        $events = $feed->happeningBetween($query, $firstDay->toDateString(), $lastDay->toDateString())
             ->orderBy('starts_at')
             ->orderBy('id')
             ->limit(self::CALENDAR_MAX_EVENTS)
@@ -124,7 +125,7 @@ class EventController extends Controller
             'calendar' => [
                 'view' => $view,
                 'date' => $anchor->toDateString(),
-                'today' => now()->toDateString(),
+                'today' => $today,
             ],
             ...$this->filterPanelProps($user, $followedIds),
             'filters' => $request->only(['tags', 'owner_filter', 'group_id', 'mine']),
@@ -142,6 +143,7 @@ class EventController extends Controller
             ->when($term !== '', fn ($query) => $query->where(
                 fn ($query) => $query->where('name', 'like', "%{$term}%")->orWhere('place', 'like', "%{$term}%")
             ));
+        $feed->happeningBetween($query, $this->today(), null);
 
         $events = $feed->ordered($query, $nearPoint)->paginate(self::PER_PAGE)->withQueryString();
 
@@ -468,7 +470,7 @@ class EventController extends Controller
                 ->where('user_id', $user->id)
                 ->where('source', AttendeeSource::Invited)
                 ->where('status', AttendanceStatus::NoResponse))
-            ->where('starts_at', '>=', now()->startOfDay())
+            ->where('starts_at', '>=', CarbonImmutable::parse($this->today(), (string) config('app.display_timezone'))->utc())
             ->orderBy('starts_at')
             ->limit(10)
             ->get();
@@ -487,33 +489,45 @@ class EventController extends Controller
                 ->orWhereHas('attendees', fn (Builder $attendees) => $attendees
                     ->where('user_id', $user->id)
                     ->whereIn('status', [AttendanceStatus::Attending, AttendanceStatus::Interested])))
-            ->where('starts_at', '>=', now())
+            ->where(fn (Builder $query) => $query
+                ->where('starts_at', '>=', now())
+                ->orWhere('ends_at', '>=', now()))
             ->orderBy('starts_at')
             ->limit(3)
             ->get();
     }
 
     /**
-     * The days of this month (in the display time zone) that have events the
-     * user can see, for the month in the feed's aside.
+     * The days of this month (in the display time zone) with an event the
+     * user can see, for the month in the feed's aside. An event marks every
+     * day it runs.
      *
      * @return array{month: string, days: list<string>}
      */
     private function eventDaysThisMonth(EventFeedQuery $feed): array
     {
         $timezone = (string) config('app.display_timezone');
-        $start = CarbonImmutable::now($timezone)->startOfMonth();
-        $end = $start->endOfMonth();
+        $first = CarbonImmutable::now($timezone)->startOfMonth();
+        $last = $first->endOfMonth()->startOfDay();
+        $days = [];
 
-        $days = array_values($feed->visible()
-            ->whereBetween('starts_at', [$start->utc(), $end->utc()])
-            ->pluck('starts_at')
-            ->map(fn ($startsAt) => CarbonImmutable::parse($startsAt)->setTimezone($timezone)->toDateString())
-            ->unique()
-            ->sort()
-            ->all());
+        $feed->happeningBetween($feed->visible(), $first->toDateString(), $last->toDateString())
+            ->toBase()
+            ->select(['events.starts_at', 'events.ends_at'])
+            ->get()
+            ->each(function (object $row) use (&$days, $timezone, $first, $last): void {
+                $localDay = fn (string $value) => CarbonImmutable::parse($value, 'UTC')->setTimezone($timezone)->startOfDay();
+                $end = $localDay($row->ends_at ?? $row->starts_at)->min($last);
 
-        return ['month' => $start->format('Y-m'), 'days' => $days];
+                for ($day = $localDay($row->starts_at)->max($first); $day <= $end; $day = $day->addDay()) {
+                    $days[$day->toDateString()] = true;
+                }
+            });
+
+        $days = array_keys($days);
+        sort($days);
+
+        return ['month' => $first->format('Y-m'), 'days' => $days];
     }
 
     /**
@@ -623,7 +637,17 @@ class EventController extends Controller
     {
         $value = $request->string($key)->toString();
 
-        return preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) === 1 ? $value : '';
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $value, $parts) !== 1) {
+            return '';
+        }
+
+        return checkdate((int) $parts[2], (int) $parts[3], (int) $parts[1]) ? $value : '';
+    }
+
+    /** Today's date (YYYY-MM-DD) in the display time zone. */
+    private function today(): string
+    {
+        return CarbonImmutable::now((string) config('app.display_timezone'))->toDateString();
     }
 
     /**

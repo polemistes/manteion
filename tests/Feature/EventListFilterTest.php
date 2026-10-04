@@ -10,6 +10,7 @@ use App\Models\Follow;
 use App\Models\Friendship;
 use App\Models\Tag;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 
 test('the list includes events the viewer is invited to and public events from people they follow', function () {
     $viewer = User::factory()->create();
@@ -203,6 +204,34 @@ test('by default only events starting today or later are shown', function () {
         ->where('events.1.id', $futureEvent->id));
 
     expect($pastEvent)->not->toBeNull();
+});
+
+test('the list keeps an event that is still running', function () {
+    $owner = User::factory()->create();
+
+    $running = Event::factory()->create(['user_id' => $owner->id, 'name' => 'Cabin Weekend', 'starts_at' => now()->subDay(), 'ends_at' => now()->addDay()]);
+    Event::factory()->create(['user_id' => $owner->id, 'name' => 'Over', 'starts_at' => now()->subDays(2), 'ends_at' => now()->subDays(2)->addHours(3)]);
+
+    $this->actingAs($owner)->get('/events')
+        ->assertInertia(fn ($page) => $page
+            ->has('events', 1)
+            ->where('events.0.id', $running->id));
+});
+
+test('date filters count days in the display time zone', function () {
+    Carbon::setTestNow('2026-09-18 12:00:00');
+    $owner = User::factory()->create();
+
+    // 23:30 on Saturday 19 September in Oslo (UTC+2).
+    $saturday = Event::factory()->create(['user_id' => $owner->id, 'starts_at' => '2026-09-19 21:30:00']);
+    // 00:30 on Sunday 20 September in Oslo, still the 19th in UTC.
+    $sunday = Event::factory()->create(['user_id' => $owner->id, 'starts_at' => '2026-09-19 22:30:00']);
+
+    $this->actingAs($owner)->get('/events?start_date=2026-09-19&end_date=2026-09-19')
+        ->assertInertia(fn ($page) => $page->has('events', 1)->where('events.0.id', $saturday->id));
+
+    $this->actingAs($owner)->get('/events?start_date=2026-09-20&end_date=2026-09-20')
+        ->assertInertia(fn ($page) => $page->has('events', 1)->where('events.0.id', $sunday->id));
 });
 
 test('an explicit empty start_date removes the default today lower bound', function () {

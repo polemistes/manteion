@@ -1,7 +1,18 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { Crop, ImagePlus, Maximize2, Trash } from '@lucide/vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import Button from '@/components/ui/Button.vue';
+import SegmentedControl from '@/components/ui/SegmentedControl.vue';
 
+/**
+ * Picks an image and prepares it for upload in the browser (re-drawing it
+ * also strips camera metadata). By default it is cropped to `aspectRatio`
+ * with drag and zoom. With `allowWhole`, the uploader may instead keep the
+ * whole picture ("Show it whole", for posters and flyers): the default
+ * follows the picture's shape, and the choice travels as `image_fit`.
+ * The prepared file is put in a hidden file input named `name`.
+ */
 const props = withDefaults(
     defineProps<{
         name: string;
@@ -9,15 +20,30 @@ const props = withDefaults(
         outputWidth: number;
         outputHeight: number;
         existingUrl?: string | null;
+        allowWhole?: boolean;
+        initialFit?: 'cover' | 'contain' | null;
+        round?: boolean;
+        removable?: boolean;
     }>(),
-    { existingUrl: null },
+    {
+        existingUrl: null,
+        allowWhole: false,
+        initialFit: null,
+        round: false,
+        removable: false,
+    },
 );
+
+const emit = defineEmits<{ remove: [] }>();
 
 const { t } = useI18n();
 
+/** Pictures at least this much wider than tall are photos (fill the frame). */
+const PHOTO_MIN_ASPECT = 1.25;
+/** Whole pictures are scaled to fit this on their longer side. */
+const WHOLE_MAX_EDGE = 1600;
 const VIEWPORT_WIDTH = 320;
 const MAX_ZOOM_MULTIPLIER = 3;
-const LETTERBOX_COLOR = '#e5e7eb'; // Tailwind gray-200, matching EventThumbnail's letterbox.
 
 const viewportHeight = computed(() =>
     Math.round(VIEWPORT_WIDTH / props.aspectRatio),
@@ -29,8 +55,13 @@ const viewport = ref<HTMLDivElement | null>(null);
 const imageEl = ref<HTMLImageElement | null>(null);
 
 const rawObjectUrl = ref<string | null>(null);
-const confirmedPreviewUrl = ref<string | null>(null);
+const preparedPreviewUrl = ref<string | null>(null);
+const removed = ref(false);
 const isCropping = ref(false);
+// Set when a new picture is chosen: its shape picks the fit once.
+let choosingFit = false;
+
+const fit = ref<'cover' | 'contain'>(props.initialFit ?? 'cover');
 
 const naturalWidth = ref(0);
 const naturalHeight = ref(0);
@@ -62,36 +93,95 @@ const imageStyle = computed(() => ({
     position: 'absolute' as const,
     left: '50%',
     top: '50%',
-    // Tailwind's Preflight resets img to max-width:100%; height:auto, which
-    // (since this image sits inside the absolutely-positioned viewport) caps
-    // its rendered width at the viewport's width once zoomed past it, while
-    // this explicit height keeps growing — stretching the image. Overriding
-    // both max-width and height here keeps the two dimensions in lockstep.
+    // The image sits inside an absolutely positioned viewport; without
+    // overriding max-width its width would stop at the viewport's while its
+    // height keeps growing, stretching it.
     maxWidth: 'none',
     width: `${naturalWidth.value * scale.value}px`,
     height: `${naturalHeight.value * scale.value}px`,
     transform: `translate(calc(-50% + ${offsetX.value}px), calc(-50% + ${offsetY.value}px))`,
 }));
 
-const previewUrl = computed(
-    () => confirmedPreviewUrl.value ?? props.existingUrl,
+const previewUrl = computed(() =>
+    removed.value ? null : (preparedPreviewUrl.value ?? props.existingUrl),
 );
+
+const hasImage = computed(() => previewUrl.value !== null);
 
 function clamp(value: number, min: number, max: number): number {
     return Math.min(Math.max(value, min), max);
 }
 
 function applyOffset(x: number, y: number): void {
-    const displayedWidth = naturalWidth.value * scale.value;
-    const displayedHeight = naturalHeight.value * scale.value;
-    const maxOffsetX = Math.max(0, (displayedWidth - VIEWPORT_WIDTH) / 2);
+    const maxOffsetX = Math.max(
+        0,
+        (naturalWidth.value * scale.value - VIEWPORT_WIDTH) / 2,
+    );
     const maxOffsetY = Math.max(
         0,
-        (displayedHeight - viewportHeight.value) / 2,
+        (naturalHeight.value * scale.value - viewportHeight.value) / 2,
     );
 
     offsetX.value = clamp(x, -maxOffsetX, maxOffsetX);
     offsetY.value = clamp(y, -maxOffsetY, maxOffsetY);
+}
+
+function setFile(blob: Blob): void {
+    if (!fileInput.value) {
+        return;
+    }
+
+    const file = new File([blob], 'image.jpg', { type: 'image/jpeg' });
+    const transfer = new DataTransfer();
+
+    transfer.items.add(file);
+    fileInput.value.files = transfer.files;
+
+    if (preparedPreviewUrl.value) {
+        URL.revokeObjectURL(preparedPreviewUrl.value);
+    }
+
+    preparedPreviewUrl.value = URL.createObjectURL(blob);
+    removed.value = false;
+}
+
+function canvasBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
+    return new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+}
+
+/** The whole picture, scaled to fit WHOLE_MAX_EDGE. */
+async function prepareWhole(): Promise<void> {
+    if (!rawObjectUrl.value) {
+        return;
+    }
+
+    const image = new Image();
+
+    image.src = rawObjectUrl.value;
+
+    try {
+        await image.decode();
+    } catch {
+        return;
+    }
+
+    const ratio = Math.min(
+        1,
+        WHOLE_MAX_EDGE / Math.max(image.naturalWidth, image.naturalHeight),
+    );
+    const canvas = document.createElement('canvas');
+
+    canvas.width = Math.round(image.naturalWidth * ratio);
+    canvas.height = Math.round(image.naturalHeight * ratio);
+    canvas
+        .getContext('2d')
+        ?.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+    const blob = await canvasBlob(canvas);
+
+    if (blob) {
+        setFile(blob);
+    }
 }
 
 function onFileSelected(event: Event): void {
@@ -106,6 +196,7 @@ function onFileSelected(event: Event): void {
     }
 
     rawObjectUrl.value = URL.createObjectURL(file);
+    choosingFit = props.allowWhole;
     isCropping.value = true;
 }
 
@@ -116,9 +207,22 @@ function onImageLoad(): void {
 
     naturalWidth.value = imageEl.value.naturalWidth;
     naturalHeight.value = imageEl.value.naturalHeight;
-    scale.value = containScale.value;
+    scale.value = coverScale.value;
     offsetX.value = 0;
     offsetY.value = 0;
+
+    if (!choosingFit) {
+        return;
+    }
+
+    choosingFit = false;
+
+    // A poster-shaped picture is shown whole unless the uploader says not.
+    if (naturalWidth.value / naturalHeight.value < PHOTO_MIN_ASPECT) {
+        fit.value = 'contain';
+    } else {
+        fit.value = 'cover';
+    }
 }
 
 function onZoomInput(event: Event): void {
@@ -144,14 +248,12 @@ function onPointerDown(event: PointerEvent): void {
 }
 
 function onPointerMove(event: PointerEvent): void {
-    if (!dragStart) {
-        return;
+    if (dragStart) {
+        applyOffset(
+            dragStart.offsetX + (event.clientX - dragStart.x),
+            dragStart.offsetY + (event.clientY - dragStart.y),
+        );
     }
-
-    applyOffset(
-        dragStart.offsetX + (event.clientX - dragStart.x),
-        dragStart.offsetY + (event.clientY - dragStart.y),
-    );
 }
 
 function onPointerUp(): void {
@@ -160,11 +262,6 @@ function onPointerUp(): void {
 
 function cancelCropping(): void {
     isCropping.value = false;
-
-    if (rawObjectUrl.value) {
-        URL.revokeObjectURL(rawObjectUrl.value);
-        rawObjectUrl.value = null;
-    }
 
     if (pickerInput.value) {
         pickerInput.value.value = '';
@@ -176,79 +273,118 @@ async function confirmCrop(): Promise<void> {
         return;
     }
 
-    const cropWidthNatural = VIEWPORT_WIDTH / scale.value;
-    const cropHeightNatural = viewportHeight.value / scale.value;
-    const cropXNatural =
-        naturalWidth.value / 2 -
-        offsetX.value / scale.value -
-        cropWidthNatural / 2;
-    const cropYNatural =
-        naturalHeight.value / 2 -
-        offsetY.value / scale.value -
-        cropHeightNatural / 2;
+    const cropWidth = VIEWPORT_WIDTH / scale.value;
+    const cropHeight = viewportHeight.value / scale.value;
+    const cropX =
+        naturalWidth.value / 2 - offsetX.value / scale.value - cropWidth / 2;
+    const cropY =
+        naturalHeight.value / 2 - offsetY.value / scale.value - cropHeight / 2;
 
     const canvas = document.createElement('canvas');
+
     canvas.width = props.outputWidth;
     canvas.height = props.outputHeight;
 
-    const ctx = canvas.getContext('2d');
+    const context = canvas.getContext('2d');
 
-    if (!ctx) {
+    if (!context) {
         return;
     }
 
-    ctx.fillStyle = LETTERBOX_COLOR;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(
+    context.fillStyle = '#efe8de';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(
         imageEl.value,
-        cropXNatural,
-        cropYNatural,
-        cropWidthNatural,
-        cropHeightNatural,
+        cropX,
+        cropY,
+        cropWidth,
+        cropHeight,
         0,
         0,
         canvas.width,
         canvas.height,
     );
 
-    const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, 'image/jpeg', 0.9),
-    );
+    const blob = await canvasBlob(canvas);
 
-    if (!blob || !fileInput.value) {
+    if (blob) {
+        setFile(blob);
+    }
+
+    isCropping.value = false;
+
+    if (pickerInput.value) {
+        pickerInput.value.value = '';
+    }
+}
+
+// Switching between "fill" and "whole" after choosing a picture: whole
+// is prepared at once, fill opens the crop.
+watch(fit, (next, previous) => {
+    if (next === previous || !rawObjectUrl.value) {
         return;
     }
 
-    const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
-    const dataTransfer = new DataTransfer();
-    dataTransfer.items.add(file);
-    fileInput.value.files = dataTransfer.files;
+    if (next === 'contain') {
+        isCropping.value = false;
+        void prepareWhole();
+    } else {
+        isCropping.value = true;
+    }
+});
 
-    if (confirmedPreviewUrl.value) {
-        URL.revokeObjectURL(confirmedPreviewUrl.value);
+function remove(): void {
+    removed.value = true;
+    isCropping.value = false;
+
+    if (fileInput.value) {
+        fileInput.value.value = '';
     }
 
-    confirmedPreviewUrl.value = URL.createObjectURL(blob);
-
-    cancelCropping();
+    emit('remove');
 }
+
+onBeforeUnmount(() => {
+    for (const url of [rawObjectUrl.value, preparedPreviewUrl.value]) {
+        if (url) {
+            URL.revokeObjectURL(url);
+        }
+    }
+});
+
+const fitSegments = computed(() => [
+    { value: 'cover', label: t('imageCropper.fillFrame'), icon: Crop },
+    { value: 'contain', label: t('imageCropper.showWhole'), icon: Maximize2 },
+]);
 </script>
 
 <template>
-    <div class="flex flex-col gap-2">
+    <div class="flex flex-col gap-3">
         <input ref="fileInput" type="file" :name="props.name" class="hidden" />
+        <input
+            v-if="props.allowWhole && hasImage"
+            type="hidden"
+            name="image_fit"
+            :value="fit"
+        />
+        <input
+            ref="pickerInput"
+            type="file"
+            accept="image/*"
+            class="hidden"
+            @change="onFileSelected"
+        />
 
-        <div
-            v-if="isCropping"
-            class="flex flex-col gap-2"
-            :style="{ width: VIEWPORT_WIDTH + 'px' }"
-        >
+        <!-- Cropping: drag and zoom inside the frame. -->
+        <div v-if="isCropping" class="flex w-full max-w-[320px] flex-col gap-3">
             <div
                 ref="viewport"
-                class="border-edge bg-gray-200 relative touch-none overflow-hidden border"
+                class="relative touch-none overflow-hidden bg-surface-2 ring-1 ring-line"
+                :class="props.round ? 'rounded-full' : 'rounded-md'"
                 :style="{
-                    width: VIEWPORT_WIDTH + 'px',
-                    height: viewportHeight + 'px',
+                    width: `${VIEWPORT_WIDTH}px`,
+                    height: `${viewportHeight}px`,
+                    maxWidth: '100%',
                 }"
                 @pointerdown="onPointerDown"
                 @pointermove="onPointerMove"
@@ -265,7 +401,6 @@ async function confirmCrop(): Promise<void> {
                     @load="onImageLoad"
                 />
             </div>
-
             <input
                 type="range"
                 :min="containScale"
@@ -273,49 +408,104 @@ async function confirmCrop(): Promise<void> {
                 step="0.01"
                 :value="scale"
                 :aria-label="t('imageCropper.zoom')"
-                class="w-full"
+                class="w-full accent-[var(--color-ink)]"
                 @input="onZoomInput"
             />
-
             <div class="flex gap-2">
-                <button
-                    type="button"
-                    class="border-edge text-xs hover:bg-surface-raised border bg-accent px-3 py-1.5 font-bold text-on-accent hover:text-ink"
-                    @click="confirmCrop"
-                >
+                <Button size="sm" variant="primary" @click="confirmCrop">
                     {{ t('imageCropper.usePhoto') }}
-                </button>
-                <button
-                    type="button"
-                    class="border-edge text-xs border px-3 py-1.5 hover:bg-accent hover:text-on-accent"
-                    @click="cancelCropping"
-                >
+                </Button>
+                <Button size="sm" variant="ghost" @click="cancelCropping">
                     {{ t('common.cancel') }}
-                </button>
+                </Button>
             </div>
         </div>
 
-        <div v-else class="flex items-center gap-4">
-            <img
-                v-if="previewUrl"
-                :src="previewUrl"
-                alt=""
-                class="border-edge h-24 border object-cover"
-                :style="{ aspectRatio: String(props.aspectRatio) }"
-            />
+        <!-- The prepared or current image, or a place to pick one. -->
+        <template v-else>
             <div
+                v-if="hasImage"
+                class="relative overflow-hidden bg-surface-2"
+                :class="[
+                    props.round ? 'size-28 rounded-full' : 'rounded-lg',
+                    !props.round && fit === 'contain'
+                        ? 'flex justify-center p-4'
+                        : '',
+                ]"
+                :style="
+                    !props.round && fit === 'cover'
+                        ? { aspectRatio: String(props.aspectRatio) }
+                        : undefined
+                "
+            >
+                <img
+                    :src="previewUrl!"
+                    alt=""
+                    :class="
+                        props.round
+                            ? 'size-full object-cover'
+                            : fit === 'contain'
+                              ? 'max-h-[320px] w-auto max-w-full rounded-xs object-contain shadow-sm'
+                              : 'size-full object-cover'
+                    "
+                />
+            </div>
+            <button
                 v-else
-                class="border-edge bg-gray-200 h-24 border"
-                :style="{ aspectRatio: String(props.aspectRatio) }"
-            ></div>
+                type="button"
+                class="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-line-strong bg-surface text-ink-muted transition-colors duration-120 hover:bg-surface-2 hover:text-ink"
+                :class="
+                    props.round ? 'size-28 rounded-full' : 'rounded-lg py-8'
+                "
+                :style="
+                    props.round
+                        ? undefined
+                        : { aspectRatio: String(props.aspectRatio) }
+                "
+                @click="pickerInput?.click()"
+            >
+                <ImagePlus :size="24" :stroke-width="1.75" aria-hidden="true" />
+                <span v-if="!props.round" class="text-label font-semibold">{{
+                    t('imageCropper.choose')
+                }}</span>
+                <span v-else class="sr-only">{{
+                    t('imageCropper.choose')
+                }}</span>
+            </button>
 
-            <input
-                ref="pickerInput"
-                type="file"
-                accept="image/*"
-                class="text-sm"
-                @change="onFileSelected"
-            />
-        </div>
+            <div v-if="hasImage" class="flex flex-wrap items-center gap-2">
+                <Button
+                    size="sm"
+                    :icon="ImagePlus"
+                    @click="pickerInput?.click()"
+                >
+                    {{ t('imageCropper.replace') }}
+                </Button>
+                <Button
+                    v-if="props.removable || preparedPreviewUrl"
+                    size="sm"
+                    variant="ghost"
+                    :icon="Trash"
+                    @click="remove"
+                >
+                    {{ t('imageCropper.remove') }}
+                </Button>
+            </div>
+
+            <div
+                v-if="props.allowWhole && hasImage"
+                class="flex flex-col gap-1.5"
+            >
+                <SegmentedControl
+                    v-model="fit"
+                    :segments="fitSegments"
+                    :label="t('imageCropper.fitLabel')"
+                    class="self-start"
+                />
+                <p class="text-meta text-ink-muted">
+                    {{ t('imageCropper.fitHint') }}
+                </p>
+            </div>
+        </template>
     </div>
 </template>

@@ -1,4 +1,11 @@
 {
     "zoom": "Zoom",
-    "usePhoto": "Use this photo"
+    "usePhoto": "Use this photo",
+    "choose": "Add a photo or poster",
+    "replace": "Replace",
+    "remove": "Remove",
+    "fillFrame": "Fill the frame",
+    "showWhole": "Show it whole",
+    "fitLabel": "How the image is shown",
+    "fitHint": "Photos fill the frame. Posters and flyers are shown whole, so no text is cut off."
 }

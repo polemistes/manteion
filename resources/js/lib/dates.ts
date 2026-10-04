@@ -32,6 +32,16 @@ function toDate(value: string | Date): Date {
     return value instanceof Date ? value : new Date(value);
 }
 
+/**
+ * ICU versions differ in which space they put in dates ("Fri 6 Nov – Sun 8
+ * Nov" may carry thin or narrow no-break spaces in one and plain spaces in
+ * another), so the server's render and the browser's would not match.
+ * Every formatted string goes through this.
+ */
+function plainSpaces(text: string): string {
+    return text.replace(/[\u00a0\u2009\u202f]/g, ' ');
+}
+
 /** The calendar day of an instant in a time zone, as YYYY-MM-DD. */
 export function dayKeyIn(value: string | Date, timeZone: string): string {
     const parts = formatter('en-CA', timeZone, {
@@ -68,7 +78,7 @@ export function isoWeekOfDay(dayKey: string): number {
     return Math.ceil(((date.getTime() - yearStart) / 86_400_000 + 1) / 7);
 }
 
-export type DaySection = 'today' | 'thisWeek' | 'later';
+export type DaySection = 'today' | 'thisWeek' | 'nextWeek' | 'later';
 
 /**
  * Date and time formatting in the viewer's language and the app's display
@@ -90,8 +100,10 @@ export function useDates() {
         value: string | Date,
         options: Intl.DateTimeFormatOptions,
     ) =>
-        formatter(intlLocale.value, timeZone.value, options).format(
-            toDate(value),
+        plainSpaces(
+            formatter(intlLocale.value, timeZone.value, options).format(
+                toDate(value),
+            ),
         );
 
     const dayKey = (value: string | Date) => dayKeyIn(value, timeZone.value);
@@ -121,6 +133,24 @@ export function useDates() {
     const monthYear = (value: string | Date) =>
         format(value, { month: 'long', year: 'numeric' });
 
+    /** "October" / "oktober" */
+    const monthName = (value: string | Date) =>
+        format(value, { month: 'long' });
+
+    /** "5 Oct" / "5. okt." */
+    const dayMonth = (value: string | Date) =>
+        format(value, { day: 'numeric', month: 'short' });
+
+    /** "5" / "5." */
+    const dayNumber = (value: string | Date) =>
+        format(value, { day: 'numeric' });
+
+    /** "Mon" / "man", or "M" narrow, "Monday" long. */
+    const weekday = (
+        value: string | Date,
+        style: 'long' | 'short' | 'narrow' = 'short',
+    ) => format(value, { weekday: style }).replace('.', '');
+
     /** The event "when" line: "Today · 19:00", "Tomorrow · 19:00", "Fri 9 Oct · 20:00". */
     const when = (value: string | Date) => {
         const days = daysFromToday(value);
@@ -146,11 +176,14 @@ export function useDates() {
             return `${when(start)}–${time(end)}`;
         }
 
-        return formatter(intlLocale.value, timeZone.value, {
-            weekday: 'short',
-            day: 'numeric',
-            month: 'short',
-        }).formatRange(toDate(start), toDate(end));
+        // Built from parts rather than formatRange, whose spacing differs
+        // between ICU versions.
+        const sameMonth = dayKey(start).slice(0, 7) === dayKey(end).slice(0, 7);
+        const from = sameMonth
+            ? format(start, { weekday: 'short', day: 'numeric' })
+            : shortDate(start);
+
+        return `${from} – ${shortDate(end)}`;
     };
 
     /** The parts of a date tile: weekday and month in caps, the day number. */
@@ -177,15 +210,21 @@ export function useDates() {
         }
 
         if (abs < 3600) {
-            return relative.format(Math.round(seconds / 60), 'minute');
+            return plainSpaces(
+                relative.format(Math.round(seconds / 60), 'minute'),
+            );
         }
 
         if (abs < 86_400) {
-            return relative.format(Math.round(seconds / 3600), 'hour');
+            return plainSpaces(
+                relative.format(Math.round(seconds / 3600), 'hour'),
+            );
         }
 
         if (abs < 7 * 86_400) {
-            return relative.format(Math.round(seconds / 86_400), 'day');
+            return plainSpaces(
+                relative.format(Math.round(seconds / 86_400), 'day'),
+            );
         }
 
         return format(value, { day: 'numeric', month: 'short' });
@@ -225,7 +264,10 @@ export function useDates() {
         return shortDate(value);
     };
 
-    /** Which feed section an upcoming instant belongs to. */
+    /**
+     * Which feed section an upcoming instant belongs to. Weeks run Monday to
+     * Sunday, so on a Sunday tomorrow is already next week.
+     */
     const section = (value: string | Date): DaySection => {
         const days = daysFromToday(value);
 
@@ -233,9 +275,13 @@ export function useDates() {
             return 'today';
         }
 
-        const todayWeekday = isoWeekday(todayKey());
+        const daysLeftThisWeek = 7 - isoWeekday(todayKey());
 
-        return days <= 7 - todayWeekday ? 'thisWeek' : 'later';
+        if (days <= daysLeftThisWeek) {
+            return 'thisWeek';
+        }
+
+        return days <= daysLeftThisWeek + 7 ? 'nextWeek' : 'later';
     };
 
     /** "Week 40" / "Uke 40" */
@@ -253,6 +299,10 @@ export function useDates() {
         longDate,
         dateTime,
         monthYear,
+        monthName,
+        dayMonth,
+        dayNumber,
+        weekday,
         when,
         span,
         tile,
@@ -266,8 +316,78 @@ export function useDates() {
 }
 
 /** 1 (Monday) … 7 (Sunday) for a YYYY-MM-DD day. */
-function isoWeekday(dayKey: string): number {
+export function isoWeekday(dayKey: string): number {
     const [year, month, day] = dayKey.split('-').map(Number);
 
     return new Date(Date.UTC(year, month - 1, day)).getUTCDay() || 7;
+}
+
+/** Adds whole days to a YYYY-MM-DD day key. */
+export function addDays(dayKey: string, days: number): string {
+    const [year, month, day] = dayKey.split('-').map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day + days));
+
+    return date.toISOString().slice(0, 10);
+}
+
+/** The Saturday–Sunday span for "this weekend", seen from the given day. */
+export function weekendOf(dayKey: string): { start: string; end: string } {
+    const weekday = isoWeekday(dayKey);
+
+    if (weekday === 7) {
+        return { start: dayKey, end: dayKey };
+    }
+
+    const saturday = addDays(dayKey, 6 - weekday);
+
+    return { start: saturday, end: addDays(saturday, 1) };
+}
+
+function wallClockOf(instant: number, timeZone: string): number {
+    const parts = formatter('en-CA', timeZone, {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+    }).formatToParts(new Date(instant));
+    const get = (type: string) =>
+        Number(parts.find((part) => part.type === type)?.value ?? 0);
+
+    return Date.UTC(
+        get('year'),
+        get('month') - 1,
+        get('day'),
+        get('hour'),
+        get('minute'),
+    );
+}
+
+/**
+ * The UTC instant of a wall-clock date (YYYY-MM-DD) and time (HH:mm) in a
+ * time zone, e.g. 16:00 in Oslo. Two passes settle daylight-saving edges.
+ */
+export function zonedToUtc(day: string, time: string, timeZone: string): Date {
+    const [year, month, date] = day.split('-').map(Number);
+    const [hours, minutes] = time.split(':').map(Number);
+    const wall = Date.UTC(year, month - 1, date, hours, minutes);
+    let utc = wall - (wallClockOf(wall, timeZone) - wall);
+
+    utc = wall - (wallClockOf(utc, timeZone) - utc);
+
+    return new Date(utc);
+}
+
+/** An instant as wall-clock date (YYYY-MM-DD) and time (HH:mm) in a time zone. */
+export function utcToZoned(
+    value: string | Date,
+    timeZone: string,
+): { day: string; time: string } {
+    const wall = new Date(wallClockOf(toDate(value).getTime(), timeZone));
+
+    return {
+        day: wall.toISOString().slice(0, 10),
+        time: wall.toISOString().slice(11, 16),
+    };
 }

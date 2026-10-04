@@ -89,3 +89,14 @@ test('search results are paginated', function () {
             ->where('pagination.last_page', 2)
             ->where('pagination.next_url', fn ($url) => str_contains($url, 'q=Picnic') && str_contains($url, 'page=2')));
 });
+
+test('search leaves out events that are over', function () {
+    $owner = User::factory()->create();
+    Event::factory()->searchable()->create(['user_id' => $owner->id, 'name' => 'Last week', 'starts_at' => now()->subWeek()]);
+    $upcoming = Event::factory()->searchable()->create(['user_id' => $owner->id, 'name' => 'Next week', 'starts_at' => now()->addWeek()]);
+
+    $this->actingAs(User::factory()->create())->get('/events/search')
+        ->assertInertia(fn ($page) => $page
+            ->has('events', 1)
+            ->where('events.0.id', $upcoming->id));
+});

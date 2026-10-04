@@ -1,52 +1,24 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { router } from '@inertiajs/vue3';
+import { Earth, Navigation, SearchX } from '@lucide/vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import CategoryFilterList from '@/components/CategoryFilterList.vue';
+import EventCard from '@/components/events/EventCard.vue';
 import Pagination from '@/components/Pagination.vue';
 import type { PaginationSummary } from '@/components/Pagination.vue';
-import PersonSummary from '@/components/PersonSummary.vue';
-import { useNominatimSearch } from '@/composables/useNominatimSearch';
-import type { NominatimResult } from '@/composables/useNominatimSearch';
-import { search } from '@/routes/events';
+import PageContainer from '@/components/shell/PageContainer.vue';
+import PageHeader from '@/components/shell/PageHeader.vue';
+import EmptyState from '@/components/ui/EmptyState.vue';
+import FilterChip from '@/components/ui/FilterChip.vue';
+import SearchField from '@/components/ui/SearchField.vue';
+import type { CategoryOption, EventSummary, TagOption } from '@/events';
+import { toastError } from '@/lib/toast';
+import { index as eventsIndex, search } from '@/routes/events';
 
-const { t, te, locale } = useI18n();
-
-const dateFnsLocales: Record<string, string> = {
-    en: 'en-GB',
-    nb: 'nb-NO',
-};
-
-interface TagOption {
-    id: number;
-    name: string;
-    slug: string;
-}
-
-interface CategoryOption {
-    id: number;
-    name: string;
-    slug: string;
-    children: TagOption[];
-}
-
-interface EventSummary {
-    id: number;
-    name: string;
-    place: string | null;
-    city: string | null;
-    country: string | null;
-    starts_at: string;
-    owner: {
-        id: number;
-        name: string;
-        username: string;
-        avatar_url: string | null;
-    };
-    tags: TagOption[];
-    distance_km: number | null;
-}
-
+/**
+ * Events anyone may find: those their hosts made searchable. Search by
+ * name or place, narrow by category, or sort by distance.
+ */
 const props = defineProps<{
     q: string;
     categories: CategoryOption[];
@@ -59,41 +31,43 @@ const props = defineProps<{
     };
 }>();
 
+const { t, te } = useI18n();
+
 const query = ref(props.q);
-const selectedTags = ref<string[]>(props.filters.tags ?? []);
-const nearLat = ref<number | null>(
-    props.filters.near_lat ? parseFloat(props.filters.near_lat) : null,
+const tags = computed(() => props.filters.tags ?? []);
+const near = computed(() =>
+    props.filters.near_lat && props.filters.near_lng
+        ? { lat: props.filters.near_lat, lng: props.filters.near_lng }
+        : null,
 );
-const nearLng = ref<number | null>(
-    props.filters.near_lng ? parseFloat(props.filters.near_lng) : null,
-);
-const nearQuery = ref('');
-const geolocationErrorMessage = ref<string | null>(null);
 
-const {
-    results: nearResults,
-    error: nearSearchError,
-    search: searchNear,
-    clearResults: clearNearResults,
-} = useNominatimSearch();
+function visit(
+    changes: {
+        q?: string;
+        tags?: string[];
+        near?: { lat: string; lng: string } | null;
+    } = {},
+): void {
+    const nextNear = changes.near === undefined ? near.value : changes.near;
 
-function submit(): void {
     router.get(
         search().url,
         {
-            q: query.value,
-            tags: selectedTags.value,
-            near_lat: nearLat.value ?? undefined,
-            near_lng: nearLng.value ?? undefined,
+            q: (changes.q ?? query.value).trim() || undefined,
+            tags: changes.tags ?? tags.value,
+            near_lat: nextNear?.lat,
+            near_lng: nextNear?.lng,
         },
         { preserveState: true, replace: true },
     );
 }
 
-function onCategoriesChange(value: string[]): void {
-    selectedTags.value = value;
-    submit();
-}
+let searchTimer: ReturnType<typeof setTimeout> | undefined;
+
+watch(query, (value) => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => visit({ q: value }), 400);
+});
 
 function categoryLabel(tag: TagOption): string {
     const key = `categories.${tag.slug}`;
@@ -101,188 +75,118 @@ function categoryLabel(tag: TagOption): string {
     return te(key) ? t(key) : tag.name;
 }
 
-function locationLabel(event: EventSummary): string | null {
-    return (
-        event.place ||
-        [event.city, event.country].filter(Boolean).join(', ') ||
-        null
-    );
+function toggleTag(slug: string, on: boolean): void {
+    visit({
+        tags: on
+            ? [...new Set([...tags.value, slug])]
+            : tags.value.filter((tag) => tag !== slug),
+    });
 }
 
-function onNearSearchInput(event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
-    nearQuery.value = value;
-    searchNear(value);
-}
+const locating = ref(false);
 
-function selectNearResult(result: NominatimResult): void {
-    nearLat.value = parseFloat(result.lat);
-    nearLng.value = parseFloat(result.lon);
-    nearQuery.value = '';
-    clearNearResults();
-    submit();
-}
-
-function useCurrentLocation(): void {
-    geolocationErrorMessage.value = null;
-
-    if (!navigator.geolocation) {
-        geolocationErrorMessage.value = t('location.geolocationError');
+function toggleNear(on: boolean): void {
+    if (!on) {
+        visit({ near: null });
 
         return;
     }
 
+    if (!navigator.geolocation) {
+        toastError(t('events.index.locationFailed'));
+
+        return;
+    }
+
+    locating.value = true;
     navigator.geolocation.getCurrentPosition(
         (position) => {
-            nearLat.value = position.coords.latitude;
-            nearLng.value = position.coords.longitude;
-            submit();
+            locating.value = false;
+            visit({
+                near: {
+                    lat: position.coords.latitude.toFixed(5),
+                    lng: position.coords.longitude.toFixed(5),
+                },
+            });
         },
         () => {
-            geolocationErrorMessage.value = t('location.geolocationError');
+            locating.value = false;
+            toastError(t('events.index.locationFailed'));
         },
-    );
-}
-
-function clearNear(): void {
-    nearLat.value = null;
-    nearLng.value = null;
-    submit();
-}
-
-function formatDate(value: string): string {
-    return new Date(value).toLocaleString(
-        dateFnsLocales[locale.value] ?? locale.value,
-        { dateStyle: 'medium', timeStyle: 'short' },
+        { timeout: 10_000, maximumAge: 300_000 },
     );
 }
 </script>
 
 <template>
-    <Head :title="t('events.search.title')" />
+    <PageHeader
+        :title="t('events.search.title')"
+        :lede="t('events.search.lede')"
+        :back="eventsIndex().url"
+        :back-label="t('events.show.back')"
+    />
 
-    <h1 class="text-xl mb-6 font-bold">{{ t('events.search.title') }}</h1>
-
-    <form class="mb-4 flex gap-2" @submit.prevent="submit">
-        <input
+    <PageContainer class="pt-3 sm:pt-0">
+        <SearchField
             v-model="query"
-            type="text"
+            :label="t('events.search.label')"
             :placeholder="t('events.search.placeholder')"
-            autofocus
-            class="border-edge bg-surface-raised text-sm flex-1 border px-3 py-2 font-sans focus:ring-1 focus:ring-accent focus:outline-none"
         />
-        <button
-            type="submit"
-            class="border-edge text-sm border px-4 py-2 hover:bg-accent hover:text-on-accent"
-        >
-            {{ t('events.search.search') }}
-        </button>
-    </form>
 
-    <div v-if="categories.length" class="mb-6">
-        <CategoryFilterList
-            :categories="categories"
-            :model-value="selectedTags"
-            @update:model-value="onCategoriesChange"
-        />
-    </div>
-
-    <div class="mb-6">
-        <p class="text-xs mb-1 font-bold">{{ t('location.near') }}</p>
         <div
-            v-if="nearLat !== null && nearLng !== null"
-            class="text-sm flex items-center gap-2"
+            class="-mx-4 mt-3 scrollbar-none flex gap-2 overflow-x-auto fade-end px-4 pb-1 sm:mx-0 sm:flex-wrap sm:[mask-image:none] sm:px-0"
+            role="group"
+            :aria-label="t('events.search.narrow')"
         >
-            <span>{{ t('location.sortingByDistance') }}</span>
-            <button type="button" class="underline" @click="clearNear">
-                {{ t('location.clear') }}
-            </button>
-        </div>
-        <div v-else class="relative">
-            <div class="flex gap-2">
-                <input
-                    type="text"
-                    :value="nearQuery"
-                    :placeholder="t('location.searchPlaceholder')"
-                    class="border-edge bg-surface-raised text-sm border px-2 py-1 focus:ring-1 focus:ring-accent focus:outline-none"
-                    @input="onNearSearchInput"
-                />
-                <button
-                    type="button"
-                    class="border-edge text-xs border px-2 py-1 hover:bg-accent hover:text-on-accent"
-                    @click="useCurrentLocation"
-                >
-                    {{ t('location.useCurrentLocation') }}
-                </button>
-            </div>
-            <ul
-                v-if="nearResults.length"
-                class="border-edge bg-surface-raised absolute z-10 mt-1 w-full border"
+            <FilterChip
+                :icon="Navigation"
+                :pressed="near !== null"
+                :disabled="locating"
+                @update:pressed="toggleNear"
             >
-                <li v-for="result in nearResults" :key="result.display_name">
-                    <button
-                        type="button"
-                        class="text-xs block w-full px-3 py-2 text-left hover:bg-accent hover:text-on-accent"
-                        @click="selectNearResult(result)"
-                    >
-                        {{ result.display_name }}
-                    </button>
+                {{
+                    locating
+                        ? t('events.index.locating')
+                        : t('events.index.nearMe')
+                }}
+            </FilterChip>
+            <FilterChip
+                v-for="category in props.categories"
+                :key="category.id"
+                :pressed="tags.includes(category.slug)"
+                @update:pressed="toggleTag(category.slug, $event)"
+            >
+                {{ categoryLabel(category) }}
+            </FilterChip>
+        </div>
+
+        <div class="@container mt-6">
+            <ul v-if="props.events.length" class="flex flex-col gap-3">
+                <li v-for="event in props.events" :key="event.id">
+                    <EventCard :event="event" />
                 </li>
             </ul>
-            <p v-else-if="nearSearchError" class="text-xs mt-1 text-ink/70">
-                {{ t('location.searchError') }}
-            </p>
+            <EmptyState
+                v-else-if="props.q || tags.length"
+                :icon="SearchX"
+                :title="t('events.search.noResultsTitle')"
+                :body="
+                    props.q
+                        ? t('events.search.noResults', { query: props.q })
+                        : t('events.search.noResultsFiltered')
+                "
+            />
+            <EmptyState
+                v-else
+                :icon="Earth"
+                :title="t('events.search.emptyTitle')"
+                :body="t('events.search.emptyBody')"
+            />
         </div>
-        <p v-if="geolocationErrorMessage" class="text-xs mt-1 text-ink/70">
-            {{ geolocationErrorMessage }}
-        </p>
-    </div>
 
-    <p v-if="q && !events.length" class="text-sm text-ink/70">
-        {{ t('events.search.noResults', { query: q }) }}
-    </p>
-
-    <ul class="flex flex-col gap-3">
-        <li
-            v-for="event in events"
-            :key="event.id"
-            class="border-frame border-edge p-4"
-        >
-            <Link
-                :href="`/events/${event.id}`"
-                class="text-base font-bold underline"
-            >
-                {{ event.name }}
-            </Link>
-            <p class="text-sm text-ink/70">
-                {{ formatDate(event.starts_at) }}
-                <template v-if="locationLabel(event)">
-                    · {{ locationLabel(event) }}
-                </template>
-                <template v-if="event.distance_km !== null">
-                    ·
-                    {{
-                        t('location.distanceAway', {
-                            distance: event.distance_km,
-                        })
-                    }}
-                </template>
-            </p>
-            <p class="text-sm mt-1">
-                {{ t('events.search.by') }}
-                <PersonSummary v-bind="event.owner" />
-            </p>
-            <div class="mt-2 flex flex-wrap gap-2">
-                <span
-                    v-for="tag in event.tags"
-                    :key="tag.id"
-                    class="border-edge text-xs border px-2 py-0.5"
-                >
-                    {{ categoryLabel(tag) }}
-                </span>
-            </div>
-        </li>
-    </ul>
-
-    <Pagination :pagination="pagination" :only="['events', 'pagination']" />
+        <Pagination
+            :pagination="props.pagination"
+            :only="['events', 'pagination']"
+        />
+    </PageContainer>
 </template>

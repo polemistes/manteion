@@ -9,6 +9,7 @@ use App\Models\ContactTagPreference;
 use App\Models\Event;
 use App\Models\Follow;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Facades\DB;
@@ -83,6 +84,34 @@ class EventFeedQuery
     {
         return $query->when($slugs !== [], fn (Builder $query) => $query
             ->whereHas('tags', fn (Builder $tags) => $tags->whereIn('slug', $slugs)));
+    }
+
+    /**
+     * Narrows to events happening on any day from $from to $until (YYYY-MM-DD
+     * in the display time zone, either left open with null). An event counts
+     * on every day it runs, so a weekend away that started on Friday still
+     * shows on Saturday.
+     *
+     * @param  Builder<Event>  $query
+     * @return Builder<Event>
+     */
+    public function happeningBetween(Builder $query, ?string $from, ?string $until): Builder
+    {
+        $timezone = (string) config('app.display_timezone');
+
+        if ($from !== null) {
+            $start = CarbonImmutable::parse($from, $timezone)->startOfDay()->utc();
+
+            $query->where(fn (Builder $query) => $query
+                ->where('starts_at', '>=', $start)
+                ->orWhere('ends_at', '>=', $start));
+        }
+
+        if ($until !== null) {
+            $query->where('starts_at', '<', CarbonImmutable::parse($until, $timezone)->addDay()->startOfDay()->utc());
+        }
+
+        return $query;
     }
 
     /**

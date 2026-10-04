@@ -12,6 +12,7 @@ use App\Models\Friendship;
 use App\Models\Reaction;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Event as EventFacade;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -138,6 +139,19 @@ test('the feed lists pending invitations, what is coming up, and this month\'s e
     expect($hosting)->not->toBeNull();
 });
 
+test('the mini month marks every day an event runs, within the month', function () {
+    Carbon::setTestNow('2026-09-18 12:00:00');
+    $viewer = User::factory()->create();
+
+    Event::factory()->create(['user_id' => $viewer->id, 'starts_at' => '2026-09-25 16:00:00', 'ends_at' => '2026-09-27 12:00:00']);
+    Event::factory()->create(['user_id' => $viewer->id, 'starts_at' => '2026-09-30 08:00:00', 'ends_at' => '2026-10-02 12:00:00']);
+    Event::factory()->create(['user_id' => $viewer->id, 'starts_at' => '2026-10-05 08:00:00']);
+
+    $this->actingAs($viewer)->get('/events')->assertInertia(fn (Assert $page) => $page
+        ->where('calendarDays.month', '2026-09')
+        ->where('calendarDays.days', ['2026-09-25', '2026-09-26', '2026-09-27', '2026-09-30']));
+});
+
 test('people who can see an event can like its comments, and the event page hears about it', function () {
     EventFacade::fake([EventActivity::class]);
     $host = User::factory()->create();
@@ -237,4 +251,15 @@ test('the feed narrows to invitations, events the viewer is going to, or ones th
         ->and($names('going'))->toBe(['Going'])
         ->and($names('hosting'))->toBe(['Hosting'])
         ->and($names('nonsense'))->toBe(['Invited', 'Going', 'Hosting']);
+});
+
+test('the feed searches the viewer\'s own events by name and place', function () {
+    $viewer = User::factory()->create();
+    Event::factory()->create(['user_id' => $viewer->id, 'name' => 'Cabin Weekend', 'place' => 'Kvitfjell', 'starts_at' => now()->addDay()]);
+    Event::factory()->create(['user_id' => $viewer->id, 'name' => 'Book Club', 'place' => 'Majorstuen', 'starts_at' => now()->addDays(2)]);
+
+    $names = fn (string $q) => collect($this->actingAs($viewer)->get('/events?q='.urlencode($q))->inertiaProps('events'))->pluck('name')->all();
+
+    expect($names('cabin'))->toBe(['Cabin Weekend'])
+        ->and($names('majorstuen'))->toBe(['Book Club']);
 });
