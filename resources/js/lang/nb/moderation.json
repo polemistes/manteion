@@ -1,6 +1,6 @@
 {
-    "title": "Modereringskø",
-    "noReports": "Ingen ventende rapporter.",
+    "title": "Rapporter",
+    "noReports": "Når noen rapporterer noe, dukker det opp her.",
     "type": {
         "message": "Melding",
         "event": "Arrangement",
@@ -8,16 +8,12 @@
         "leaflet": "Flyveblad",
         "leaflet_response": "Svar på flyveblad"
     },
-    "viewInContext": "Vis i sammenheng",
+    "viewInContext": "Se det",
     "alreadyDeleted": "Dette innholdet er allerede fjernet.",
     "byAuthor": "Av {name}",
-    "reportedByReason": "Rapportert av {name}: {reason}",
-    "noReasonGiven": "ingen årsak oppgitt",
+    "noReasonGiven": "ingen oppgitt",
     "deleteContent": "Slett",
-    "dismiss": "Avvis rapport",
-    "messageReporter": "Send melding til rapportør",
-    "messageReportedUser": "Send melding til rapportert bruker",
-    "suspendUser": "Suspender bruker",
+    "dismiss": "Avvis",
     "report": "Rapporter",
     "reportTitle": "Rapporter dette innholdet",
     "reportReasonPlaceholder": "For eksempel: det er spam, eller det er sårende.",
@@ -30,5 +26,15 @@
     "reportThanks": "Takk. En moderator ser på det.",
     "reportDescription": "Moderatorene ser hva du rapporterer og hvem som rapporterte. Personen du rapporterer, ser det ikke.",
     "reportReason": "Hva er galt?",
-    "reporting": "Rapporterer …"
+    "reporting": "Rapporterer …",
+    "lede": "Det folk har rapportert, nyeste først. Den som blir rapportert, ser aldri hvem som rapporterte.",
+    "reportedBy": "Rapportert av {name} {ago}",
+    "reason": "Grunn:",
+    "more": "Mer for denne rapporten",
+    "writeTo": "Skriv til {name}",
+    "suspendName": "Suspender {name}…",
+    "dismissed": "Rapporten er avvist.",
+    "deleteTitle": "Slette dette: {type}?",
+    "deleteBody": "Det forsvinner for godt, og rapporten lukkes.",
+    "noReportsTitle": "Ingenting å se på"
 }

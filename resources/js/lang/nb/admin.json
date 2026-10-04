@@ -1,6 +1,6 @@
 {
     "users": {
-        "title": "Administrasjon",
+        "title": "Brukere",
         "searchPlaceholder": "Søk på navn, brukernavn eller e-post",
         "name": "Navn",
         "email": "E-post",
@@ -27,6 +27,22 @@
         "deleteAccount": "Slett konto",
         "deleteAccountTitle": "Slett {name} sin konto",
         "deleteAccountWarning": "Dette sletter kontoen og alt de eier permanent. Dette kan ikke angres.",
-        "yourPassword": "Ditt passord"
+        "yourPassword": "Ditt passord",
+        "lede": "Alle kontoene på Manteion, rollene deres og hvordan de står.",
+        "count": "Ingen kontoer | {n} konto | {n} kontoer",
+        "none": "Ingen passer med det søket",
+        "roleFor": "Rolle for {name}",
+        "roleSaved": "Rollen til {name} er endret.",
+        "actionsFor": "Handlinger for {name}",
+        "emailAction": "Send en e-post…",
+        "suspendAction": "Suspender…",
+        "deleteAction": "Slett konto…",
+        "impersonateTitle": "Se appen som {name}?",
+        "unsuspendTitle": "Oppheve suspensjonen?",
+        "suspendHint": "De kan ikke logge inn før suspensjonen er opphevet.",
+        "reason": "Grunn",
+        "suspendedToast": "{name} er suspendert.",
+        "emailSent": "E-post sendt til {name}.",
+        "deleted": "Kontoen til {name} er slettet."
     }
 }

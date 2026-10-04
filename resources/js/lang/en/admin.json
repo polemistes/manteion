@@ -1,6 +1,6 @@
 {
     "users": {
-        "title": "Administration",
+        "title": "Users",
         "searchPlaceholder": "Search by name, username, or email",
         "name": "Name",
         "email": "Email",
@@ -27,6 +27,22 @@
         "deleteAccount": "Delete account",
         "deleteAccountTitle": "Delete {name}'s account",
         "deleteAccountWarning": "This permanently deletes the account and everything they own. This cannot be undone.",
-        "yourPassword": "Your password"
+        "yourPassword": "Your password",
+        "lede": "Every account on Manteion, its role and its standing.",
+        "count": "No accounts | {n} account | {n} accounts",
+        "none": "No one matches that search",
+        "roleFor": "Role for {name}",
+        "roleSaved": "{name}’s role is changed.",
+        "actionsFor": "Actions for {name}",
+        "emailAction": "Send an email…",
+        "suspendAction": "Suspend…",
+        "deleteAction": "Delete account…",
+        "impersonateTitle": "View the app as {name}?",
+        "unsuspendTitle": "Lift the suspension?",
+        "suspendHint": "They can’t sign in until the suspension is lifted.",
+        "reason": "Reason",
+        "suspendedToast": "{name} is suspended.",
+        "emailSent": "Email sent to {name}.",
+        "deleted": "{name}’s account is deleted."
     }
 }

@@ -1,28 +1,40 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
+import {
+    Ellipsis,
+    ExternalLink,
+    MessageCircle,
+    ShieldBan,
+    ShieldCheck,
+    Trash,
+} from '@lucide/vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Pagination from '@/components/Pagination.vue';
 import type { PaginationSummary } from '@/components/Pagination.vue';
+import PageContainer from '@/components/shell/PageContainer.vue';
+import PageHeader from '@/components/shell/PageHeader.vue';
+import AppDialog from '@/components/ui/AppDialog.vue';
+import Button from '@/components/ui/Button.vue';
+import EmptyState from '@/components/ui/EmptyState.vue';
+import Menu from '@/components/ui/Menu.vue';
+import MenuItem from '@/components/ui/MenuItem.vue';
+import Tag from '@/components/ui/Tag.vue';
+import TextArea from '@/components/ui/TextArea.vue';
 import { confirmAction } from '@/composables/useConfirm';
 import { staffDelete } from '@/composables/useStaffDelete';
-import { suspend as adminUsersSuspend } from '@/routes/admin/users';
+import { useDates } from '@/lib/dates';
+import { toast, toastError } from '@/lib/toast';
+import { suspend as suspendUser } from '@/routes/admin/users';
 import { update as dismissReport } from '@/routes/moderation/reports';
 import { message as messageUser } from '@/routes/moderation/users';
+import { index as settingsIndex } from '@/routes/settings';
 
-const { t, locale } = useI18n();
-
-const dateFnsLocales: Record<string, string> = {
-    en: 'en-GB',
-    nb: 'nb-NO',
-};
-
-function formatDate(value: string): string {
-    return new Date(value).toLocaleString(
-        dateFnsLocales[locale.value] ?? locale.value,
-        { dateStyle: 'medium', timeStyle: 'short' },
-    );
-}
-
+/**
+ * The reports waiting for staff: what was reported, by whom and why, with
+ * the way to it, and deleting it, dismissing the report, writing to either
+ * person or suspending the author.
+ */
 interface ReportedUser {
     id: number;
     name: string;
@@ -51,36 +63,43 @@ const props = defineProps<{
     pagination: PaginationSummary;
 }>();
 
-function typeLabel(type: Reportable['type']): string {
-    return t(`moderation.type.${type}`);
-}
+const { t } = useI18n();
+const dates = useDates();
+
+const options = {
+    preserveScroll: true,
+    onError: () => toastError(t('settings.saveFailed')),
+};
 
 function dismiss(report: ModerationReport): void {
-    router.patch(dismissReport(report.id).url, {}, { preserveScroll: true });
+    router.patch(
+        dismissReport(report.id).url,
+        {},
+        {
+            ...options,
+            onSuccess: () => toast({ title: t('moderation.dismissed') }),
+        },
+    );
 }
 
 async function deleteContent(report: ModerationReport): Promise<void> {
-    // Events and leaflets don't offer the "leave a placeholder" choice
-    // (unlike comments and messages) — just confirm and delete.
+    // Events and leaflets offer no "leave a placeholder" choice, unlike
+    // comments and messages: just confirm and delete.
     if (
         report.reportable.type === 'event' ||
         report.reportable.type === 'leaflet' ||
         report.reportable.type === 'leaflet_response'
     ) {
         const confirmed = await confirmAction({
-            message: t(
-                report.reportable.type === 'event'
-                    ? 'events.show.confirmDeleteEvent'
-                    : report.reportable.type === 'leaflet'
-                      ? 'leaflets.card.confirmDelete'
-                      : 'leaflets.responses.confirmDelete',
-            ),
+            title: t('moderation.deleteTitle', {
+                type: t(`moderation.type.${report.reportable.type}`),
+            }),
+            message: t('moderation.deleteBody'),
+            confirmLabel: t('moderation.deleteContent'),
         });
 
         if (confirmed) {
-            router.delete(report.reportable.delete_url, {
-                preserveScroll: true,
-            });
+            router.delete(report.reportable.delete_url, options);
         }
 
         return;
@@ -90,116 +109,237 @@ async function deleteContent(report: ModerationReport): Promise<void> {
         message: t('moderation.confirmDeleteContent'),
     });
 
-    if (choice === null) {
-        return;
+    if (choice !== null) {
+        router.delete(report.reportable.delete_url, {
+            ...options,
+            data: { leave_placeholder: choice === 'placeholder' },
+        });
     }
-
-    router.delete(report.reportable.delete_url, {
-        data: { leave_placeholder: choice === 'placeholder' },
-        preserveScroll: true,
-    });
 }
 
-function messageAuthor(user: ReportedUser): void {
+function write(user: ReportedUser): void {
     router.post(messageUser(user.id).url);
 }
 
-async function suspendAuthor(user: ReportedUser): Promise<void> {
-    router.post(adminUsersSuspend(user.id).url, {}, { preserveScroll: true });
+// Suspending asks for a reason, which other staff see.
+const suspendFor = ref<ReportedUser | null>(null);
+const reason = ref('');
+const suspending = ref(false);
+
+const suspendOpen = computed({
+    get: () => suspendFor.value !== null,
+    set: (isOpen: boolean) => {
+        if (!isOpen) {
+            suspendFor.value = null;
+        }
+    },
+});
+
+function openSuspend(user: ReportedUser): void {
+    reason.value = '';
+    suspendFor.value = user;
+}
+
+function suspend(): void {
+    const user = suspendFor.value;
+
+    if (!user) {
+        return;
+    }
+
+    suspending.value = true;
+    router.post(
+        suspendUser(user.id).url,
+        { reason: reason.value.trim() || null },
+        {
+            ...options,
+            onSuccess: () => {
+                suspendFor.value = null;
+                toast({
+                    title: t('admin.users.suspendedToast', { name: user.name }),
+                    icon: ShieldBan,
+                });
+            },
+            onFinish: () => {
+                suspending.value = false;
+            },
+        },
+    );
 }
 </script>
 
 <template>
-    <Head :title="t('moderation.title')" />
-
-    <h1 class="text-xl mb-6 font-bold">{{ t('moderation.title') }}</h1>
-
-    <p v-if="!props.reports.length" class="text-sm text-ink/70">
-        {{ t('moderation.noReports') }}
-    </p>
-
-    <ul class="flex flex-col gap-4">
-        <li
-            v-for="report in props.reports"
-            :key="report.id"
-            class="border-frame border-edge p-4"
-        >
-            <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <span class="text-xs font-bold uppercase">{{
-                    typeLabel(report.reportable.type)
-                }}</span>
-                <Link :href="report.reportable.url" class="text-xs underline">{{
-                    t('moderation.viewInContext')
-                }}</Link>
-            </div>
-
-            <p class="text-sm mb-2 font-sans">
-                {{
-                    report.reportable.excerpt ?? t('moderation.alreadyDeleted')
-                }}
-            </p>
-
-            <p class="text-xs mb-1 text-ink/70">
-                {{
-                    t('moderation.byAuthor', {
-                        name: report.reportable.author.name,
-                    })
-                }}
-            </p>
-            <p class="text-xs mb-1 text-ink/70">
-                {{
-                    t('moderation.reportedByReason', {
-                        name: report.reporter.name,
-                        reason: report.reason ?? t('moderation.noReasonGiven'),
-                    })
-                }}
-            </p>
-            <p class="text-xs mb-3 text-ink/50">
-                {{ formatDate(report.created_at) }}
-            </p>
-
-            <div class="flex flex-wrap gap-2">
-                <button
-                    type="button"
-                    class="border-edge text-xs hover:bg-surface-raised border bg-accent px-3 py-1 text-on-accent hover:text-ink"
-                    @click="deleteContent(report)"
-                >
-                    {{ t('moderation.deleteContent') }}
-                </button>
-                <button
-                    type="button"
-                    class="border-edge text-xs border px-3 py-1 hover:bg-accent hover:text-on-accent"
-                    @click="dismiss(report)"
-                >
-                    {{ t('moderation.dismiss') }}
-                </button>
-                <button
-                    type="button"
-                    class="border-edge text-xs border px-3 py-1 hover:bg-accent hover:text-on-accent"
-                    @click="messageAuthor(report.reporter)"
-                >
-                    {{ t('moderation.messageReporter') }}
-                </button>
-                <button
-                    type="button"
-                    class="border-edge text-xs border px-3 py-1 hover:bg-accent hover:text-on-accent"
-                    @click="messageAuthor(report.reportable.author)"
-                >
-                    {{ t('moderation.messageReportedUser') }}
-                </button>
-                <button
-                    type="button"
-                    class="border-edge text-xs border px-3 py-1 hover:bg-accent hover:text-on-accent"
-                    @click="suspendAuthor(report.reportable.author)"
-                >
-                    {{ t('moderation.suspendUser') }}
-                </button>
-            </div>
-        </li>
-    </ul>
-
-    <Pagination
-        :pagination="props.pagination"
-        :only="['reports', 'pagination']"
+    <PageHeader
+        :title="t('moderation.title')"
+        :lede="t('moderation.lede')"
+        :back="settingsIndex().url"
+        :back-label="t('settings.title')"
     />
+
+    <PageContainer class="pt-4 pb-16 sm:pt-0">
+        <ul v-if="props.reports.length" class="flex flex-col gap-4">
+            <li
+                v-for="report in props.reports"
+                :key="report.id"
+                class="rounded-lg border border-line bg-surface p-4 sm:p-5"
+            >
+                <div class="flex items-start gap-3">
+                    <div class="min-w-0 flex-1">
+                        <p class="flex flex-wrap items-center gap-2">
+                            <Tag tone="host">{{
+                                t(`moderation.type.${report.reportable.type}`)
+                            }}</Tag>
+                            <span class="text-meta text-ink-muted">{{
+                                t('moderation.reportedBy', {
+                                    name: report.reporter.name,
+                                    ago: dates.ago(report.created_at),
+                                })
+                            }}</span>
+                        </p>
+                        <p class="mt-1 text-meta text-ink-muted">
+                            {{
+                                t('moderation.byAuthor', {
+                                    name: report.reportable.author.name,
+                                })
+                            }}
+                        </p>
+                    </div>
+                    <Menu>
+                        <template #trigger>
+                            <button
+                                type="button"
+                                :aria-label="t('moderation.more')"
+                                class="grid size-11 shrink-0 place-items-center rounded-full text-ink-muted hover:bg-surface-2 hover:text-ink"
+                            >
+                                <Ellipsis
+                                    :size="20"
+                                    :stroke-width="2"
+                                    aria-hidden="true"
+                                />
+                            </button>
+                        </template>
+                        <MenuItem
+                            :icon="MessageCircle"
+                            @select="write(report.reporter)"
+                        >
+                            {{
+                                t('moderation.writeTo', {
+                                    name: report.reporter.name,
+                                })
+                            }}
+                        </MenuItem>
+                        <MenuItem
+                            :icon="MessageCircle"
+                            @select="write(report.reportable.author)"
+                        >
+                            {{
+                                t('moderation.writeTo', {
+                                    name: report.reportable.author.name,
+                                })
+                            }}
+                        </MenuItem>
+                        <MenuItem
+                            :icon="ShieldBan"
+                            danger
+                            @select="openSuspend(report.reportable.author)"
+                        >
+                            {{
+                                t('moderation.suspendName', {
+                                    name: report.reportable.author.name,
+                                })
+                            }}
+                        </MenuItem>
+                    </Menu>
+                </div>
+
+                <blockquote
+                    class="mt-3 rounded-r-sm border-l-2 border-line-strong bg-canvas px-3.5 py-2.5 whitespace-pre-line text-ink"
+                    :class="
+                        report.reportable.excerpt
+                            ? ''
+                            : 'font-display text-ink-muted italic'
+                    "
+                >
+                    {{
+                        report.reportable.excerpt ??
+                        t('moderation.alreadyDeleted')
+                    }}
+                </blockquote>
+
+                <p class="mt-3 text-body text-ink">
+                    <span class="font-semibold">{{
+                        t('moderation.reason')
+                    }}</span>
+                    {{ report.reason ?? t('moderation.noReasonGiven') }}
+                </p>
+
+                <div class="mt-4 flex flex-wrap items-center gap-2">
+                    <Button
+                        v-if="report.reportable.excerpt"
+                        variant="danger"
+                        size="sm"
+                        :icon="Trash"
+                        @click="deleteContent(report)"
+                    >
+                        {{ t('moderation.deleteContent') }}
+                    </Button>
+                    <Button
+                        size="sm"
+                        :icon="ShieldCheck"
+                        @click="dismiss(report)"
+                    >
+                        {{ t('moderation.dismiss') }}
+                    </Button>
+                    <Button
+                        :as="Link"
+                        :href="report.reportable.url"
+                        variant="ghost"
+                        size="sm"
+                        :icon="ExternalLink"
+                    >
+                        {{ t('moderation.viewInContext') }}
+                    </Button>
+                </div>
+            </li>
+        </ul>
+        <EmptyState
+            v-else
+            :icon="ShieldCheck"
+            :title="t('moderation.noReportsTitle')"
+            :body="t('moderation.noReports')"
+        />
+
+        <Pagination
+            :pagination="props.pagination"
+            :only="['reports', 'pagination']"
+        />
+    </PageContainer>
+
+    <AppDialog
+        v-model:open="suspendOpen"
+        :title="t('admin.users.suspendTitle', { name: suspendFor?.name ?? '' })"
+        :description="t('admin.users.suspendHint')"
+    >
+        <form id="suspend-author" @submit.prevent="suspend">
+            <TextArea
+                v-model="reason"
+                :label="t('admin.users.reason')"
+                :placeholder="t('admin.users.suspendReasonPlaceholder')"
+                optional
+            />
+        </form>
+        <template #actions>
+            <Button
+                type="submit"
+                form="suspend-author"
+                variant="danger"
+                :disabled="suspending"
+            >
+                {{ t('admin.users.suspend') }}
+            </Button>
+            <Button variant="ghost" @click="suspendFor = null">
+                {{ t('ui.cancel') }}
+            </Button>
+        </template>
+    </AppDialog>
 </template>

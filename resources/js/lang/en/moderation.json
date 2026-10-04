@@ -1,6 +1,6 @@
 {
-    "title": "Moderation queue",
-    "noReports": "No pending reports.",
+    "title": "Reports",
+    "noReports": "When someone reports something, it shows up here.",
     "type": {
         "message": "Message",
         "event": "Event",
@@ -8,16 +8,12 @@
         "leaflet": "Leaflet",
         "leaflet_response": "Leaflet response"
     },
-    "viewInContext": "View in context",
+    "viewInContext": "View it",
     "alreadyDeleted": "This content has already been removed.",
     "byAuthor": "By {name}",
-    "reportedByReason": "Reported by {name}: {reason}",
-    "noReasonGiven": "no reason given",
+    "noReasonGiven": "none given",
     "deleteContent": "Delete",
-    "dismiss": "Dismiss report",
-    "messageReporter": "Message reporter",
-    "messageReportedUser": "Message reported user",
-    "suspendUser": "Suspend user",
+    "dismiss": "Dismiss",
     "report": "Report",
     "reportTitle": "Report this content",
     "reportReasonPlaceholder": "For example: it’s spam, or it’s hurtful.",
@@ -30,5 +26,15 @@
     "reportThanks": "Thanks. A moderator will look at it.",
     "reportDescription": "Moderators see what you report and who reported it. The person you report doesn’t.",
     "reportReason": "What’s wrong?",
-    "reporting": "Reporting…"
+    "reporting": "Reporting…",
+    "lede": "What people reported, newest first. The person reported never sees who reported them.",
+    "reportedBy": "Reported by {name} {ago}",
+    "reason": "Reason:",
+    "more": "More for this report",
+    "writeTo": "Write to {name}",
+    "suspendName": "Suspend {name}…",
+    "dismissed": "Report dismissed.",
+    "deleteTitle": "Delete this {type}?",
+    "deleteBody": "It goes for good, and the report is closed.",
+    "noReportsTitle": "Nothing to look at"
 }

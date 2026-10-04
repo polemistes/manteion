@@ -37,6 +37,7 @@ class UserController extends Controller
                 'name' => $user->name,
                 'username' => $user->username,
                 'email' => $user->email,
+                'avatar_url' => $user->avatar_url,
                 'role' => $user->role->value,
                 'is_suspended' => $user->isSuspended(),
                 'created_at' => $user->created_at->toIso8601String(),
