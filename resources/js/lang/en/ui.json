@@ -13,5 +13,6 @@
     "alphaLong": "Things may break, and data may be deleted at any time.",
     "undo": "Undo",
     "somethingWentWrong": "Something went wrong. Try again.",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "toastRegion": "Notifications ({hotkey})"
 }

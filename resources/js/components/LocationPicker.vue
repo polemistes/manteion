@@ -9,12 +9,14 @@ import { onMounted, onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
     cityFromAddress,
+    countryCodeFromAddress,
     countryFromAddress,
     MIN_QUERY_LENGTH,
     reverseGeocode,
     useNominatimSearch,
 } from '@/composables/useNominatimSearch';
 import type { NominatimResult } from '@/composables/useNominatimSearch';
+import { usePlaces } from '@/lib/places';
 
 // Vite bundles these as hashed URLs, which breaks Leaflet's default
 // relative-path icon lookup unless we point it at the bundled files.
@@ -34,6 +36,7 @@ interface LocationValue {
     longitude: number | null;
     city: string | null;
     country: string | null;
+    country_code: string | null;
 }
 
 const props = withDefaults(
@@ -43,19 +46,24 @@ const props = withDefaults(
     { initialValue: null },
 );
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
+const { cityAndCountry } = usePlaces();
 
 const latitude = ref<number | null>(props.initialValue?.latitude ?? null);
 const longitude = ref<number | null>(props.initialValue?.longitude ?? null);
 const city = ref<string | null>(props.initialValue?.city ?? null);
 const country = ref<string | null>(props.initialValue?.country ?? null);
+const countryCode = ref<string | null>(
+    props.initialValue?.country_code ?? null,
+);
 const searchQuery = ref('');
 // True once a result has been picked: the field then holds the chosen
 // address, which is not an unanswered search.
 const picked = ref(false);
 
-const { results, searching, error, search, clearResults } =
-    useNominatimSearch();
+const { results, searching, error, search, clearResults } = useNominatimSearch(
+    () => locale.value,
+);
 
 const mapContainer = ref<HTMLDivElement | null>(null);
 let map: L.Map | null = null;
@@ -95,11 +103,12 @@ async function applyCoordinates(lat: number, lng: number): Promise<void> {
     longitude.value = lng;
     placeMarker(lat, lng);
 
-    const result = await reverseGeocode(lat, lng);
+    const result = await reverseGeocode(lat, lng, locale.value);
 
     if (result) {
         city.value = cityFromAddress(result.address);
         country.value = countryFromAddress(result.address);
+        countryCode.value = countryCodeFromAddress(result.address);
     }
 }
 
@@ -111,6 +120,7 @@ function selectResult(result: NominatimResult): void {
     longitude.value = lng;
     city.value = cityFromAddress(result.address);
     country.value = countryFromAddress(result.address);
+    countryCode.value = countryCodeFromAddress(result.address);
     searchQuery.value = result.display_name;
     picked.value = true;
     clearResults();
@@ -131,6 +141,7 @@ function clearLocation(): void {
     longitude.value = null;
     city.value = null;
     country.value = null;
+    countryCode.value = null;
     searchQuery.value = '';
     picked.value = false;
     clearResults();
@@ -148,9 +159,20 @@ onMounted(() => {
 
     const hasInitialPin = latitude.value !== null && longitude.value !== null;
 
-    map = L.map(mapContainer.value).setView(
+    // Zoom buttons and the credit in the user's language: Leaflet's own are
+    // English ("Zoom in", "A JavaScript library for interactive maps").
+    map = L.map(mapContainer.value, { zoomControl: false }).setView(
         hasInitialPin ? [latitude.value!, longitude.value!] : DEFAULT_CENTER,
         hasInitialPin ? PIN_ZOOM : DEFAULT_ZOOM,
+    );
+    L.control
+        .zoom({
+            zoomInTitle: t('location.zoomIn'),
+            zoomOutTitle: t('location.zoomOut'),
+        })
+        .addTo(map);
+    map.attributionControl.setPrefix(
+        '<a href="https://leafletjs.com">Leaflet</a>',
     );
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -180,6 +202,7 @@ onUnmounted(() => {
         <input type="hidden" name="longitude" :value="longitude ?? ''" />
         <input type="hidden" name="city" :value="city ?? ''" />
         <input type="hidden" name="country" :value="country ?? ''" />
+        <input type="hidden" name="country_code" :value="countryCode ?? ''" />
 
         <div class="relative">
             <MapPin
@@ -197,11 +220,10 @@ onUnmounted(() => {
                 @input="onSearchInput"
                 @keydown.enter.prevent
             />
-            <!-- Leaflet's own panes and controls use z-index up to 1000, so
-                 this has to clear that or the map swallows the list. -->
+            <!-- The map below is isolated, so a small z-index clears it. -->
             <ul
                 v-if="results.length"
-                class="absolute z-[1001] mt-1 w-full overflow-hidden rounded-md bg-surface shadow-lg ring-1 ring-line"
+                class="absolute z-20 mt-1 w-full overflow-hidden rounded-md bg-surface shadow-lg ring-1 ring-line"
             >
                 <li v-for="result in results" :key="result.display_name">
                     <button
@@ -231,7 +253,11 @@ onUnmounted(() => {
             </p>
         </div>
 
-        <div class="overflow-hidden rounded-lg border border-line bg-surface">
+        <!-- isolate: Leaflet's panes and controls (z-index up to 1000) stay
+             inside the card instead of painting over the bars and sheets. -->
+        <div
+            class="isolate overflow-hidden rounded-lg border border-line bg-surface"
+        >
             <div
                 ref="mapContainer"
                 class="map-tiles h-[180px] w-full bg-surface-2"
@@ -247,7 +273,7 @@ onUnmounted(() => {
                 />
                 <span class="min-w-0 flex-1">
                     <template v-if="latitude !== null && longitude !== null">{{
-                        [city, country].filter(Boolean).join(', ') ||
+                        cityAndCountry(city, country, countryCode) ||
                         t('location.pinPlaced')
                     }}</template>
                     <template v-else>{{ t('location.tapToPlace') }}</template>

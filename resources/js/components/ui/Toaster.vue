@@ -139,6 +139,7 @@ onBeforeUnmount(() => {
         </ToastRoot>
 
         <ToastViewport
+            :label="t('ui.toastRegion', { hotkey: '{hotkey}' })"
             class="fixed right-4 bottom-[var(--toast-bottom,calc(16px+env(safe-area-inset-bottom)))] left-4 z-[60] flex flex-col gap-2 outline-none sm:right-auto sm:bottom-6 sm:left-[calc(var(--spacing-rail)+24px)] sm:w-90 lg:left-[calc(var(--spacing-sidebar)+24px)]"
         />
     </ToastProvider>

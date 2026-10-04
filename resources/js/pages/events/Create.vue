@@ -35,6 +35,7 @@ const { t } = useI18n();
                 longitude: null,
                 city: null,
                 country: null,
+                country_code: null,
                 description: '',
                 starts_at: null,
                 ends_at: null,

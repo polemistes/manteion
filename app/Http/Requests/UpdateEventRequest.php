@@ -35,6 +35,7 @@ class UpdateEventRequest extends FormRequest
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'city' => ['nullable', 'string', 'max:255'],
             'country' => ['nullable', 'string', 'max:255'],
+            'country_code' => ['nullable', 'string', 'size:2', 'alpha:ascii'],
             'description' => ['required', 'string', 'max:5000'],
             'starts_at' => ['required', 'date'],
             'ends_at' => ['nullable', 'date', 'after:starts_at'],

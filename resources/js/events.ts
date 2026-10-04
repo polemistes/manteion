@@ -58,6 +58,7 @@ export interface EventSummary {
     place: string | null;
     city: string | null;
     country: string | null;
+    country_code: string | null;
     latitude: number | null;
     longitude: number | null;
     starts_at: string;

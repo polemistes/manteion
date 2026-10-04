@@ -21,6 +21,7 @@ const props = defineProps<{
         longitude: number | null;
         city: string | null;
         country: string | null;
+        country_code: string | null;
         description: string;
         starts_at: string;
         ends_at: string | null;

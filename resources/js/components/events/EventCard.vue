@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button.vue';
 import DateBadge from '@/components/ui/DateBadge.vue';
 import type { EventSummary } from '@/events';
 import { useDates } from '@/lib/dates';
+import { usePlaces } from '@/lib/places';
 import { show as eventsShow } from '@/routes/events';
 import AttendanceVisibilityDialog from './AttendanceVisibilityDialog.vue';
 import RsvpControl from './RsvpControl.vue';
@@ -32,6 +33,7 @@ const props = withDefaults(
 
 const { t } = useI18n();
 const dates = useDates();
+const { cityAndCountry } = usePlaces();
 
 const shape = computed(() => props.event.cover?.shape ?? 'none');
 const href = computed(() => eventsShow(props.event.id).url);
@@ -78,7 +80,11 @@ const isToday = computed(
 const place = computed(
     () =>
         props.event.place ||
-        [props.event.city, props.event.country].filter(Boolean).join(', ') ||
+        cityAndCountry(
+            props.event.city,
+            props.event.country,
+            props.event.country_code,
+        ) ||
         null,
 );
 

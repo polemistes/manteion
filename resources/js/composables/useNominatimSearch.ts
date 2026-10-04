@@ -5,6 +5,7 @@ export interface NominatimAddress {
     town?: string;
     village?: string;
     country?: string;
+    country_code?: string;
     [key: string]: string | undefined;
 }
 
@@ -26,14 +27,25 @@ export function countryFromAddress(address?: NominatimAddress): string | null {
     return address?.country ?? null;
 }
 
+/** The ISO country code ("NO"), which Nominatim gives in lower case. */
+export function countryCodeFromAddress(
+    address?: NominatimAddress,
+): string | null {
+    const code = address?.country_code;
+
+    return code && /^[a-z]{2}$/i.test(code) ? code.toUpperCase() : null;
+}
+
 async function fetchNominatim(
     path: string,
     params: Record<string, string>,
+    language: string,
 ): Promise<unknown> {
     const url = new URL(`https://nominatim.openstreetmap.org/${path}`);
     url.search = new URLSearchParams({
         format: 'jsonv2',
         addressdetails: '1',
+        'accept-language': language,
         ...params,
     }).toString();
 
@@ -48,15 +60,21 @@ async function fetchNominatim(
     return response.json();
 }
 
+/** The address at a point, named in the given language ("nb", "en"). */
 export async function reverseGeocode(
     lat: number,
     lng: number,
+    language: string,
 ): Promise<NominatimResult | null> {
     try {
-        const result = await fetchNominatim('reverse', {
-            lat: String(lat),
-            lon: String(lng),
-        });
+        const result = await fetchNominatim(
+            'reverse',
+            {
+                lat: String(lat),
+                lon: String(lng),
+            },
+            language,
+        );
 
         return result as NominatimResult;
     } catch {
@@ -64,7 +82,8 @@ export async function reverseGeocode(
     }
 }
 
-export function useNominatimSearch() {
+/** Place search, with names in the given language ("nb", "en"). */
+export function useNominatimSearch(language: () => string) {
     const results = ref<NominatimResult[]>([]);
     const searching = ref(false);
     const error = ref(false);
@@ -78,10 +97,14 @@ export function useNominatimSearch() {
         error.value = false;
 
         try {
-            const data = await fetchNominatim('search', {
-                q: term,
-                limit: '5',
-            });
+            const data = await fetchNominatim(
+                'search',
+                {
+                    q: term,
+                    limit: '5',
+                },
+                language(),
+            );
 
             if (thisRequestId === requestId) {
                 results.value = data as NominatimResult[];

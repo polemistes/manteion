@@ -35,7 +35,8 @@ const initials = computed(() => {
     const first = words[0]?.[0] ?? '?';
     const last = words.length > 1 ? (words[words.length - 1][0] ?? '') : '';
 
-    return (first + last).toUpperCase();
+    // Two letters don't fit a small face (stacks, seen-by): one does.
+    return (props.size < 32 ? first : first + last).toUpperCase();
 });
 
 const style = computed(() => ({

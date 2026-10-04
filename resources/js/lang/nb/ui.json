@@ -13,5 +13,6 @@
     "alphaLong": "Ting kan gå i stykker, og data kan bli slettet når som helst.",
     "undo": "Angre",
     "somethingWentWrong": "Noe gikk galt. Prøv igjen.",
-    "cancel": "Avbryt"
+    "cancel": "Avbryt",
+    "toastRegion": "Varsler ({hotkey})"
 }

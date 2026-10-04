@@ -39,6 +39,7 @@ import EmptyState from '@/components/ui/EmptyState.vue';
 import FilterChip from '@/components/ui/FilterChip.vue';
 import IconButton from '@/components/ui/IconButton.vue';
 import SegmentedLinks from '@/components/ui/SegmentedLinks.vue';
+import { usePressedChipInView } from '@/composables/usePressedChipInView';
 import type {
     CategoryOption,
     ContactOption,
@@ -196,6 +197,11 @@ const pageViews = computed(() => [
         active: true,
     },
 ]);
+
+// On a phone the chips scroll sideways: keep the pressed one in view.
+const chipRow = ref<HTMLElement | null>(null);
+
+usePressedChipInView(chipRow, mine);
 </script>
 
 <template>
@@ -300,6 +306,7 @@ const pageViews = computed(() => [
 
                 <div
                     class="-mx-4 mt-3 scrollbar-none flex gap-2 overflow-x-auto fade-end px-4 pb-1 sm:mx-0 sm:flex-wrap sm:[mask-image:none] sm:px-0"
+                    ref="chipRow"
                     role="group"
                     :aria-label="t('events.index.quick')"
                 >

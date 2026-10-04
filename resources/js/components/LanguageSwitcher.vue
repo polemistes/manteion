@@ -13,6 +13,7 @@ const segments = computed(() =>
     Object.entries(page.props.availableLocales).map(([code, label]) => ({
         value: code,
         label,
+        shortLabel: code.toUpperCase(),
     })),
 );
 

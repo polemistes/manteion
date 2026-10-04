@@ -37,7 +37,7 @@ use Illuminate\Support\Carbon;
  * @property-read int $attending_count
  * @property-read int $interested_count
  */
-#[Fillable(['user_id', 'name', 'place', 'latitude', 'longitude', 'city', 'country', 'description', 'starts_at', 'ends_at', 'visibility', 'allow_invitee_invites', 'allow_invitee_comments', 'searchable_paid_at', 'followers_notified_at', 'is_deleted'])]
+#[Fillable(['user_id', 'name', 'place', 'latitude', 'longitude', 'city', 'country', 'country_code', 'description', 'starts_at', 'ends_at', 'visibility', 'allow_invitee_invites', 'allow_invitee_comments', 'searchable_paid_at', 'followers_notified_at', 'is_deleted'])]
 class Event extends Model
 {
     /** @use HasFactory<EventFactory> */

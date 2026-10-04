@@ -52,7 +52,7 @@ const props = withDefaults(
 
 const model = defineModel<EventFilterState>({ required: true });
 
-const { t, te } = useI18n();
+const { t, te, locale } = useI18n();
 const dates = useDates();
 
 function patch(changes: Partial<EventFilterState>): void {
@@ -67,7 +67,7 @@ const {
     results: placeResults,
     search: searchPlaces,
     clearResults,
-} = useNominatimSearch();
+} = useNominatimSearch(() => locale.value);
 
 const nearOn = computed({
     get: () => model.value.near_lat !== null,
@@ -344,13 +344,20 @@ const groups = computed(() => [
                     {{ preset.label }}
                 </FilterChip>
             </div>
-            <div class="mt-3 grid grid-cols-2 gap-3">
+            <div
+                class="mt-3 grid gap-3"
+                :class="props.compact ? 'grid-cols-1' : 'grid-cols-2'"
+            >
+                <!-- From today is the default, which "Any time" already says:
+                     the field stays empty for it. -->
                 <TextField
                     type="date"
                     :label="t('events.filters.from')"
-                    :model-value="model.start_date"
+                    :model-value="
+                        model.start_date === today ? '' : model.start_date
+                    "
                     @update:model-value="
-                        patch({ start_date: String($event ?? '') })
+                        patch({ start_date: String($event ?? '') || today })
                     "
                 />
                 <TextField

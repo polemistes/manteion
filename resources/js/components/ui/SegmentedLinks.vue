@@ -32,7 +32,7 @@ const props = defineProps<{
             class="relative inline-flex h-[38px] items-center justify-center gap-1.5 rounded-full text-label font-semibold whitespace-nowrap transition-[background-color,color,box-shadow] duration-200 after:absolute after:inset-x-0 after:-inset-y-[3px]"
             :class="[
                 link.active
-                    ? 'bg-surface text-ink shadow-sm'
+                    ? 'bg-surface text-ink shadow-sm dark:bg-surface-3'
                     : 'text-ink-muted hover:text-ink',
                 link.iconOnly ? 'w-11' : 'px-3.5',
             ]"

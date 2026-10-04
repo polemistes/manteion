@@ -39,9 +39,10 @@ const features = computed(() => [
             class="mx-auto flex min-h-dvh max-w-[1104px] flex-col px-4 pt-[calc(12px+env(safe-area-inset-top))] pb-[calc(24px+env(safe-area-inset-bottom))] sm:px-8"
         >
             <header class="flex items-center justify-between gap-3 py-2">
-                <span class="flex items-center gap-2.5">
+                <span class="flex shrink-0 items-center gap-2.5">
                     <Mark class="h-[30px] w-5 text-mark" />
-                    <span class="font-display text-title-2 font-medium"
+                    <span
+                        class="font-display text-title-2 font-medium whitespace-nowrap"
                         >Manteion</span
                     >
                 </span>

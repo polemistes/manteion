@@ -48,6 +48,7 @@ import type {
     TagOption,
 } from '@/events';
 import { useDates } from '@/lib/dates';
+import { usePlaces } from '@/lib/places';
 import { toast, toastError } from '@/lib/toast';
 import { useEventChannel } from '@/realtime';
 import {
@@ -75,6 +76,7 @@ const props = defineProps<{
         longitude: number | null;
         city: string | null;
         country: string | null;
+        country_code: string | null;
         description: string;
         starts_at: string;
         ends_at: string | null;
@@ -104,6 +106,7 @@ const props = defineProps<{
 
 const { t, te } = useI18n();
 const dates = useDates();
+const { cityAndCountry } = usePlaces();
 
 const cover = computed<EventCover | null>(() => props.event.images[0] ?? null);
 const shape = computed<'photo' | 'poster' | 'none'>(
@@ -214,7 +217,11 @@ const nights = computed(() => {
 });
 
 const address = computed(() =>
-    [props.event.city, props.event.country].filter(Boolean).join(', '),
+    cityAndCountry(
+        props.event.city,
+        props.event.country,
+        props.event.country_code,
+    ),
 );
 
 const hasMap = computed(

@@ -5,6 +5,8 @@ import type { Component } from 'vue';
 export interface Segment {
     value: string;
     label: string;
+    /** Shown instead of the label on a phone, where the full one won't fit. */
+    shortLabel?: string;
     count?: number;
     icon?: Component;
     iconOnly?: boolean;
@@ -41,9 +43,13 @@ function select(value: unknown): void {
             v-for="segment in props.segments"
             :key="segment.value"
             :value="segment.value"
-            :aria-label="segment.iconOnly ? segment.label : undefined"
+            :aria-label="
+                segment.iconOnly || segment.shortLabel
+                    ? segment.label
+                    : undefined
+            "
             :title="segment.iconOnly ? segment.label : undefined"
-            class="group relative inline-flex h-[38px] items-center justify-center gap-1.5 rounded-full text-label font-semibold whitespace-nowrap text-ink-muted transition-[background-color,color,box-shadow] duration-200 after:absolute after:inset-x-0 after:-inset-y-[3px] hover:text-ink data-[state=on]:bg-surface data-[state=on]:text-ink data-[state=on]:shadow-sm"
+            class="group relative inline-flex h-[38px] items-center justify-center gap-1.5 rounded-full text-label font-semibold whitespace-nowrap text-ink-muted transition-[background-color,color,box-shadow] duration-200 after:absolute after:inset-x-0 after:-inset-y-[3px] hover:text-ink data-[state=on]:bg-surface data-[state=on]:text-ink data-[state=on]:shadow-sm dark:data-[state=on]:bg-surface-3"
             :class="segment.iconOnly ? 'w-11' : 'px-3.5'"
         >
             <component
@@ -53,7 +59,14 @@ function select(value: unknown): void {
                 :stroke-width="segment.iconOnly ? 1.8 : 2"
                 aria-hidden="true"
             />
-            <span v-if="!segment.iconOnly">{{ segment.label }}</span>
+            <template v-if="!segment.iconOnly">
+                <span v-if="segment.shortLabel" class="sm:hidden">{{
+                    segment.shortLabel
+                }}</span>
+                <span :class="segment.shortLabel ? 'hidden sm:inline' : ''">{{
+                    segment.label
+                }}</span>
+            </template>
             <span
                 v-if="segment.count !== undefined"
                 class="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-surface-3 px-[5px] text-kicker leading-[18px] tracking-normal text-ink tabular-nums group-data-[state=on]:bg-surface-2"

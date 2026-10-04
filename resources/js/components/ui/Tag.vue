@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import type { Component } from 'vue';
 
-/** A label that isn't interactive: an event category, "Private". */
+/** A label that isn't interactive: an event category, "Private", your "Going". */
 const props = withDefaults(
     defineProps<{
         icon?: Component;
-        tone?: 'default' | 'success' | 'host';
+        tone?: 'default' | 'success' | 'host' | 'going';
     }>(),
     { icon: undefined, tone: 'default' },
 );
@@ -21,6 +21,8 @@ const props = withDefaults(
                 props.tone === 'success',
             'h-5 rounded-xs bg-surface-2 px-[7px] text-kicker text-ink-muted uppercase':
                 props.tone === 'host',
+            'h-5 rounded-xs bg-accent-soft px-[7px] text-kicker text-accent-ink uppercase':
+                props.tone === 'going',
         }"
     >
         <component

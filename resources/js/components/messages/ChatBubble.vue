@@ -92,7 +92,18 @@ onBeforeUnmount(cancelPress);
             props.message.reactions.length ? 'mb-[13px]' : '',
         ]"
     >
-        <div v-if="props.reserveAvatar" class="w-7 shrink-0">
+        <!-- Level with the bubble's foot, not the time line under it. -->
+        <div
+            v-if="props.reserveAvatar"
+            class="w-7 shrink-0"
+            :class="
+                props.showTime && !props.message.pending
+                    ? props.message.reactions.length
+                        ? 'mb-[35px]'
+                        : 'mb-5'
+                    : ''
+            "
+        >
             <Avatar
                 v-if="props.showAvatar"
                 :name="props.message.sender.name"
@@ -200,10 +211,12 @@ onBeforeUnmount(cancelPress);
                     </div>
                 </div>
 
-                <!-- Pointer devices: quick reactions and more, beside the bubble. -->
+                <!-- Pointer devices: quick reactions and more, floating just
+                     above the bubble so they take none of its width. -->
                 <div
                     v-if="canAct"
-                    class="invisible flex shrink-0 items-center gap-0.5 rounded-full bg-surface p-0.5 opacity-0 shadow-sm ring-1 ring-line transition-opacity duration-120 group-focus-within/msg:visible group-focus-within/msg:opacity-100 group-hover/msg:visible group-hover/msg:opacity-100 has-[[data-state=open]]:visible has-[[data-state=open]]:opacity-100 pointer-coarse:hidden"
+                    class="invisible absolute bottom-full z-10 mb-1 flex items-center gap-0.5 rounded-full bg-surface p-0.5 opacity-0 shadow-sm ring-1 ring-line transition-opacity duration-120 group-focus-within/msg:visible group-focus-within/msg:opacity-100 group-hover/msg:visible group-hover/msg:opacity-100 has-[[data-state=open]]:visible has-[[data-state=open]]:opacity-100 pointer-coarse:hidden"
+                    :class="mine ? 'right-0' : 'left-0'"
                     role="toolbar"
                     :aria-label="t('messages.show.actions')"
                 >

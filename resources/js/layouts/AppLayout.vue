@@ -304,9 +304,11 @@ onIncomingMessage((message) => {
                     <span
                         class="relative grid h-[30px] w-14 place-items-center rounded-full transition-colors duration-200"
                         :class="
-                            item.active
+                            item.active && item.key !== 'me'
                                 ? 'bg-accent-soft text-accent-ink'
-                                : 'text-ink-muted'
+                                : item.active
+                                  ? 'text-accent-ink'
+                                  : 'text-ink-muted'
                         "
                     >
                         <Avatar

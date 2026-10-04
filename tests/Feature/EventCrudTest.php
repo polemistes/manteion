@@ -72,6 +72,7 @@ test('a user can create an event with a map location', function () {
         'longitude' => 10.6802,
         'city' => 'Oslo',
         'country' => 'Norway',
+        'country_code' => 'NO',
         'description' => 'Bring gloves.',
         'starts_at' => now()->addWeek()->toDateTimeString(),
         'ends_at' => null,
@@ -87,13 +88,48 @@ test('a user can create an event with a map location', function () {
     expect($event->longitude)->toBe(10.6802);
     expect($event->city)->toBe('Oslo');
     expect($event->country)->toBe('Norway');
+    expect($event->country_code)->toBe('NO');
 
     $this->actingAs($user)->get("/events/{$event->id}")
         ->assertInertia(fn ($page) => $page
             ->where('event.latitude', 59.9022)
             ->where('event.longitude', 10.6802)
             ->where('event.city', 'Oslo')
-            ->where('event.country', 'Norway'));
+            ->where('event.country', 'Norway')
+            ->where('event.country_code', 'NO'));
+});
+
+test('a country code must be two letters', function (string $code) {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->post('/events', [
+        'name' => 'Beach Cleanup',
+        'city' => 'Oslo',
+        'country' => 'Norway',
+        'country_code' => $code,
+        'description' => 'Bring gloves.',
+        'starts_at' => now()->addWeek()->toDateTimeString(),
+        'visibility' => 'private',
+        'allow_invitee_invites' => false,
+        'allow_invitee_comments' => true,
+    ])->assertInvalid(['country_code']);
+})->with(['Norway', 'N', 'N1', 'Nø']);
+
+test('an event list and the edit form carry the country code', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->create([
+        'user_id' => $user->id,
+        'city' => 'Oslo',
+        'country' => 'Norge',
+        'country_code' => 'no',
+        'starts_at' => now()->addDay(),
+    ]);
+
+    $this->actingAs($user)->get('/events')
+        ->assertInertia(fn ($page) => $page->where('events.0.country_code', 'NO'));
+
+    $this->actingAs($user)->get("/events/{$event->id}/edit")
+        ->assertInertia(fn ($page) => $page->where('event.country_code', 'NO'));
 });
 
 test('a user can create an event without a place or map location', function () {

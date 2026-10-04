@@ -12,6 +12,7 @@ import EmptyState from '@/components/ui/EmptyState.vue';
 import FilterChip from '@/components/ui/FilterChip.vue';
 import IconButton from '@/components/ui/IconButton.vue';
 import SectionHeader from '@/components/ui/SectionHeader.vue';
+import { usePressedChipInView } from '@/composables/usePressedChipInView';
 import { addDays, isoWeekday, useDates } from '@/lib/dates';
 import { onActivity, onReconnect } from '@/realtime';
 import { requestJson } from '@/realtime/http';
@@ -228,6 +229,11 @@ const pushSummary = computed(() => {
 
     return t('notifications.push.on', { list });
 });
+
+// On a phone the chips scroll sideways: keep the pressed one in view.
+const chipRow = ref<HTMLElement | null>(null);
+
+usePressedChipInView(chipRow, kind);
 </script>
 
 <template>
@@ -264,6 +270,7 @@ const pushSummary = computed(() => {
             <div class="min-w-0">
                 <div
                     class="-mx-4 scrollbar-none flex gap-2 overflow-x-auto fade-end px-4 pb-1 sm:mx-0 sm:flex-wrap sm:[mask-image:none] sm:px-0"
+                    ref="chipRow"
                     role="group"
                     :aria-label="t('notifications.kinds')"
                 >

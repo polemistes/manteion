@@ -6,5 +6,7 @@
     "searchError": "Couldn't search right now. Try again.",
     "clear": "Clear location",
     "pinPlaced": "Pin placed on the map",
-    "tapToPlace": "Tap the map to place the pin, or search above."
+    "tapToPlace": "Tap the map to place the pin, or search above.",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out"
 }

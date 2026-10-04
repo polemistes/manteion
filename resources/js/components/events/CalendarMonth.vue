@@ -189,7 +189,7 @@ function discClass(day: string): string {
                                 >
                                     <Link
                                         :href="eventsShow(event.id).url"
-                                        class="relative z-10 block truncate rounded-xs px-1.5 py-[3px] text-caption"
+                                        class="relative z-10 line-clamp-2 rounded-xs px-1.5 py-[3px] text-caption [overflow-wrap:normal]"
                                         :class="chipClass(event)"
                                         :title="chipTitle(event, day)"
                                     >

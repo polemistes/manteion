@@ -52,14 +52,14 @@ const meta = computed(() =>
         .join(' · '),
 );
 
-const status = computed<{ label: string; tone: 'success' | 'host' } | null>(
+const status = computed<{ label: string; tone: 'going' | 'host' } | null>(
     () => {
         if (props.event.is_host) {
             return { label: t('events.index.hosting'), tone: 'host' };
         }
 
         if (props.event.my_status === 'attending') {
-            return { label: t('events.rsvp.going'), tone: 'success' };
+            return { label: t('events.rsvp.going'), tone: 'going' };
         }
 
         if (props.event.my_status === 'interested') {
@@ -81,7 +81,7 @@ const status = computed<{ label: string; tone: 'success' | 'host' } | null>(
         class="flex items-start gap-3 rounded-md px-3 py-2.5 transition-colors duration-120 hover:bg-surface-2"
     >
         <span
-            class="w-[4.5rem] shrink-0 pt-px text-label font-semibold text-ink tabular-nums"
+            class="w-[4.5rem] shrink-0 pt-px text-label font-semibold text-ink"
         >
             {{ startLabel }}
             <span

@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button.vue';
 import CountBadge from '@/components/ui/CountBadge.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import GroupAvatar from '@/components/ui/GroupAvatar.vue';
+import IconButton from '@/components/ui/IconButton.vue';
 import SearchField from '@/components/ui/SearchField.vue';
 import SegmentedControl from '@/components/ui/SegmentedControl.vue';
 import { useDates } from '@/lib/dates';
@@ -85,12 +86,30 @@ function preview(conversation: ConversationListItem): string {
             v-if="props.heading"
             class="hidden items-center justify-between gap-3 px-5 pt-7 pb-1 sm:flex"
         >
-            <h1 class="font-display text-title-1">
+            <h1
+                class="shrink-0 font-display text-title-1 [overflow-wrap:normal]"
+            >
                 {{ t('messages.index.title') }}
             </h1>
-            <Button :as="Link" :href="create().url" :icon="SquarePen" size="sm">
-                {{ t('messages.index.newMessage') }}
-            </Button>
+            <!-- In the narrow two-pane column (md) only the icon fits. -->
+            <span class="md:hidden lg:inline-flex">
+                <Button
+                    :as="Link"
+                    :href="create().url"
+                    :icon="SquarePen"
+                    size="sm"
+                >
+                    {{ t('messages.index.newMessage') }}
+                </Button>
+            </span>
+            <span class="hidden md:inline-flex lg:hidden">
+                <IconButton
+                    :as="Link"
+                    :href="create().url"
+                    :icon="SquarePen"
+                    :label="t('messages.index.newMessage')"
+                />
+            </span>
         </div>
 
         <div class="flex flex-col gap-3 px-4 pt-3 pb-3 sm:px-5">

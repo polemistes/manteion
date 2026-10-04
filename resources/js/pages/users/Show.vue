@@ -380,7 +380,7 @@ function eventStatus(status: AttendanceStatus | null): string | null {
                             v-if="eventStatus(event.my_status)"
                             :tone="
                                 event.my_status === 'attending'
-                                    ? 'success'
+                                    ? 'going'
                                     : 'host'
                             "
                         >

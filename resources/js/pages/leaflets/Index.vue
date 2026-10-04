@@ -15,6 +15,7 @@ import Button from '@/components/ui/Button.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import FilterChip from '@/components/ui/FilterChip.vue';
 import IconButton from '@/components/ui/IconButton.vue';
+import { usePressedChipInView } from '@/composables/usePressedChipInView';
 import { leafletVisibilities } from '@/leaflets';
 import type { LeafletSummary, LeafletVisibility } from '@/leaflets';
 import { index as leafletsIndex, store } from '@/routes/leaflets';
@@ -51,6 +52,11 @@ function setScope(scope: LeafletVisibility | null): void {
 }
 
 const composeOpen = ref(false);
+
+// On a phone the chips scroll sideways: keep the pressed one in view.
+const chipRow = ref<HTMLElement | null>(null);
+
+usePressedChipInView(chipRow, () => props.scope);
 </script>
 
 <template>
@@ -94,6 +100,7 @@ const composeOpen = ref(false);
 
         <div
             class="-mx-4 mt-4 scrollbar-none flex gap-2 overflow-x-auto fade-end px-4 pb-1 sm:mx-0 sm:flex-wrap sm:[mask-image:none] sm:px-0"
+            ref="chipRow"
             role="group"
             :aria-label="t('leaflets.index.scope')"
         >

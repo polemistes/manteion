@@ -168,7 +168,7 @@ class EventController extends Controller
     public function store(StoreEventRequest $request): RedirectResponse
     {
         $event = $request->user()->events()->create($request->safe()->only([
-            'name', 'place', 'latitude', 'longitude', 'city', 'country', 'description', 'starts_at', 'ends_at', 'visibility', 'allow_invitee_invites', 'allow_invitee_comments',
+            'name', 'place', 'latitude', 'longitude', 'city', 'country', 'country_code', 'description', 'starts_at', 'ends_at', 'visibility', 'allow_invitee_invites', 'allow_invitee_comments',
         ]));
 
         $this->syncTags($event, $request->input('tag_ids', []));
@@ -219,6 +219,7 @@ class EventController extends Controller
                 'longitude' => $event->longitude,
                 'city' => $event->city,
                 'country' => $event->country,
+                'country_code' => $event->country_code === null ? null : strtoupper($event->country_code),
                 'description' => $event->description,
                 'starts_at' => $event->starts_at->toIso8601String(),
                 'ends_at' => $event->ends_at?->toIso8601String(),
@@ -284,6 +285,7 @@ class EventController extends Controller
                 'longitude' => $event->longitude,
                 'city' => $event->city,
                 'country' => $event->country,
+                'country_code' => $event->country_code === null ? null : strtoupper($event->country_code),
                 'description' => $event->description,
                 'starts_at' => $event->starts_at->toIso8601String(),
                 'ends_at' => $event->ends_at?->toIso8601String(),
@@ -311,7 +313,7 @@ class EventController extends Controller
         $wasPrivate = $event->visibility === EventVisibility::Private;
 
         $event->update([
-            ...$request->safe()->only(['name', 'place', 'latitude', 'longitude', 'city', 'country', 'description', 'starts_at', 'ends_at', 'allow_invitee_invites', 'allow_invitee_comments']),
+            ...$request->safe()->only(['name', 'place', 'latitude', 'longitude', 'city', 'country', 'country_code', 'description', 'starts_at', 'ends_at', 'allow_invitee_invites', 'allow_invitee_comments']),
             'visibility' => $visibility,
         ]);
 
@@ -387,6 +389,7 @@ class EventController extends Controller
                 'place' => $event->place,
                 'city' => $event->city,
                 'country' => $event->country,
+                'country_code' => $event->country_code === null ? null : strtoupper($event->country_code),
                 'latitude' => $event->latitude,
                 'longitude' => $event->longitude,
                 'starts_at' => $event->starts_at->toIso8601String(),

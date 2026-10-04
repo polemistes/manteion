@@ -22,6 +22,7 @@ export interface EventFormValues {
     longitude: number | null;
     city: string | null;
     country: string | null;
+    country_code: string | null;
     description: string;
     starts_at: string | null;
     ends_at: string | null;
@@ -168,6 +169,7 @@ const visibilityOptions = [
                     longitude: props.values.longitude,
                     city: props.values.city,
                     country: props.values.country,
+                    country_code: props.values.country_code,
                 }"
             />
         </section>

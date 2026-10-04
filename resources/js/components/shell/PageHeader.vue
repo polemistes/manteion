@@ -139,10 +139,13 @@ const { activity } = useNavigation();
                 <ArrowLeft :size="16" :stroke-width="2" aria-hidden="true" />
                 {{ props.backLabel ?? t('ui.back') }}
             </Link>
+            <!-- A wrapping row: when the title and the actions don't fit
+                 side by side, the actions move under it rather than the
+                 title breaking mid-word. -->
             <div
-                class="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-x-4 gap-y-2"
+                class="flex flex-wrap items-end justify-between gap-x-4 gap-y-3"
             >
-                <div class="min-w-0">
+                <div class="min-w-0 [overflow-wrap:normal]">
                     <p
                         v-if="props.kicker"
                         class="mb-1.5 text-kicker tracking-[0.1em] text-ink-muted uppercase"
@@ -157,13 +160,13 @@ const { activity } = useNavigation();
                 </div>
                 <div
                     v-if="$slots.actions"
-                    class="flex flex-wrap items-center justify-end gap-2 pb-0.5"
+                    class="flex flex-wrap items-center gap-2 pb-0.5"
                 >
                     <slot name="actions" />
                 </div>
                 <p
                     v-if="props.lede || $slots.lede"
-                    class="col-span-2 text-body text-ink-muted"
+                    class="w-full text-body text-ink-muted"
                 >
                     <slot name="lede">{{ props.lede }}</slot>
                 </p>

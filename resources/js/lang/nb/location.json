@@ -6,5 +6,7 @@
     "searchError": "Kunne ikke søke akkurat nå. Prøv igjen.",
     "clear": "Fjern plassering",
     "pinPlaced": "Nålen står på kartet",
-    "tapToPlace": "Trykk på kartet for å plassere nålen, eller søk over."
+    "tapToPlace": "Trykk på kartet for å plassere nålen, eller søk over.",
+    "zoomIn": "Zoom inn",
+    "zoomOut": "Zoom ut"
 }

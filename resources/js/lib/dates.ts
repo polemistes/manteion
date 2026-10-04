@@ -223,7 +223,8 @@ export function useDates() {
         weekday: format(value, { weekday: 'short' })
             .replace('.', '')
             .toUpperCase(),
-        day: format(value, { day: 'numeric' }),
+        // Norwegian writes the day as "5."; the tile shows the number alone.
+        day: format(value, { day: 'numeric' }).replace('.', ''),
         month: format(value, { month: 'short' }).replace('.', '').toUpperCase(),
         isToday: daysFromToday(value) === 0,
     });

@@ -47,6 +47,10 @@ onMounted(async () => {
         maxZoom: 19,
         attribution: '© OpenStreetMap',
     }).addTo(map);
+    // Leaflet's own credit carries an English title.
+    map.attributionControl.setPrefix(
+        '<a href="https://leafletjs.com">Leaflet</a>',
+    );
 
     L.marker([props.latitude, props.longitude], {
         icon: L.divIcon({
@@ -66,7 +70,11 @@ onBeforeUnmount(() => destroy?.());
 </script>
 
 <template>
-    <section class="overflow-hidden rounded-lg border border-line bg-surface">
+    <!-- isolate: Leaflet's panes and controls (z-index up to 1000) stay
+         inside the card instead of painting over bars, sheets and scrims. -->
+    <section
+        class="isolate overflow-hidden rounded-lg border border-line bg-surface"
+    >
         <div
             ref="container"
             class="map-tiles h-[150px] w-full bg-surface-2"
