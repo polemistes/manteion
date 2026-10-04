@@ -1,0 +1,9 @@
+# Deploying Manteion over SSH without a password (deploy/push.sh).
+# Install with: sudo visudo -f /etc/sudoers.d/manteion
+#
+# proteus may run anything as the manteion user: it owns only Manteion's own
+# files, so that reaches no further than Manteion itself.
+proteus ALL=(manteion) NOPASSWD: ALL
+# And as root these two commands, nothing else: reload PHP (so that it drops
+# the old release's cached code) and restart Manteion's two services.
+proteus ALL=(root) NOPASSWD: /usr/bin/systemctl reload php-fpm, /usr/bin/systemctl restart manteion-queue manteion-reverb

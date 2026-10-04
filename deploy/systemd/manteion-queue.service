@@ -1,0 +1,26 @@
+# Manteion's queue worker: sends web push, mail and link previews in the
+# background, so that no request waits for them. It stops after an hour (or
+# when told to by a deploy) and systemd starts it again on the current release.
+# Install: cp to /etc/systemd/system/, then systemctl daemon-reload.
+
+[Unit]
+Description=Manteion queue worker
+After=network.target
+
+[Service]
+Type=simple
+User=manteion
+Group=manteion
+WorkingDirectory=/home/manteion/app
+ExecStart=/usr/bin/php artisan queue:work --sleep=1 --tries=3 --max-time=3600
+Restart=always
+RestartSec=3
+
+# A fence round the process: it can't gain privileges, has a /tmp of its
+# own, and sees /usr, /boot and /etc read-only.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

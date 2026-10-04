@@ -1,0 +1,10 @@
+# The nightly backup (deploy/backup.sh), started by manteion-backup.timer.
+
+[Unit]
+Description=Back up Manteion (database and uploads)
+
+[Service]
+Type=oneshot
+User=manteion
+Group=manteion
+ExecStart=/home/manteion/app/deploy/backup.sh

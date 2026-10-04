@@ -1,0 +1,24 @@
+# Manteion's WebSocket server (Laravel Reverb): live messages, typing, badges
+# and activity. It listens only on the server itself (127.0.0.1:8080); Apache
+# passes the browsers' WebSocket connections (/app/...) on to it.
+# Install: cp to /etc/systemd/system/, then systemctl daemon-reload.
+
+[Unit]
+Description=Manteion WebSocket server (Reverb)
+After=network.target
+
+[Service]
+Type=simple
+User=manteion
+Group=manteion
+WorkingDirectory=/home/manteion/app
+ExecStart=/usr/bin/php artisan reverb:start --host=127.0.0.1 --port=8080
+Restart=always
+RestartSec=3
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target
