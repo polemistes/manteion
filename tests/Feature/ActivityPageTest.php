@@ -105,8 +105,9 @@ test('the activity page loads every actor in one query', function () {
     DB::enableQueryLog();
     $this->actingAs($user)->get('/notifications')->assertOk();
 
+    // Identifiers are quoted "so" on SQLite and `so` on MariaDB.
     $actorQueries = collect(DB::getQueryLog())
-        ->filter(fn (array $query) => str_contains($query['query'], 'select "id", "name", "username", "avatar_path" from "users"'));
+        ->filter(fn (array $query) => str_contains(str_replace(['"', '`'], '', $query['query']), 'select id, name, username, avatar_path from users'));
     expect($actorQueries)->toHaveCount(1);
 });
 
