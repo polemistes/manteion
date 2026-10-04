@@ -3,12 +3,15 @@
 namespace App\Http\Requests;
 
 use App\Enums\EventVisibility;
+use App\Http\Requests\Concerns\NormalizesEventTimes;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class StoreEventRequest extends FormRequest
 {
+    use NormalizesEventTimes;
+
     /**
      * Decoding an image costs about four bytes of memory a pixel, so an
      * upload is capped before it is decoded at all.

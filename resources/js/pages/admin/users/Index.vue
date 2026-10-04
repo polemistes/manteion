@@ -312,14 +312,17 @@ function submit(): void {
                             {{ t('admin.users.impersonate') }}
                         </MenuItem>
                         <MenuItem
-                            v-if="user.is_suspended"
+                            v-if="
+                                user.is_suspended &&
+                                user.role !== 'administrator'
+                            "
                             :icon="ShieldCheck"
                             @select="unsuspend(user)"
                         >
                             {{ t('admin.users.unsuspend') }}
                         </MenuItem>
                         <MenuItem
-                            v-else
+                            v-else-if="user.role !== 'administrator'"
                             :icon="ShieldBan"
                             @select="open('suspend', user)"
                         >

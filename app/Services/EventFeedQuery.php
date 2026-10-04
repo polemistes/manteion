@@ -117,9 +117,10 @@ class EventFeedQuery
         if ($from !== null) {
             $start = CarbonImmutable::parse($from, $timezone)->startOfDay()->utc();
 
+            // One that ends at midnight is over before the day starts.
             $query->where(fn (Builder $query) => $query
                 ->where('starts_at', '>=', $start)
-                ->orWhere('ends_at', '>=', $start));
+                ->orWhere('ends_at', '>', $start));
         }
 
         if ($until !== null) {

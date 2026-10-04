@@ -10,7 +10,7 @@ test('a user can register a push subscription, which keeps the browsers user age
     $response = $this->actingAs($user)
         ->withHeader('User-Agent', $userAgent)
         ->post('/push-subscriptions', [
-            'endpoint' => 'https://push.example.com/subscription/abc',
+            'endpoint' => 'https://fcm.googleapis.com/fcm/send/abc',
             'key' => 'public-key-value',
             'token' => 'auth-token-value',
             'content_encoding' => 'aes128gcm',
@@ -20,7 +20,7 @@ test('a user can register a push subscription, which keeps the browsers user age
     $this->assertDatabaseHas('push_subscriptions', [
         'subscribable_id' => $user->id,
         'subscribable_type' => User::class,
-        'endpoint' => 'https://push.example.com/subscription/abc',
+        'endpoint' => 'https://fcm.googleapis.com/fcm/send/abc',
         'public_key' => 'public-key-value',
         'auth_token' => 'auth-token-value',
         'content_encoding' => 'aes128gcm',
@@ -33,7 +33,7 @@ test('the push helper subscribing with JSON gets an empty 204 instead of a redir
 
     $this->actingAs($user)
         ->json('POST', '/push-subscriptions', [
-            'endpoint' => 'https://push.example.com/subscription/abc',
+            'endpoint' => 'https://fcm.googleapis.com/fcm/send/abc',
             'key' => 'public-key-value',
             'token' => 'auth-token-value',
             'content_encoding' => 'aes128gcm',
@@ -52,7 +52,7 @@ test('an Inertia visit subscribing is sent back to its page', function () {
     $this->actingAs($user)
         ->from('/settings/notifications')
         ->json('POST', '/push-subscriptions', [
-            'endpoint' => 'https://push.example.com/subscription/abc',
+            'endpoint' => 'https://fcm.googleapis.com/fcm/send/abc',
             'content_encoding' => 'aes128gcm',
         ], ['X-Inertia' => 'true', 'Accept' => 'text/html, application/xhtml+xml'])
         ->assertRedirect('/settings/notifications');
@@ -63,14 +63,14 @@ test('an Inertia visit subscribing is sent back to its page', function () {
 test('subscribing again from the same browser updates that device rather than adding one', function () {
     $user = User::factory()->create();
     $device = PushSubscription::factory()->for($user, 'subscribable')->create([
-        'endpoint' => 'https://push.example.com/subscription/abc',
+        'endpoint' => 'https://fcm.googleapis.com/fcm/send/abc',
         'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:130.0) Gecko/20100101 Firefox/130.0',
     ]);
 
     $this->actingAs($user)
         ->withHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:131.0) Gecko/20100101 Firefox/131.0')
         ->postJson('/push-subscriptions', [
-            'endpoint' => 'https://push.example.com/subscription/abc',
+            'endpoint' => 'https://fcm.googleapis.com/fcm/send/abc',
             'key' => 'new-public-key',
             'token' => 'new-auth-token',
             'content_encoding' => 'aes128gcm',
@@ -88,7 +88,7 @@ test('an overlong user agent is cut to fit', function () {
 
     $this->actingAs($user)
         ->withHeader('User-Agent', str_repeat('a', 600))
-        ->postJson('/push-subscriptions', ['endpoint' => 'https://push.example.com/subscription/abc'])
+        ->postJson('/push-subscriptions', ['endpoint' => 'https://fcm.googleapis.com/fcm/send/abc'])
         ->assertNoContent();
 
     expect($user->pushSubscriptions()->sole()->user_agent)->toBe(str_repeat('a', 512));
@@ -99,7 +99,7 @@ test('an unknown content encoding is rejected', function () {
 
     $this->actingAs($user)
         ->post('/push-subscriptions', [
-            'endpoint' => 'https://push.example.com/subscription/abc',
+            'endpoint' => 'https://fcm.googleapis.com/fcm/send/abc',
             'content_encoding' => 'rot13',
         ])
         ->assertInvalid(['content_encoding']);
@@ -109,24 +109,24 @@ test('an unknown content encoding is rejected', function () {
 
 test('a user can remove a push subscription by its endpoint', function () {
     $user = User::factory()->create();
-    $user->updatePushSubscription('https://push.example.com/subscription/abc', 'key', 'token');
+    $user->updatePushSubscription('https://fcm.googleapis.com/fcm/send/abc', 'key', 'token');
 
-    $this->assertDatabaseHas('push_subscriptions', ['endpoint' => 'https://push.example.com/subscription/abc']);
+    $this->assertDatabaseHas('push_subscriptions', ['endpoint' => 'https://fcm.googleapis.com/fcm/send/abc']);
 
     $response = $this->actingAs($user)->delete('/push-subscriptions', [
-        'endpoint' => 'https://push.example.com/subscription/abc',
+        'endpoint' => 'https://fcm.googleapis.com/fcm/send/abc',
     ]);
 
     $response->assertRedirect();
-    $this->assertDatabaseMissing('push_subscriptions', ['endpoint' => 'https://push.example.com/subscription/abc']);
+    $this->assertDatabaseMissing('push_subscriptions', ['endpoint' => 'https://fcm.googleapis.com/fcm/send/abc']);
 });
 
 test('the push helper unsubscribing with JSON gets an empty 204', function () {
     $user = User::factory()->create();
-    $user->updatePushSubscription('https://push.example.com/subscription/abc', 'key', 'token');
+    $user->updatePushSubscription('https://fcm.googleapis.com/fcm/send/abc', 'key', 'token');
 
     $this->actingAs($user)
-        ->deleteJson('/push-subscriptions', ['endpoint' => 'https://push.example.com/subscription/abc'])
+        ->deleteJson('/push-subscriptions', ['endpoint' => 'https://fcm.googleapis.com/fcm/send/abc'])
         ->assertNoContent();
 
     expect($user->pushSubscriptions()->count())->toBe(0);
@@ -180,4 +180,35 @@ test('guests cannot remove devices', function () {
     $this->delete("/push-subscriptions/{$device->id}")->assertRedirect('/login');
 
     $this->assertModelExists($device);
+});
+
+test('only a browser push service can be an endpoint', function (string $endpoint, bool $allowed) {
+    $response = $this->actingAs(User::factory()->create())
+        ->postJson('/push-subscriptions', ['endpoint' => $endpoint, 'key' => 'k', 'token' => 't']);
+
+    $allowed ? $response->assertNoContent() : $response->assertUnprocessable()->assertJsonValidationErrors('endpoint');
+})->with([
+    'Chrome' => ['https://fcm.googleapis.com/fcm/send/abc', true],
+    'Firefox' => ['https://updates.push.services.mozilla.com/wpush/v2/abc', true],
+    'Edge' => ['https://wns2-par02p.notify.windows.com/w/?token=abc', true],
+    'Safari' => ['https://web.push.apple.com/QGuQ', true],
+    'an internal address' => ['http://127.0.0.1:6379/internal', false],
+    'plain http' => ['http://fcm.googleapis.com/fcm/send/abc', false],
+    'another host' => ['https://evil.example.com/fcm/send/abc', false],
+    'a lookalike host' => ['https://fcm.googleapis.com.evil.example/x', false],
+    'a port' => ['https://fcm.googleapis.com:8443/x', false],
+    'credentials' => ['https://user@fcm.googleapis.com/x', false],
+]);
+
+test('an account keeps its newest ten devices', function () {
+    $user = User::factory()->create();
+    $oldest = PushSubscription::factory()->for($user, 'subscribable')->create();
+    PushSubscription::factory()->count(9)->for($user, 'subscribable')->create();
+
+    $this->actingAs($user)
+        ->postJson('/push-subscriptions', ['endpoint' => 'https://fcm.googleapis.com/fcm/send/newest'])
+        ->assertNoContent();
+
+    expect($user->pushSubscriptions()->count())->toBe(10)
+        ->and($user->pushSubscriptions()->whereKey($oldest->id)->exists())->toBeFalse();
 });

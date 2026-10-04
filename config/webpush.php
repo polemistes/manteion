@@ -38,6 +38,17 @@ return [
     'client_options' => [],
 
     /**
+     * The push services a subscription's endpoint may point at: Chrome,
+     * Edge (both through FCM or WNS), Firefox and Safari. A leading dot
+     * allows the subdomains of that host. Comma-separated in
+     * WEBPUSH_ALLOWED_HOSTS to override.
+     */
+    'allowed_endpoint_hosts' => array_filter(array_map('trim', explode(',', (string) env(
+        'WEBPUSH_ALLOWED_HOSTS',
+        'fcm.googleapis.com,updates.push.services.mozilla.com,.push.services.mozilla.com,.notify.windows.com,.push.apple.com',
+    )))),
+
+    /**
      * The automatic padding in bytes used by Minishlink\WebPush.
      * Set to false to support Firefox Android with v1 endpoint.
      */

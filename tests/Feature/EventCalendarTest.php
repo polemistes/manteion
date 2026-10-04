@@ -108,3 +108,19 @@ test('the calendar only shows events the viewer may see', function () {
     $this->actingAs($viewer)->get('/events/calendar')
         ->assertInertia(fn ($page) => $page->has('events', 0));
 });
+
+test('an event that ends at midnight is over before the next day starts', function () {
+    $user = User::factory()->create();
+    // 20:00 to 00:00 on Thursday 10 September in Oslo.
+    Event::factory()->create(['user_id' => $user->id, 'name' => 'Late dinner', 'starts_at' => '2026-09-10 18:00:00', 'ends_at' => '2026-09-10 22:00:00']);
+
+    $this->actingAs($user)->get('/events/calendar?view=day&date=2026-09-10')
+        ->assertInertia(fn ($page) => $page->has('events', 1));
+
+    $this->actingAs($user)->get('/events/calendar?view=day&date=2026-09-11')
+        ->assertInertia(fn ($page) => $page->has('events', 0));
+
+    $this->actingAs($user)->get('/events?start_date=2026-09-11')
+        ->assertInertia(fn ($page) => $page->has('events', 0)
+            ->where('calendarDays.days', ['2026-09-10']));
+});

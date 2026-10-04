@@ -17,10 +17,16 @@ return new class extends Migration
         });
     }
 
+    /**
+     * MySQL keeps this index for the user_id foreign key once it exists, so
+     * the key is dropped around it and put back.
+     */
     public function down(): void
     {
         Schema::table('conversation_participants', function (Blueprint $table) {
+            $table->dropForeign(['user_id']);
             $table->dropIndex(['user_id']);
+            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
         });
     }
 };

@@ -263,3 +263,32 @@ test('the feed searches the viewer\'s own events by name and place', function ()
     expect($names('cabin'))->toBe(['Cabin Weekend'])
         ->and($names('majorstuen'))->toBe(['Book Club']);
 });
+
+test('the people to invite never give away a guest who hid their answer', function () {
+    $host = User::factory()->create();
+    $viewer = User::factory()->create();
+    $hidden = User::factory()->create();
+    $other = User::factory()->create();
+    Friendship::factory()->accepted()->create(['requester_id' => $viewer->id, 'addressee_id' => $hidden->id]);
+    Friendship::factory()->accepted()->create(['requester_id' => $viewer->id, 'addressee_id' => $other->id]);
+    $event = Event::factory()->create(['user_id' => $host->id, 'allow_invitee_invites' => true]);
+    EventAttendee::factory()->create(['event_id' => $event->id, 'user_id' => $viewer->id]);
+    EventAttendee::factory()->attending()->visibility(AttendanceVisibility::None)->create(['event_id' => $event->id, 'user_id' => $hidden->id]);
+
+    $this->actingAs($viewer)->get("/events/{$event->id}")->assertInertia(fn (Assert $page) => $page
+        ->where('event.can_invite', true)
+        ->where('attendees', fn ($attendees) => ! collect($attendees)->pluck('user.id')->contains($hidden->id))
+        ->where('inviteCandidates', fn ($candidates) => collect($candidates)->pluck('id')->sort()->values()->all() === collect([$hidden->id, $other->id])->sort()->values()->all()));
+});
+
+test('someone who may not invite gets no one to invite', function () {
+    $host = User::factory()->create();
+    $viewer = User::factory()->create();
+    Friendship::factory()->accepted()->create(['requester_id' => $viewer->id, 'addressee_id' => User::factory()->create()->id]);
+    $event = Event::factory()->create(['user_id' => $host->id, 'allow_invitee_invites' => false]);
+    EventAttendee::factory()->create(['event_id' => $event->id, 'user_id' => $viewer->id]);
+
+    $this->actingAs($viewer)->get("/events/{$event->id}")->assertInertia(fn (Assert $page) => $page
+        ->where('event.can_invite', false)
+        ->where('inviteCandidates', []));
+});

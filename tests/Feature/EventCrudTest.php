@@ -198,3 +198,24 @@ test('an image beyond the decoding cap is rejected by validation', function () {
         'image' => UploadedFile::fake()->image('huge.jpg', 5001, 100),
     ])->assertInvalid(['image']);
 });
+
+test('a time sent with another offset is stored as UTC', function () {
+    $user = User::factory()->create();
+    $games = Tag::query()->where('slug', 'games')->firstOrFail();
+
+    $this->actingAs($user)->post('/events', [
+        'name' => 'Board Game Night',
+        'description' => 'Bring snacks.',
+        'starts_at' => '2026-11-10T18:00:00+01:00',
+        'ends_at' => '2026-11-10T22:30:00+01:00',
+        'visibility' => 'private',
+        'allow_invitee_invites' => false,
+        'allow_invitee_comments' => true,
+        'tag_ids' => [$games->id],
+    ])->assertRedirect();
+
+    $event = Event::query()->latest('id')->firstOrFail();
+
+    expect($event->starts_at->toDateTimeString())->toBe('2026-11-10 17:00:00')
+        ->and($event->ends_at->toDateTimeString())->toBe('2026-11-10 21:30:00');
+});

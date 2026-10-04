@@ -215,6 +215,25 @@ class ActivityFeed
     }
 
     /**
+     * Deletes everyone's notifications about something this person did, for
+     * an account that is going: their comments and replies are no longer
+     * there to quote.
+     */
+    public static function withdrawBy(User $actor): void
+    {
+        $notifications = fn () => DatabaseNotification::query()
+            ->where('notifiable_type', (new User)->getMorphClass())
+            ->where('notifiable_id', '!=', $actor->id)
+            ->where('data->actor_id', $actor->id);
+
+        $unreadFor = $notifications()->whereNull('read_at')->distinct()->pluck('notifiable_id');
+
+        $notifications()->delete();
+
+        $unreadFor->each(fn (mixed $userId) => BadgesUpdated::dispatch((int) $userId));
+    }
+
+    /**
      * Deletes the recipient's notifications of one kind that point at
      * something deleted (found by its reference key, e.g. `comment_id`), so
      * its text does not live on in their activity. Their devices hear about

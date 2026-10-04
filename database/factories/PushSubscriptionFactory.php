@@ -22,7 +22,7 @@ class PushSubscriptionFactory extends Factory
         return [
             'subscribable_type' => (new User)->getMorphClass(),
             'subscribable_id' => User::factory(),
-            'endpoint' => 'https://push.example.com/send/'.Str::random(40),
+            'endpoint' => 'https://fcm.googleapis.com/fcm/send/'.Str::random(40),
             'public_key' => Str::random(87),
             'auth_token' => Str::random(22),
             'content_encoding' => 'aes128gcm',

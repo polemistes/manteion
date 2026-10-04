@@ -69,8 +69,10 @@ class UserController extends Controller
         return back();
     }
 
-    public function unsuspend(User $user): RedirectResponse
+    public function unsuspend(Request $request, User $user): RedirectResponse
     {
+        abort_unless($request->user()->role->outranks($user->role), 403);
+
         $user->update([
             'suspended_at' => null,
             'suspended_reason' => null,

@@ -5,12 +5,14 @@ use App\Enums\UserRole;
 use App\Models\Conversation;
 use App\Models\ConversationParticipant;
 use App\Models\Event;
+use App\Models\EventComment;
 use App\Models\EventImage;
 use App\Models\Friendship;
 use App\Models\Message;
 use App\Models\PushSubscription;
 use App\Models\User;
 use App\Notifications\InvitedToEvent;
+use App\Notifications\NewEventComment;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -127,4 +129,25 @@ test('deleting the account that started a conversation does not delete the conve
     // The deleted user's own participation and messages are still gone.
     expect(ConversationParticipant::query()->where('conversation_id', $conversation->id)->where('user_id', $creator->id)->exists())->toBeFalse();
     expect(Message::find($creatorMessage->id))->toBeNull();
+});
+
+test('a deleted account leaves nothing of theirs in other people’s Activity', function () {
+    $leaving = User::factory()->create();
+    $host = User::factory()->create();
+    $guest = User::factory()->create();
+    $staying = User::factory()->create();
+
+    $hostEvent = Event::factory()->create(['user_id' => $host->id]);
+    $comment = EventComment::factory()->create(['event_id' => $hostEvent->id, 'user_id' => $leaving->id, 'body' => 'My phone number is 99 99 99 99']);
+    $host->notify(new NewEventComment($comment));
+
+    $theirEvent = Event::factory()->create(['user_id' => $leaving->id]);
+    $guest->notify(new InvitedToEvent($theirEvent, $staying));
+
+    $guest->notify(new InvitedToEvent($hostEvent, $staying));
+
+    $this->actingAs($leaving)->delete('/profile', ['password' => 'password'])->assertRedirect();
+
+    expect($host->notifications()->count())->toBe(0)
+        ->and($guest->notifications()->pluck('data')->pluck('subject_id')->all())->toBe([$hostEvent->id]);
 });

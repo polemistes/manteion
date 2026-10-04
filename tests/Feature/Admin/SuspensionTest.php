@@ -57,6 +57,31 @@ test('staff cannot suspend themselves', function () {
 
     $response = $this->actingAs($moderator)->post("/admin/users/{$moderator->id}/suspension");
 
-    $response->assertStatus(422);
+    $response->assertForbidden();
     expect($moderator->fresh()->isSuspended())->toBeFalse();
+});
+
+test('staff can only suspend someone below them', function (UserRole $actor, UserRole $target, bool $allowed) {
+    $staff = User::factory()->create(['role' => $actor]);
+    $other = User::factory()->create(['role' => $target]);
+
+    $response = $this->actingAs($staff)->post("/admin/users/{$other->id}/suspension");
+
+    $allowed ? $response->assertRedirect() : $response->assertForbidden();
+    expect($other->fresh()->isSuspended())->toBe($allowed);
+})->with([
+    'moderator → member' => [UserRole::Moderator, UserRole::Member, true],
+    'moderator → moderator' => [UserRole::Moderator, UserRole::Moderator, false],
+    'moderator → administrator' => [UserRole::Moderator, UserRole::Administrator, false],
+    'administrator → moderator' => [UserRole::Administrator, UserRole::Moderator, true],
+    'administrator → administrator' => [UserRole::Administrator, UserRole::Administrator, false],
+]);
+
+test('a moderator cannot lift an administrators suspension', function () {
+    $moderator = User::factory()->create(['role' => UserRole::Moderator]);
+    $admin = User::factory()->create(['role' => UserRole::Administrator, 'suspended_at' => now()]);
+
+    $this->actingAs($moderator)->delete("/admin/users/{$admin->id}/suspension")->assertForbidden();
+
+    expect($admin->fresh()->isSuspended())->toBeTrue();
 });

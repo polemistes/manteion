@@ -197,6 +197,14 @@ class EventController extends Controller
         $isOwner = $viewer->is($event->owner);
         $attendee = $event->attendeeFor($viewer);
         $viewerFriendIds = $viewer->friendIds();
+        $canInvite = Gate::allows('invite', $event);
+
+        // An attendee who limited their visibility is left out entirely for
+        // viewers outside it, not merely shown without a status: being
+        // listed at all reveals that they were invited.
+        $visibleAttendees = $event->attendees
+            ->filter(fn (EventAttendee $attendee) => $isOwner || $attendee->user_id === $viewer->id || $attendee->isVisibleGiven($viewerFriendIds))
+            ->values();
 
         // The comment policy reads the comment's event; hand it this loaded
         // instance so no comment re-fetches the event and its attendees.
@@ -223,7 +231,7 @@ class EventController extends Controller
                 'images' => $event->images->map(fn (EventImage $image) => $image->presentation())->values(),
                 'is_owner' => $isOwner,
                 'is_deleted' => $event->is_deleted,
-                'can_invite' => Gate::allows('invite', $event),
+                'can_invite' => $canInvite,
                 'can_comment' => Gate::allows('comment', $event),
                 'can_delete' => Gate::allows('delete', $event),
                 'can_report' => ! $event->is_deleted && Gate::allows('view', $event) && ! $viewer->is($event->owner),
@@ -233,11 +241,7 @@ class EventController extends Controller
                 'attendance_visibility' => $attendee->attendance_visibility->value,
             ],
             'invitation' => $this->pendingInvitation($attendee),
-            // An attendee who limited their visibility is left out entirely
-            // for viewers outside it, not merely shown without a status:
-            // being listed at all reveals that they were invited.
-            'attendees' => $event->attendees
-                ->filter(fn (EventAttendee $attendee) => $isOwner || $attendee->user_id === $viewer->id || $attendee->isVisibleGiven($viewerFriendIds))
+            'attendees' => $visibleAttendees
                 ->map(fn (EventAttendee $attendee) => [
                     'id' => $attendee->id,
                     'user' => ['id' => $attendee->user->id, 'name' => $attendee->user->name, 'username' => $attendee->user->username, 'avatar_url' => $attendee->user->avatar_url],
@@ -255,8 +259,11 @@ class EventController extends Controller
                 'can_report' => ! $comment->is_deleted && $comment->user_id !== $viewer->id,
                 'reactions' => Reaction::summarize($comment->reactions, $viewer),
             ])->values(),
-            'inviteCandidates' => $viewer->friends()
-                ->reject(fn (User $friend) => $event->attendeeFor($friend) !== null)
+            // Only for someone who may invite, and without only the guests
+            // they can see: leaving out a hidden one would give it away.
+            // Inviting someone already invited changes nothing.
+            'inviteCandidates' => ! $canInvite ? [] : $viewer->friends()
+                ->reject(fn (User $friend) => $visibleAttendees->contains('user_id', $friend->id))
                 ->map(fn (User $friend) => ['id' => $friend->id, 'name' => $friend->name, 'username' => $friend->username, 'avatar_url' => $friend->avatar_url])
                 ->values(),
         ]);
@@ -519,9 +526,14 @@ class EventController extends Controller
             ->get()
             ->each(function (object $row) use (&$days, $timezone, $first, $last): void {
                 $localDay = fn (string $value) => CarbonImmutable::parse($value, 'UTC')->setTimezone($timezone)->startOfDay();
-                $end = $localDay($row->ends_at ?? $row->starts_at)->min($last);
+                $startDay = $localDay($row->starts_at);
+                // One that ends at midnight ends on the day before.
+                $endDay = $row->ends_at === null
+                    ? $startDay
+                    : CarbonImmutable::parse($row->ends_at, 'UTC')->subSecond()->setTimezone($timezone)->startOfDay()->max($startDay);
+                $end = $endDay->min($last);
 
-                for ($day = $localDay($row->starts_at)->max($first); $day <= $end; $day = $day->addDay()) {
+                for ($day = $startDay->max($first); $day <= $end; $day = $day->addDay()) {
                     $days[$day->toDateString()] = true;
                 }
             });

@@ -173,3 +173,29 @@ test('each follower hears about a new event in their own language', function () 
     Notification::assertNotSentTo($owner, FollowedUserPublishedEvent::class);
     expect($event->fresh()->followers_notified_at)->not->toBeNull();
 });
+
+test('followers hear nothing of an event made private or deleted before the job ran', function (string $change) {
+    Notification::fake();
+    $owner = User::factory()->create();
+    $follower = User::factory()->create();
+    Follow::factory()->create(['follower_id' => $follower->id, 'followed_id' => $owner->id]);
+    $event = Event::factory()->public()->create(['user_id' => $owner->id]);
+
+    $event->update($change === 'private' ? ['visibility' => 'private'] : ['is_deleted' => true]);
+    (new NotifyFollowersOfEvent($event))->handle();
+
+    Notification::assertNotSentTo($follower, FollowedUserPublishedEvent::class);
+})->with(['private', 'deleted']);
+
+test('a queued follower notification is not sent once the event has gone private', function () {
+    $owner = User::factory()->create();
+    $follower = User::factory()->create();
+    $event = Event::factory()->public()->create(['user_id' => $owner->id]);
+    $notification = new FollowedUserPublishedEvent($event);
+
+    expect($notification->shouldSend($follower, 'database'))->toBeTrue();
+
+    $event->update(['visibility' => 'private']);
+
+    expect($notification->shouldSend($follower, 'database'))->toBeFalse();
+});

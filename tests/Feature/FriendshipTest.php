@@ -194,7 +194,7 @@ test('declining a friend request is never announced', function () {
     Notification::assertNothingSent();
 });
 
-test('sending, answering and withdrawing a friend request update both sides badges', function (string $action) {
+test('sending, accepting and withdrawing a friend request update both sides badges', function (string $action) {
     $sender = User::factory()->create();
     $recipient = User::factory()->create();
     $friendship = $action === 'send' ? null : Friendship::factory()->create([
@@ -215,7 +215,19 @@ test('sending, answering and withdrawing a friend request update both sides badg
 
     Event::assertDispatched(BadgesUpdated::class, fn (BadgesUpdated $event) => $event->userId === $sender->id);
     Event::assertDispatched(BadgesUpdated::class, fn (BadgesUpdated $event) => $event->userId === $recipient->id);
-})->with(['send', 'accept', 'decline', 'cancel', 'remove']);
+})->with(['send', 'accept', 'cancel', 'remove']);
+
+test('declining a friend request updates only the decliners badges, so the requester cannot tell', function () {
+    $sender = User::factory()->create();
+    $recipient = User::factory()->create();
+    $friendship = Friendship::factory()->create(['requester_id' => $sender->id, 'addressee_id' => $recipient->id]);
+    Event::fake([BadgesUpdated::class]);
+
+    $this->actingAs($recipient)->patch("/friendships/{$friendship->id}", ['action' => 'decline'])->assertRedirect();
+
+    Event::assertDispatched(BadgesUpdated::class, fn (BadgesUpdated $event) => $event->userId === $recipient->id);
+    Event::assertNotDispatched(BadgesUpdated::class, fn (BadgesUpdated $event) => $event->userId === $sender->id);
+});
 
 test('a refused friend request change updates no badges', function () {
     $sender = User::factory()->create();

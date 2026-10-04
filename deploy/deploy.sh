@@ -13,6 +13,13 @@ set -eu
 APP_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 cd "$APP_DIR"
 
+# The example Reverb credentials are public: with them anyone could sign
+# private-channel subscriptions and read every user's live updates.
+if grep -Eq '^REVERB_APP_(KEY|SECRET)=manteion-local' "$APP_DIR/.env"; then
+    echo "ERROR: .env still has the example REVERB_APP_KEY / REVERB_APP_SECRET. Set your own (e.g. openssl rand -hex 20) first." >&2
+    exit 1
+fi
+
 if [ "${1:-}" != "--no-pull" ]; then
     git pull --ff-only
 fi

@@ -107,7 +107,7 @@ class AppServiceProvider extends ServiceProvider
                 return (new WebPush(
                     $auth,
                     [],
-                    Http::timeout(30)->withOptions($config['client_options'])->buildClient(),
+                    Http::timeout(10)->connectTimeout(5)->withOptions($config['client_options'])->buildClient(),
                     new HttpFactory,
                     new HttpFactory,
                     null,

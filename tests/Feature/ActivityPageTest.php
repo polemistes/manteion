@@ -189,14 +189,25 @@ test('the activity page only shows the users own notifications', function () {
     expect($someoneElse->unreadNotifications()->count())->toBe(1);
 });
 
-test('notifications of someone who has since left show without an actor', function () {
+test('a notification whose actor can no longer be found shows without one', function () {
+    $user = User::factory()->create();
+    $inviter = User::factory()->create();
+    $user->notify(new InvitedToEvent(Event::factory()->create(), $inviter));
+    // Gone without the model's deleting hook (which withdraws what they did).
+    DB::table('users')->where('id', $inviter->id)->delete();
+
+    $this->actingAs($user)->get('/notifications')
+        ->assertInertia(fn (Assert $page) => $page->where('notifications.0.actor', null));
+});
+
+test('notifications about what someone did go when their account does', function () {
     $user = User::factory()->create();
     $inviter = User::factory()->create();
     $user->notify(new InvitedToEvent(Event::factory()->create(), $inviter));
     $inviter->delete();
 
     $this->actingAs($user)->get('/notifications')
-        ->assertInertia(fn (Assert $page) => $page->where('notifications.0.actor', null));
+        ->assertInertia(fn (Assert $page) => $page->has('notifications', 0));
 });
 
 test('opening the activity page marks everything read, while showing what was unread', function () {

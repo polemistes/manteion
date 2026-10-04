@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PushSubscription;
+use App\Rules\PushServiceEndpoint;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -16,12 +17,15 @@ use Minishlink\WebPush\ContentEncoding;
  */
 class PushSubscriptionController extends Controller
 {
+    /** How many devices one account can get pushes on. */
+    public const MAX_DEVICES = 10;
+
     public function store(Request $request): RedirectResponse|Response
     {
         $request->validate([
-            'endpoint' => ['required', 'string'],
-            'key' => ['nullable', 'string'],
-            'token' => ['nullable', 'string'],
+            'endpoint' => ['required', 'string', 'max:1024', new PushServiceEndpoint],
+            'key' => ['nullable', 'string', 'max:255'],
+            'token' => ['nullable', 'string', 'max:255'],
             'content_encoding' => ['nullable', Rule::enum(ContentEncoding::class)],
         ]);
 
@@ -37,6 +41,13 @@ class PushSubscriptionController extends Controller
         $subscription->forceFill([
             'user_agent' => Str::substr((string) $request->userAgent(), 0, 512) ?: null,
         ])->save();
+
+        // Every notification goes to every device, so keep the newest few.
+        $stale = $request->user()->pushSubscriptions()->orderByDesc('id')->skip(self::MAX_DEVICES)->take(PHP_INT_MAX)->pluck('id');
+
+        if ($stale->isNotEmpty()) {
+            $request->user()->pushSubscriptions()->whereKey($stale)->delete();
+        }
 
         return $this->done($request);
     }

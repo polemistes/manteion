@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\EventVisibility;
 use App\Enums\FollowStatus;
 use App\Models\ContactTagPreference;
 use App\Models\Event;
@@ -28,6 +29,11 @@ class NotifyFollowersOfEvent implements ShouldQueue
         $event = $this->event->fresh(['owner', 'tags']);
 
         if ($event === null || $event->followers_notified_at !== null) {
+            return;
+        }
+
+        // Made private or deleted while this waited in the queue.
+        if ($event->is_deleted || ! in_array($event->visibility, [EventVisibility::Public, EventVisibility::Searchable], true)) {
             return;
         }
 

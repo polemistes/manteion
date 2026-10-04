@@ -59,7 +59,13 @@ class FriendshipController extends Controller
         // An answered request has been seen, wherever it was answered.
         ActivityFeed::markRead($request->user(), 'user', $friendship->requester_id);
 
-        $this->updateBadges($friendship);
+        // The requester's counts only change when they gain a friend; a
+        // nudge to their devices on a decline would give it away.
+        if ($accepted) {
+            $this->updateBadges($friendship);
+        } else {
+            BadgesUpdated::dispatch($friendship->addressee_id);
+        }
 
         return back();
     }

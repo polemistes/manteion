@@ -9,6 +9,7 @@ use App\Enums\NotificationCategory;
 use App\Enums\ThemeMode;
 use App\Enums\UserRole;
 use App\Notifications\PushTest;
+use App\Services\ActivityFeed;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -67,13 +68,20 @@ class User extends Authenticatable
     /**
      * Push subscriptions (each device's endpoint, keys and user agent) and
      * stored notifications hang off polymorphic relations, which no foreign
-     * key cascades, so they go when the account goes.
+     * key cascades, so they go when the account goes. So does what the
+     * account left in other people's Activity: what they did (a comment
+     * quoted, an invitation) and anything about their events and leaflets,
+     * which the database cascades away with them.
      */
     protected static function booted(): void
     {
         static::deleting(function (User $user) {
             $user->pushSubscriptions()->delete();
             $user->notifications()->delete();
+
+            ActivityFeed::withdrawBy($user);
+            $user->events()->pluck('id')->each(fn (int $id) => ActivityFeed::withdrawAbout('event', $id));
+            $user->leaflets()->pluck('id')->each(fn (int $id) => ActivityFeed::withdrawAbout('leaflet', $id));
         });
     }
 

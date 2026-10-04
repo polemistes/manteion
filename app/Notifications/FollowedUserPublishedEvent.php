@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Enums\EventVisibility;
 use App\Enums\NotificationCategory;
 use App\Models\Event;
 use App\Models\User;
@@ -15,6 +16,19 @@ class FollowedUserPublishedEvent extends ActivityNotification
     public function __construct(
         public Event $event,
     ) {}
+
+    /**
+     * Not when the event was made private or deleted while this waited in
+     * the queue.
+     */
+    public function shouldSend(object $notifiable, string $channel): bool
+    {
+        $event = $this->event->fresh();
+
+        return $event !== null
+            && ! $event->is_deleted
+            && in_array($event->visibility, [EventVisibility::Public, EventVisibility::Searchable], true);
+    }
 
     public static function category(): NotificationCategory
     {
