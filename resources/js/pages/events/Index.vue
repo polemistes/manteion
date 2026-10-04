@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router, usePage, usePoll } from '@inertiajs/vue3';
+import { Head, Link, router, usePoll } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import EventCard from '@/components/EventCard.vue';
@@ -15,15 +15,14 @@ import type {
     EventSummary,
     GroupOption,
 } from '@/events';
+import { useBadges } from '@/realtime';
 import { index as eventsIndex, create as eventsCreate } from '@/routes/events';
 import { index as notificationsIndex } from '@/routes/notifications';
 
 const { t } = useI18n();
 
-const page = usePage();
-const unreadNotificationsCount = computed(
-    () => page.props.unreadNotificationsCount,
-);
+const { badges } = useBadges();
+const unreadNotificationsCount = computed(() => badges.value.activity);
 
 usePoll(20000, { only: ['events', 'pagination'] });
 

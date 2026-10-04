@@ -11,7 +11,7 @@ interface ConversationSummary {
     type: 'direct' | 'group';
     title: string;
     avatar_url: string | null;
-    last_message: { body: string; is_mine: boolean } | null;
+    last_message: { body: string | null; is_mine: boolean } | null;
     unread: boolean;
 }
 
@@ -19,7 +19,7 @@ defineProps<{
     conversations: ConversationSummary[];
 }>();
 
-usePoll(15000, { only: ['conversations', 'unreadMessagesCount'] });
+usePoll(15000, { only: ['conversations'] });
 </script>
 
 <template>

@@ -14,23 +14,13 @@
     "appearInFriendsLists": "Vis meg i vennenes venneliste",
     "searchable": "La profilen min bli funnet i søk",
     "appearanceHeading": "Utseende",
-    "themeStyle": "Stil",
     "themeMode": "Lys eller mørk",
-    "themeStyles": {
-        "classic": "Klassisk",
-        "soft": "Myk"
-    },
     "themeModes": {
         "light": "Lys",
         "dark": "Mørk",
         "system": "Følg systemet"
     },
     "notificationsHeading": "Varslinger",
-    "pushNotificationsEnabled": "Push-varslinger",
-    "notifyEventInvites": "Arrangementsinvitasjoner",
-    "notifyMessages": "Meldinger",
-    "notifyFriendRequests": "Venneforespørsler",
-    "notifyFollowRequests": "Følgeforespørsler",
     "save": "Lagre endringer",
     "saving": "Lagrer…",
     "saved": "Lagret.",

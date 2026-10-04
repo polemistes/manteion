@@ -1,10 +1,15 @@
 import type { Theme } from '@/theme';
 import type { Auth } from '@/types/auth';
+import type { Badges } from '@/types/badges';
 
 // Extend ImportMeta interface for Vite...
 declare module 'vite/client' {
     interface ImportMetaEnv {
         readonly VITE_APP_NAME: string;
+        readonly VITE_REVERB_APP_KEY?: string;
+        readonly VITE_REVERB_HOST?: string;
+        readonly VITE_REVERB_PORT?: string;
+        readonly VITE_REVERB_SCHEME?: string;
         [key: string]: string | boolean | undefined;
     }
 
@@ -19,13 +24,11 @@ declare module '@inertiajs/core' {
         sharedPageProps: {
             name: string;
             auth: Auth;
-            sidebarOpen: boolean;
-            unreadNotificationsCount: number;
-            unreadMessagesCount: number;
-            pendingContactRequestsCount: number;
+            /** Live counts come from useBadges() in @/realtime/badges. */
+            badges: Badges;
             locale: string;
-            theme: Theme;
             availableLocales: Record<string, string>;
+            theme: Theme;
             vapidPublicKey: string | null;
             impersonating: boolean;
             [key: string]: unknown;

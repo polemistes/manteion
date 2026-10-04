@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link, usePage, usePoll } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AlphaBanner from '@/components/AlphaBanner.vue';
@@ -8,6 +8,7 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import ImpersonationBanner from '@/components/ImpersonationBanner.vue';
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
 import StaffDeleteDialog from '@/components/StaffDeleteDialog.vue';
+import { useBadges } from '@/realtime';
 import { logout } from '@/routes';
 import { index as contactsIndex } from '@/routes/contacts';
 import { index as eventsIndex } from '@/routes/events';
@@ -19,21 +20,7 @@ const { t } = useI18n();
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
-const unreadNotificationsCount = computed(
-    () => page.props.unreadNotificationsCount,
-);
-const unreadMessagesCount = computed(() => page.props.unreadMessagesCount);
-const pendingContactRequestsCount = computed(
-    () => page.props.pendingContactRequestsCount,
-);
-
-usePoll(20000, {
-    only: [
-        'unreadNotificationsCount',
-        'unreadMessagesCount',
-        'pendingContactRequestsCount',
-    ],
-});
+const { badges } = useBadges();
 
 const isImpersonating = computed(() => page.props.impersonating);
 
@@ -44,7 +31,7 @@ const navItems = computed(() => {
         {
             label: t('nav.events'),
             href: eventsIndex().url,
-            badge: unreadNotificationsCount.value,
+            badge: badges.value.activity,
         },
         {
             label: t('nav.leaflets'),
@@ -54,12 +41,12 @@ const navItems = computed(() => {
         {
             label: t('nav.messages'),
             href: messagesIndex().url,
-            badge: unreadMessagesCount.value,
+            badge: badges.value.messages,
         },
         {
             label: t('nav.contacts'),
             href: contactsIndex().url,
-            badge: pendingContactRequestsCount.value,
+            badge: badges.value.requests,
         },
     ].map((item) => ({
         ...item,

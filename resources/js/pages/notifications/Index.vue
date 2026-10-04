@@ -2,17 +2,10 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import { read } from '@/routes/notifications';
-
-interface NotificationItem {
-    id: string;
-    type: string;
-    data: Record<string, unknown>;
-    read_at: string | null;
-    created_at: string;
-}
+import type { ActivityItem } from '@/types';
 
 defineProps<{
-    notifications: NotificationItem[];
+    notifications: ActivityItem[];
 }>();
 
 const { t, locale } = useI18n();
@@ -29,18 +22,18 @@ function formatDate(value: string): string {
     );
 }
 
-function message(notification: NotificationItem): string {
+function message(notification: ActivityItem): string {
     if (notification.type === 'InvitedToEvent') {
         return t('notifications.invitedToEvent', {
-            name: notification.data.invited_by_name,
-            event: notification.data.event_name,
+            name: notification.actor?.name ?? '',
+            event: notification.subject_title,
         });
     }
 
     if (notification.type === 'FollowedUserPublishedEvent') {
         return t('notifications.followedUserPublishedEvent', {
-            name: notification.data.owner_name,
-            event: notification.data.event_name,
+            name: notification.actor?.name ?? '',
+            event: notification.subject_title,
         });
     }
 
@@ -62,19 +55,16 @@ function message(notification: NotificationItem): string {
             v-for="notification in notifications"
             :key="notification.id"
             class="flex items-center justify-between gap-4 border-frame border-edge px-3 py-2 text-sm"
-            :class="notification.read_at ? '' : 'font-bold'"
+            :class="notification.unread ? 'font-bold' : ''"
         >
-            <Link
-                :href="`/events/${notification.data.event_id}`"
-                class="flex-1 underline"
-            >
+            <Link :href="notification.url" class="flex-1 underline">
                 {{ message(notification) }}
             </Link>
             <span class="shrink-0 text-xs text-ink/70">{{
                 formatDate(notification.created_at)
             }}</span>
             <Link
-                v-if="!notification.read_at"
+                v-if="notification.unread"
                 :href="read(notification.id).url"
                 method="post"
                 as="button"

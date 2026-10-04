@@ -6,10 +6,10 @@
 /*
  * Design tokens. Components never name a colour, radius or font directly;
  * they use these semantic utilities (bg-surface, text-ink, border-edge,
- * bg-accent, rounded-card, font-body, border-frame …) and each style/mode
- * combination below reassigns the variables. The values in @theme are the
- * classic light style; `static` keeps every variable in the output so the
- * theme blocks and @utility rules can reference them.
+ * bg-accent, rounded-card, font-body, border-frame …) and the dark mode
+ * below reassigns the variables. The values in @theme are the light mode;
+ * `static` keeps every variable in the output so the dark block and
+ * @utility rules can reference them.
  */
 @theme static {
     --font-sans:
@@ -40,8 +40,9 @@
     color-scheme: light;
 }
 
-/* Classic, dark: the same brutalist frame, inverted. */
-html[data-style='classic'][data-mode='dark'] {
+/* Dark: the same brutalist frame, inverted. The root carries data-mode
+   (light or dark, "system" already resolved, see app.blade.php). */
+html[data-mode='dark'] {
     --color-surface: #0b0b0b;
     --color-surface-raised: #0b0b0b;
     --color-surface-inset: #262626;
@@ -49,38 +50,6 @@ html[data-style='classic'][data-mode='dark'] {
     --color-edge: #f2f2f2;
     --color-accent: #f2f2f2;
     --color-on-accent: #0b0b0b;
-    color-scheme: dark;
-}
-
-/* Soft: rounded, warm, a coral accent, and a rounded sans throughout. */
-html[data-style='soft'] {
-    --font-body:
-        Nunito, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
-        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-    --font-sans:
-        Nunito, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
-        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-    --frame-width: 2px;
-    --radius-card: 1rem;
-    --radius-control: 0.5rem;
-
-    --color-surface: #fbf6ef;
-    --color-surface-raised: #ffffff;
-    --color-surface-inset: #fbe2cf;
-    --color-ink: #2f2a3d;
-    --color-edge: #e4d8ca;
-    --color-accent: #e8735a;
-    --color-on-accent: #ffffff;
-}
-
-html[data-style='soft'][data-mode='dark'] {
-    --color-surface: #1e1b2e;
-    --color-surface-raised: #2a2740;
-    --color-surface-inset: #3f3a68;
-    --color-ink: #f2edf7;
-    --color-edge: #443f5c;
-    --color-accent: #ff8f76;
-    --color-on-accent: #1e1b2e;
     color-scheme: dark;
 }
 

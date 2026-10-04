@@ -1,19 +1,15 @@
 import { createInertiaApp, router } from '@inertiajs/vue3';
-import { configureEcho } from '@laravel/echo-vue';
 import { createAppI18n } from './i18n';
 import AppLayout from './layouts/AppLayout.vue';
 import { setupNativeShell } from './native';
-import { setupPushNotifications } from './push';
+import { setupInstallPrompt } from './pwa/install';
+import { registerServiceWorker } from './pwa/serviceWorker';
+import { setupRealtime } from './realtime';
 import { applyTheme } from './theme';
-
-configureEcho({
-    broadcaster: 'reverb',
-});
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 setupNativeShell();
-setupPushNotifications();
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
@@ -22,12 +18,20 @@ createInertiaApp({
     },
     layout: (name) =>
         name === 'Welcome' || name.startsWith('auth/') ? null : AppLayout,
-    withApp(app, { page }) {
+    withApp(app, { page, ssr }) {
         applyTheme(page.props.theme);
         router.on('navigate', (event) =>
             applyTheme(event.detail.page.props.theme),
         );
 
         app.use(createAppI18n(page.props.locale as string));
+
+        // Browser only, and before the app mounts, so the badge store holds
+        // the page's counts when hydration compares against the server.
+        if (!ssr) {
+            setupRealtime(page);
+            registerServiceWorker();
+            setupInstallPrompt();
+        }
     },
 });

@@ -14,23 +14,13 @@
     "appearInFriendsLists": "Show me in my friends' friends lists",
     "searchable": "Let my profile be found in search",
     "appearanceHeading": "Appearance",
-    "themeStyle": "Style",
     "themeMode": "Light or dark",
-    "themeStyles": {
-        "classic": "Classic",
-        "soft": "Soft"
-    },
     "themeModes": {
         "light": "Light",
         "dark": "Dark",
         "system": "Follow system"
     },
     "notificationsHeading": "Notifications",
-    "pushNotificationsEnabled": "Push notifications",
-    "notifyEventInvites": "Event invites",
-    "notifyMessages": "Messages",
-    "notifyFriendRequests": "Friend requests",
-    "notifyFollowRequests": "Follower requests",
     "save": "Save changes",
     "saving": "Saving…",
     "saved": "Saved.",
