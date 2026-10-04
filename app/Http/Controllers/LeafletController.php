@@ -137,6 +137,8 @@ class LeafletController extends Controller
 
         $leaflet->delete();
 
+        ActivityFeed::withdrawAbout('leaflet', $leaflet->id);
+
         return redirect()->route('leaflets.index');
     }
 

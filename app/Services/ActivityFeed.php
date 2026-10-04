@@ -196,6 +196,25 @@ class ActivityFeed
     }
 
     /**
+     * Deletes every notification about an event or leaflet that is gone,
+     * whoever got them, so no one's Activity keeps pointing at it. Those for
+     * whom one was still unread hear about their new count.
+     */
+    public static function withdrawAbout(string $subjectType, int $subjectId): void
+    {
+        $notifications = fn () => DatabaseNotification::query()
+            ->where('notifiable_type', (new User)->getMorphClass())
+            ->where('data->subject_type', $subjectType)
+            ->where('data->subject_id', $subjectId);
+
+        $unreadFor = $notifications()->whereNull('read_at')->distinct()->pluck('notifiable_id');
+
+        $notifications()->delete();
+
+        $unreadFor->each(fn (mixed $userId) => BadgesUpdated::dispatch((int) $userId));
+    }
+
+    /**
      * Deletes the recipient's notifications of one kind that point at
      * something deleted (found by its reference key, e.g. `comment_id`), so
      * its text does not live on in their activity. Their devices hear about

@@ -333,6 +333,7 @@ class EventController extends Controller
                 'resolved_at' => now(),
             ]);
 
+            ActivityFeed::withdrawAbout('event', $event->id);
             broadcast(new EventActivity($event->id, 'deleted'))->toOthers();
 
             return redirect()->route('events.index');
@@ -350,6 +351,7 @@ class EventController extends Controller
 
         $event->delete();
 
+        ActivityFeed::withdrawAbout('event', $event->id);
         broadcast(new EventActivity($event->id, 'deleted'))->toOthers();
 
         return redirect()->route('events.index');

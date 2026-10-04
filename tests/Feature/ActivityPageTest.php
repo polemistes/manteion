@@ -419,3 +419,31 @@ test('the activity page says which notifications reach the phone', function () {
     $this->actingAs($user)->get('/notifications')
         ->assertInertia(fn (Assert $page) => $page->where('push.has_device', true));
 });
+
+test('deleting an event takes everyone’s notifications about it along', function () {
+    $host = User::factory()->create();
+    $guest = User::factory()->create();
+    $event = Event::factory()->create(['user_id' => $host->id]);
+    $other = Event::factory()->create(['user_id' => $host->id]);
+    $guest->notify(new InvitedToEvent($event, $host));
+    $guest->notify(new InvitedToEvent($other, $host));
+    Events::fake([BadgesUpdated::class]);
+
+    $this->actingAs($host)->delete("/events/{$event->id}")->assertRedirect();
+
+    expect($guest->notifications()->pluck('data')->pluck('subject_id')->all())->toBe([$other->id]);
+    Events::assertDispatched(BadgesUpdated::class, fn (BadgesUpdated $event) => $event->userId === $guest->id);
+});
+
+test('deleting a leaflet takes the notifications about its responses along', function () {
+    $author = User::factory()->create();
+    $friend = User::factory()->create();
+    Friendship::factory()->accepted()->create(['requester_id' => $friend->id, 'addressee_id' => $author->id]);
+    $leaflet = Leaflet::factory()->friends()->create(['user_id' => $author->id]);
+    $author->notify(new NewLeafletResponse(LeafletResponse::factory()->create(['leaflet_id' => $leaflet->id, 'user_id' => $friend->id])));
+    $author->notifications()->update(['read_at' => now()]);
+
+    $this->actingAs($author)->delete("/leaflets/{$leaflet->id}")->assertRedirect();
+
+    expect($author->notifications()->count())->toBe(0);
+});

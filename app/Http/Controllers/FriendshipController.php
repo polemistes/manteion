@@ -56,6 +56,9 @@ class FriendshipController extends Controller
             );
         }
 
+        // An answered request has been seen, wherever it was answered.
+        ActivityFeed::markRead($request->user(), 'user', $friendship->requester_id);
+
         $this->updateBadges($friendship);
 
         return back();

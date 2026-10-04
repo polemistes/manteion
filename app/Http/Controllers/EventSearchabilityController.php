@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\EventVisibility;
+use App\Events\EventActivity;
 use App\Models\Event;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
@@ -17,6 +18,8 @@ class EventSearchabilityController extends Controller
             'visibility' => EventVisibility::Searchable,
             'searchable_paid_at' => now(),
         ]);
+
+        broadcast(new EventActivity($event->id, 'updated'))->toOthers();
 
         return back();
     }

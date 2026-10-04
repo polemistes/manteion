@@ -180,3 +180,14 @@ test('unfollowing keeps the notification about the follow', function () {
 
     expect($target->notifications()->count())->toBe(1);
 });
+
+test('approving a follow request marks its notification read', function () {
+    $follower = User::factory()->create();
+    $followed = User::factory()->create(['allow_public_follow' => false]);
+    $follow = Follow::factory()->pending()->create(['follower_id' => $follower->id, 'followed_id' => $followed->id]);
+    $followed->notify(new NewFollower($follow));
+
+    $this->actingAs($followed)->patch("/follows/{$follow->id}")->assertRedirect();
+
+    expect($followed->unreadNotifications()->count())->toBe(0);
+});

@@ -42,6 +42,9 @@ class FollowController extends Controller
             (new FollowRequestApproved($follow))->locale($follow->follower->locale ?? 'en')
         );
 
+        // An answered request has been seen, wherever it was answered.
+        ActivityFeed::markRead($follow->followed, 'user', $follow->follower_id);
+
         $this->updateBadges($follow);
 
         return back();

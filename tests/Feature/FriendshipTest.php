@@ -254,3 +254,16 @@ test('removing a friend keeps the notifications of how the friendship began', fu
     expect($recipient->notifications()->count())->toBe(1);
     expect($sender->notifications()->count())->toBe(1);
 });
+
+test('answering a friend request marks its notification read, wherever it is answered', function (string $action) {
+    $requester = User::factory()->create();
+    $addressee = User::factory()->create();
+    $friendship = Friendship::factory()->create(['requester_id' => $requester->id, 'addressee_id' => $addressee->id]);
+    $addressee->notify(new FriendRequestReceived($friendship));
+
+    expect($addressee->unreadNotifications()->count())->toBe(1);
+
+    $this->actingAs($addressee)->patch("/friendships/{$friendship->id}", ['action' => $action])->assertRedirect();
+
+    expect($addressee->unreadNotifications()->count())->toBe(0);
+})->with(['accept', 'decline']);

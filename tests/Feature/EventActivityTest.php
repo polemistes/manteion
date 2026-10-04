@@ -5,6 +5,7 @@ use App\Events\EventActivity;
 use App\Models\Event;
 use App\Models\EventAttendee;
 use App\Models\EventComment;
+use App\Models\EventImage;
 use App\Models\Follow;
 use App\Models\Friendship;
 use App\Models\User;
@@ -165,4 +166,25 @@ test('an unreachable WebSocket server does not fail the change', function () {
 
     $this->assertDatabaseHas('event_comments', ['event_id' => $event->id, 'body' => 'Welcome!']);
     Exceptions::assertReported(BroadcastException::class);
+});
+
+test('removing the cover image tells the open event pages', function () {
+    $host = User::factory()->create();
+    $event = Event::factory()->create(['user_id' => $host->id]);
+    $image = EventImage::factory()->create(['event_id' => $event->id]);
+    Events::fake([EventActivity::class]);
+
+    $this->actingAs($host)->delete("/events/{$event->id}/images/{$image->id}")->assertRedirect();
+
+    assertEventActivity($event, 'updated');
+});
+
+test('making an event searchable tells the open event pages', function () {
+    $host = User::factory()->create();
+    $event = Event::factory()->public()->create(['user_id' => $host->id]);
+    Events::fake([EventActivity::class]);
+
+    $this->actingAs($host)->post("/events/{$event->id}/searchable")->assertRedirect();
+
+    assertEventActivity($event, 'updated');
 });

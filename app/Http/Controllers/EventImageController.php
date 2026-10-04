@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\EventActivity;
 use App\Models\Event;
 use App\Models\EventImage;
 use Illuminate\Http\RedirectResponse;
@@ -16,6 +17,8 @@ class EventImageController extends Controller
 
         Storage::disk('public')->delete($image->path);
         $image->delete();
+
+        broadcast(new EventActivity($event->id, 'updated'))->toOthers();
 
         return back();
     }
