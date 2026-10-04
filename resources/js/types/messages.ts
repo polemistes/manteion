@@ -71,3 +71,39 @@ export type TypingUser = {
     id: number;
     name: string;
 };
+
+/** A person on a conversation list row (up to three per group). */
+export type ConversationAvatar = {
+    id: number;
+    name: string;
+    avatar_url: string | null;
+};
+
+/** One row of the conversation list (messages/Index, and beside a thread). */
+export type ConversationListItem = {
+    id: number;
+    type: ConversationType;
+    title: string;
+    avatar_url: string | null;
+    avatars: ConversationAvatar[];
+    last_message: {
+        body: string | null;
+        is_mine: boolean;
+        sender_name: string;
+        is_deleted: boolean;
+        created_at: string;
+    } | null;
+    unread: boolean;
+    unread_count: number;
+    muted: boolean;
+    activity_at: string;
+};
+
+/** A member of the open conversation. */
+export type ConversationParticipantSummary = {
+    id: number;
+    name: string;
+    username: string;
+    avatar_url: string | null;
+    is_me: boolean;
+};

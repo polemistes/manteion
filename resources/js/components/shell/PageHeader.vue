@@ -33,6 +33,7 @@ const props = withDefaults(
         phoneHidden?: boolean;
         headerHidden?: boolean;
         width?: 'feed' | 'wide' | 'panel';
+        alpha?: boolean;
     }>(),
     {
         documentTitle: undefined,
@@ -45,6 +46,7 @@ const props = withDefaults(
         phoneHidden: false,
         headerHidden: false,
         width: 'feed',
+        alpha: true,
     },
 );
 
@@ -117,14 +119,14 @@ const { activity } = useNavigation();
         </div>
     </header>
 
-    <AlphaNotice v-if="props.root" class="mx-4 mt-3 sm:hidden" />
+    <AlphaNotice v-if="props.root && props.alpha" class="mx-4 mt-3 sm:hidden" />
 
     <PageContainer
-        v-if="props.root || !props.headerHidden"
+        v-if="(props.root && props.alpha) || !props.headerHidden"
         :width="props.width"
         class="hidden sm:block"
     >
-        <div v-if="props.root" class="pt-4 lg:hidden">
+        <div v-if="props.root && props.alpha" class="pt-4 lg:hidden">
             <AlphaNotice />
         </div>
 

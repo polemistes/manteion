@@ -41,6 +41,13 @@ const ownBottomBar: Record<string, string> = {
 
 const hasTabBar = computed(() => !(page.component in ownBottomBar));
 
+/** Pages that fill the viewport and scroll inside themselves (the list, the thread). */
+const fullHeight = computed(
+    () =>
+        page.component === 'messages/Index' ||
+        page.component === 'messages/Show',
+);
+
 const toastBottom = computed(
     () =>
         ownBottomBar[page.component] ??
@@ -267,9 +274,11 @@ onIncomingMessage((message) => {
                 id="main"
                 class="min-w-0 flex-1"
                 :class="
-                    hasTabBar
-                        ? 'pb-[calc(var(--spacing-tabbar)+env(safe-area-inset-bottom)+24px)] sm:pb-12'
-                        : 'sm:pb-12'
+                    fullHeight
+                        ? 'h-dvh overflow-hidden'
+                        : hasTabBar
+                          ? 'pb-[calc(var(--spacing-tabbar)+env(safe-area-inset-bottom)+24px)] sm:pb-12'
+                          : 'sm:pb-12'
                 "
             >
                 <slot />
