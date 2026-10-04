@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\EventActivity;
 use App\Events\MessageUpdated;
 use App\Http\Requests\StoreReactionRequest;
+use App\Models\EventComment;
 use App\Models\Message;
 use App\Models\Reaction;
 use Illuminate\Http\JsonResponse;
@@ -43,6 +45,10 @@ class ReactionController extends Controller
 
         if ($reactable instanceof Message) {
             broadcast(new MessageUpdated($reactable))->toOthers();
+        }
+
+        if ($reactable instanceof EventComment) {
+            broadcast(new EventActivity($reactable->event_id, 'comment'))->toOthers();
         }
 
         if ($request->wantsJson()) {

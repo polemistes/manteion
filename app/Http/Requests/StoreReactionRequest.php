@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\EventComment;
 use App\Models\Leaflet;
 use App\Models\LeafletResponse;
 use App\Models\Message;
@@ -15,6 +16,7 @@ class StoreReactionRequest extends FormRequest
      * @var array<string, class-string>
      */
     private const REACTABLE_TYPES = [
+        'comment' => EventComment::class,
         'leaflet' => Leaflet::class,
         'leaflet_response' => LeafletResponse::class,
         'message' => Message::class,
@@ -34,6 +36,12 @@ class StoreReactionRequest extends FormRequest
             return $reactable->conversation->isVisibleTo($this->user());
         }
 
+        // Likes on comments: anyone who can see the event, but not on a
+        // deleted comment.
+        if ($reactable instanceof EventComment) {
+            return ! $reactable->is_deleted && $reactable->event->isVisibleTo($this->user());
+        }
+
         return $this->user()->can('view', $reactable);
     }
 
@@ -49,7 +57,7 @@ class StoreReactionRequest extends FormRequest
         ];
     }
 
-    public function reactable(): Leaflet|LeafletResponse|Message|null
+    public function reactable(): EventComment|Leaflet|LeafletResponse|Message|null
     {
         $modelClass = self::REACTABLE_TYPES[$this->string('reactable_type')->value()] ?? null;
 

@@ -1,4 +1,8 @@
-export type ReactableType = 'leaflet' | 'leaflet_response' | 'message';
+export type ReactableType =
+    | 'comment'
+    | 'leaflet'
+    | 'leaflet_response'
+    | 'message';
 
 export interface ReactionSummary {
     emoji: string;

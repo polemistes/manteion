@@ -10,6 +10,7 @@ use App\Http\Controllers\ContactGroupMemberController;
 use App\Http\Controllers\ContactsController;
 use App\Http\Controllers\ContactTagPreferenceController;
 use App\Http\Controllers\EventAttendanceController;
+use App\Http\Controllers\EventCalendarFileController;
 use App\Http\Controllers\EventCommentController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventImageController;
@@ -84,6 +85,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/events/create', [EventController::class, 'create'])->name('events.create');
     Route::post('/events', [EventController::class, 'store'])->name('events.store');
     Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
+    Route::get('/events/{event}/calendar.ics', EventCalendarFileController::class)->name('events.calendar-file');
     Route::get('/events/{event}/edit', [EventController::class, 'edit'])->name('events.edit');
     Route::put('/events/{event}', [EventController::class, 'update'])->name('events.update');
     Route::delete('/events/{event}', [EventController::class, 'destroy'])->name('events.destroy');

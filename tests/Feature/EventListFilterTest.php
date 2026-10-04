@@ -159,10 +159,10 @@ test('the list reports the cover image and attendance counts for each event', fu
 
     $response->assertInertia(fn ($page) => $page
         ->has('events', 2)
-        ->where('events.0.cover_image_url', fn ($url) => str_contains($url, 'events/cover.jpg'))
+        ->where('events.0.cover.url', fn ($url) => str_contains($url, 'events/cover.jpg'))
         ->where('events.0.attending_count', 1)
         ->where('events.0.interested_count', 1)
-        ->where('events.1.cover_image_url', null)
+        ->where('events.1.cover', null)
         ->where('events.1.attending_count', 0)
         ->where('events.1.interested_count', 0));
 });

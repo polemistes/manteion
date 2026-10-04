@@ -32,6 +32,16 @@ class ImageProcessor
      */
     public function store(UploadedFile $file, string $directory, int $maxEdge = self::EVENT_MAX_EDGE): string
     {
+        return $this->storeWithSize($file, $directory, $maxEdge)['path'];
+    }
+
+    /**
+     * Like store(), and also says how large the stored image came out.
+     *
+     * @return array{path: string, width: int, height: int}
+     */
+    public function storeWithSize(UploadedFile $file, string $directory, int $maxEdge = self::EVENT_MAX_EDGE): array
+    {
         $image = $this->orient($this->decode($file), $file);
         $image = $this->fit($image, $maxEdge);
 
@@ -58,7 +68,7 @@ class ImageProcessor
 
         Storage::disk('public')->put($path, $contents);
 
-        return $path;
+        return ['path' => $path, 'width' => $width, 'height' => $height];
     }
 
     private function decode(UploadedFile $file): GdImage

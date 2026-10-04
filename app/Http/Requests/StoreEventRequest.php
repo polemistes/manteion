@@ -41,6 +41,7 @@ class StoreEventRequest extends FormRequest
             'tag_ids' => ['array', 'max:50'],
             'tag_ids.*' => ['integer', 'exists:tags,id'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', Rule::dimensions()->maxWidth(self::MAX_UPLOAD_EDGE)->maxHeight(self::MAX_UPLOAD_EDGE)],
+            'image_fit' => ['nullable', 'string', 'in:cover,contain'],
         ];
     }
 }

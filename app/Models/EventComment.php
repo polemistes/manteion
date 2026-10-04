@@ -52,6 +52,14 @@ class EventComment extends Model
     }
 
     /**
+     * @return MorphMany<Reaction, $this>
+     */
+    public function reactions(): MorphMany
+    {
+        return $this->morphMany(Reaction::class, 'reactable');
+    }
+
+    /**
      * @return MorphMany<Report, $this>
      */
     public function reports(): MorphMany

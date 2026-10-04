@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AttendanceStatus;
+use App\Enums\AttendeeSource;
 use App\Enums\ContactGroupType;
 use App\Enums\EventVisibility;
 use App\Enums\FollowStatus;
@@ -14,6 +16,8 @@ use App\Models\ContactGroup;
 use App\Models\Event;
 use App\Models\EventAttendee;
 use App\Models\EventComment;
+use App\Models\EventImage;
+use App\Models\Reaction;
 use App\Models\Tag;
 use App\Models\User;
 use App\Services\ActivityFeed;
@@ -30,6 +34,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -68,9 +73,12 @@ class EventController extends Controller
         return Inertia::render('events/Index', [
             'events' => $this->summarizeEvents($events->getCollection(), $user, $nearPoint),
             'pagination' => $this->summarizePagination($events),
+            'invitations' => fn () => $this->summarizeEvents($this->pendingInvitationsFor($user, $feed), $user),
+            'comingUp' => fn () => $this->summarizeEvents($this->comingUpFor($user, $feed), $user),
+            'calendarDays' => fn () => $this->eventDaysThisMonth($feed),
             ...$this->filterPanelProps($user, $followedIds),
             'filters' => [
-                ...$request->only(['tags', 'owner_filter', 'group_id', 'near_lat', 'near_lng']),
+                ...$request->only(['tags', 'owner_filter', 'group_id', 'near_lat', 'near_lng', 'mine']),
                 'start_date' => $startDateFilter,
                 'end_date' => $endDateFilter,
             ],
@@ -119,7 +127,7 @@ class EventController extends Controller
                 'today' => now()->toDateString(),
             ],
             ...$this->filterPanelProps($user, $followedIds),
-            'filters' => $request->only(['tags', 'owner_filter', 'group_id']),
+            'filters' => $request->only(['tags', 'owner_filter', 'group_id', 'mine']),
         ]);
     }
 
@@ -162,7 +170,7 @@ class EventController extends Controller
         ]));
 
         $this->syncTags($event, $request->input('tag_ids', []));
-        $this->storeImage($event, $request->file('image'));
+        $this->storeImage($event, $request->file('image'), $request->input('image_fit'));
 
         if ($event->visibility !== EventVisibility::Private) {
             NotifyFollowersOfEvent::dispatch($event);
@@ -176,7 +184,7 @@ class EventController extends Controller
         Gate::authorize('view', $event);
 
         $viewer = $request->user();
-        $event->load(['owner', 'tags', 'images', 'comments.user', 'attendees.user']);
+        $event->load(['owner', 'tags', 'images', 'comments.user', 'comments.reactions', 'attendees.user', 'attendees.invitedBy']);
 
         // Opening the event means its invitation, comments and so on have
         // been seen.
@@ -210,7 +218,7 @@ class EventController extends Controller
                 'is_searchable_paid' => $event->searchable_paid_at !== null,
                 'owner' => ['id' => $event->owner->id, 'name' => $event->owner->name, 'username' => $event->owner->username, 'avatar_url' => $event->owner->avatar_url],
                 'tags' => $event->tags->map(fn (Tag $tag) => ['id' => $tag->id, 'name' => $tag->name, 'slug' => $tag->slug])->values(),
-                'images' => $event->images->map(fn ($image) => Storage::disk('public')->url($image->path))->values(),
+                'images' => $event->images->map(fn (EventImage $image) => $image->presentation())->values(),
                 'is_owner' => $isOwner,
                 'is_deleted' => $event->is_deleted,
                 'can_invite' => Gate::allows('invite', $event),
@@ -222,6 +230,7 @@ class EventController extends Controller
                 'status' => $attendee->status->value,
                 'attendance_visibility' => $attendee->attendance_visibility->value,
             ],
+            'invitation' => $this->pendingInvitation($attendee),
             // An attendee who limited their visibility is left out entirely
             // for viewers outside it, not merely shown without a status:
             // being listed at all reveals that they were invited.
@@ -242,6 +251,7 @@ class EventController extends Controller
                 // The viewer has already been authorised to view the event,
                 // and with it every comment on it.
                 'can_report' => ! $comment->is_deleted && $comment->user_id !== $viewer->id,
+                'reactions' => Reaction::summarize($comment->reactions, $viewer),
             ])->values(),
             'inviteCandidates' => $viewer->friends()
                 ->reject(fn (User $friend) => $event->attendeeFor($friend) !== null)
@@ -273,9 +283,7 @@ class EventController extends Controller
                 'allow_invitee_invites' => $event->allow_invitee_invites,
                 'allow_invitee_comments' => $event->allow_invitee_comments,
                 'tag_ids' => $event->tags->pluck('id')->values(),
-                'image' => $event->images->first() !== null
-                    ? ['id' => $event->images->first()->id, 'url' => Storage::disk('public')->url($event->images->first()->path)]
-                    : null,
+                'image' => $event->images->first()?->presentation(),
             ],
             'categories' => Tag::categoriesTree(),
         ]);
@@ -299,7 +307,7 @@ class EventController extends Controller
         ]);
 
         $this->syncTags($event, $request->input('tag_ids', []));
-        $this->storeImage($event, $request->file('image'));
+        $this->storeImage($event, $request->file('image'), $request->input('image_fit'), $request->exists('image_fit'));
 
         if ($wasPrivate && $visibility !== EventVisibility::Private && $event->followers_notified_at === null) {
             NotifyFollowersOfEvent::dispatch($event);
@@ -346,35 +354,166 @@ class EventController extends Controller
     }
 
     /**
+     * The card shape of each event, from the viewer's side: their answer and
+     * invitation, the cover's size and shape, and up to four faces of people
+     * going (friends first, only those whose answer the viewer may see).
+     *
      * @param  Collection<int, Event>  $events
      * @param  array{0: float, 1: float}|null  $nearPoint
      * @return array<int, array<string, mixed>>
      */
     private function summarizeEvents(Collection $events, User $viewer, ?array $nearPoint = null): array
     {
-        return $events->map(fn (Event $event) => [
-            'id' => $event->id,
-            'name' => $event->name,
-            'place' => $event->place,
-            'city' => $event->city,
-            'country' => $event->country,
-            'latitude' => $event->latitude,
-            'longitude' => $event->longitude,
-            'starts_at' => $event->starts_at->toIso8601String(),
-            'visibility' => $event->visibility->value,
-            'owner' => ['id' => $event->owner->id, 'name' => $event->owner->name, 'username' => $event->owner->username, 'avatar_url' => $event->owner->avatar_url],
-            'tags' => $event->tags->map(fn (Tag $tag) => ['id' => $tag->id, 'name' => $tag->name, 'slug' => $tag->slug])->values()->all(),
-            'my_status' => $event->attendeeFor($viewer)?->status->value,
-            'my_attendance_visibility' => $event->attendeeFor($viewer)?->attendance_visibility->value,
-            'cover_image_url' => $event->images->first() !== null
-                ? Storage::disk('public')->url($event->images->first()->path)
-                : null,
-            'attending_count' => $event->attending_count,
-            'interested_count' => $event->interested_count,
-            'distance_km' => $nearPoint !== null && $event->latitude !== null && $event->longitude !== null
-                ? round($this->haversineKm($nearPoint[0], $nearPoint[1], $event->latitude, $event->longitude), 1)
-                : null,
-        ])->values()->all();
+        $faces = $this->goingFaces($events, $viewer);
+
+        return $events->map(function (Event $event) use ($viewer, $nearPoint, $faces) {
+            $attendee = $event->attendeeFor($viewer);
+
+            return [
+                'id' => $event->id,
+                'name' => $event->name,
+                'description' => Str::limit(preg_replace('/\s+/', ' ', $event->description) ?? '', 220),
+                'place' => $event->place,
+                'city' => $event->city,
+                'country' => $event->country,
+                'latitude' => $event->latitude,
+                'longitude' => $event->longitude,
+                'starts_at' => $event->starts_at->toIso8601String(),
+                'ends_at' => $event->ends_at?->toIso8601String(),
+                'visibility' => $event->visibility->value,
+                'owner' => ['id' => $event->owner->id, 'name' => $event->owner->name, 'username' => $event->owner->username, 'avatar_url' => $event->owner->avatar_url],
+                'is_host' => $event->user_id === $viewer->id,
+                'tags' => $event->tags->map(fn (Tag $tag) => ['id' => $tag->id, 'name' => $tag->name, 'slug' => $tag->slug])->values()->all(),
+                'my_status' => $attendee?->status->value,
+                'my_attendance_visibility' => $attendee?->attendance_visibility->value,
+                'invitation' => $this->pendingInvitation($attendee),
+                'cover' => $event->images->first()?->presentation(),
+                'attending_count' => $event->attending_count,
+                'interested_count' => $event->interested_count,
+                'going' => $faces[$event->id] ?? [],
+                'distance_km' => $nearPoint !== null && $event->latitude !== null && $event->longitude !== null
+                    ? round($this->haversineKm($nearPoint[0], $nearPoint[1], $event->latitude, $event->longitude), 1)
+                    : null,
+            ];
+        })->values()->all();
+    }
+
+    /**
+     * Who invited the viewer, while the invitation is still unanswered.
+     *
+     * @return array{by: array{id: int, name: string, avatar_url: string|null}|null, at: string}|null
+     */
+    private function pendingInvitation(?EventAttendee $attendee): ?array
+    {
+        if ($attendee === null || $attendee->source !== AttendeeSource::Invited || $attendee->status !== AttendanceStatus::NoResponse) {
+            return null;
+        }
+
+        $by = $attendee->invitedBy;
+
+        return [
+            'by' => $by === null ? null : ['id' => $by->id, 'name' => $by->name, 'avatar_url' => $by->avatar_url],
+            'at' => ($attendee->created_at ?? now())->toIso8601String(),
+        ];
+    }
+
+    /**
+     * Up to four people going to each event that the viewer may see as
+     * going, friends first. One query for the whole page.
+     *
+     * @param  Collection<int, Event>  $events
+     * @return array<int, list<array{id: int, name: string, avatar_url: string|null}>>
+     */
+    private function goingFaces(Collection $events, User $viewer): array
+    {
+        if ($events->isEmpty()) {
+            return [];
+        }
+
+        $friendIds = $viewer->friendIds();
+        $hostOf = $events->pluck('user_id', 'id');
+
+        return EventAttendee::query()
+            ->whereIn('event_id', $events->pluck('id')->all())
+            ->where('status', AttendanceStatus::Attending)
+            ->with('user:id,name,avatar_path')
+            ->orderBy('id')
+            ->get()
+            ->groupBy('event_id')
+            ->map(fn (Collection $attendees, int $eventId) => array_values($attendees
+                ->filter(fn (EventAttendee $attendee) => $hostOf[$eventId] === $viewer->id
+                    || $attendee->user_id === $viewer->id
+                    || $attendee->isVisibleGiven($friendIds))
+                ->sortBy(fn (EventAttendee $attendee) => $friendIds->contains($attendee->user_id) ? 0 : 1)
+                ->take(4)
+                ->map(fn (EventAttendee $attendee) => [
+                    'id' => $attendee->user->id,
+                    'name' => $attendee->user->name,
+                    'avatar_url' => $attendee->user->avatar_url,
+                ])
+                ->all()))
+            ->all();
+    }
+
+    /**
+     * Upcoming events the user was invited to and hasn't answered, soonest
+     * first: the feed's "Waiting for your answer".
+     *
+     * @return Collection<int, Event>
+     */
+    private function pendingInvitationsFor(User $user, EventFeedQuery $feed): Collection
+    {
+        return $feed->visible()
+            ->whereHas('attendees', fn (Builder $query) => $query
+                ->where('user_id', $user->id)
+                ->where('source', AttendeeSource::Invited)
+                ->where('status', AttendanceStatus::NoResponse))
+            ->where('starts_at', '>=', now()->startOfDay())
+            ->orderBy('starts_at')
+            ->limit(10)
+            ->get();
+    }
+
+    /**
+     * The next three events the user is going to, may go to, or hosts.
+     *
+     * @return Collection<int, Event>
+     */
+    private function comingUpFor(User $user, EventFeedQuery $feed): Collection
+    {
+        return $feed->visible()
+            ->where(fn (Builder $query) => $query
+                ->where('user_id', $user->id)
+                ->orWhereHas('attendees', fn (Builder $attendees) => $attendees
+                    ->where('user_id', $user->id)
+                    ->whereIn('status', [AttendanceStatus::Attending, AttendanceStatus::Interested])))
+            ->where('starts_at', '>=', now())
+            ->orderBy('starts_at')
+            ->limit(3)
+            ->get();
+    }
+
+    /**
+     * The days of this month (in the display time zone) that have events the
+     * user can see, for the month in the feed's aside.
+     *
+     * @return array{month: string, days: list<string>}
+     */
+    private function eventDaysThisMonth(EventFeedQuery $feed): array
+    {
+        $timezone = (string) config('app.display_timezone');
+        $start = CarbonImmutable::now($timezone)->startOfMonth();
+        $end = $start->endOfMonth();
+
+        $days = array_values($feed->visible()
+            ->whereBetween('starts_at', [$start->utc(), $end->utc()])
+            ->pluck('starts_at')
+            ->map(fn ($startsAt) => CarbonImmutable::parse($startsAt)->setTimezone($timezone)->toDateString())
+            ->unique()
+            ->sort()
+            ->all());
+
+        return ['month' => $start->format('Y-m'), 'days' => $days];
     }
 
     /**
@@ -405,8 +544,9 @@ class EventController extends Controller
     }
 
     /**
-     * Narrows a feed query by organizer (friends, followed users, specific
-     * people) and by contact group, as the list and calendar pages share.
+     * Narrows a feed query by the viewer's relationship to the event, by
+     * organizer (friends, followed users, specific people) and by contact
+     * group, as the list and calendar pages share.
      *
      * @param  Builder<Event>  $query
      * @param  Collection<int, int>  $followedIds
@@ -414,6 +554,20 @@ class EventController extends Controller
      */
     private function applyContactFilters(Builder $query, Request $request, User $user, Collection $followedIds): Builder
     {
+        // The viewer's own relationship to the event: invited and not yet
+        // answered, going (or maybe), or hosting.
+        match ($request->string('mine')->toString()) {
+            'invited' => $query->whereHas('attendees', fn (Builder $attendees) => $attendees
+                ->where('user_id', $user->id)
+                ->where('source', AttendeeSource::Invited)
+                ->where('status', AttendanceStatus::NoResponse)),
+            'going' => $query->whereHas('attendees', fn (Builder $attendees) => $attendees
+                ->where('user_id', $user->id)
+                ->whereIn('status', [AttendanceStatus::Attending, AttendanceStatus::Interested])),
+            'hosting' => $query->where('user_id', $user->id),
+            default => null,
+        };
+
         $ownerFilter = $request->array('owner_filter');
         if ($ownerFilter !== []) {
             $allowedOwnerIds = collect();
@@ -512,9 +666,21 @@ class EventController extends Controller
         $event->tags()->sync($tagIds->merge($parentIds)->unique());
     }
 
-    private function storeImage(Event $event, ?UploadedFile $file): void
+    /**
+     * Replaces the event's image with an upload, or, without one, applies a
+     * changed "fill the frame / show it whole" choice to the current image
+     * (only when the form sent one). `$fit` is 'cover', 'contain', or null
+     * to let the image's shape decide.
+     */
+    private function storeImage(Event $event, ?UploadedFile $file, ?string $fit, bool $fitSent = true): void
     {
+        $fit = in_array($fit, ['cover', 'contain'], true) ? $fit : null;
+
         if ($file === null) {
+            if ($fitSent) {
+                $event->images()->update(['fit' => $fit]);
+            }
+
             return;
         }
 
@@ -523,8 +689,14 @@ class EventController extends Controller
             $existingImage->delete();
         }
 
-        $path = $this->imageProcessor->store($file, "events/{$event->id}", ImageProcessor::EVENT_MAX_EDGE);
+        $stored = $this->imageProcessor->storeWithSize($file, "events/{$event->id}", ImageProcessor::EVENT_MAX_EDGE);
 
-        $event->images()->create(['path' => $path, 'position' => 0]);
+        $event->images()->create([
+            'path' => $stored['path'],
+            'position' => 0,
+            'width' => $stored['width'],
+            'height' => $stored['height'],
+            'fit' => $fit,
+        ]);
     }
 }
