@@ -7,7 +7,8 @@
         "scope": "Show",
         "scopeAll": "All",
         "emptyTitle": "No leaflets here yet",
-        "empty": "Write the first one: ask, offer or tell people something."
+        "empty": "Write the first one: ask, offer or tell people something.",
+        "endNote": "That’s all the leaflets for now."
     },
     "form": {
         "body": "Message",

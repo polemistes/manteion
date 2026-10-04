@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppDialog from '@/components/ui/AppDialog.vue';
 import Avatar from '@/components/ui/Avatar.vue';
@@ -62,11 +62,15 @@ const segments = computed(() => [
         label: t('events.show.going'),
         count: groups.value.attending.length,
     },
-    {
-        value: 'interested',
-        label: t('events.show.maybe'),
-        count: groups.value.interested.length,
-    },
+    ...(groups.value.interested.length
+        ? [
+              {
+                  value: 'interested',
+                  label: t('events.show.maybe'),
+                  count: groups.value.interested.length,
+              },
+          ]
+        : []),
     ...(groups.value.no_response.length
         ? [
               {
@@ -90,6 +94,20 @@ const listSegments = computed(() => [
           ]
         : []),
 ]);
+
+// A group that empties (someone changed their answer) takes its segment
+// with it: fall back to Going.
+watch(segments, (next) => {
+    if (!next.some((segment) => segment.value === tab.value)) {
+        tab.value = 'attending';
+    }
+});
+
+watch(listSegments, (next) => {
+    if (!next.some((segment) => segment.value === listTab.value)) {
+        listTab.value = 'attending';
+    }
+});
 
 const FACES = 5;
 const faces = computed(() => groups.value[tab.value].slice(0, FACES));
@@ -122,15 +140,24 @@ function openList(): void {
             </button>
         </div>
         <SegmentedControl
+            v-if="segments.length > 1"
             v-model="tab"
             :segments="segments"
             :label="t('events.show.whosComing')"
             class="w-full [&>button]:flex-1"
         />
-        <p v-if="!faces.length" class="mt-4 text-meta text-ink-muted">
+        <p
+            v-if="!faces.length"
+            class="text-meta text-ink-muted"
+            :class="segments.length > 1 ? 'mt-4' : ''"
+        >
             {{ t('events.show.noOne') }}
         </p>
-        <ul v-else class="mt-4 grid grid-cols-6 gap-2">
+        <ul
+            v-else
+            class="grid grid-cols-6 gap-2"
+            :class="segments.length > 1 ? 'mt-4' : ''"
+        >
             <li v-for="person in faces" :key="person.id">
                 <Link
                     :href="usersShow(person.id).url"
@@ -179,6 +206,7 @@ function openList(): void {
             size="lg"
         >
             <SegmentedControl
+                v-if="listSegments.length > 1"
                 v-model="listTab"
                 :segments="listSegments"
                 :label="t('events.show.guestList')"

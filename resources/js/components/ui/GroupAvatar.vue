@@ -38,6 +38,7 @@ const shown = computed(() => props.members.slice(0, 2));
                 :src="shown[0].avatar_url"
                 :size="inner"
                 decorative
+                single
                 class="absolute top-0 left-0"
             />
             <Avatar
@@ -45,6 +46,7 @@ const shown = computed(() => props.members.slice(0, 2));
                 :src="shown[1].avatar_url"
                 :size="inner"
                 decorative
+                single
                 ring
                 class="absolute right-0 bottom-0"
             />

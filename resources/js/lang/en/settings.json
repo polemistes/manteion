@@ -14,9 +14,14 @@
     "seeProfile": "{'@'}{username} · See your profile",
     "saveFailed": "Couldn’t save that. Try again.",
     "overview": {
-        "title": "Your account",
         "editAccount": "Edit account",
-        "seeProfile": "See your profile"
+        "hints": {
+            "account": "Your photo, name, username, email and password.",
+            "privacy": "Who can follow you, find you and see your friends.",
+            "notifications": "What reaches your phone, and what only shows here.",
+            "appearance": "Light, dark, or the same as your device.",
+            "language": "English or Norwegian."
+        }
     },
     "install": {
         "title": "Install Manteion",

@@ -273,7 +273,8 @@ function submit(): void {
                 </div>
                 <div class="flex shrink-0 items-center gap-2 pl-[54px] sm:pl-0">
                     <SelectField
-                        class="w-44"
+                        class="w-40"
+                        compact
                         :model-value="user.role"
                         :options="roles"
                         :label="t('admin.users.roleFor', { name: user.name })"

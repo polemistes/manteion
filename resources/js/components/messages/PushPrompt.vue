@@ -87,64 +87,67 @@ async function turnOn(): Promise<void> {
 </script>
 
 <template>
-    <div
-        v-if="state !== 'hidden'"
-        class="relative flex gap-3 rounded-lg border border-line bg-surface p-4 pr-12"
-    >
-        <span
-            class="grid size-10 shrink-0 place-items-center rounded-full bg-accent-soft text-accent-ink"
+    <!-- In a narrow column (the list beside an open chat) the icon goes,
+         so the text keeps the width. -->
+    <div v-if="state !== 'hidden'" class="@container">
+        <div
+            class="relative flex gap-3 rounded-lg border border-line bg-surface p-4 pr-12 @max-xs:pr-10"
         >
-            <BellRing :size="20" :stroke-width="1.8" aria-hidden="true" />
-        </span>
-        <div class="min-w-0 flex-1">
-            <p class="font-semibold">
-                {{
-                    state === 'install'
-                        ? t('messages.push.installTitle')
-                        : t('messages.push.title')
-                }}
-            </p>
-            <p class="mt-0.5 text-meta text-ink-muted">
-                <template v-if="state === 'install'">
-                    {{ t('messages.push.installBody') }}
-                    <span class="mt-1.5 flex items-center gap-2 text-ink">
-                        <Share
-                            :size="16"
-                            :stroke-width="2"
-                            aria-hidden="true"
-                        />
-                        <span aria-hidden="true">→</span>
-                        <SquarePlus
-                            :size="16"
-                            :stroke-width="2"
-                            aria-hidden="true"
-                        />
-                    </span>
-                </template>
-                <template v-else>{{ t('messages.push.body') }}</template>
-            </p>
-            <Button
-                v-if="state === 'offer'"
-                variant="primary"
-                size="sm"
-                class="mt-3"
-                :icon="BellRing"
-                :disabled="busy"
-                @click="turnOn"
+            <span
+                class="grid size-10 shrink-0 place-items-center rounded-full bg-accent-soft text-accent-ink @max-xs:hidden"
             >
-                {{
-                    busy
-                        ? t('messages.push.turningOn')
-                        : t('messages.push.turnOn')
-                }}
-            </Button>
+                <BellRing :size="20" :stroke-width="1.8" aria-hidden="true" />
+            </span>
+            <div class="min-w-0 flex-1">
+                <p class="font-semibold">
+                    {{
+                        state === 'install'
+                            ? t('messages.push.installTitle')
+                            : t('messages.push.title')
+                    }}
+                </p>
+                <p class="mt-0.5 text-meta text-ink-muted">
+                    <template v-if="state === 'install'">
+                        {{ t('messages.push.installBody') }}
+                        <span class="mt-1.5 flex items-center gap-2 text-ink">
+                            <Share
+                                :size="16"
+                                :stroke-width="2"
+                                aria-hidden="true"
+                            />
+                            <span aria-hidden="true">→</span>
+                            <SquarePlus
+                                :size="16"
+                                :stroke-width="2"
+                                aria-hidden="true"
+                            />
+                        </span>
+                    </template>
+                    <template v-else>{{ t('messages.push.body') }}</template>
+                </p>
+                <Button
+                    v-if="state === 'offer'"
+                    variant="primary"
+                    size="sm"
+                    class="mt-3"
+                    :icon="BellRing"
+                    :disabled="busy"
+                    @click="turnOn"
+                >
+                    {{
+                        busy
+                            ? t('messages.push.turningOn')
+                            : t('messages.push.turnOn')
+                    }}
+                </Button>
+            </div>
+            <IconButton
+                :icon="X"
+                :label="t('ui.dismiss')"
+                size="sm"
+                class="absolute top-2 right-2"
+                @click="dismiss"
+            />
         </div>
-        <IconButton
-            :icon="X"
-            :label="t('ui.dismiss')"
-            size="sm"
-            class="absolute top-2 right-2"
-            @click="dismiss"
-        />
     </div>
 </template>

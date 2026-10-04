@@ -123,6 +123,7 @@
         "cancelRequest": "Cancel friend request",
         "cancelFollowRequest": "Cancel follow request",
         "message": "Message",
-        "comingUp": "Coming up"
+        "comingUp": "Coming up",
+        "nothingToShow": "Nothing from {name} to show you yet."
     }
 }

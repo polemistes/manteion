@@ -5,6 +5,7 @@ import {
     Calendar,
     ChevronDown,
     ChevronLeft,
+    Earth,
     Ellipsis,
     Eye,
     Flag,
@@ -227,6 +228,9 @@ const address = computed(() =>
 const hasMap = computed(
     () => props.event.latitude !== null && props.event.longitude !== null,
 );
+
+/** The map card shows for a pinned place with a name. */
+const hasMapCard = computed(() => hasMap.value && !!props.event.place);
 
 const directionsUrl = computed(() =>
     hasMap.value
@@ -515,8 +519,9 @@ const showMenu = computed(
                     {{ t('events.show.deletedEvent') }}
                 </div>
 
-                <!-- Invitation, title. -->
-                <div class="mt-5 sm:mt-6">
+                <!-- Invitation, title. From xl the cover is in the aside, so
+                     the title follows the crumb row closely. -->
+                <div class="mt-5 sm:mt-6 xl:mt-1">
                     <p
                         v-if="props.invitation?.by"
                         class="mb-3 inline-flex max-w-full items-center gap-2 rounded-full bg-accent-soft py-1 pr-3 pl-1 text-label text-ink"
@@ -635,8 +640,12 @@ const showMenu = computed(
                                 class="flex items-center gap-1.5 text-meta text-ink-muted"
                             >
                                 {{ t('events.show.host') }} ·
-                                <Lock
-                                    v-if="props.event.visibility === 'private'"
+                                <component
+                                    :is="
+                                        props.event.visibility === 'private'
+                                            ? Lock
+                                            : Earth
+                                    "
                                     :size="13"
                                     :stroke-width="2"
                                     aria-hidden="true"
@@ -685,43 +694,61 @@ const showMenu = computed(
                     {{ t('events.show.ended') }}
                 </p>
 
-                <!-- Before xl: guests and map in the main column. -->
+                <!-- Who's coming, About and the map. Phone: in that order.
+                     640–767: guests, map, About. 768–1279: guests and map
+                     side by side, then About. xl: guests and map move to
+                     the aside. One map either way (Leaflet can't start in
+                     a hidden box). -->
                 <div
-                    class="mt-8 grid gap-6 border-y border-line py-6 md:grid-cols-2 md:border-0 md:py-0 xl:hidden"
+                    class="mt-8 grid gap-y-8 md:grid-cols-2 md:gap-x-6 md:gap-y-8 xl:block"
                 >
-                    <GuestFaces
-                        :attendees="props.attendees"
-                        :host="props.event.owner"
-                        :viewer-is-host="props.event.is_owner"
-                    />
+                    <div
+                        class="border-y border-line py-6 sm:border-0 sm:py-0 xl:hidden"
+                    >
+                        <GuestFaces
+                            :attendees="props.attendees"
+                            :host="props.event.owner"
+                            :viewer-is-host="props.event.is_owner"
+                        />
+                    </div>
                     <EventMapCard
-                        v-if="hasMap && props.event.place"
+                        v-if="hasMapCard"
+                        class="row-start-3 sm:row-start-2 md:col-start-2 md:row-start-1 xl:hidden"
                         :latitude="props.event.latitude!"
                         :longitude="props.event.longitude!"
-                        :place="props.event.place"
+                        :place="props.event.place ?? ''"
                         :address="address"
                     />
-                </div>
 
-                <!-- About. -->
-                <section class="mt-8">
-                    <h2 class="mb-2 text-kicker text-ink-muted uppercase">
-                        {{ t('events.show.about') }}
-                    </h2>
-                    <div
-                        class="max-w-reading font-display text-reading whitespace-pre-line text-ink"
+                    <!-- About. -->
+                    <section
+                        class="md:col-span-2"
+                        :class="
+                            hasMapCard
+                                ? 'row-start-2 sm:row-start-3 md:row-start-2'
+                                : ''
+                        "
                     >
-                        {{ props.event.description }}
-                    </div>
-                    <div
-                        v-if="props.event.tags.length"
-                        class="mt-5 flex flex-wrap gap-2"
-                    >
-                        <Tag v-for="tag in props.event.tags" :key="tag.id">{{
-                            categoryLabel(tag)
-                        }}</Tag>
-                    </div>
-                </section>
+                        <h2 class="mb-2 text-kicker text-ink-muted uppercase">
+                            {{ t('events.show.about') }}
+                        </h2>
+                        <div
+                            class="max-w-reading font-display text-reading whitespace-pre-line text-ink"
+                        >
+                            {{ props.event.description }}
+                        </div>
+                        <div
+                            v-if="props.event.tags.length"
+                            class="mt-5 flex flex-wrap gap-2"
+                        >
+                            <Tag
+                                v-for="tag in props.event.tags"
+                                :key="tag.id"
+                                >{{ categoryLabel(tag) }}</Tag
+                            >
+                        </div>
+                    </section>
+                </div>
 
                 <div class="mt-10 max-w-reading">
                     <CommentThread
@@ -772,10 +799,10 @@ const showMenu = computed(
                         />
                     </div>
                     <EventMapCard
-                        v-if="hasMap && props.event.place"
+                        v-if="hasMapCard"
                         :latitude="props.event.latitude!"
                         :longitude="props.event.longitude!"
-                        :place="props.event.place"
+                        :place="props.event.place ?? ''"
                         :address="address"
                     />
                 </div>

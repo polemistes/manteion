@@ -1,26 +1,23 @@
 <script setup lang="ts">
-import { Link, usePage } from '@inertiajs/vue3';
-import { Download } from '@lucide/vue';
-import { computed } from 'vue';
+import { Link } from '@inertiajs/vue3';
+import { ChevronRight, Download } from '@lucide/vue';
 import { useI18n } from 'vue-i18n';
+import { sections } from '@/components/settings/sections';
 import SettingsGroup from '@/components/settings/SettingsGroup.vue';
 import SettingsNav from '@/components/settings/SettingsNav.vue';
 import PageContainer from '@/components/shell/PageContainer.vue';
 import PageHeader from '@/components/shell/PageHeader.vue';
-import Avatar from '@/components/ui/Avatar.vue';
 import Button from '@/components/ui/Button.vue';
+import Card from '@/components/ui/Card.vue';
+import ListRow from '@/components/ui/ListRow.vue';
 import { useInstallPrompt } from '@/pwa/install';
-import { account } from '@/routes/settings';
-import { show as usersShow } from '@/routes/users';
 
 /**
  * Settings, the Me tab. On a phone and a small tablet it is the list of
- * panels; from 768 the nav sits beside an overview of the account.
+ * panels; from 768 the nav sits beside the panels with what each holds.
  */
 const { t } = useI18n();
-const page = usePage();
 
-const user = computed(() => page.props.auth.user);
 const { canInstall, promptInstall } = useInstallPrompt();
 </script>
 
@@ -59,39 +56,41 @@ const { canInstall, promptInstall } = useInstallPrompt();
             </div>
 
             <div class="flex min-w-0 flex-col gap-7">
-                <h2 class="font-display text-title-2">
-                    {{ t('settings.overview.title') }}
-                </h2>
-                <div
-                    class="flex items-center gap-4 rounded-lg border border-line bg-surface p-5"
-                >
-                    <Avatar
-                        :name="user.name"
-                        :src="user.avatar_url"
-                        :size="64"
-                    />
-                    <div class="min-w-0 flex-1">
-                        <p class="truncate font-display text-title-3 text-ink">
-                            {{ user.name }}
-                        </p>
-                        <p class="truncate text-meta text-ink-muted">
-                            @{{ user.username }} · {{ user.email }}
-                        </p>
-                        <div class="mt-3 flex flex-wrap gap-2">
-                            <Button :as="Link" :href="account().url" size="sm">
-                                {{ t('settings.overview.editAccount') }}
-                            </Button>
-                            <Button
-                                :as="Link"
-                                :href="usersShow(user.id).url"
-                                variant="ghost"
-                                size="sm"
+                <Card>
+                    <ListRow
+                        v-for="section in sections"
+                        :key="section.key"
+                        :as="Link"
+                        :href="section.href()"
+                        interactive
+                        :title="t(`settings.sections.${section.key}`)"
+                        :inset="70"
+                    >
+                        <template #leading>
+                            <span
+                                class="grid size-10 shrink-0 place-items-center rounded-full bg-surface-2 text-ink-muted"
+                                aria-hidden="true"
                             >
-                                {{ t('settings.overview.seeProfile') }}
-                            </Button>
-                        </div>
-                    </div>
-                </div>
+                                <component
+                                    :is="section.icon"
+                                    :size="20"
+                                    :stroke-width="1.75"
+                                />
+                            </span>
+                        </template>
+                        <span class="mt-0.5 block text-meta text-ink-muted">{{
+                            t(`settings.overview.hints.${section.key}`)
+                        }}</span>
+                        <template #trailing>
+                            <ChevronRight
+                                :size="18"
+                                :stroke-width="1.9"
+                                class="shrink-0 text-ink-subtle"
+                                aria-hidden="true"
+                            />
+                        </template>
+                    </ListRow>
+                </Card>
 
                 <SettingsGroup v-if="canInstall" :flush="false">
                     <p class="font-semibold text-ink">

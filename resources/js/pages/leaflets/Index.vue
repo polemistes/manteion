@@ -73,11 +73,6 @@ usePressedChipInView(chipRow, () => props.scope);
                 @click="composeOpen = true"
             />
         </template>
-        <template #actions>
-            <Button :icon="Plus" variant="primary" @click="composeOpen = true">
-                {{ t('leaflets.index.compose') }}
-            </Button>
-        </template>
     </PageHeader>
 
     <PageContainer class="pt-3 pb-16 sm:pt-0">
@@ -134,6 +129,16 @@ usePressedChipInView(chipRow, () => props.scope);
             :pagination="props.pagination"
             :only="['leaflets', 'pagination']"
         />
+
+        <p
+            v-if="
+                props.leaflets.length &&
+                props.pagination.current_page === props.pagination.last_page
+            "
+            class="mt-10 text-center font-display text-input text-ink-muted italic"
+        >
+            {{ t('leaflets.index.endNote') }}
+        </p>
     </PageContainer>
 
     <AppDialog

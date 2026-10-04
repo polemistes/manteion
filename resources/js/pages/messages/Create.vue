@@ -93,7 +93,7 @@ function setSelected(id: number, value: boolean): void {
                     class="group/row relative flex min-h-15 cursor-pointer items-center gap-3.5 px-4 py-3 transition-colors duration-120 hover:bg-surface-2/55"
                 >
                     <span
-                        class="pointer-events-none absolute top-0 right-0 left-[74px] h-px bg-line group-first/row:hidden"
+                        class="pointer-events-none absolute top-0 right-0 left-[74px] h-px bg-line group-first-of-type/row:hidden"
                         aria-hidden="true"
                     />
                     <Avatar

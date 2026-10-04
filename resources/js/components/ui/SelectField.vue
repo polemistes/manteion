@@ -21,7 +21,8 @@ export interface SelectOption {
 
 /**
  * A labelled select in the field style. With `name` it also submits inside
- * an Inertia <Form> (Reka renders a hidden native select).
+ * an Inertia <Form> (Reka renders a hidden native select). `compact` is
+ * the 40px pill for selects in list rows (its hit area is still 44).
  */
 const props = withDefaults(
     defineProps<{
@@ -35,6 +36,7 @@ const props = withDefaults(
         disabled?: boolean;
         defaultValue?: string;
         hideLabel?: boolean;
+        compact?: boolean;
     }>(),
     {
         label: undefined,
@@ -46,6 +48,7 @@ const props = withDefaults(
         disabled: false,
         defaultValue: undefined,
         hideLabel: false,
+        compact: false,
     },
 );
 
@@ -77,8 +80,13 @@ const triggerId = computed(() => props.id ?? autoId);
             <SelectTrigger
                 :id="triggerId"
                 :aria-invalid="props.error ? 'true' : undefined"
-                class="flex h-12 w-full items-center justify-between gap-2 rounded-md bg-surface px-3.5 text-left text-input text-ink ring-1 ring-control ring-inset hover:ring-ink-subtle focus:outline-none focus-visible:ring-2 focus-visible:ring-ink disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-ink-subtle data-[placeholder]:text-ink-subtle"
-                :class="props.error ? 'ring-2 ring-danger' : ''"
+                class="relative flex w-full items-center justify-between gap-2 bg-surface text-left text-ink ring-1 ring-inset hover:ring-ink-subtle focus:outline-none focus-visible:ring-2 focus-visible:ring-ink disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-ink-subtle data-[placeholder]:text-ink-subtle"
+                :class="[
+                    props.compact
+                        ? 'h-10 rounded-full pr-3 pl-4 text-label font-medium ring-line-strong after:absolute after:inset-x-0 after:-inset-y-0.5'
+                        : 'h-12 rounded-md px-3.5 text-input ring-control',
+                    props.error ? 'ring-2 ring-danger' : '',
+                ]"
             >
                 <SelectValue :placeholder="props.placeholder" class="truncate" />
                 <ChevronDown

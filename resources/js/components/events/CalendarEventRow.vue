@@ -11,7 +11,8 @@ import { dayPart } from './calendar';
 /**
  * One event in a calendar list: the time it starts that day (or "All
  * day", "Until 12:00" on the later days of a longer event), the name,
- * where and whose, and your answer.
+ * where and whose, and your answer (under the name where the row is
+ * narrow, as on phones and in the aside, so the name keeps the width).
  */
 const props = defineProps<{
     event: EventSummary;
@@ -78,10 +79,10 @@ const status = computed<{ label: string; tone: 'going' | 'host' } | null>(
 <template>
     <Link
         :href="eventsShow(props.event.id).url"
-        class="flex items-start gap-3 rounded-md px-3 py-2.5 transition-colors duration-120 hover:bg-surface-2"
+        class="@container flex items-start gap-3 rounded-md px-3 py-2.5 transition-colors duration-120 hover:bg-surface-2"
     >
         <span
-            class="w-[4.5rem] shrink-0 pt-px text-label font-semibold text-ink"
+            class="w-[5.25rem] shrink-0 pt-px text-label font-semibold text-ink"
         >
             {{ startLabel }}
             <span
@@ -97,9 +98,12 @@ const status = computed<{ label: string; tone: 'going' | 'host' } | null>(
             <span v-if="meta" class="block truncate text-meta text-ink-muted">{{
                 meta
             }}</span>
+            <span v-if="status" class="mt-1.5 block @md:hidden">
+                <Tag :tone="status.tone">{{ status.label }}</Tag>
+            </span>
         </span>
-        <Tag v-if="status" :tone="status.tone" class="mt-0.5">{{
-            status.label
-        }}</Tag>
+        <span v-if="status" class="mt-0.5 hidden @md:block">
+            <Tag :tone="status.tone">{{ status.label }}</Tag>
+        </span>
     </Link>
 </template>

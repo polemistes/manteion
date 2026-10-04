@@ -14,9 +14,14 @@
     "seeProfile": "{'@'}{username} · Se profilen din",
     "saveFailed": "Kunne ikke lagre. Prøv igjen.",
     "overview": {
-        "title": "Kontoen din",
         "editAccount": "Rediger konto",
-        "seeProfile": "Se profilen din"
+        "hints": {
+            "account": "Bildet, navnet, brukernavnet, e-posten og passordet ditt.",
+            "privacy": "Hvem som kan følge deg, finne deg og se vennene dine.",
+            "notifications": "Hva som når telefonen din, og hva som bare vises her.",
+            "appearance": "Lyst, mørkt eller det samme som enheten.",
+            "language": "Engelsk eller norsk."
+        }
     },
     "install": {
         "title": "Installer Manteion",

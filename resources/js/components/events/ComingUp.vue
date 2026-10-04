@@ -55,7 +55,7 @@ function role(event: EventSummary): string {
                     />
                     <DateBadge :date="event.starts_at" size="sm" />
                     <span class="min-w-0 flex-1">
-                        <span class="block truncate text-label font-semibold">{{
+                        <span class="line-clamp-2 text-label font-semibold">{{
                             event.name
                         }}</span>
                         <span class="block truncate text-meta text-ink-muted"

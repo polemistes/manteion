@@ -123,6 +123,7 @@
         "cancelRequest": "Trekk tilbake venneforespørselen",
         "cancelFollowRequest": "Trekk tilbake forespørselen om å følge",
         "message": "Send melding",
-        "comingUp": "Kommer snart"
+        "comingUp": "Kommer snart",
+        "nothingToShow": "Ingenting fra {name} å vise deg ennå."
     }
 }

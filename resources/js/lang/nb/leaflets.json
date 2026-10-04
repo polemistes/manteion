@@ -7,7 +7,8 @@
         "scope": "Vis",
         "scopeAll": "Alle",
         "emptyTitle": "Ingen flyveblad her ennå",
-        "empty": "Skriv det første: spør om noe, tilby noe eller fortell noe."
+        "empty": "Skriv det første: spør om noe, tilby noe eller fortell noe.",
+        "endNote": "Det var alle flyvebladene for nå."
     },
     "form": {
         "body": "Melding",

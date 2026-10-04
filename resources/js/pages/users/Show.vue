@@ -462,5 +462,14 @@ function eventStatus(status: AttendanceStatus | null): string | null {
                 </button>
             </p>
         </template>
+
+        <p
+            v-if="
+                !props.is_self && !props.events.length && !props.friends.length
+            "
+            class="mt-10 text-center font-display text-input text-ink-muted italic"
+        >
+            {{ t('people.profile.nothingToShow', { name: name }) }}
+        </p>
     </PageContainer>
 </template>

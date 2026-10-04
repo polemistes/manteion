@@ -4,7 +4,8 @@ import { computed, ref, watch } from 'vue';
 /**
  * A round photo, or two initials in the serif when there is none (or it
  * fails to load). A plain <img> so the server-rendered markup matches the
- * browser's: no initials flash while a cached photo loads.
+ * browser's: no initials flash while a cached photo loads. Small faces,
+ * and `single` ones (partly covered, as in a group's face), get one.
  */
 const props = withDefaults(
     defineProps<{
@@ -13,8 +14,9 @@ const props = withDefaults(
         size?: number;
         ring?: boolean;
         decorative?: boolean;
+        single?: boolean;
     }>(),
-    { src: null, size: 40, ring: false, decorative: false },
+    { src: null, size: 40, ring: false, decorative: false, single: false },
 );
 
 const failed = ref(false);
@@ -36,7 +38,7 @@ const initials = computed(() => {
     const last = words.length > 1 ? (words[words.length - 1][0] ?? '') : '';
 
     // Two letters don't fit a small face (stacks, seen-by): one does.
-    return (props.size < 32 ? first : first + last).toUpperCase();
+    return (props.single || props.size < 32 ? first : first + last).toUpperCase();
 });
 
 const style = computed(() => ({
