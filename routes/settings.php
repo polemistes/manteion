@@ -18,8 +18,10 @@ Route::get('/settings/privacy', [PrivacyController::class, 'edit'])->name('setti
 Route::put('/settings/privacy', [PrivacyController::class, 'update'])->name('settings.privacy.update');
 Route::get('/settings/notifications', [NotificationController::class, 'edit'])->name('settings.notifications');
 Route::put('/settings/notifications', [NotificationController::class, 'update'])->name('settings.notifications.update');
+Route::post('/settings/notifications/test', [NotificationController::class, 'test'])->middleware('throttle:6,1')->name('settings.notifications.test');
 Route::get('/settings/appearance', [AppearanceController::class, 'edit'])->name('settings.appearance');
 Route::put('/settings/appearance', [AppearanceController::class, 'update'])->name('settings.appearance.update');
+Route::get('/settings/language', [SettingsController::class, 'language'])->name('settings.language');
 
 // A device listed in the notification settings, removed by id (the other
 // push-subscription routes, by endpoint, are in routes/web.php).

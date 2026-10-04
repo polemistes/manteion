@@ -176,7 +176,11 @@ async function showPush(data) {
             samePage(client.url, url),
     );
 
-    if (watching) {
+    // A test from the notification settings always shows: that is what it
+    // checks. The open windows hear that it arrived, below.
+    const isTest = info.type === 'test';
+
+    if (watching && !isTest) {
         watching.postMessage({ type: 'push', data: info });
 
         if (!mustShowEveryPush) {
@@ -233,6 +237,12 @@ async function showPush(data) {
         payload.title || 'Manteion',
         options,
     );
+
+    if (isTest) {
+        windows.forEach((client) =>
+            client.postMessage({ type: 'push', data: info }),
+        );
+    }
 }
 
 self.addEventListener('push', (event) => {

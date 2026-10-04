@@ -1,0 +1,167 @@
+{
+    "title": "Innstillinger",
+    "sections": {
+        "account": "Konto",
+        "privacy": "Personvern",
+        "notifications": "Varsler",
+        "appearance": "Utseende",
+        "language": "Språk"
+    },
+    "staff": "Ansatte",
+    "moderation": "Moderering",
+    "users": "Brukere",
+    "logOut": "Logg ut",
+    "seeProfile": "{'@'}{username} · Se profilen din",
+    "saveFailed": "Kunne ikke lagre. Prøv igjen.",
+    "overview": {
+        "title": "Kontoen din",
+        "editAccount": "Rediger konto",
+        "seeProfile": "Se profilen din"
+    },
+    "install": {
+        "title": "Installer Manteion",
+        "body": "Åpne den fra hjemskjermen som en vanlig app, og få varsler der.",
+        "action": "Installer"
+    },
+    "account": {
+        "photo": "Bilde",
+        "name": "Navn",
+        "username": "Brukernavn",
+        "usernameHint": "Bokstaver, tall, punktum og understrek. Folk finner deg med det.",
+        "email": "E-post",
+        "bio": "Om deg",
+        "bioPlaceholder": "Noen ord om deg selv…",
+        "save": "Lagre endringer",
+        "saving": "Lagrer…",
+        "saved": "Lagret.",
+        "password": "Passord",
+        "currentPassword": "Nåværende passord",
+        "newPassword": "Nytt passord",
+        "confirmPassword": "Nytt passord igjen",
+        "changePassword": "Bytt passord",
+        "passwordSaved": "Passordet ditt er byttet.",
+        "leave": "Forlat Manteion",
+        "deleteBody": "Sletter du kontoen, forsvinner profilen din, arrangementene, flyvebladene og meldingene dine for godt.",
+        "delete": "Slett konto…",
+        "deleteTitle": "Slette kontoen din?",
+        "deleteConfirm": "Dette kan ikke angres. Skriv inn passordet ditt for å bekrefte.",
+        "deleteForGood": "Slett kontoen min"
+    },
+    "privacy": {
+        "lede": "Hvem som kan følge deg, finne deg og se hvem du kjenner.",
+        "followers": "Følgere",
+        "findingYou": "Å finne deg",
+        "allow_public_follow": {
+            "title": "Alle kan følge deg",
+            "description": "Når dette er av, godkjenner du hver nye følger først."
+        },
+        "searchable": {
+            "title": "La folk finne deg på navn",
+            "description": "Profilen din dukker opp når folk søker etter noen å legge til."
+        },
+        "show_friends_list": {
+            "title": "Vis vennene dine på profilen",
+            "description": "Andre kan se hvem du er venn med."
+        },
+        "appear_in_friends_lists": {
+            "title": "Vis deg i vennenes lister",
+            "description": "Navnet ditt vises når noen ser på en venns venner."
+        }
+    },
+    "notifications": {
+        "lede": "Velg hva som når deg, og hvor. Alt dukker fortsatt opp i Aktivitet, og Manteion sender aldri reklame.",
+        "device": {
+            "title": "Varsler på denne enheten",
+            "on": "På · {device}",
+            "off": "Av. Slå på for å få varsler her.",
+            "blocked": "Blokkert i denne nettleseren. Tillat varsler for nettstedet i nettleserens innstillinger.",
+            "failed": "Kunne ikke slå på varsler her. Prøv igjen.",
+            "sendTest": "Send en test",
+            "testHint": "Sjekk at varsler når denne enheten.",
+            "testSent": "Sendt. Den bør komme om noen sekunder…",
+            "testMissing": "Testen kom ikke fram. Sjekk at varsler for denne nettleseren er tillatt i enhetens innstillinger.",
+            "testFailed": "Kunne ikke sende en test. Prøv igjen.",
+            "lastTest": "Siste test kom fram {ago}",
+            "installTitle": "Legg Manteion til på Hjem-skjermen først",
+            "installBody": "På iPhone og iPad virker varsler i den installerte appen. Trykk Del, så Legg til på Hjem-skjerm, og åpne Manteion derfra.",
+            "unsupported": "Denne nettleseren kan ikke få varsler fra Manteion.",
+            "unconfigured": "Varsler er ikke satt opp på denne serveren ennå."
+        },
+        "notifyMeAbout": "Varsle meg om",
+        "defaultsNote": "Meldinger er på som standard. Slå på resten bare hvis du vil ha dem på låseskjermen.",
+        "groups": {
+            "messages": "Meldinger",
+            "events": "Arrangementer",
+            "people": "Folk",
+            "leaflets": "Flyveblad"
+        },
+        "categories": {
+            "direct_messages": {
+                "title": "Direktemeldinger",
+                "description": "Når noen skriver til deg"
+            },
+            "group_messages": {
+                "title": "Gruppemeldinger",
+                "description": "Nye meldinger i gruppesamtalene dine"
+            },
+            "event_invites": {
+                "title": "Invitasjoner",
+                "description": "Når noen inviterer deg til et arrangement"
+            },
+            "event_comments": {
+                "title": "Kommentarer på arrangementene dine",
+                "description": "Når noen kommenterer et arrangement du er vert for"
+            },
+            "followed_events": {
+                "title": "Nye arrangementer fra folk du følger",
+                "description": "Når de publiserer et arrangement"
+            },
+            "friend_requests": {
+                "title": "Venneforespørsler",
+                "description": "Forespørsler, og forespørsler som blir godtatt"
+            },
+            "followers": {
+                "title": "Nye følgere",
+                "description": "Nye følgere og godkjente forespørsler om å følge"
+            },
+            "leaflet_responses": {
+                "title": "Svar på flyvebladene dine",
+                "description": "Når noen svarer på et flyveblad du har laget"
+            }
+        },
+        "privacy": "Personvern",
+        "previews": {
+            "title": "Vis forhåndsvisning av meldinger",
+            "description": "Vis hvem som skrev og hva de skrev. Når dette er av, står det bare «Ny melding» i varselet."
+        },
+        "devices": {
+            "title": "Enheter som får varsler",
+            "note": "Fjerner du en enhet, stopper varslene der med en gang.",
+            "none": "Ingen enheter ennå. Slå på varsler på en telefon eller datamaskin for å se den her.",
+            "thisDevice": "Denne enheten",
+            "added": "Lagt til {date}",
+            "remove": "Fjern",
+            "removeTitle": "Fjerne denne enheten?",
+            "removeBody": "{device} slutter å få varsler. Du kan slå dem på der igjen når som helst.",
+            "removed": "{device} er fjernet."
+        }
+    },
+    "appearance": {
+        "mode": "Lyst eller mørkt",
+        "light": "Lyst",
+        "lightHint": "Papir og blekk",
+        "dark": "Mørkt",
+        "darkHint": "Skånsomt for øynene om kvelden",
+        "system": "Som enheten",
+        "systemHint": "Følger telefonen eller datamaskinen din",
+        "sound": "Lyd",
+        "soundTitle": "Spill av en lyd for nye meldinger",
+        "soundHint": "En myk klang mens Manteion er åpen",
+        "soundNote": "Dette lagres bare i denne nettleseren."
+    },
+    "language": {
+        "lede": "Språket Manteion bruker med deg, her og i varsler.",
+        "en": "Engelsk",
+        "nb": "Norsk (bokmål)"
+    }
+}

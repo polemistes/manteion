@@ -5,6 +5,9 @@ use App\Enums\ThemeMode;
 use App\Enums\UserRole;
 use App\Models\PushSubscription;
 use App\Models\User;
+use App\Notifications\PushTest;
+use Illuminate\Support\Facades\Notification;
+use NotificationChannels\WebPush\WebPushChannel;
 
 beforeEach(function () {
     // These tests are about the props, and the committed Vite build may not
@@ -14,7 +17,7 @@ beforeEach(function () {
 
 test('guests are sent to the login page', function (string $url) {
     $this->get($url)->assertRedirect('/login');
-})->with(['/settings', '/settings/account', '/settings/privacy', '/settings/notifications', '/settings/appearance']);
+})->with(['/settings', '/settings/account', '/settings/privacy', '/settings/notifications', '/settings/appearance', '/settings/language']);
 
 test('the settings hub renders', function () {
     $this->actingAs(User::factory()->create())
@@ -101,10 +104,10 @@ test('the notifications page gets the effective settings, the categories in disp
                 ['value' => 'leaflet_responses', 'push_default' => false],
             ])
             ->where('devices', [
-                ['id' => $fromBeforeUserAgents->id, 'label' => 'Unknown device', 'created_at' => $fromBeforeUserAgents->created_at->toIso8601String()],
-                ['id' => $windows->id, 'label' => 'Firefox on Windows', 'created_at' => $windows->created_at->toIso8601String()],
-                ['id' => $iphone->id, 'label' => 'Safari on iPhone', 'created_at' => $iphone->created_at->toIso8601String()],
-                ['id' => $android->id, 'label' => 'Chrome on Android', 'created_at' => $android->created_at->toIso8601String()],
+                ['id' => $fromBeforeUserAgents->id, 'label' => 'Unknown device', 'created_at' => $fromBeforeUserAgents->created_at->toIso8601String(), 'endpoint_hash' => hash('sha256', $fromBeforeUserAgents->endpoint)],
+                ['id' => $windows->id, 'label' => 'Firefox on Windows', 'created_at' => $windows->created_at->toIso8601String(), 'endpoint_hash' => hash('sha256', $windows->endpoint)],
+                ['id' => $iphone->id, 'label' => 'Safari on iPhone', 'created_at' => $iphone->created_at->toIso8601String(), 'endpoint_hash' => hash('sha256', $iphone->endpoint)],
+                ['id' => $android->id, 'label' => 'Chrome on Android', 'created_at' => $android->created_at->toIso8601String(), 'endpoint_hash' => hash('sha256', $android->endpoint)],
             ]));
 });
 
@@ -162,3 +165,41 @@ test('while impersonating, an administrator cannot change the users settings', f
     'appearance' => ['PUT', '/settings/appearance', ['theme_mode' => 'dark']],
     'a device' => ['DELETE', '/push-subscriptions/{device}', []],
 ]);
+
+test('the language page renders', function () {
+    $this->actingAs(User::factory()->create())
+        ->get('/settings/language')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->component('settings/Language'));
+});
+
+test('a test push goes to the device that asked, and only to it', function () {
+    Notification::fake();
+    $user = User::factory()->create();
+    $device = PushSubscription::factory()->for($user, 'subscribable')->create();
+    $other = PushSubscription::factory()->for($user, 'subscribable')->create();
+
+    $this->actingAs($user)
+        ->postJson('/settings/notifications/test', ['endpoint' => $device->endpoint])
+        ->assertNoContent();
+
+    Notification::assertSentTo($user, PushTest::class, function (PushTest $notification, array $channels) use ($user, $device) {
+        $routed = $user->routeNotificationForWebPush($notification);
+
+        return $channels === [WebPushChannel::class]
+            && $routed->pluck('id')->all() === [$device->id];
+    });
+    expect($user->routeNotificationForWebPush()->pluck('id')->sort()->values()->all())
+        ->toBe(collect([$device->id, $other->id])->sort()->values()->all());
+});
+
+test('a test push is only for the users own devices', function () {
+    Notification::fake();
+    $someoneElses = PushSubscription::factory()->create();
+
+    $this->actingAs(User::factory()->create())
+        ->postJson('/settings/notifications/test', ['endpoint' => $someoneElses->endpoint])
+        ->assertNotFound();
+
+    Notification::assertNothingSent();
+});

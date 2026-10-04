@@ -5,6 +5,10 @@ return [
     // Push notifications for activity (App\Notifications\ActivityNotification
     // and its kinds). The Activity page words these items on the client.
     'push' => [
+        'test' => [
+            'title' => 'Manteion',
+            'body' => 'Varsler fungerer på denne enheten.',
+        ],
         'invited_to_event' => [
             'title' => 'Arrangementsinvitasjon',
             'body' => ':name inviterte deg til «:event»',

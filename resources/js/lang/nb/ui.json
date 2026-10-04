@@ -15,5 +15,6 @@
     "alphaLong": "Ting kan gå i stykker, og data kan bli slettet når som helst.",
     "undo": "Angre",
     "tryAgain": "Prøv igjen",
-    "somethingWentWrong": "Noe gikk galt. Prøv igjen."
+    "somethingWentWrong": "Noe gikk galt. Prøv igjen.",
+    "cancel": "Avbryt"
 }

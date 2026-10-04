@@ -94,6 +94,19 @@ async function currentSubscription(): Promise<PushSubscription | null> {
     return (await registration?.pushManager.getSubscription()) ?? null;
 }
 
+/** This browser's push endpoint, while it has a subscription. */
+export async function currentEndpoint(): Promise<string | null> {
+    if (!hasPushApis()) {
+        return null;
+    }
+
+    try {
+        return (await currentSubscription())?.endpoint ?? null;
+    } catch {
+        return null;
+    }
+}
+
 /** Whether this browser holds a push subscription (with permission). */
 export async function isSubscribed(): Promise<boolean> {
     if (!hasPushApis() || Notification.permission !== 'granted') {

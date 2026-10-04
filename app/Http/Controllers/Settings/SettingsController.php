@@ -16,4 +16,13 @@ class SettingsController extends Controller
     {
         return Inertia::render('settings/Index');
     }
+
+    /**
+     * English or Norwegian. The choice is saved with PUT /locale; the
+     * current and available locales are shared with every page.
+     */
+    public function language(): Response
+    {
+        return Inertia::render('settings/Language');
+    }
 }

@@ -7,9 +7,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateNotificationSettingsRequest;
 use App\Models\PushSubscription;
 use App\Models\User;
+use App\Notifications\PushTest;
 use App\Services\DeviceLabel;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -34,10 +36,32 @@ class NotificationController extends Controller
                 ->map(fn (PushSubscription $subscription) => [
                     'id' => $subscription->id,
                     'label' => DeviceLabel::for($subscription->user_agent),
+                    // So a browser can tell which row is itself without the
+                    // page handing out the other devices' endpoints.
+                    'endpoint_hash' => hash('sha256', $subscription->endpoint),
                     'created_at' => $subscription->created_at->toIso8601String(),
                 ])
                 ->all(),
         ]);
+    }
+
+    /**
+     * "Send a test": a push to the device that asked, sent at once. Only to
+     * one of the user's own devices.
+     */
+    public function test(Request $request): HttpResponse
+    {
+        $validated = $request->validate([
+            'endpoint' => ['required', 'string', 'max:2048'],
+        ]);
+
+        $user = $request->user();
+
+        abort_unless($user->pushSubscriptions()->where('endpoint', $validated['endpoint'])->exists(), 404);
+
+        $user->notifyNow(new PushTest($validated['endpoint']));
+
+        return response()->noContent();
     }
 
     /**

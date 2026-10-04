@@ -8,20 +8,24 @@ use App\Enums\FriendshipStatus;
 use App\Enums\NotificationCategory;
 use App\Enums\ThemeMode;
 use App\Enums\UserRole;
+use App\Notifications\PushTest;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Notifications\Notification;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use NotificationChannels\WebPush\HasPushSubscriptions;
+use NotificationChannels\WebPush\PushSubscription as WebPushSubscription;
 
 /**
  * @property int $id
@@ -145,6 +149,21 @@ class User extends Authenticatable
     public function wantsPush(NotificationCategory $category): bool
     {
         return $this->notificationSettings()['push'][$category->value];
+    }
+
+    /**
+     * The devices a push goes to: every one of the user's, except for a test
+     * push, which goes only to the device that asked for it.
+     *
+     * @return EloquentCollection<int, WebPushSubscription>
+     */
+    public function routeNotificationForWebPush(?Notification $notification = null): EloquentCollection
+    {
+        if ($notification instanceof PushTest) {
+            return $this->pushSubscriptions()->where('endpoint', $notification->endpoint)->get();
+        }
+
+        return $this->pushSubscriptions;
     }
 
     /**

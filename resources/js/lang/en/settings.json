@@ -1,0 +1,167 @@
+{
+    "title": "Settings",
+    "sections": {
+        "account": "Account",
+        "privacy": "Privacy",
+        "notifications": "Notifications",
+        "appearance": "Appearance",
+        "language": "Language"
+    },
+    "staff": "Staff",
+    "moderation": "Moderation",
+    "users": "Users",
+    "logOut": "Log out",
+    "seeProfile": "{'@'}{username} · See your profile",
+    "saveFailed": "Couldn’t save that. Try again.",
+    "overview": {
+        "title": "Your account",
+        "editAccount": "Edit account",
+        "seeProfile": "See your profile"
+    },
+    "install": {
+        "title": "Install Manteion",
+        "body": "Open it from your home screen like any app, and get notifications there.",
+        "action": "Install"
+    },
+    "account": {
+        "photo": "Photo",
+        "name": "Name",
+        "username": "Username",
+        "usernameHint": "Letters, numbers, dots and underscores. People find you by it.",
+        "email": "Email",
+        "bio": "About you",
+        "bioPlaceholder": "A few words about yourself…",
+        "save": "Save changes",
+        "saving": "Saving…",
+        "saved": "Saved.",
+        "password": "Password",
+        "currentPassword": "Current password",
+        "newPassword": "New password",
+        "confirmPassword": "New password again",
+        "changePassword": "Change password",
+        "passwordSaved": "Your password is changed.",
+        "leave": "Leave Manteion",
+        "deleteBody": "Deleting your account removes your profile, your events, leaflets and messages for good.",
+        "delete": "Delete account…",
+        "deleteTitle": "Delete your account?",
+        "deleteConfirm": "This can’t be undone. Enter your password to confirm.",
+        "deleteForGood": "Delete my account"
+    },
+    "privacy": {
+        "lede": "Who can follow you, find you and see who you know.",
+        "followers": "Followers",
+        "findingYou": "Finding you",
+        "allow_public_follow": {
+            "title": "Anyone can follow you",
+            "description": "When off, you approve each new follower first."
+        },
+        "searchable": {
+            "title": "Let people find you by name",
+            "description": "Your profile shows up when people search for someone to add."
+        },
+        "show_friends_list": {
+            "title": "Show your friends on your profile",
+            "description": "Others can see who you are friends with."
+        },
+        "appear_in_friends_lists": {
+            "title": "Appear in your friends’ lists",
+            "description": "Your name shows when someone looks at a friend’s friends."
+        }
+    },
+    "notifications": {
+        "lede": "Choose what reaches you, and where. Everything still shows up in Activity, and Manteion never sends marketing.",
+        "device": {
+            "title": "Notifications on this device",
+            "on": "On · {device}",
+            "off": "Off. Turn on to get notifications here.",
+            "blocked": "Blocked in this browser. Allow notifications for this site in the browser’s settings.",
+            "failed": "Couldn’t turn on notifications here. Try again.",
+            "sendTest": "Send a test",
+            "testHint": "Check that notifications reach this device.",
+            "testSent": "Sent. It should arrive in a few seconds…",
+            "testMissing": "No test arrived. Check that notifications for this browser are allowed in the device’s settings.",
+            "testFailed": "Couldn’t send a test. Try again.",
+            "lastTest": "Last test arrived {ago}",
+            "installTitle": "Add Manteion to your Home Screen first",
+            "installBody": "On iPhone and iPad, notifications work in the installed app. Tap Share, then Add to Home Screen, and open Manteion from there.",
+            "unsupported": "This browser can’t get notifications from Manteion.",
+            "unconfigured": "Notifications aren’t set up on this server yet."
+        },
+        "notifyMeAbout": "Notify me about",
+        "defaultsNote": "Messages are on by default. Turn on the rest only if you want them on your lock screen.",
+        "groups": {
+            "messages": "Messages",
+            "events": "Events",
+            "people": "People",
+            "leaflets": "Leaflets"
+        },
+        "categories": {
+            "direct_messages": {
+                "title": "Direct messages",
+                "description": "When someone writes to you"
+            },
+            "group_messages": {
+                "title": "Group messages",
+                "description": "New messages in your group chats"
+            },
+            "event_invites": {
+                "title": "Invitations",
+                "description": "When someone invites you to an event"
+            },
+            "event_comments": {
+                "title": "Comments on your events",
+                "description": "When someone comments on an event you host"
+            },
+            "followed_events": {
+                "title": "New events from people you follow",
+                "description": "When they publish an event"
+            },
+            "friend_requests": {
+                "title": "Friend requests",
+                "description": "Requests, and requests accepted"
+            },
+            "followers": {
+                "title": "New followers",
+                "description": "New followers and approved follow requests"
+            },
+            "leaflet_responses": {
+                "title": "Responses to your leaflets",
+                "description": "When someone responds to a leaflet of yours"
+            }
+        },
+        "privacy": "Privacy",
+        "previews": {
+            "title": "Show message previews",
+            "description": "Show who wrote and what they said. When off, a notification only says “New message”."
+        },
+        "devices": {
+            "title": "Devices that get notifications",
+            "note": "Removing a device stops notifications there right away.",
+            "none": "No devices yet. Turn on notifications on a phone or computer to see it here.",
+            "thisDevice": "This device",
+            "added": "Added {date}",
+            "remove": "Remove",
+            "removeTitle": "Remove this device?",
+            "removeBody": "{device} stops getting notifications. You can turn them on there again at any time.",
+            "removed": "{device} is removed."
+        }
+    },
+    "appearance": {
+        "mode": "Light or dark",
+        "light": "Light",
+        "lightHint": "Paper and ink",
+        "dark": "Dark",
+        "darkHint": "Easy on the eyes in the evening",
+        "system": "Same as the device",
+        "systemHint": "Follows your phone or computer",
+        "sound": "Sound",
+        "soundTitle": "Play a sound for new messages",
+        "soundHint": "A soft chime while Manteion is open",
+        "soundNote": "This is saved in this browser only."
+    },
+    "language": {
+        "lede": "The language Manteion speaks to you in, here and in notifications.",
+        "en": "English",
+        "nb": "Norwegian (bokmål)"
+    }
+}
