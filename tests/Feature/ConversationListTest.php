@@ -294,6 +294,13 @@ test('a conversation page costs the same few queries however many messages and r
         }
     };
     $queriesFor = function () use ($user, $conversation): int {
+        // Read already, so no load also marks it read (whose queries depend on
+        // whether the clock ticked into a new second since the last one).
+        ConversationParticipant::query()
+            ->where('conversation_id', $conversation->id)
+            ->where('user_id', $user->id)
+            ->update(['last_read_at' => now()->addHour()]);
+
         DB::flushQueryLog();
         DB::enableQueryLog();
         $this->actingAs($user)->get("/messages/{$conversation->id}")->assertOk();
