@@ -1,0 +1,15 @@
+{
+    "weekdayShort": {
+        "mon": "Ma",
+        "tue": "Ti",
+        "wed": "On",
+        "thu": "To",
+        "fri": "Fr",
+        "sat": "Lø",
+        "sun": "Sø"
+    },
+    "weekAbbreviation": "Uke",
+    "noDateSelected": "Ingen dato valgt",
+    "time": "Tid",
+    "clearDate": "Fjern dato"
+}

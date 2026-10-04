@@ -1,0 +1,6 @@
+{
+    "label": "Sider",
+    "previous": "Forrige",
+    "next": "Neste",
+    "pageOf": "Side {page} av {total}"
+}

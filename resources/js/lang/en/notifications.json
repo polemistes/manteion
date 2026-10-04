@@ -1,0 +1,7 @@
+{
+    "title": "Notifications",
+    "empty": "Nothing here yet.",
+    "markRead": "Mark read",
+    "invitedToEvent": "{name} invited you to \"{event}\"",
+    "followedUserPublishedEvent": "{name} published \"{event}\""
+}

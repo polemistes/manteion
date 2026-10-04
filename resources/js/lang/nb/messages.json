@@ -1,0 +1,33 @@
+{
+    "index": {
+        "title": "Meldinger",
+        "newMessage": "Ny melding",
+        "noConversations": "Ingen samtaler ennå. Start en med en venn.",
+        "you": "Deg: ",
+        "loadOlder": "Last inn eldre meldinger",
+        "loadingOlder": "Laster…",
+        "noMessagesYet": "Ingen meldinger ennå"
+    },
+    "create": {
+        "title": "Ny melding",
+        "noFriends": "Du har ingen venner ennå. Legg til noen fra kontaktene dine først.",
+        "to": "Til",
+        "groupNameOptional": "Gruppenavn (valgfritt)",
+        "groupNamePlaceholder": "Brukes bare hvis du velger mer enn én person",
+        "submit": "Start samtale",
+        "submitting": "Starter…"
+    },
+    "show": {
+        "leave": "Forlat",
+        "inThisConversation": "I denne samtalen",
+        "you": "Deg",
+        "add": "Legg til",
+        "noMessagesYet": "Ingen meldinger ennå. Si hei!",
+        "messagePlaceholder": "Skriv en melding…",
+        "send": "Send",
+        "sending": "Sender…",
+        "delete": "Slett",
+        "deleted": "Melding slettet",
+        "confirmDeleteMessage": "Er du sikker på at du vil slette denne meldingen?"
+    }
+}

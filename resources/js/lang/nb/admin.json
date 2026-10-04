@@ -1,0 +1,32 @@
+{
+    "users": {
+        "title": "Administrasjon",
+        "searchPlaceholder": "Søk på navn, brukernavn eller e-post",
+        "name": "Navn",
+        "email": "E-post",
+        "role": "Rolle",
+        "status": "Status",
+        "actions": "Handlinger",
+        "roleMember": "Medlem",
+        "roleModerator": "Moderator",
+        "roleAdministrator": "Administrator",
+        "suspended": "Suspendert",
+        "active": "Aktiv",
+        "impersonate": "Vis som",
+        "confirmImpersonate": "Vis appen som {name}? Du vil se alt de ser og kan slette innholdet deres, men ikke poste eller endre noe som dem.",
+        "message": "Melding",
+        "unsuspend": "Opphev suspensjon",
+        "confirmUnsuspend": "Oppheve suspensjonen av {name} sin konto?",
+        "suspend": "Suspender",
+        "suspendTitle": "Suspender {name}",
+        "suspendReasonPlaceholder": "Årsak (valgfritt, vises til annet personale)",
+        "emailTitle": "Send e-post til {name}",
+        "emailSubjectPlaceholder": "Emne",
+        "emailBodyPlaceholder": "Melding",
+        "sendEmail": "Send",
+        "deleteAccount": "Slett konto",
+        "deleteAccountTitle": "Slett {name} sin konto",
+        "deleteAccountWarning": "Dette sletter kontoen og alt de eier permanent. Dette kan ikke angres.",
+        "yourPassword": "Ditt passord"
+    }
+}

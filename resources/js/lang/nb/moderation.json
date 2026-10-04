@@ -1,0 +1,30 @@
+{
+    "title": "Modereringskø",
+    "noReports": "Ingen ventende rapporter.",
+    "type": {
+        "message": "Melding",
+        "event": "Arrangement",
+        "comment": "Kommentar",
+        "leaflet": "Flyveblad",
+        "leaflet_response": "Svar på flyveblad"
+    },
+    "viewInContext": "Vis i sammenheng",
+    "alreadyDeleted": "Dette innholdet er allerede fjernet.",
+    "byAuthor": "Av {name}",
+    "reportedByReason": "Rapportert av {name}: {reason}",
+    "noReasonGiven": "ingen årsak oppgitt",
+    "deleteContent": "Slett",
+    "dismiss": "Avvis rapport",
+    "messageReporter": "Send melding til rapportør",
+    "messageReportedUser": "Send melding til rapportert bruker",
+    "suspendUser": "Suspender bruker",
+    "report": "Rapporter",
+    "reportTitle": "Rapporter dette innholdet",
+    "reportReasonPlaceholder": "Hvorfor rapporterer du dette? (valgfritt)",
+    "reported": "Rapportert",
+    "deleteWithPlaceholder": "Slett og la stå «Slettet av en moderator»",
+    "deleteWithoutPlaceholder": "Slett helt",
+    "confirmDeleteContent": "Slett dette innholdet, eller slett det og la stå en plassholdertekst i stedet?",
+    "viewingAs": "Viser som {name} — du kan bla gjennom og slette innhold, men ikke poste eller endre noe.",
+    "returnToAdmin": "Tilbake til admin"
+}

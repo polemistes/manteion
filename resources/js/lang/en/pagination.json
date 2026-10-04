@@ -1,0 +1,6 @@
+{
+    "label": "Pages",
+    "previous": "Previous",
+    "next": "Next",
+    "pageOf": "Page {page} of {total}"
+}

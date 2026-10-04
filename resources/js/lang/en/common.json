@@ -1,0 +1,14 @@
+{
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "remove": "Remove",
+    "create": "Create",
+    "add": "Add",
+    "search": "Search",
+    "message": "Message",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "passphraseHint": "At least 10 characters. No special requirements — a few random words works well, e.g. \"correct horse battery staple\".",
+    "alphaNotice": "Alpha test — things may break, and data may be deleted at any time."
+}

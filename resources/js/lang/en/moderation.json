@@ -1,0 +1,30 @@
+{
+    "title": "Moderation queue",
+    "noReports": "No pending reports.",
+    "type": {
+        "message": "Message",
+        "event": "Event",
+        "comment": "Comment",
+        "leaflet": "Leaflet",
+        "leaflet_response": "Leaflet response"
+    },
+    "viewInContext": "View in context",
+    "alreadyDeleted": "This content has already been removed.",
+    "byAuthor": "By {name}",
+    "reportedByReason": "Reported by {name}: {reason}",
+    "noReasonGiven": "no reason given",
+    "deleteContent": "Delete",
+    "dismiss": "Dismiss report",
+    "messageReporter": "Message reporter",
+    "messageReportedUser": "Message reported user",
+    "suspendUser": "Suspend user",
+    "report": "Report",
+    "reportTitle": "Report this content",
+    "reportReasonPlaceholder": "Why are you reporting this? (optional)",
+    "reported": "Reported",
+    "deleteWithPlaceholder": "Delete and leave \"Deleted by a moderator\"",
+    "deleteWithoutPlaceholder": "Delete completely",
+    "confirmDeleteContent": "Delete this content, or delete it and leave a placeholder in its place?",
+    "viewingAs": "Viewing as {name} — you can browse and delete content, but not post or change anything.",
+    "returnToAdmin": "Return to admin"
+}

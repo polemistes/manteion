@@ -1,0 +1,17 @@
+{
+    "noBio": "This person hasn't written a bio yet.",
+    "friendsHeading": "Friends",
+    "showFriends": "Show friends",
+    "hideFriends": "Hide friends",
+    "addFriend": "Add friend",
+    "friendRequestSent": "Friend request sent",
+    "cancel": "Cancel",
+    "acceptFriendRequest": "Accept friend request",
+    "decline": "Decline",
+    "unfriend": "Unfriend",
+    "confirmUnfriend": "Are you sure you want to remove this friend?",
+    "message": "Message",
+    "follow": "Follow",
+    "followRequested": "Follow requested",
+    "unfollow": "Unfollow"
+}

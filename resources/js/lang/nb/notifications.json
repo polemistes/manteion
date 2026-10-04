@@ -1,0 +1,7 @@
+{
+    "title": "Varsler",
+    "empty": "Ingenting her ennå.",
+    "markRead": "Merk som lest",
+    "invitedToEvent": "{name} inviterte deg til «{event}»",
+    "followedUserPublishedEvent": "{name} publiserte «{event}»"
+}

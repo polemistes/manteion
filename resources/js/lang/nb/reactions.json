@@ -1,0 +1,22 @@
+{
+    "pick": "Legg til en reaksjon",
+    "pickerTitle": "Velg en emoji",
+    "search": "Søk etter emoji",
+    "close": "Lukk",
+    "loading": "Laster emoji…",
+    "noMatches": "Ingen emoji passer.",
+    "add": "Reager med {emoji}",
+    "remove": "Fjern din {emoji}",
+    "removeMine": "Fjern reaksjonen din ({name})",
+    "groups": {
+        "0": "Smilefjes og følelser",
+        "1": "Mennesker og kropp",
+        "2": "Dyr og natur",
+        "3": "Mat og drikke",
+        "4": "Reise og steder",
+        "5": "Aktiviteter",
+        "6": "Gjenstander",
+        "7": "Symboler",
+        "8": "Flagg"
+    }
+}

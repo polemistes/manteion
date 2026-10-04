@@ -1,0 +1,49 @@
+{
+    "index": {
+        "title": "Leaflets",
+        "compose": "Write a leaflet",
+        "scope": "Show",
+        "scopeAll": "All",
+        "empty": "No leaflets here yet."
+    },
+    "form": {
+        "body": "Message",
+        "bodyPlaceholder": "What do you want to say?",
+        "visibility": "Who can read it",
+        "attachment": "Attach",
+        "attachmentNone": "Nothing",
+        "attachmentImage": "An image",
+        "attachmentLink": "A link",
+        "link": "Link",
+        "send": "Send leaflet",
+        "sending": "Sending…"
+    },
+    "visibility": {
+        "official": "Official",
+        "friends_and_followers": "Friends and followers",
+        "friends": "Friends only",
+        "private": "Private"
+    },
+    "card": {
+        "edited": "edited",
+        "edit": "Edit",
+        "delete": "Delete",
+        "confirmDelete": "Delete this leaflet?"
+    },
+    "edit": {
+        "title": "Edit leaflet",
+        "save": "Save changes",
+        "saving": "Saving…"
+    },
+    "responses": {
+        "heading": "Responses",
+        "placeholder": "Write a response…",
+        "send": "Respond",
+        "sending": "Sending…",
+        "delete": "Delete",
+        "confirmDelete": "Delete this response?"
+    },
+    "show": {
+        "backToFeed": "Back to all leaflets"
+    }
+}

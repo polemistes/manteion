@@ -1,0 +1,32 @@
+{
+    "users": {
+        "title": "Administration",
+        "searchPlaceholder": "Search by name, username, or email",
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "status": "Status",
+        "actions": "Actions",
+        "roleMember": "Member",
+        "roleModerator": "Moderator",
+        "roleAdministrator": "Administrator",
+        "suspended": "Suspended",
+        "active": "Active",
+        "impersonate": "View as",
+        "confirmImpersonate": "View the app as {name}? You'll be able to see everything they see and delete their content, but not post or change anything as them.",
+        "message": "Message",
+        "unsuspend": "Unsuspend",
+        "confirmUnsuspend": "Lift the suspension on {name}'s account?",
+        "suspend": "Suspend",
+        "suspendTitle": "Suspend {name}",
+        "suspendReasonPlaceholder": "Reason (optional, shown to other staff)",
+        "emailTitle": "Email {name}",
+        "emailSubjectPlaceholder": "Subject",
+        "emailBodyPlaceholder": "Message",
+        "sendEmail": "Send",
+        "deleteAccount": "Delete account",
+        "deleteAccountTitle": "Delete {name}'s account",
+        "deleteAccountWarning": "This permanently deletes the account and everything they own. This cannot be undone.",
+        "yourPassword": "Your password"
+    }
+}

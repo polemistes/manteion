@@ -1,11 +1,14 @@
 import { createInertiaApp, router } from '@inertiajs/vue3';
-import { createI18n } from 'vue-i18n';
-import en from './lang/en.json';
-import nb from './lang/nb.json';
+import { configureEcho } from '@laravel/echo-vue';
+import { createAppI18n } from './i18n';
 import AppLayout from './layouts/AppLayout.vue';
 import { setupNativeShell } from './native';
 import { setupPushNotifications } from './push';
 import { applyTheme } from './theme';
+
+configureEcho({
+    broadcaster: 'reverb',
+});
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -25,13 +28,6 @@ createInertiaApp({
             applyTheme(event.detail.page.props.theme),
         );
 
-        const i18n = createI18n({
-            legacy: false,
-            locale: page.props.locale as string,
-            fallbackLocale: 'en',
-            messages: { en, nb },
-        });
-
-        app.use(i18n);
+        app.use(createAppI18n(page.props.locale as string));
     },
 });

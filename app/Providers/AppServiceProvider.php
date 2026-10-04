@@ -11,6 +11,7 @@ use Carbon\CarbonImmutable;
 use GuzzleHttp\Psr7\HttpFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Foundation\DevCommands;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -38,6 +39,18 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
         $this->configureWebPushLogger();
         $this->configureMorphMap();
+        $this->configureDevCommands();
+    }
+
+    /**
+     * `composer run dev` also starts the WebSocket server, and polls the
+     * queue every second rather than every three, since push notifications
+     * for new messages wait on it.
+     */
+    protected function configureDevCommands(): void
+    {
+        DevCommands::artisan('queue:listen --tries=3 --timeout=0 --sleep=1', 'queue');
+        DevCommands::artisan('reverb:start', 'reverb');
     }
 
     /**

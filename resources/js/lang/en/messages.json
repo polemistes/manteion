@@ -1,0 +1,33 @@
+{
+    "index": {
+        "title": "Messages",
+        "newMessage": "New message",
+        "noConversations": "No conversations yet. Start one with a friend.",
+        "you": "You: ",
+        "loadOlder": "Load older messages",
+        "loadingOlder": "Loading…",
+        "noMessagesYet": "No messages yet"
+    },
+    "create": {
+        "title": "New message",
+        "noFriends": "You don't have any friends yet. Add some from your contacts first.",
+        "to": "To",
+        "groupNameOptional": "Group name (optional)",
+        "groupNamePlaceholder": "Only used if you pick more than one person",
+        "submit": "Start conversation",
+        "submitting": "Starting…"
+    },
+    "show": {
+        "leave": "Leave",
+        "inThisConversation": "In this conversation",
+        "you": "You",
+        "add": "Add",
+        "noMessagesYet": "No messages yet. Say hello!",
+        "messagePlaceholder": "Write a message…",
+        "send": "Send",
+        "sending": "Sending…",
+        "delete": "Delete",
+        "deleted": "Message deleted",
+        "confirmDeleteMessage": "Are you sure you want to delete this message?"
+    }
+}

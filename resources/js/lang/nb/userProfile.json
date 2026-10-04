@@ -1,0 +1,17 @@
+{
+    "noBio": "Denne personen har ikke skrevet en biografi ennå.",
+    "friendsHeading": "Venner",
+    "showFriends": "Vis venner",
+    "hideFriends": "Skjul venner",
+    "addFriend": "Legg til venn",
+    "friendRequestSent": "Venneforespørsel sendt",
+    "cancel": "Avbryt",
+    "acceptFriendRequest": "Godta venneforespørsel",
+    "decline": "Avslå",
+    "unfriend": "Fjern venn",
+    "confirmUnfriend": "Er du sikker på at du vil fjerne denne vennen?",
+    "message": "Melding",
+    "follow": "Følg",
+    "followRequested": "Følgeforespørsel sendt",
+    "unfollow": "Slutt å følge"
+}
