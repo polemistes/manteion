@@ -386,28 +386,30 @@ html[data-mode='dark'] {
 }
 
 /* Leaflet's zoom buttons and credit in the app's colours (its own are white
-   in dark mode too), and the buttons a full 44px where fingers tap them. */
-.map-tiles .leaflet-bar {
+   in dark mode too), and the buttons a full 44px where fingers tap them.
+   `.leaflet-container` (on the same element as .map-tiles) outranks
+   Leaflet's own rules, which load after this file. */
+.map-tiles.leaflet-container .leaflet-bar {
     border-color: var(--color-line);
 }
 
-.map-tiles .leaflet-bar a {
+.map-tiles.leaflet-container .leaflet-bar a {
     background-color: var(--color-surface);
     border-bottom-color: var(--color-line);
     color: var(--color-ink);
 }
 
-.map-tiles .leaflet-bar a:hover,
-.map-tiles .leaflet-bar a:focus-visible {
+.map-tiles.leaflet-container .leaflet-bar a:hover,
+.map-tiles.leaflet-container .leaflet-bar a:focus-visible {
     background-color: var(--color-surface-2);
 }
 
-.map-tiles .leaflet-control-attribution {
+.map-tiles.leaflet-container .leaflet-control-attribution {
     background-color: color-mix(in srgb, var(--color-surface) 85%, transparent);
     color: var(--color-ink-muted);
 }
 
-.map-tiles .leaflet-control-attribution a {
+.map-tiles.leaflet-container .leaflet-control-attribution a {
     color: var(--color-ink);
 }
 

@@ -389,10 +389,9 @@ function eventStatus(status: AttendanceStatus | null): string | null {
                     >
                         <DateBadge :date="event.starts_at" size="sm" />
                         <span class="min-w-0 flex-1">
-                            <span
-                                class="block truncate font-semibold text-ink"
-                                >{{ event.name }}</span
-                            >
+                            <span class="line-clamp-2 font-semibold text-ink">{{
+                                event.name
+                            }}</span>
                             <span
                                 class="block truncate text-meta text-ink-muted"
                                 >{{
