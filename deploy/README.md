@@ -27,14 +27,24 @@ The data is one SQLite file and a folder of uploaded pictures:
 At home, SSH goes straight to the server on port 22. From anywhere else, port 22 doesn't get through, so the router forwards port 2222 to the server's port 22 instead (the server itself still listens on 22 only). On the development machine, `~/.ssh/config` picks the port, so that `ssh proteus@manteion.no` and `deploy/push.sh` work in both places. All the server's names reach the same machine, with the same key:
 
 ```
-# Home is where the server answers on its own address; elsewhere, go through 2222.
-Match host manteion.no,varians.eu,aldebaran.no !exec "timeout 1 bash -c '</dev/tcp/192.168.0.141/22' 2>/dev/null"
+# Home is where the server's web port answers on its own address; elsewhere,
+# go through 2222. (Port 80 rather than 22 for the probe: the firewall allows
+# only six new port-22 connections per 30 seconds, and a probe there would
+# count as one.)
+Match host manteion.no,varians.eu,aldebaran.no !exec "timeout 1 bash -c '</dev/tcp/192.168.0.141/80' 2>/dev/null"
     Port 2222
 
-# One server, one key, whichever name and port it is reached by.
 Host manteion.no varians.eu aldebaran.no
+    # One server, one key, whichever name and port it is reached by.
     HostKeyAlias aldebaran.no
+    # Commands that follow each other (a deploy runs several) share one
+    # connection, kept open for ten minutes after the last one.
+    ControlMaster auto
+    ControlPath ~/.ssh/cm-%C
+    ControlPersist 10m
 ```
+
+The firewall's limit on port 22 means at most six fresh connections per 30 seconds from one address; a seventh hangs until the half minute is over. With the shared connection above, a deploy uses one.
 
 ## Setting up, once
 
