@@ -4,11 +4,11 @@
 # manteion user (deploy/deploy.sh), then reloads PHP and restarts the queue
 # worker and Reverb so that everything runs the new release.
 #
-#   deploy/push.sh            the server is proteus@aldebaran.no
+#   deploy/push.sh            the server is proteus@manteion.no
 #   MANTEION_HOST=me@host deploy/push.sh
 set -euo pipefail
 
-HOST="${MANTEION_HOST:-proteus@aldebaran.no}"
+HOST="${MANTEION_HOST:-proteus@manteion.no}"
 cd "$(dirname "$0")/.."
 
 if [ -n "$(git status --porcelain)" ] && [ "${FORCE:-}" != 1 ]; then
