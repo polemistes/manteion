@@ -111,6 +111,8 @@ As root (with `sudo`), except where it says otherwise.
     apachectl configtest && systemctl reload httpd
     ```
 
+    The site also asks for HTTP/2 and compression, which make a big difference over the 5G line (one connection for the many small built files, and text at a third of its size). Switch the two modules on in `/etc/httpd/conf/httpd.conf`, by removing the `#` in front of `LoadModule deflate_module modules/mod_deflate.so` and `LoadModule http2_module modules/mod_http2.so`, then `apachectl configtest && systemctl reload httpd`. Until then the site works without them.
+
     www.manteion.no sends everyone on to manteion.no, so the site has one address. certbot's timer renews the certificate and reloads Apache. The modules the site uses (`proxy`, `proxy_http`, `proxy_fcgi`, `rewrite`, `headers`, `ssl`) are already on for the other sites.
 
 11. **Backups.**
