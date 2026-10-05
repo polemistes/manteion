@@ -22,6 +22,23 @@ The data is one SQLite file and a folder of uploaded pictures:
   manteion.env                 the settings (never in git)
 ```
 
+## Reaching the server over SSH
+
+At home, SSH goes straight to the server on port 22. From anywhere else, port 22 doesn't get through, so the router forwards port 2222 to the server's port 22 instead (the server itself still listens on 22 only). On the development machine, `~/.ssh/config` picks the port, so that `ssh proteus@aldebaran.no` and `deploy/push.sh` work in both places:
+
+```
+# Home is where the server answers on its own address; elsewhere, go through 2222.
+Match host aldebaran.no,varians.eu !exec "timeout 1 bash -c '</dev/tcp/192.168.0.141/22' 2>/dev/null"
+    Port 2222
+
+# The same server key on either port.
+Host aldebaran.no
+    HostKeyAlias aldebaran.no
+
+Host varians.eu
+    HostKeyAlias varians.eu
+```
+
 ## Setting up, once
 
 As root (with `sudo`), except where it says otherwise.
