@@ -178,7 +178,7 @@ ssh proteus@manteion.no "sudo -n -u manteion sqlite3 /home/manteion/database/man
 
 The push subscriptions can stay if `manteion.env` has the old site's VAPID keys: the site keeps its address and its keys, so the browsers' subscriptions stay valid and the testers keep getting push without doing anything (each device shows as "Unknown device" in Settings → Notifications until its browser reports itself again). With new keys, the old subscriptions are dead; delete them too (`DELETE FROM push_subscriptions;`), and the testers turn push on again on each device.
 
-Since the names point to this server, the old site gets no more visitors; leave it in maintenance mode as a fallback copy until the web hotel is given up.
+Since the names point to this server, the old site gets no more visitors. It is not kept as a fallback: once the import is checked, the web hotel copy can be removed and the hotel given up. The code lives on GitHub (`main`), the data in `/home/manteion` and its backups.
 
 The testers keep the address and log in again with the same username and password. An app on the home screen keeps working: it belongs to the address.
 
