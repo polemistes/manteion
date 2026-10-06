@@ -45,7 +45,12 @@ return [
             // in the log rather than fully on disk.
             'journal_mode' => env('DB_JOURNAL_MODE', 'wal'),
             'synchronous' => env('DB_SYNCHRONOUS', 'normal'),
-            'transaction_mode' => 'DEFERRED',
+            // A transaction takes the write lock as it begins (and waits for
+            // it), rather than as a read that can't be upgraded once someone
+            // else has written: that refusal is immediate, whatever the
+            // busy timeout, and is how the queue worker still met "database
+            // is locked".
+            'transaction_mode' => 'IMMEDIATE',
         ],
 
         'mysql' => [
