@@ -114,7 +114,7 @@ As root (with `sudo`), except where it says otherwise.
     certbot certonly --apache -d manteion.no -d www.manteion.no --deploy-hook "systemctl reload httpd"
     ```
 
-    Then the port 443 site:
+    Only now the port 443 site. It points at the certificate's files, so with it in place before the certificate exists Apache refuses its configuration, and certbot refuses to run against a broken one. (If that has happened: move the file out of `conf.d/`, run the `certbot` line, move it back.)
 
     ```sh
     cp /home/manteion/app/deploy/apache/manteion.no-ssl.conf /etc/httpd/conf/conf.d/
