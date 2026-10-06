@@ -30,7 +30,10 @@ class PushTest extends Notification
             ->body(__('notifications.push.test.body'))
             ->icon('/icons/icon-192.png')
             ->badge('/icons/badge-96.png')
-            ->tag('push-test')
+            // A tag of its own for every test: with one shared tag a new test
+            // replaces the one still on screen, and on a desktop that is quiet
+            // (Firefox ignores renotify), which looks like nothing arrived.
+            ->tag('push-test-'.now()->getTimestampMs())
             ->renotify()
             ->lang(app()->getLocale())
             ->data([

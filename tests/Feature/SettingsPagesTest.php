@@ -193,6 +193,21 @@ test('a test push goes to the device that asked, and only to it', function () {
         ->toBe(collect([$device->id, $other->id])->sort()->values()->all());
 });
 
+test('every test push has a tag of its own, so a new one is not a quiet replacement', function () {
+    $user = User::factory()->create();
+    $device = PushSubscription::factory()->for($user, 'subscribable')->create();
+    $notification = new PushTest($device->endpoint);
+
+    $this->travelTo(now());
+    $first = $notification->toWebPush($user, $notification)->toArray();
+    $this->travelTo(now()->addSecond());
+    $second = $notification->toWebPush($user, $notification)->toArray();
+
+    expect($first['tag'])->toStartWith('push-test')
+        ->and($second['tag'])->not->toBe($first['tag'])
+        ->and($first['renotify'])->toBeTrue();
+});
+
 test('a test push is only for the users own devices', function () {
     Notification::fake();
     $someoneElses = PushSubscription::factory()->create();
