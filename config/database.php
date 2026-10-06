@@ -38,9 +38,13 @@ return [
             'database' => env('DB_DATABASE', database_path('database.sqlite')),
             'prefix' => '',
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
-            'busy_timeout' => null,
-            'journal_mode' => null,
-            'synchronous' => null,
+            // SQLite takes one writer at a time: wait for the other one (the
+            // queue worker, a page) rather than fail with "database is locked".
+            'busy_timeout' => (int) env('DB_BUSY_TIMEOUT', 5000),
+            // Readers don't wait for writers, and a write is safe once it is
+            // in the log rather than fully on disk.
+            'journal_mode' => env('DB_JOURNAL_MODE', 'wal'),
+            'synchronous' => env('DB_SYNCHRONOUS', 'normal'),
             'transaction_mode' => 'DEFERRED',
         ],
 
