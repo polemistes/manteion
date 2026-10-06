@@ -139,18 +139,25 @@ As root (with `sudo`), except where it says otherwise.
 
 ## Bringing the current site over
 
-The site on domene.shop keeps its data in one SQLite file (`~/app/database/database.sqlite`, unless `DB_DATABASE` in `~/app/.env` says otherwise) and its pictures in `~/app/storage/app/public`. Do this between steps 5 and 7, from the development machine, with your domene.shop user in place of `USER`:
+The site on domene.shop keeps its data in one SQLite file (`~/app/database/database.sqlite`) and its pictures in `~/app/storage/app/public`. Do this between steps 5 and 7, from the development machine. The domene.shop user is `manteion`; the server side needs no password (the deploy rule).
 
 ```sh
-# Stop changes on the old site while the copy is taken.
-ssh USER@login.domeneshop.no 'cd app && php artisan down'
+# Stop changes on the old site, and let SQLite write a complete copy of the
+# database (a plain file copy could miss changes still in its journal).
+ssh manteion@login.domeneshop.no 'cd app && php artisan down && php -r '"'"'(new PDO("sqlite:database/database.sqlite"))->exec("VACUUM INTO \"database/export.sqlite\"");'"'"' && ls -l database/export.sqlite'
 
-# Copy the database and the pictures to this machine, then on to the server.
-scp USER@login.domeneshop.no:app/database/database.sqlite /tmp/manteion.sqlite
-rsync -a USER@login.domeneshop.no:app/storage/app/public/ /tmp/manteion-uploads/
+# Fetch the copy and the pictures.
+scp manteion@login.domeneshop.no:app/database/export.sqlite /tmp/manteion.sqlite
+rsync -a manteion@login.domeneshop.no:app/storage/app/public/ /tmp/manteion-uploads/
+
+# Put them on the server, as the manteion user, and switch the database to
+# its write-ahead log.
 ssh proteus@manteion.no 'sudo -n -u manteion tee /home/manteion/database/manteion.sqlite >/dev/null && sudo -n -u manteion chmod 600 /home/manteion/database/manteion.sqlite' < /tmp/manteion.sqlite
 rsync -a --rsync-path='sudo -n -u manteion rsync' /tmp/manteion-uploads/ proteus@manteion.no:/home/manteion/storage/app/public/
 ssh proteus@manteion.no "sudo -n -u manteion sqlite3 /home/manteion/database/manteion.sqlite 'PRAGMA journal_mode=WAL;'"
+
+# The copies on this machine are no longer needed.
+rm -rf /tmp/manteion.sqlite /tmp/manteion-uploads
 ```
 
 The first release (step 7) migrates the copy to the new version. It keeps the accounts, friendships, follows, events, messages, leaflets and pictures. It clears the old activity notifications and resets everyone's notification settings to the new defaults.
