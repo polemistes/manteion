@@ -70,7 +70,7 @@
         "seen": "Sett",
         "seenBy": "Sett av {names}",
         "markSeen": "La {name} få vite at du har sett dette",
-        "seenByYou": "Sett av deg"
+        "markedSeen": "{name} får vite at du har sett det"
     },
     "create": {
         "title": "Ny melding",

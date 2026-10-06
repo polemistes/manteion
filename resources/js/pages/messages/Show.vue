@@ -550,6 +550,13 @@ async function markSeen(message: ChatMessage): Promise<void> {
         if (response?.message && latest) {
             setExtra({ ...latest, seen_by: response.message.seen_by });
         }
+
+        // Nothing shows under the message for you (the mark is for the
+        // others), so say that it went through.
+        toast({
+            title: t('messages.show.markedSeen', { name: message.sender.name }),
+            icon: CheckCheck,
+        });
     } catch {
         setExtra(before);
         toastError(t('ui.somethingWentWrong'));
@@ -934,15 +941,15 @@ async function leave(): Promise<void> {
         <div class="border-t border-line pt-2">
             <button
                 v-if="
-                    actionsFor &&
-                    !actionsFor.is_mine &&
-                    !actionsFor.is_deleted &&
-                    !actionsFor.seen_by.some(
+                    actionsFor && !actionsFor.is_mine && !actionsFor.is_deleted
+                "
+                type="button"
+                class="flex h-12 w-full items-center gap-3 rounded-md px-3 text-left hover:bg-surface-2 disabled:pointer-events-none disabled:opacity-45"
+                :disabled="
+                    actionsFor.seen_by.some(
                         (person) => person.id === page.props.auth.user.id,
                     )
                 "
-                type="button"
-                class="flex h-12 w-full items-center gap-3 rounded-md px-3 text-left hover:bg-surface-2"
                 @click="actOnSheet(markSeen)"
             >
                 <CheckCheck

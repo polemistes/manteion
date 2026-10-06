@@ -61,12 +61,14 @@ const page = usePage();
 
 // Who has seen this message: the automatic "Seen" (your newest message,
 // governed by the privacy switches) and the deliberate marks on any
-// message, each person once.
+// message, each person once. Your own mark is for the others to see.
 const seen = computed(() => {
     const people = new Map<number, (typeof props.seenBy)[number]>();
 
     for (const person of [...props.message.seen_by, ...props.seenBy]) {
-        people.set(person.id, person);
+        if (person.id !== page.props.auth.user.id) {
+            people.set(person.id, person);
+        }
     }
 
     return [...people.values()];
@@ -78,20 +80,43 @@ const markedByMe = computed(() =>
     ),
 );
 
-/** Only you marked it: say so, rather than "Seen" as if the sender had. */
-const seenCaption = computed(() =>
-    seen.value.length === 1 && seen.value[0].id === page.props.auth.user.id
-        ? t('messages.show.seenByYou')
-        : t('messages.show.seen'),
+/** Someone else's message, still there: it can be marked as seen. */
+const markable = computed(
+    () => !mine.value && !deleted.value && !props.message.pending,
 );
 
-const canMarkSeen = computed(
-    () =>
-        !mine.value &&
-        !deleted.value &&
-        !props.message.pending &&
-        !markedByMe.value,
-);
+// A double click (mouse) or double tap (touch) marks it as seen. A tap is a
+// pointerup; two within 300 ms count. Mouse goes through dblclick.
+let lastTapAt = 0;
+let lastMarkAt = 0;
+
+function tryMarkSeen(): void {
+    const now = Date.now();
+
+    if (!markable.value || markedByMe.value || now - lastMarkAt < 600) {
+        return;
+    }
+
+    lastMarkAt = now;
+    emit('markSeen');
+}
+
+function onPointerUp(event: PointerEvent): void {
+    cancelPress();
+
+    if (event.pointerType !== 'touch') {
+        return;
+    }
+
+    const now = Date.now();
+
+    if (now - lastTapAt < 300) {
+        lastTapAt = 0;
+        tryMarkSeen();
+    } else {
+        lastTapAt = now;
+    }
+}
 
 const seenLabel = computed(() =>
     t('messages.show.seenBy', {
@@ -185,11 +210,12 @@ onBeforeUnmount(cancelPress);
                 :class="mine ? 'flex-row-reverse' : ''"
             >
                 <div
-                    class="relative min-w-0 animate-[rise-in_160ms_var(--ease-enter)] select-text"
+                    class="relative min-w-0 animate-[rise-in_160ms_var(--ease-enter)] touch-manipulation select-text"
                     @pointerdown="onPointerDown"
-                    @pointerup="cancelPress"
+                    @pointerup="onPointerUp"
                     @pointerleave="cancelPress"
                     @pointercancel="cancelPress"
+                    @dblclick="tryMarkSeen"
                     @contextmenu="canAct && $event.preventDefault()"
                 >
                     <p
@@ -323,8 +349,9 @@ onBeforeUnmount(cancelPress);
                                 </button>
                             </template>
                             <MenuItem
-                                v-if="canMarkSeen"
+                                v-if="markable"
                                 :icon="CheckCheck"
+                                :disabled="markedByMe"
                                 @select="emit('markSeen')"
                                 >{{
                                     t('messages.show.markSeen', {
@@ -393,7 +420,7 @@ onBeforeUnmount(cancelPress);
                     <span
                         v-if="props.seenAs === 'caption'"
                         :aria-label="seenLabel"
-                        >· {{ seenCaption }}</span
+                        >· {{ t('messages.show.seen') }}</span
                     >
                     <span
                         v-else

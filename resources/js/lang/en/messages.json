@@ -70,7 +70,7 @@
         "seen": "Seen",
         "seenBy": "Seen by {names}",
         "markSeen": "Let {name} know you’ve seen this",
-        "seenByYou": "Seen by you"
+        "markedSeen": "{name} will see that you’ve seen it"
     },
     "create": {
         "title": "New message",
