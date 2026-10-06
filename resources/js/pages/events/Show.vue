@@ -95,6 +95,7 @@ const props = defineProps<{
         is_deleted: boolean;
         can_invite: boolean;
         can_comment: boolean;
+        can_comment_as_organizer: boolean;
         can_delete: boolean;
         can_report: boolean;
     };
@@ -780,9 +781,12 @@ const showMenu = computed(
                 <div class="mt-10 max-w-reading">
                     <CommentThread
                         :event-id="props.event.id"
-                        :host-id="props.event.owner.id"
+                        :organizer="props.event.organizer"
                         :comments="props.comments"
                         :can-comment="props.event.can_comment"
+                        :can-comment-as-organizer="
+                            props.event.can_comment_as_organizer
+                        "
                     />
                 </div>
             </article>
@@ -867,6 +871,9 @@ const showMenu = computed(
         v-if="props.event.can_invite"
         v-model:open="inviteOpen"
         :event-id="props.event.id"
+        :organizer-name="
+            props.event.is_owner ? props.event.organizer?.name : undefined
+        "
         :candidates="props.inviteCandidates"
     />
     <AppDialog

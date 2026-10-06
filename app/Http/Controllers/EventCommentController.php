@@ -18,8 +18,15 @@ class EventCommentController extends Controller
 {
     public function store(StoreEventCommentRequest $request, Event $event): RedirectResponse
     {
+        // A spokesperson may speak as the hosting organizer; their own name
+        // is shown beside it either way.
+        $asOrganizer = $request->boolean('as_organizer')
+            && $event->organizer_id !== null
+            && $request->user()->organizerIds()->contains($event->organizer_id);
+
         $comment = $event->comments()->create([
             'user_id' => $request->user()->id,
+            'organizer_id' => $asOrganizer ? $event->organizer_id : null,
             'body' => $request->validated('body'),
         ]);
 

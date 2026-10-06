@@ -4,6 +4,7 @@ import { Ellipsis, Flag, Heart, SendHorizontal, Trash } from '@lucide/vue';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Avatar from '@/components/ui/Avatar.vue';
+import Checkbox from '@/components/ui/Checkbox.vue';
 import Menu from '@/components/ui/Menu.vue';
 import MenuItem from '@/components/ui/MenuItem.vue';
 import Tag from '@/components/ui/Tag.vue';
@@ -11,12 +12,14 @@ import TextArea from '@/components/ui/TextArea.vue';
 import { confirmAction } from '@/composables/useConfirm';
 import { report } from '@/composables/useReport';
 import { staffDelete } from '@/composables/useStaffDelete';
+import type { OrganizerSummary } from '@/events';
 import { useDates } from '@/lib/dates';
 import { linkify } from '@/lib/text';
 import { toastError } from '@/lib/toast';
 import type { ReactionSummary } from '@/reactions';
 import { requestJson } from '@/realtime';
 import * as eventComments from '@/routes/events/comments';
+import { show as organizersShow } from '@/routes/organizers';
 import { store as reactionsStore } from '@/routes/reactions';
 import { show as usersShow } from '@/routes/users';
 
@@ -33,6 +36,9 @@ export interface EventCommentItem {
     is_deleted: boolean;
     created_at: string;
     user: Person;
+    /** Set when a spokesperson wrote it as the hosting organizer. */
+    organizer: OrganizerSummary | null;
+    is_host: boolean;
     can_delete: boolean;
     can_report: boolean;
     reactions: ReactionSummary[];
@@ -40,13 +46,16 @@ export interface EventCommentItem {
 
 /**
  * The event's comments: who, when, what, a like (heart) and Reply, which
- * starts an answer with their @name. The composer posts in place.
+ * starts an answer with their @name. The composer posts in place. A
+ * spokesperson of the hosting organizer can speak as it; their own name
+ * is shown beside the organizer's either way.
  */
 const props = defineProps<{
     eventId: number;
-    hostId: number;
+    organizer: OrganizerSummary | null;
     comments: EventCommentItem[];
     canComment: boolean;
+    canCommentAsOrganizer: boolean;
 }>();
 
 const { t } = useI18n();
@@ -54,6 +63,26 @@ const page = usePage();
 const dates = useDates();
 
 const text = ref('');
+const asOrganizer = ref(props.canCommentAsOrganizer);
+
+/** Whose face a comment wears: the organizer's, or the writer's. */
+function faceOf(comment: EventCommentItem): {
+    name: string;
+    avatar_url: string | null;
+    url: string;
+} {
+    return comment.organizer
+        ? {
+              name: comment.organizer.name,
+              avatar_url: comment.organizer.avatar_url,
+              url: organizersShow(comment.organizer.id).url,
+          }
+        : {
+              name: comment.user.name,
+              avatar_url: comment.user.avatar_url,
+              url: usersShow(comment.user.id).url,
+          };
+}
 const field = ref<InstanceType<typeof TextArea> | null>(null);
 
 // Likes change at once; the server's answer replaces them.
@@ -176,24 +205,33 @@ async function remove(comment: EventCommentItem): Promise<void> {
                 :key="comment.id"
                 class="flex gap-3"
             >
-                <Link :href="usersShow(comment.user.id).url" class="shrink-0">
+                <Link :href="faceOf(comment).url" class="shrink-0">
                     <Avatar
-                        :name="comment.user.name"
-                        :src="comment.user.avatar_url"
+                        :name="faceOf(comment).name"
+                        :src="faceOf(comment).avatar_url"
                         :size="36"
                     />
                 </Link>
                 <div class="min-w-0 flex-1">
                     <p class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                         <Link
-                            :href="usersShow(comment.user.id).url"
+                            :href="faceOf(comment).url"
                             class="text-label font-semibold text-ink hover:underline"
-                            >{{ comment.user.name }}</Link
+                            >{{ faceOf(comment).name }}</Link
                         >
-                        <Tag
-                            v-if="comment.user.id === props.hostId"
-                            tone="host"
-                            >{{ t('events.show.hostTag') }}</Tag
+                        <Tag v-if="comment.is_host" tone="host">{{
+                            t('events.show.hostTag')
+                        }}</Tag>
+                        <Link
+                            v-if="comment.organizer"
+                            :href="usersShow(comment.user.id).url"
+                            class="text-meta text-ink-muted hover:underline"
+                            :title="
+                                t('events.show.spokesperson', {
+                                    name: comment.user.name,
+                                })
+                            "
+                            >{{ comment.user.name }}</Link
                         >
                         <span class="text-meta text-ink-subtle">{{
                             dates.ago(comment.created_at)
@@ -314,8 +352,16 @@ async function remove(comment: EventCommentItem): Promise<void> {
             @success="text = ''"
         >
             <Avatar
-                :name="page.props.auth.user.name"
-                :src="page.props.auth.user.avatar_url"
+                :name="
+                    asOrganizer && props.organizer
+                        ? props.organizer.name
+                        : page.props.auth.user.name
+                "
+                :src="
+                    asOrganizer && props.organizer
+                        ? props.organizer.avatar_url
+                        : page.props.auth.user.avatar_url
+                "
                 :size="36"
                 decorative
                 class="mt-1"
@@ -359,6 +405,29 @@ async function remove(comment: EventCommentItem): Promise<void> {
                 >
                     {{ errors.body }}
                 </p>
+                <div
+                    v-if="props.canCommentAsOrganizer && props.organizer"
+                    class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1"
+                >
+                    <input
+                        type="hidden"
+                        name="as_organizer"
+                        :value="asOrganizer ? 1 : 0"
+                    />
+                    <label
+                        class="flex min-h-11 cursor-pointer items-center gap-2 text-label font-medium text-ink"
+                    >
+                        <Checkbox v-model="asOrganizer" />
+                        {{
+                            t('events.show.commentAs', {
+                                name: props.organizer.name,
+                            })
+                        }}
+                    </label>
+                    <span class="text-meta text-ink-subtle">{{
+                        t('events.show.commentAsHint')
+                    }}</span>
+                </div>
             </div>
         </Form>
         <p v-else class="text-meta text-ink-muted">

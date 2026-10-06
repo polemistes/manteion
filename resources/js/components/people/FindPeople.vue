@@ -14,17 +14,24 @@ import {
     store as requestFriendship,
     update as answerFriendship,
 } from '@/routes/friendships';
+import { show as organizersShow } from '@/routes/organizers';
+import {
+    destroy as unfollowOrganizer,
+    store as followOrganizer,
+} from '@/routes/organizers/follow';
 import { show as usersShow } from '@/routes/users';
 import { PEOPLE_PROPS } from './people';
-import type { FindResult } from './people';
+import type { FindResult, OrganizerResult } from './people';
 
 /**
  * Finding someone new by name or @username: they get a friend request or
- * a follow. Only people who let themselves be found show up.
+ * a follow. Only people who let themselves be found show up. Organizers
+ * (venues and groups) are found the same way and can be followed.
  */
 const props = defineProps<{
     query: string;
     results: FindResult[];
+    organizers: OrganizerResult[];
 }>();
 
 const { t } = useI18n();
@@ -42,7 +49,7 @@ watch(term, (value) => {
                 preserveState: true,
                 preserveScroll: true,
                 replace: true,
-                only: ['findQuery', 'findResults'],
+                only: ['findQuery', 'findResults', 'findOrganizers'],
             },
         );
     }, 350);
@@ -50,7 +57,33 @@ watch(term, (value) => {
 
 onBeforeUnmount(() => clearTimeout(timer));
 
-const busy = ref<number | null>(null);
+const busy = ref<number | string | null>(null);
+
+function organizerFollowAction(organizer: OrganizerResult): void {
+    busy.value = `organizer-${organizer.id}`;
+    const options = {
+        preserveScroll: true,
+        preserveState: true,
+        only: PEOPLE_PROPS,
+        onSuccess: () =>
+            toast({
+                title: organizer.is_following
+                    ? t('people.find.unfollowed', { name: organizer.name })
+                    : t('people.find.followed', { name: organizer.name }),
+                icon: Check,
+            }),
+        onError: () => toastError(t('settings.saveFailed')),
+        onFinish: () => {
+            busy.value = null;
+        },
+    };
+
+    if (organizer.is_following) {
+        router.delete(unfollowOrganizer(organizer.id).url, options);
+    } else {
+        router.post(followOrganizer(organizer.id).url, {}, options);
+    }
+}
 
 function run(
     result: FindResult,
@@ -233,8 +266,60 @@ function followLabel(result: FindResult): string {
                 </div>
             </li>
         </ul>
-        <p v-else-if="props.query" class="mt-3 text-meta text-ink-muted">
+        <p
+            v-else-if="props.query && !props.organizers.length"
+            class="mt-3 text-meta text-ink-muted"
+        >
             {{ t('people.find.none', { query: props.query }) }}
         </p>
+
+        <template v-if="props.organizers.length">
+            <h3 class="mt-5 mb-1 text-meta font-semibold text-ink-muted">
+                {{ t('people.find.organizers') }}
+            </h3>
+            <ul class="flex flex-col">
+                <li
+                    v-for="organizer in props.organizers"
+                    :key="organizer.id"
+                    class="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-line py-3 first:border-t-0"
+                >
+                    <Link
+                        :href="organizersShow(organizer.id).url"
+                        class="flex min-w-0 flex-1 basis-48 items-center gap-3"
+                    >
+                        <Avatar
+                            :name="organizer.name"
+                            :src="organizer.avatar_url"
+                            :size="40"
+                            decorative
+                        />
+                        <span class="min-w-0">
+                            <span
+                                class="block truncate font-semibold text-ink"
+                                >{{ organizer.name }}</span
+                            >
+                            <span
+                                class="block truncate text-meta text-ink-muted"
+                                >{{ '@' + organizer.handle }}</span
+                            >
+                        </span>
+                    </Link>
+                    <Button
+                        size="sm"
+                        :variant="
+                            organizer.is_following ? 'ghost' : 'secondary'
+                        "
+                        :disabled="busy === `organizer-${organizer.id}`"
+                        @click="organizerFollowAction(organizer)"
+                    >
+                        {{
+                            organizer.is_following
+                                ? t('people.find.following')
+                                : t('people.find.follow')
+                        }}
+                    </Button>
+                </li>
+            </ul>
+        </template>
     </div>
 </template>

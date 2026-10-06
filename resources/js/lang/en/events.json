@@ -112,7 +112,10 @@
         "expandPoster": "Show the whole poster",
         "ended": "This event has ended.",
         "mapLabel": "Map of {place}",
-        "spokesperson": "Spokesperson: {name}"
+        "spokesperson": "Spokesperson: {name}",
+        "commentAs": "Comment as {name}",
+        "commentAsHint": "Your name is shown beside it.",
+        "inviteHintOrganizer": "Your friends and the people who follow {name}. They get an invitation and can answer straight away."
     },
     "search": {
         "title": "Public events",

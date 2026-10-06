@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 /**
  * A short message with one optional image or one optional link.
@@ -95,10 +96,50 @@ class Leaflet extends Model
         return $this->morphMany(Report::class, 'reportable');
     }
 
-    public function isVisibleTo(User $user): bool
+    /**
+     * Whether the user wrote it, or speaks for the organizer it is from.
+     */
+    public function isOwnedBy(User $user): bool
     {
         if ($this->user_id === $user->id) {
             return true;
+        }
+
+        return $this->organizer_id !== null && $user->organizerIds()->contains($this->organizer_id);
+    }
+
+    /** Whose name it carries: the organizer's, else the writer's. */
+    public function authorName(): string
+    {
+        return $this->organizer->name ?? $this->owner->name;
+    }
+
+    /**
+     * Everyone who answers for it: the writer, or every spokesperson of
+     * the organizer it is from.
+     *
+     * @return Collection<int, User>
+     */
+    public function authors(): Collection
+    {
+        return $this->organizer === null
+            ? $this->owner->newCollection([$this->owner])
+            : $this->organizer->activeSpokespersons()->get();
+    }
+
+    public function isVisibleTo(User $user): bool
+    {
+        if ($this->isOwnedBy($user)) {
+            return true;
+        }
+
+        // An organizer has followers, not friends.
+        if ($this->organizer_id !== null) {
+            return match ($this->visibility) {
+                LeafletVisibility::Official => true,
+                LeafletVisibility::FriendsAndFollowers => $user->followedOrganizerIds()->contains($this->organizer_id),
+                default => false,
+            };
         }
 
         return match ($this->visibility) {

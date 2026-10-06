@@ -26,7 +26,7 @@ import MenuSeparator from '@/components/ui/MenuSeparator.vue';
 import SectionHeader from '@/components/ui/SectionHeader.vue';
 import Tag from '@/components/ui/Tag.vue';
 import { confirmAction } from '@/composables/useConfirm';
-import type { AttendanceStatus, EventCover } from '@/events';
+import type { AttendanceStatus, EventCover, OrganizerSummary } from '@/events';
 import { useDates } from '@/lib/dates';
 import { toast, toastError } from '@/lib/toast';
 import { index as contactsIndex } from '@/routes/contacts';
@@ -40,6 +40,7 @@ import {
     store as storeFriendship,
     update as answerFriendship,
 } from '@/routes/friendships';
+import { show as organizersShow } from '@/routes/organizers';
 import { account } from '@/routes/settings';
 import { show as usersShow } from '@/routes/users';
 
@@ -68,6 +69,8 @@ const props = defineProps<{
         avatar_url: string | null;
     }[];
     mutual_count: number | null;
+    /** The organizers they speak for and chose to be listed on. */
+    organizers: OrganizerSummary[];
     events: {
         id: number;
         name: string;
@@ -462,9 +465,40 @@ function eventStatus(status: AttendanceStatus | null): string | null {
             </p>
         </template>
 
+        <template v-if="props.organizers.length">
+            <SectionHeader
+                :title="t('people.profile.speaksFor')"
+                :meta="String(props.organizers.length)"
+            />
+            <ul
+                class="grid grid-cols-3 gap-x-3 gap-y-5 sm:grid-cols-4 md:grid-cols-6"
+            >
+                <li v-for="organizer in props.organizers" :key="organizer.id">
+                    <Link
+                        :href="organizersShow(organizer.id).url"
+                        class="flex flex-col items-center gap-2 rounded-md p-1 text-center hover:bg-surface-2/55"
+                    >
+                        <Avatar
+                            :name="organizer.name"
+                            :src="organizer.avatar_url"
+                            :size="56"
+                            decorative
+                        />
+                        <span
+                            class="line-clamp-2 text-meta font-medium text-ink"
+                            >{{ organizer.name }}</span
+                        >
+                    </Link>
+                </li>
+            </ul>
+        </template>
+
         <p
             v-if="
-                !props.is_self && !props.events.length && !props.friends.length
+                !props.is_self &&
+                !props.events.length &&
+                !props.friends.length &&
+                !props.organizers.length
             "
             class="mt-10 text-center font-display text-input text-ink-muted italic"
         >

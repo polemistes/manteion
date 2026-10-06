@@ -38,6 +38,7 @@ return [
     ],
 
     'leaflet' => [
+        'organizer_visibility' => 'En arrangør har følgere, ikke venner. Velg et annet publikum.',
         'one_attachment' => 'Et flyveblad kan ha enten et bilde eller en lenke, ikke begge.',
     ],
 

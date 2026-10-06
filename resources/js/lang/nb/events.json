@@ -112,7 +112,10 @@
         "expandPoster": "Vis hele plakaten",
         "ended": "Arrangementet er over.",
         "mapLabel": "Kart over {place}",
-        "spokesperson": "Talsperson: {name}"
+        "spokesperson": "Talsperson: {name}",
+        "commentAs": "Kommenter som {name}",
+        "commentAsHint": "Navnet ditt vises ved siden av.",
+        "inviteHintOrganizer": "Vennene dine og de som følger {name}. De får en invitasjon og kan svare med en gang."
     },
     "search": {
         "title": "Offentlige arrangementer",

@@ -14,6 +14,6 @@ class LeafletResponsePolicy
 
     public function delete(User $user, LeafletResponse $response): bool
     {
-        return $user->is($response->user) || $user->is($response->leaflet->owner) || $user->isStaff();
+        return $user->is($response->user) || $response->leaflet->isOwnedBy($user) || $user->isStaff();
     }
 }

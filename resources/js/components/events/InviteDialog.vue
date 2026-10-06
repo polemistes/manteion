@@ -18,11 +18,18 @@ interface Person {
     avatar_url: string | null;
 }
 
-/** Pick friends to invite; they can answer straight away. */
-const props = defineProps<{
-    eventId: number;
-    candidates: Person[];
-}>();
+/**
+ * Pick friends to invite; they can answer straight away. For a spokesperson
+ * of the hosting organizer the organizer's followers are offered too.
+ */
+const props = withDefaults(
+    defineProps<{
+        eventId: number;
+        candidates: Person[];
+        organizerName?: string | null;
+    }>(),
+    { organizerName: null },
+);
 
 const open = defineModel<boolean>('open', { default: false });
 
@@ -82,7 +89,13 @@ function send(): void {
     <AppDialog
         v-model:open="open"
         :title="t('events.show.inviteTitle')"
-        :description="t('events.show.inviteHint')"
+        :description="
+            props.organizerName
+                ? t('events.show.inviteHintOrganizer', {
+                      name: props.organizerName,
+                  })
+                : t('events.show.inviteHint')
+        "
         size="lg"
     >
         <p v-if="!props.candidates.length" class="text-ink-muted">

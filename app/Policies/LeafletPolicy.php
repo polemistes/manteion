@@ -19,11 +19,11 @@ class LeafletPolicy
 
     public function update(User $user, Leaflet $leaflet): bool
     {
-        return $user->is($leaflet->owner);
+        return $leaflet->isOwnedBy($user);
     }
 
     public function delete(User $user, Leaflet $leaflet): bool
     {
-        return $user->is($leaflet->owner) || $user->isStaff();
+        return $leaflet->isOwnedBy($user) || $user->isStaff();
     }
 }

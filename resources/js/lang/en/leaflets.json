@@ -27,7 +27,15 @@
         "link": "Link",
         "linkHint": "A preview of the page shows once it is saved.",
         "send": "Post leaflet",
-        "sending": "Posting…"
+        "sending": "Posting…",
+        "host": "From",
+        "hostYou": "You",
+        "hostHint": "Yourself, or an organizer you speak for.",
+        "organizerVisibilityHints": {
+            "official": "Everyone on Manteion",
+            "friends_and_followers": "The people who follow {name}",
+            "private": "Only the spokespersons of {name}"
+        }
     },
     "visibility": {
         "official": "Official",
@@ -65,5 +73,9 @@
     },
     "show": {
         "title": "Leaflet from {name}"
+    },
+    "organizerVisibility": {
+        "friends_and_followers": "Followers",
+        "private": "Spokespersons only"
     }
 }

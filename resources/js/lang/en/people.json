@@ -103,7 +103,8 @@
         "requestSent": "Friend request sent to {name}.",
         "requestCancelled": "Request cancelled.",
         "followed": "You follow {name} now.",
-        "unfollowed": "You no longer follow {name}."
+        "unfollowed": "You no longer follow {name}.",
+        "organizers": "Organizers"
     },
     "empty": {
         "friendsTitle": "No friends here yet",
@@ -115,7 +116,8 @@
         "requestsTitle": "No requests",
         "requestsBody": "Friend and follow requests, both ways, show up here.",
         "groupsTitle": "No groups yet",
-        "groupsBody": "Put people in groups to filter your events feed by them."
+        "groupsBody": "Put people in groups to filter your events feed by them.",
+        "followingOrganizers": "Follow an organizer to see its public events and leaflets in your feeds."
     },
     "profile": {
         "unfriended": "You and {name} are no longer friends.",
@@ -124,6 +126,8 @@
         "cancelFollowRequest": "Cancel follow request",
         "message": "Message",
         "comingUp": "Coming up",
-        "nothingToShow": "Nothing from {name} to show you yet."
-    }
+        "nothingToShow": "Nothing from {name} to show you yet.",
+        "speaksFor": "Speaks for"
+    },
+    "organizers": "Organizers"
 }

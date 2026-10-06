@@ -38,6 +38,7 @@ return [
     ],
 
     'leaflet' => [
+        'organizer_visibility' => 'An organizer has followers, not friends. Choose another audience.',
         'one_attachment' => 'A leaflet can carry either an image or a link, not both.',
     ],
 

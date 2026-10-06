@@ -10,6 +10,7 @@ use App\Http\Requests\UpdateLeafletRequest;
 use App\Jobs\FetchLeafletLinkPreview;
 use App\Models\Leaflet;
 use App\Models\LeafletResponse;
+use App\Models\Organizer;
 use App\Models\Reaction;
 use App\Models\User;
 use App\Services\ActivityFeed;
@@ -52,6 +53,8 @@ class LeafletController extends Controller
                 'next_url' => $leaflets->nextPageUrl(),
             ],
             'scope' => $scope?->value,
+            // The organizers the viewer may write as.
+            'organizers' => $viewer->organizers()->orderBy('name')->get()->map(fn (Organizer $organizer) => $organizer->summary())->values(),
         ]);
     }
 
@@ -59,8 +62,16 @@ class LeafletController extends Controller
     {
         Gate::authorize('create', Leaflet::class);
 
+        // From an organizer only by one of its spokespersons.
+        $organizerId = $request->validated('organizer_id');
+
+        if ($organizerId !== null && ! $request->user()->organizerIds()->contains((int) $organizerId)) {
+            abort(403);
+        }
+
         $leaflet = $request->user()->leaflets()->create([
             ...$request->safe()->only(['body', 'visibility']),
+            'organizer_id' => $organizerId,
             'link_url' => $request->validated('link_url') ?: null,
         ]);
 
@@ -68,7 +79,7 @@ class LeafletController extends Controller
         $this->refreshLinkPreview($leaflet);
 
         AdminAlerts::send(AdminAlert::LeafletPublished, $request->user(), [
-            'author' => $request->user()->name,
+            'author' => $leaflet->authorName(),
             'visibility' => $leaflet->visibility->value,
         ], route('leaflets.show', $leaflet));
 
@@ -79,7 +90,7 @@ class LeafletController extends Controller
     {
         Gate::authorize('view', $leaflet);
 
-        $leaflet->load(['owner', 'reactions', 'responses.user', 'responses.reactions'])->loadCount('responses');
+        $leaflet->load(['owner', 'organizer', 'reactions', 'responses.user', 'responses.reactions'])->loadCount('responses');
         $this->retryMissingLinkPreview($leaflet);
 
         // Opening the leaflet means the replies to it have been seen.
@@ -103,6 +114,7 @@ class LeafletController extends Controller
                 'visibility' => $leaflet->visibility->value,
                 'link_url' => $leaflet->link_url,
                 'image_url' => $leaflet->image_path === null ? null : Storage::disk('public')->url($leaflet->image_path),
+                'organizer' => $leaflet->organizer?->summary(),
             ],
         ]);
     }
@@ -161,6 +173,7 @@ class LeafletController extends Controller
             'created_at' => $leaflet->created_at->toIso8601String(),
             'is_edited' => $leaflet->updated_at->gt($leaflet->created_at->addMinute()),
             'owner' => ['id' => $leaflet->owner->id, 'name' => $leaflet->owner->name, 'username' => $leaflet->owner->username, 'avatar_url' => $leaflet->owner->avatar_url],
+            'organizer' => $leaflet->organizer?->summary(),
             'image_url' => $leaflet->image_path === null ? null : Storage::disk('public')->url($leaflet->image_path),
             'link' => $leaflet->link_url === null ? null : [
                 'url' => $leaflet->link_url,
@@ -171,7 +184,7 @@ class LeafletController extends Controller
             ],
             'can_edit' => Gate::forUser($viewer)->allows('update', $leaflet),
             'can_delete' => Gate::forUser($viewer)->allows('delete', $leaflet),
-            'can_report' => $leaflet->user_id !== $viewer->id,
+            'can_report' => ! $leaflet->isOwnedBy($viewer),
             'reactions' => Reaction::summarize($leaflet->reactions, $viewer),
             'responses_count' => (int) $leaflet->responses_count,
             // The thread itself only on the leaflet's own page; the feed
@@ -181,7 +194,7 @@ class LeafletController extends Controller
                 'body' => $response->body,
                 'created_at' => $response->created_at->toIso8601String(),
                 'user' => ['id' => $response->user->id, 'name' => $response->user->name, 'username' => $response->user->username, 'avatar_url' => $response->user->avatar_url],
-                'can_delete' => $viewer->id === $response->user_id || $viewer->id === $leaflet->user_id || $viewer->isStaff(),
+                'can_delete' => $viewer->id === $response->user_id || $leaflet->isOwnedBy($viewer) || $viewer->isStaff(),
                 'can_report' => $response->user_id !== $viewer->id,
                 'reactions' => Reaction::summarize($response->reactions, $viewer),
             ])->values()->all(),

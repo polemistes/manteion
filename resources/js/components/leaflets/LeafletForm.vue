@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Form } from '@inertiajs/vue3';
 import { ImagePlus, Link2, X } from '@lucide/vue';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import FieldError from '@/components/FieldError.vue';
 import ImageCropper from '@/components/ImageCropper.vue';
@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button.vue';
 import SelectField from '@/components/ui/SelectField.vue';
 import TextArea from '@/components/ui/TextArea.vue';
 import TextField from '@/components/ui/TextField.vue';
+import type { OrganizerSummary } from '@/events';
 import { leafletVisibilities } from '@/leaflets';
 import type { LeafletVisibility } from '@/leaflets';
 
@@ -29,6 +30,10 @@ const props = withDefaults(
         linkUrl?: string | null;
         imageUrl?: string | null;
         resetOnSuccess?: boolean;
+        /** The organizers the writer may post as (new leaflets only). */
+        organizers?: OrganizerSummary[];
+        /** The organizer an existing leaflet is from; that cannot change. */
+        organizer?: OrganizerSummary | null;
     }>(),
     {
         body: '',
@@ -36,6 +41,8 @@ const props = withDefaults(
         linkUrl: null,
         imageUrl: null,
         resetOnSuccess: false,
+        organizers: () => [],
+        organizer: null,
     },
 );
 
@@ -51,16 +58,52 @@ const attachment = ref<'none' | 'image' | 'link'>(
     props.imageUrl ? 'image' : props.linkUrl ? 'link' : 'none',
 );
 
-const visibilityOptions = computed(() =>
-    leafletVisibilities.map((value) => ({
-        value,
-        label: t(`leaflets.visibility.${value}`),
+// From whom: the writer ('me') or an organizer they speak for.
+const fromId = ref<string>(props.organizer ? String(props.organizer.id) : 'me');
+const fromOptions = computed(() => [
+    { value: 'me', label: t('leaflets.form.hostYou') },
+    ...props.organizers.map((organizer) => ({
+        value: String(organizer.id),
+        label: organizer.name,
     })),
+]);
+const chosenOrganizer = computed(
+    () =>
+        props.organizer ??
+        props.organizers.find(
+            (organizer) => String(organizer.id) === fromId.value,
+        ) ??
+        null,
+);
+
+// An organizer has followers, not friends: its audiences are named so,
+// and "friends only" is not among them.
+const visibilityOptions = computed(() =>
+    leafletVisibilities
+        .filter((value) => !chosenOrganizer.value || value !== 'friends')
+        .map((value) => ({
+            value,
+            label:
+                chosenOrganizer.value &&
+                (value === 'friends_and_followers' || value === 'private')
+                    ? t(`leaflets.organizerVisibility.${value}`)
+                    : t(`leaflets.visibility.${value}`),
+        })),
 );
 
 const visibilityHint = computed(() =>
-    t(`leaflets.form.visibilityHints.${visibility.value}`),
+    chosenOrganizer.value
+        ? t(`leaflets.form.organizerVisibilityHints.${visibility.value}`, {
+              name: chosenOrganizer.value.name,
+          })
+        : t(`leaflets.form.visibilityHints.${visibility.value}`),
 );
+
+watch(chosenOrganizer, (organizer) => {
+    if (organizer && visibility.value === 'friends') {
+        visibility.value = 'friends_and_followers';
+    }
+});
 
 const MAX = 2000;
 const remaining = computed(() => MAX - body.value.length);
@@ -77,6 +120,7 @@ function onSuccess(): void {
     }
 
     body.value = '';
+    fromId.value = 'me';
     visibility.value = props.visibility;
     linkUrl.value = '';
     attachment.value = 'none';
@@ -109,6 +153,21 @@ function onSuccess(): void {
             >
                 {{ remaining }}
             </p>
+        </div>
+
+        <div v-if="props.organizers.length && !props.organizer">
+            <input
+                type="hidden"
+                name="organizer_id"
+                :value="chosenOrganizer?.id ?? ''"
+            />
+            <SelectField
+                v-model="fromId"
+                :label="t('leaflets.form.host')"
+                :options="fromOptions"
+                :hint="t('leaflets.form.hostHint')"
+                :error="errors.organizer_id"
+            />
         </div>
 
         <div>

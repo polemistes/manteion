@@ -103,7 +103,8 @@
         "requestSent": "Venneforespørsel sendt til {name}.",
         "requestCancelled": "Forespørselen er trukket tilbake.",
         "followed": "Du følger {name} nå.",
-        "unfollowed": "Du følger ikke lenger {name}."
+        "unfollowed": "Du følger ikke lenger {name}.",
+        "organizers": "Arrangører"
     },
     "empty": {
         "friendsTitle": "Ingen venner her ennå",
@@ -115,7 +116,8 @@
         "requestsTitle": "Ingen forespørsler",
         "requestsBody": "Venne- og følgeforespørsler begge veier dukker opp her.",
         "groupsTitle": "Ingen grupper ennå",
-        "groupsBody": "Sett folk i grupper for å filtrere arrangementsfeeden etter dem."
+        "groupsBody": "Sett folk i grupper for å filtrere arrangementsfeeden etter dem.",
+        "followingOrganizers": "Følg en arrangør for å se dens offentlige arrangementer og løpesedler i strømmene dine."
     },
     "profile": {
         "unfriended": "Du og {name} er ikke lenger venner.",
@@ -124,6 +126,8 @@
         "cancelFollowRequest": "Trekk tilbake forespørselen om å følge",
         "message": "Send melding",
         "comingUp": "Kommer snart",
-        "nothingToShow": "Ingenting fra {name} å vise deg ennå."
-    }
+        "nothingToShow": "Ingenting fra {name} å vise deg ennå.",
+        "speaksFor": "Taler for"
+    },
+    "organizers": "Arrangører"
 }

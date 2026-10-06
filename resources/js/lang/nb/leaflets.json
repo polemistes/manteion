@@ -27,7 +27,15 @@
         "link": "Lenke",
         "linkHint": "En forhåndsvisning av siden vises når det er lagret.",
         "send": "Publiser flyveblad",
-        "sending": "Publiserer…"
+        "sending": "Publiserer…",
+        "host": "Fra",
+        "hostYou": "Deg",
+        "hostHint": "Deg selv, eller en arrangør du taler for.",
+        "organizerVisibilityHints": {
+            "official": "Alle på Manteion",
+            "friends_and_followers": "De som følger {name}",
+            "private": "Bare talspersonene for {name}"
+        }
     },
     "visibility": {
         "official": "Offisielt",
@@ -65,5 +73,9 @@
     },
     "show": {
         "title": "Flyveblad fra {name}"
+    },
+    "organizerVisibility": {
+        "friends_and_followers": "Følgere",
+        "private": "Bare talspersoner"
     }
 }

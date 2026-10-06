@@ -42,6 +42,15 @@ export interface GroupEntry {
 
 export type GroupType = 'friend' | 'following';
 
+/** An organizer found by name or handle, and whether the viewer follows it. */
+export interface OrganizerResult {
+    id: number;
+    name: string;
+    handle: string;
+    avatar_url: string | null;
+    is_following: boolean;
+}
+
 export interface FindResult extends Person {
     friend_status: 'none' | 'request_sent' | 'request_received' | 'friends';
     friendship_id: number | null;
@@ -61,7 +70,9 @@ export const PEOPLE_PROPS = [
     'pendingFollowerRequests',
     'friendGroups',
     'followingGroups',
+    'followedOrganizers',
     'findResults',
+    'findOrganizers',
 ];
 
 /** Opens the direct conversation with someone (creating it the first time). */

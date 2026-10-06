@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { router, usePage, usePoll } from '@inertiajs/vue3';
+import { Link, router, usePage, usePoll } from '@inertiajs/vue3';
 import {
     BellOff,
     ChevronRight,
@@ -20,6 +20,7 @@ import { messagePerson, PEOPLE_PROPS } from '@/components/people/people';
 import type {
     FindResult,
     FollowEntry,
+    OrganizerResult,
     FriendEntry,
     FriendRequestEntry,
     GroupEntry,
@@ -37,11 +38,12 @@ import Button from '@/components/ui/Button.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import FilterChip from '@/components/ui/FilterChip.vue';
 import IconButton from '@/components/ui/IconButton.vue';
+import ListRow from '@/components/ui/ListRow.vue';
 import SearchField from '@/components/ui/SearchField.vue';
 import SectionHeader from '@/components/ui/SectionHeader.vue';
 import { confirmAction } from '@/composables/useConfirm';
 import { usePressedChipInView } from '@/composables/usePressedChipInView';
-import type { CategoryOption, TagOption } from '@/events';
+import type { CategoryOption, OrganizerSummary, TagOption } from '@/events';
 import { useDates } from '@/lib/dates';
 import { toast, toastError } from '@/lib/toast';
 import { useBadges } from '@/realtime';
@@ -54,6 +56,8 @@ import {
     destroy as destroyFriendship,
     update as answerFriendRequest,
 } from '@/routes/friendships';
+import { show as organizersShow } from '@/routes/organizers';
+import { destroy as unfollowOrganizer } from '@/routes/organizers/follow';
 
 /**
  * People: friends, the people you follow and who follow you, the requests
@@ -71,8 +75,10 @@ const props = defineProps<{
     friendGroups: GroupEntry[];
     followingGroups: GroupEntry[];
     categories: CategoryOption[];
+    followedOrganizers: OrganizerSummary[];
     findQuery: string;
     findResults: FindResult[];
+    findOrganizers: OrganizerResult[];
 }>();
 
 const { t, te } = useI18n();
@@ -198,6 +204,38 @@ const following = computed(() =>
 const followers = computed(() =>
     props.followers.filter((entry) => matches(entry.user)),
 );
+const followedOrganizers = computed(() => {
+    const term = query.value.trim().toLocaleLowerCase();
+
+    return props.followedOrganizers.filter(
+        (organizer) =>
+            term === '' ||
+            organizer.name.toLocaleLowerCase().includes(term) ||
+            organizer.handle.toLocaleLowerCase().includes(term),
+    );
+});
+
+async function endOrganizerFollow(organizer: OrganizerSummary): Promise<void> {
+    const confirmed = await confirmAction({
+        title: t('people.confirm.unfollowTitle', { name: organizer.name }),
+        message: t('people.confirm.unfollowBody'),
+        confirmLabel: t('people.menu.unfollow'),
+    });
+
+    if (!confirmed) {
+        return;
+    }
+
+    router.delete(unfollowOrganizer(organizer.id).url, {
+        preserveScroll: true,
+        only: PEOPLE_PROPS,
+        onSuccess: () =>
+            toast({
+                title: t('people.find.unfollowed', { name: organizer.name }),
+            }),
+        onError: () => toastError(t('settings.saveFailed')),
+    });
+}
 
 // The requests waiting for you, newest first.
 type Incoming =
@@ -734,6 +772,51 @@ usePressedChipInView(chipRow, tab);
                         :title="t('people.empty.followingTitle')"
                         :body="t('people.empty.followingBody')"
                     />
+
+                    <!-- The organizers (venues, groups) you follow. -->
+                    <template v-if="followedOrganizers.length">
+                        <SectionHeader
+                            :title="t('people.organizers')"
+                            :meta="String(props.followedOrganizers.length)"
+                        />
+                        <div
+                            class="overflow-hidden rounded-lg border border-line bg-surface"
+                        >
+                            <ListRow
+                                v-for="organizer in followedOrganizers"
+                                :key="organizer.id"
+                                :inset="74"
+                                :sub="'@' + organizer.handle"
+                                interactive
+                            >
+                                <template #leading>
+                                    <Avatar
+                                        :name="organizer.name"
+                                        :src="organizer.avatar_url"
+                                        :size="44"
+                                        decorative
+                                    />
+                                </template>
+                                <template #title>
+                                    <Link
+                                        :href="organizersShow(organizer.id).url"
+                                        class="after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-offset-[-2px] focus-visible:after:outline-ink"
+                                        >{{ organizer.name }}</Link
+                                    >
+                                </template>
+                                <template #trailing>
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        class="relative z-10"
+                                        @click="endOrganizerFollow(organizer)"
+                                    >
+                                        {{ t('people.find.following') }}
+                                    </Button>
+                                </template>
+                            </ListRow>
+                        </div>
+                    </template>
                 </template>
 
                 <!-- Followers -->
@@ -995,6 +1078,7 @@ usePressedChipInView(chipRow, tab);
                         <FindPeople
                             :query="props.findQuery"
                             :results="props.findResults"
+                            :organizers="props.findOrganizers"
                         />
                     </section>
                 </div>
@@ -1008,7 +1092,11 @@ usePressedChipInView(chipRow, tab);
         :description="t('people.find.hint')"
         size="lg"
     >
-        <FindPeople :query="props.findQuery" :results="props.findResults" />
+        <FindPeople
+            :query="props.findQuery"
+            :results="props.findResults"
+            :organizers="props.findOrganizers"
+        />
     </AppDialog>
 
     <MuteDialog

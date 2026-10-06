@@ -20,7 +20,11 @@ usePoll(30_000, { only: ['leaflet'] });
 
 <template>
     <PageHeader
-        :title="t('leaflets.show.title', { name: props.leaflet.owner.name })"
+        :title="
+            t('leaflets.show.title', {
+                name: (props.leaflet.organizer ?? props.leaflet.owner).name,
+            })
+        "
         :back="leafletsIndex().url"
         :back-label="t('leaflets.index.title')"
     />

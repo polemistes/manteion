@@ -6,6 +6,7 @@ use App\Enums\FollowStatus;
 use App\Models\Event;
 use App\Models\Follow;
 use App\Models\Friendship;
+use App\Models\Organizer;
 use App\Models\User;
 use App\Services\ActivityFeed;
 use App\Services\EventFeedQuery;
@@ -81,6 +82,9 @@ class UserProfileController extends Controller
                 'avatar_url' => $friend->avatar_url,
             ])->all(),
             'mutual_count' => $viewer->is($user) ? null : (MutualFriends::counts($viewer, collect([$user->id]))[$user->id] ?? null),
+            // The organizers they speak for and chose to be listed on.
+            'organizers' => $user->organizers()->wherePivot('listed', true)->orderBy('name')->get()
+                ->map(fn (Organizer $organizer) => $organizer->summary())->values()->all(),
             'events' => $events->map(fn (Event $event) => [
                 'id' => $event->id,
                 'name' => $event->name,

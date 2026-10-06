@@ -205,7 +205,7 @@ class EventController extends Controller
         Gate::authorize('view', $event);
 
         $viewer = $request->user();
-        $event->load(['owner', 'organizer', 'tags', 'images', 'comments.user', 'comments.reactions', 'attendees.user', 'attendees.invitedBy']);
+        $event->load(['owner', 'organizer', 'tags', 'images', 'comments.user', 'comments.organizer', 'comments.reactions', 'attendees.user', 'attendees.invitedBy']);
 
         // Opening the event means its invitation, comments and so on have
         // been seen.
@@ -254,6 +254,7 @@ class EventController extends Controller
                 'is_deleted' => $event->is_deleted,
                 'can_invite' => $canInvite,
                 'can_comment' => Gate::allows('comment', $event),
+                'can_comment_as_organizer' => $event->organizer_id !== null && $viewer->organizerIds()->contains($event->organizer_id),
                 'can_delete' => Gate::allows('delete', $event),
                 'can_report' => ! $event->is_deleted && Gate::allows('view', $event) && ! $isOwner,
             ],
@@ -274,6 +275,8 @@ class EventController extends Controller
                 'is_deleted' => $comment->is_deleted,
                 'created_at' => $comment->created_at->toIso8601String(),
                 'user' => ['id' => $comment->user->id, 'name' => $comment->user->name, 'username' => $comment->user->username, 'avatar_url' => $comment->user->avatar_url],
+                'organizer' => $comment->organizer?->summary(),
+                'is_host' => $event->isHostedBy($comment->user),
                 'can_delete' => $viewer->can('delete', $comment),
                 // The viewer has already been authorised to view the event,
                 // and with it every comment on it.
@@ -283,11 +286,33 @@ class EventController extends Controller
             // Only for someone who may invite, and without only the guests
             // they can see: leaving out a hidden one would give it away.
             // Inviting someone already invited changes nothing.
-            'inviteCandidates' => ! $canInvite ? [] : $viewer->friends()
-                ->reject(fn (User $friend) => $visibleAttendees->contains('user_id', $friend->id))
-                ->map(fn (User $friend) => ['id' => $friend->id, 'name' => $friend->name, 'username' => $friend->username, 'avatar_url' => $friend->avatar_url])
+            'inviteCandidates' => ! $canInvite ? [] : $this->inviteCandidates($event, $viewer)
+                ->reject(fn (User $person) => $visibleAttendees->contains('user_id', $person->id))
+                ->map(fn (User $person) => ['id' => $person->id, 'name' => $person->name, 'username' => $person->username, 'avatar_url' => $person->avatar_url])
                 ->values(),
         ]);
+    }
+
+    /**
+     * Whom an inviter may pick: their friends, and for a spokesperson of
+     * the hosting organizer also the organizer's followers, who asked to
+     * hear from it.
+     *
+     * @return Collection<int, User>
+     */
+    private function inviteCandidates(Event $event, User $viewer): Collection
+    {
+        $candidates = $viewer->friends();
+
+        if ($event->organizer !== null && $viewer->organizerIds()->contains($event->organizer_id)) {
+            $candidates = $candidates
+                ->concat($event->organizer->followers()->get())
+                ->unique('id');
+        }
+
+        return $candidates->reject(fn (User $person) => $person->id === $viewer->id)
+            ->sortBy(fn (User $person) => mb_strtolower($person->name))
+            ->values();
     }
 
     public function edit(Event $event): Response

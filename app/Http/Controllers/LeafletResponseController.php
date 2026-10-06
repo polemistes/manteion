@@ -6,6 +6,7 @@ use App\Enums\ReportStatus;
 use App\Http\Requests\StoreLeafletResponseRequest;
 use App\Models\Leaflet;
 use App\Models\LeafletResponse;
+use App\Models\User;
 use App\Notifications\NewLeafletResponse;
 use App\Services\ActivityFeed;
 use Illuminate\Http\RedirectResponse;
@@ -21,10 +22,11 @@ class LeafletResponseController extends Controller
             'body' => $request->validated('body'),
         ]);
 
-        // The author hears about everyone's replies but their own.
-        if ($response->user_id !== $leaflet->user_id) {
-            $leaflet->owner->notify((new NewLeafletResponse($response))->locale($leaflet->owner->locale ?? 'en'));
-        }
+        // The author hears about everyone's replies but their own: the
+        // writer, or every spokesperson of the organizer it is from.
+        $leaflet->authors()
+            ->reject(fn (User $author) => $author->id === $response->user_id)
+            ->each(fn (User $author) => $author->notify((new NewLeafletResponse($response))->locale($author->locale ?? 'en')));
 
         return back();
     }
@@ -41,8 +43,8 @@ class LeafletResponseController extends Controller
 
         $response->delete();
 
-        // The author's notification quotes the reply; it goes with it.
-        ActivityFeed::withdraw($leaflet->owner, NewLeafletResponse::class, 'response_id', $response->id);
+        // The authors' notifications quote the reply; they go with it.
+        $leaflet->authors()->each(fn (User $author) => ActivityFeed::withdraw($author, NewLeafletResponse::class, 'response_id', $response->id));
 
         return back();
     }

@@ -1,3 +1,4 @@
+import type { OrganizerSummary } from '@/events';
 import type { ReactionSummary } from '@/reactions';
 
 export type LeafletVisibility =
@@ -22,6 +23,8 @@ export interface LeafletSummary {
         username: string;
         avatar_url: string | null;
     };
+    /** The organizer it is from, when a spokesperson wrote it as one. */
+    organizer: OrganizerSummary | null;
     image_url: string | null;
     link: {
         url: string;

@@ -56,6 +56,11 @@ class UpdateLeafletRequest extends FormRequest
                 if ($keepsImage && $this->filled('link_url')) {
                     $validator->errors()->add('link_url', __('messages.leaflet.one_attachment'));
                 }
+
+                // An organizer has followers, not friends.
+                if ($leaflet instanceof Leaflet && $leaflet->organizer_id !== null && $this->input('visibility') === LeafletVisibility::Friends->value) {
+                    $validator->errors()->add('visibility', __('messages.leaflet.organizer_visibility'));
+                }
             },
         ];
     }

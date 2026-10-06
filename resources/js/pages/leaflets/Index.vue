@@ -16,6 +16,7 @@ import EmptyState from '@/components/ui/EmptyState.vue';
 import FilterChip from '@/components/ui/FilterChip.vue';
 import IconButton from '@/components/ui/IconButton.vue';
 import { usePressedChipInView } from '@/composables/usePressedChipInView';
+import type { OrganizerSummary } from '@/events';
 import { leafletVisibilities } from '@/leaflets';
 import type { LeafletSummary, LeafletVisibility } from '@/leaflets';
 import { index as leafletsIndex, store } from '@/routes/leaflets';
@@ -28,6 +29,7 @@ const props = defineProps<{
     leaflets: LeafletSummary[];
     pagination: PaginationSummary;
     scope: LeafletVisibility | null;
+    organizers: OrganizerSummary[];
 }>();
 
 const { t } = useI18n();
@@ -148,6 +150,7 @@ usePressedChipInView(chipRow, () => props.scope);
     >
         <LeafletForm
             :form="store.form()"
+            :organizers="props.organizers"
             :submit-label="t('leaflets.form.send')"
             :submitting-label="t('leaflets.form.sending')"
             reset-on-success

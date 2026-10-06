@@ -8,6 +8,7 @@ use App\Models\ContactGroup;
 use App\Models\ContactTagPreference;
 use App\Models\Follow;
 use App\Models\Friendship;
+use App\Models\Organizer;
 use App\Models\Tag;
 use App\Models\User;
 use App\Services\MutualFriends;
@@ -130,12 +131,41 @@ class ContactsController extends Controller
             'friendGroups' => $this->summarizeGroups($user->contactGroups()->ofType(ContactGroupType::Friend)->with('members')->get()),
             'followingGroups' => $this->summarizeGroups($user->contactGroups()->ofType(ContactGroupType::Following)->with('members')->get()),
             'categories' => Tag::categoriesTree(),
+            'followedOrganizers' => $user->followedOrganizers()->orderBy('name')->get()
+                ->map(fn (Organizer $organizer) => $organizer->summary())->values()->all(),
             'findQuery' => $findQuery,
             'findResults' => array_map(fn (array $result) => [
                 ...$result,
                 'mutual_count' => $mutualCounts[$result['id']] ?? null,
             ], $findResults),
+            'findOrganizers' => $this->findOrganizers($findQuery, $user),
         ]);
+    }
+
+    /**
+     * Organizers by name or handle; every organizer can be found.
+     *
+     * @return array<int, array{id: int, name: string, handle: string, avatar_url: string|null, is_following: bool}>
+     */
+    private function findOrganizers(string $term, User $viewer): array
+    {
+        if ($term === '') {
+            return [];
+        }
+
+        $followedIds = $viewer->followedOrganizerIds();
+
+        return Organizer::query()
+            ->where(fn ($query) => $query->where('name', 'like', "%{$term}%")->orWhere('handle', 'like', "%{$term}%"))
+            ->orderBy('name')
+            ->limit(10)
+            ->get()
+            ->map(fn (Organizer $organizer) => [
+                ...$organizer->summary(),
+                'is_following' => $followedIds->contains($organizer->id),
+            ])
+            ->values()
+            ->all();
     }
 
     /**

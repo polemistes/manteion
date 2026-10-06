@@ -19,6 +19,7 @@ class StoreEventCommentRequest extends FormRequest
     {
         return [
             'body' => ['required', 'string', 'max:2000'],
+            'as_organizer' => ['sometimes', 'boolean'],
         ];
     }
 }

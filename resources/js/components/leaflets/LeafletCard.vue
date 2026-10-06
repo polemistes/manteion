@@ -25,6 +25,7 @@ import {
     edit as editLeaflet,
     show as showLeaflet,
 } from '@/routes/leaflets';
+import { show as organizersShow } from '@/routes/organizers';
 import { show as usersShow } from '@/routes/users';
 
 /**
@@ -44,6 +45,21 @@ const props = withDefaults(
 
 const { t } = useI18n();
 const dates = useDates();
+
+// Whose leaflet it is: the organizer's when written as one, else the writer's.
+const author = computed(() => props.leaflet.organizer ?? props.leaflet.owner);
+const authorUrl = computed(() =>
+    props.leaflet.organizer
+        ? organizersShow(props.leaflet.organizer.id).url
+        : usersShow(props.leaflet.owner.id).url,
+);
+const visibilityLabel = computed(() =>
+    props.leaflet.organizer &&
+    (props.leaflet.visibility === 'friends_and_followers' ||
+        props.leaflet.visibility === 'private')
+        ? t(`leaflets.organizerVisibility.${props.leaflet.visibility}`)
+        : t(`leaflets.visibility.${props.leaflet.visibility}`),
+);
 
 const long = computed(() => props.leaflet.body.length > 280);
 const cut = computed(() => !props.full && props.leaflet.body.length > 700);
@@ -68,28 +84,34 @@ async function remove(): Promise<void> {
 <template>
     <article class="rounded-lg border border-line bg-surface">
         <header class="flex items-center gap-3 px-4 pt-4 sm:px-5 sm:pt-5">
-            <Link
-                :href="usersShow(props.leaflet.owner.id).url"
-                class="shrink-0"
-            >
+            <Link :href="authorUrl" class="shrink-0">
                 <Avatar
-                    :name="props.leaflet.owner.name"
-                    :src="props.leaflet.owner.avatar_url"
+                    :name="author.name"
+                    :src="author.avatar_url"
                     :size="40"
                 />
             </Link>
             <div class="min-w-0 flex-1">
                 <p class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                     <Link
-                        :href="usersShow(props.leaflet.owner.id).url"
+                        :href="authorUrl"
                         class="relative min-w-0 font-semibold text-ink after:absolute after:-inset-x-1 after:-top-3 after:bottom-0 hover:underline"
                         ><span class="block truncate">{{
-                            props.leaflet.owner.name
+                            author.name
                         }}</span></Link
                     >
-                    <Tag tone="host">{{
-                        t(`leaflets.visibility.${props.leaflet.visibility}`)
-                    }}</Tag>
+                    <Tag tone="host">{{ visibilityLabel }}</Tag>
+                    <Link
+                        v-if="props.leaflet.organizer"
+                        :href="usersShow(props.leaflet.owner.id).url"
+                        class="relative min-w-0 truncate text-meta text-ink-muted hover:underline"
+                        :title="
+                            t('events.show.spokesperson', {
+                                name: props.leaflet.owner.name,
+                            })
+                        "
+                        >{{ props.leaflet.owner.name }}</Link
+                    >
                 </p>
                 <p class="text-meta text-ink-muted">
                     <Link
