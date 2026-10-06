@@ -33,3 +33,6 @@ yarn-error.log
 
 # Playwright MCP writes its snapshots and screenshots here
 /.playwright-mcp
+
+# Editor workspace settings
+*.code-workspace
