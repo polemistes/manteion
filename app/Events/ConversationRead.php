@@ -27,7 +27,7 @@ class ConversationRead implements ShouldBroadcastNow, ShouldRescue
      */
     public function broadcastOn(): array
     {
-        return ConversationParticipant::channelsFor($this->participant->conversation_id, exceptUserId: $this->participant->user_id);
+        return ConversationParticipant::readReceiptChannelsFor($this->participant->conversation_id, $this->participant->user_id);
     }
 
     public function broadcastAs(): string

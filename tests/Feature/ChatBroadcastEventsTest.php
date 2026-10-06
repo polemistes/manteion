@@ -237,6 +237,7 @@ test('someone who left a group no longer gets its messages, whatever they still 
 test('reading a conversation tells the others when, for their "Seen", if the reader shows that', function () {
     $broadcaster = chatBroadcaster();
     [$sender, $reader] = User::factory()->count(2)->create()->all();
+    $sender->update(['share_read_receipts' => true]);
     $reader->update(['share_read_receipts' => true]);
     $conversation = chatBroadcastConversation([$sender, $reader]);
     Message::factory()->create(['conversation_id' => $conversation->id, 'user_id' => $sender->id]);
@@ -251,9 +252,25 @@ test('reading a conversation tells the others when, for their "Seen", if the rea
         ->and($read[0]['payload']['read_at'])->not->toBeNull();
 });
 
+test('a read is told only to those who show their own reads: it goes both ways', function () {
+    $broadcaster = chatBroadcaster();
+    [$showing, $notShowing, $reader] = User::factory()->count(3)->create()->all();
+    $showing->update(['share_read_receipts' => true]);
+    $reader->update(['share_read_receipts' => true]);
+    $conversation = chatBroadcastConversation([$showing, $notShowing, $reader], 'Hikers');
+    Message::factory()->create(['conversation_id' => $conversation->id, 'user_id' => $notShowing->id]);
+
+    $this->actingAs($reader)->postJson("/messages/{$conversation->id}/read")->assertNoContent();
+
+    $read = $broadcaster->named('conversation.read');
+    expect($read)->toHaveCount(1)
+        ->and($read[0]['channels'])->toBe(["private-App.Models.User.{$showing->id}"]);
+});
+
 test('opening a conversation with something new in it tells the others it was read, if the reader shows that', function () {
     $broadcaster = chatBroadcaster();
     [$sender, $reader] = User::factory()->count(2)->create()->all();
+    $sender->update(['share_read_receipts' => true]);
     $reader->update(['share_read_receipts' => true]);
     $conversation = chatBroadcastConversation([$sender, $reader]);
     Message::factory()->create(['conversation_id' => $conversation->id, 'user_id' => $sender->id]);

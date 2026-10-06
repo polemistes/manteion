@@ -75,11 +75,11 @@
         "messages": "Messages",
         "share_typing": {
             "title": "Show when you are typing",
-            "description": "People in the chat see that you are writing."
+            "description": "People in the chat see that you are writing, and you see when they are. Off, you see nothing either."
         },
         "share_read_receipts": {
             "title": "Show when you have read messages",
-            "description": "Others see “Seen” under their message once you have read it. Off until you turn it on."
+            "description": "Others see “Seen” under their message once you have read it, and you see theirs. Off until you turn it on."
         }
     },
     "notifications": {

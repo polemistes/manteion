@@ -212,6 +212,11 @@ export function useConversationChannel(
     }
 
     function startTyping(user: TypingUser): void {
+        // Seeing others type goes with showing your own typing.
+        if (!viewer().share_typing) {
+            return;
+        }
+
         clearTimeout(typingTimers.get(user.id));
         typingTimers.set(
             user.id,

@@ -75,11 +75,11 @@
         "messages": "Meldinger",
         "share_typing": {
             "title": "Vis at du skriver",
-            "description": "De du skriver med, ser at du holder på å skrive."
+            "description": "De du skriver med, ser at du holder på å skrive, og du ser når de gjør det. Av, ser du det heller ikke."
         },
         "share_read_receipts": {
             "title": "Vis at du har lest meldinger",
-            "description": "Andre ser «Sett» under meldingen sin når du har lest den. Av til du slår det på."
+            "description": "Andre ser «Sett» under meldingen sin når du har lest den, og du ser deres. Av til du slår det på."
         }
     },
     "notifications": {

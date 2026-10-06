@@ -93,4 +93,23 @@ class ConversationParticipant extends Model
             ->map(fn (int $userId) => new PrivateChannel("App.Models.User.{$userId}"))
             ->all());
     }
+
+    /**
+     * The user channels of the participants who get to see that someone
+     * read the conversation: those who show their own reads (it goes both
+     * ways), other than the reader.
+     *
+     * @return list<PrivateChannel>
+     */
+    public static function readReceiptChannelsFor(int $conversationId, int $readerId): array
+    {
+        return array_values(self::query()
+            ->where('conversation_id', $conversationId)
+            ->where('user_id', '!=', $readerId)
+            ->whereHas('user', fn (Builder $query) => $query->where('share_read_receipts', true))
+            ->orderBy('user_id')
+            ->pluck('user_id')
+            ->map(fn (int $userId) => new PrivateChannel("App.Models.User.{$userId}"))
+            ->all());
+    }
 }
