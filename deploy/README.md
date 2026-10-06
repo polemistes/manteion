@@ -106,7 +106,15 @@ As root (with `sudo`), except where it says otherwise.
    systemctl enable --now manteion-queue manteion-reverb
    ```
 
-10. **Apache and the certificate.** Copy the port 80 site, check, and reload:
+10. **Apache and the certificate.** Apache's service on Arch is fenced off from `/home` (`ProtectHome=yes`), yet it serves Manteion's built files straight from `/home/manteion/app/public`. A small override lets it read that one folder, and nothing else in `/home`:
+
+    ```sh
+    mkdir -p /etc/systemd/system/httpd.service.d
+    cp /home/manteion/app/deploy/systemd/httpd-manteion.conf /etc/systemd/system/httpd.service.d/manteion.conf
+    systemctl daemon-reload && systemctl restart httpd
+    ```
+
+    Then copy the port 80 site, check, and reload:
 
     ```sh
     cp /home/manteion/app/deploy/apache/manteion.no.conf /etc/httpd/conf/conf.d/
