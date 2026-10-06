@@ -91,6 +91,7 @@ test('the notifications page gets the effective settings, the categories in disp
                     'followed_events' => false,
                     'friend_requests' => false,
                     'followers' => true,
+                    'organizer_invites' => false,
                     'leaflet_responses' => false,
                 ],
                 'message_previews' => false,
@@ -112,6 +113,7 @@ test('the notifications page gets the effective settings, the categories in disp
                 ['value' => 'followed_events', 'push_default' => false],
                 ['value' => 'friend_requests', 'push_default' => false],
                 ['value' => 'followers', 'push_default' => false],
+                ['value' => 'organizer_invites', 'push_default' => false],
                 ['value' => 'leaflet_responses', 'push_default' => false],
             ])
             ->where('devices', [

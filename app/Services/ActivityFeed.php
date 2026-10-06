@@ -6,10 +6,12 @@ use App\Events\BadgesUpdated;
 use App\Models\Event;
 use App\Models\Follow;
 use App\Models\Friendship;
+use App\Models\OrganizerSpokesperson;
 use App\Models\User;
 use App\Notifications\ActivityNotification;
 use App\Notifications\FriendRequestReceived;
 use App\Notifications\NewFollower;
+use App\Notifications\SpokespersonInvited;
 use Carbon\CarbonInterface;
 use Closure;
 use Illuminate\Http\Request;
@@ -95,13 +97,18 @@ class ActivityFeed
             ->get(['id', 'status'])
             ->keyBy('id');
 
+        $spokespersonInvitations = OrganizerSpokesperson::query()
+            ->whereKey($notifications->pluck('data.spokesperson_id')->filter()->unique()->values())
+            ->get(['id', 'accepted_at'])
+            ->keyBy('id');
+
         $followingActors = Follow::query()
             ->where('follower_id', $user->id)
             ->whereIn('followed_id', $notifications->pluck('data.actor_id')->filter()->unique()->values())
             ->get(['followed_id', 'status'])
             ->mapWithKeys(fn (Follow $follow) => [$follow->followed_id => $follow->status->value]);
 
-        return function (DatabaseNotification $notification) use ($user, $events, $friendships, $follows, $followingActors): array {
+        return function (DatabaseNotification $notification) use ($user, $events, $friendships, $follows, $followingActors, $spokespersonInvitations): array {
             $data = $notification->data;
             $event = ($data['subject_type'] ?? null) === 'event' ? $events->get($data['subject_id'] ?? null) : null;
             $attendee = $event?->attendees->first();
@@ -112,6 +119,12 @@ class ActivityFeed
                 default => null,
             };
 
+            // An invitation to speak for an organizer: open until answered,
+            // gone once declined.
+            $invitation = $notification->type === SpokespersonInvited::class
+                ? $spokespersonInvitations->get($data['spokesperson_id'] ?? null)
+                : null;
+
             $following = $notification->type === NewFollower::class
                 ? $followingActors->get($data['actor_id'] ?? null)
                 : null;
@@ -121,13 +134,17 @@ class ActivityFeed
                     'starts_at' => $event->starts_at->toIso8601String(),
                     'ends_at' => $event->ends_at?->toIso8601String(),
                     'cover' => $event->images->first()?->presentation(),
-                    'host_name' => $event->owner->name,
-                    'is_host' => $event->user_id === $user->id,
+                    'host_name' => $event->hostName(),
+                    'is_host' => $event->isHostedBy($user),
                     'is_over' => $event->isOver(),
                     'my_status' => $attendee?->status->value,
                     'my_attendance_visibility' => $attendee?->attendance_visibility->value,
                 ],
-                'request' => $request === null ? null : ['id' => $request->id, 'status' => $request->status->value],
+                'request' => match (true) {
+                    $request !== null => ['id' => $request->id, 'status' => $request->status->value],
+                    $invitation !== null => ['id' => $invitation->id, 'status' => $invitation->isPending() ? 'pending' : 'accepted'],
+                    default => null,
+                },
                 'following_actor' => $following,
             ];
         };

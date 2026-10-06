@@ -51,6 +51,14 @@ export interface EventInvitation {
     at: string;
 }
 
+/** A venue or organisation hosting an event (App\Models\Organizer::summary). */
+export interface OrganizerSummary {
+    id: number;
+    name: string;
+    handle: string;
+    avatar_url: string | null;
+}
+
 export interface EventSummary {
     id: number;
     name: string;
@@ -65,6 +73,8 @@ export interface EventSummary {
     ends_at: string | null;
     visibility: string;
     owner: ContactOption;
+    /** The organizer hosting it, when a spokesperson made it for one. */
+    organizer: OrganizerSummary | null;
     is_host: boolean;
     tags: TagOption[];
     my_status: AttendanceStatus | null;

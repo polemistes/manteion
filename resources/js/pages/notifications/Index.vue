@@ -47,6 +47,7 @@ function kindOf(item: ActivityItem): Exclude<Kind, 'all'> {
         case 'FollowedUserPublishedEvent':
             return 'invitations';
         case 'FriendRequestReceived':
+        case 'SpokespersonInvited':
             return 'requests';
         case 'NewFollower':
             return item.pending ? 'requests' : 'follows';

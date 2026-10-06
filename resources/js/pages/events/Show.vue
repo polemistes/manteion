@@ -46,6 +46,7 @@ import type {
     AttendanceVisibility,
     EventCover,
     EventInvitation,
+    OrganizerSummary,
     TagOption,
 } from '@/events';
 import { useDates } from '@/lib/dates';
@@ -59,6 +60,7 @@ import {
     index as eventsIndex,
 } from '@/routes/events';
 import { store as makeSearchable } from '@/routes/events/searchable';
+import { show as organizersShow } from '@/routes/organizers';
 import { show as usersShow } from '@/routes/users';
 
 interface Person {
@@ -88,6 +90,7 @@ const props = defineProps<{
         owner: Person;
         tags: TagOption[];
         images: EventCover[];
+        organizer: OrganizerSummary | null;
         is_owner: boolean;
         is_deleted: boolean;
         can_invite: boolean;
@@ -108,6 +111,14 @@ const props = defineProps<{
 const { t, te } = useI18n();
 const dates = useDates();
 const { cityAndCountry } = usePlaces();
+
+/** Who hosts: the organizer when there is one, else the person. */
+const host = computed(() => props.event.organizer ?? props.event.owner);
+const hostUrl = computed(() =>
+    props.event.organizer
+        ? organizersShow(props.event.organizer.id).url
+        : usersShow(props.event.owner.id).url,
+);
 
 const cover = computed<EventCover | null>(() => props.event.images[0] ?? null);
 const shape = computed<'photo' | 'poster' | 'none'>(
@@ -620,21 +631,18 @@ const showMenu = computed(
                         </div>
                     </li>
                     <li class="flex gap-3.5 sm:col-span-2 xl:col-span-1">
-                        <Link
-                            :href="usersShow(props.event.owner.id).url"
-                            class="shrink-0"
-                        >
+                        <Link :href="hostUrl" class="shrink-0">
                             <Avatar
-                                :name="props.event.owner.name"
-                                :src="props.event.owner.avatar_url"
+                                :name="host.name"
+                                :src="host.avatar_url"
                                 :size="40"
                             />
                         </Link>
                         <div class="min-w-0">
                             <Link
-                                :href="usersShow(props.event.owner.id).url"
+                                :href="hostUrl"
                                 class="font-semibold text-ink hover:underline"
-                                >{{ props.event.owner.name }}</Link
+                                >{{ host.name }}</Link
                             >
                             <p
                                 class="flex items-center gap-1.5 text-meta text-ink-muted"
@@ -651,6 +659,26 @@ const showMenu = computed(
                                     aria-hidden="true"
                                 />
                                 {{ visibilityLabel }}
+                            </p>
+                            <p
+                                v-if="props.event.organizer"
+                                class="text-meta text-ink-muted"
+                            >
+                                <i18n-t
+                                    keypath="events.show.spokesperson"
+                                    scope="global"
+                                >
+                                    <template #name>
+                                        <Link
+                                            :href="
+                                                usersShow(props.event.owner.id)
+                                                    .url
+                                            "
+                                            class="text-ink hover:underline"
+                                            >{{ props.event.owner.name }}</Link
+                                        >
+                                    </template>
+                                </i18n-t>
                             </p>
                         </div>
                     </li>

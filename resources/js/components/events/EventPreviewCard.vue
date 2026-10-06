@@ -5,6 +5,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Avatar from '@/components/ui/Avatar.vue';
 import Tag from '@/components/ui/Tag.vue';
+import type { OrganizerSummary } from '@/events';
 import { useDates } from '@/lib/dates';
 
 /**
@@ -19,13 +20,15 @@ const props = defineProps<{
     cover: { url: string; fit: 'cover' | 'contain' } | null;
     visibility: 'private' | 'public';
     isNew: boolean;
+    /** The organizer chosen as host, or null for the person themself. */
+    organizer?: OrganizerSummary | null;
 }>();
 
 const { t } = useI18n();
 const dates = useDates();
 const page = usePage();
 
-const host = computed(() => page.props.auth.user);
+const host = computed(() => props.organizer ?? page.props.auth.user);
 
 const when = computed(() =>
     props.startsAt

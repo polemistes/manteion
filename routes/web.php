@@ -24,6 +24,9 @@ use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Moderation\ReportController as ModerationReportController;
 use App\Http\Controllers\Moderation\StaffConversationController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\OrganizerController;
+use App\Http\Controllers\OrganizerFollowController;
+use App\Http\Controllers\OrganizerSpokespersonController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\ReactionController;
@@ -100,6 +103,18 @@ Route::middleware('auth')->group(function () {
         ->name('events.images.destroy')
         ->scopeBindings();
     Route::post('/events/{event}/searchable', [EventSearchabilityController::class, 'store'])->name('events.searchable.store');
+
+    Route::get('/organizers/create', [OrganizerController::class, 'create'])->name('organizers.create');
+    Route::post('/organizers', [OrganizerController::class, 'store'])->name('organizers.store');
+    Route::get('/organizers/{organizer}', [OrganizerController::class, 'show'])->name('organizers.show');
+    Route::get('/organizers/{organizer}/edit', [OrganizerController::class, 'edit'])->name('organizers.edit');
+    Route::put('/organizers/{organizer}', [OrganizerController::class, 'update'])->name('organizers.update');
+    Route::delete('/organizers/{organizer}', [OrganizerController::class, 'destroy'])->name('organizers.destroy');
+    Route::post('/organizers/{organizer}/follow', [OrganizerFollowController::class, 'store'])->name('organizers.follow.store');
+    Route::delete('/organizers/{organizer}/follow', [OrganizerFollowController::class, 'destroy'])->name('organizers.follow.destroy');
+    Route::post('/organizers/{organizer}/spokespersons', [OrganizerSpokespersonController::class, 'store'])->name('organizers.spokespersons.store');
+    Route::patch('/organizers/{organizer}/spokespersons/{user}', [OrganizerSpokespersonController::class, 'update'])->name('organizers.spokespersons.update');
+    Route::delete('/organizers/{organizer}/spokespersons/{user}', [OrganizerSpokespersonController::class, 'destroy'])->name('organizers.spokespersons.destroy');
 
     Route::get('/leaflets', [LeafletController::class, 'index'])->name('leaflets.index');
     Route::post('/leaflets', [LeafletController::class, 'store'])->name('leaflets.store');

@@ -244,7 +244,10 @@ const groupOrder: { key: string; categories: NotificationCategory[] }[] = [
         key: 'events',
         categories: ['event_invites', 'event_comments', 'followed_events'],
     },
-    { key: 'people', categories: ['friend_requests', 'followers'] },
+    {
+        key: 'people',
+        categories: ['friend_requests', 'followers', 'organizer_invites'],
+    },
     { key: 'leaflets', categories: ['leaflet_responses'] },
 ];
 

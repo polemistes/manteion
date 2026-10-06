@@ -19,21 +19,21 @@ class EventPolicy
 
     public function update(User $user, Event $event): bool
     {
-        return $user->is($event->owner);
+        return $event->isHostedBy($user);
     }
 
     public function delete(User $user, Event $event): bool
     {
-        return $user->is($event->owner) || $user->isStaff();
+        return $event->isHostedBy($user) || $user->isStaff();
     }
 
     public function comment(User $user, Event $event): bool
     {
-        return $event->isVisibleTo($user) && ($user->is($event->owner) || $event->allow_invitee_comments);
+        return $event->isVisibleTo($user) && ($event->isHostedBy($user) || $event->allow_invitee_comments);
     }
 
     public function invite(User $user, Event $event): bool
     {
-        return $event->isVisibleTo($user) && ($user->is($event->owner) || $event->allow_invitee_invites);
+        return $event->isVisibleTo($user) && ($event->isHostedBy($user) || $event->allow_invitee_invites);
     }
 }

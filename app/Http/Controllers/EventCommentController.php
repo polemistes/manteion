@@ -7,6 +7,7 @@ use App\Events\EventActivity;
 use App\Http\Requests\StoreEventCommentRequest;
 use App\Models\Event;
 use App\Models\EventComment;
+use App\Models\User;
 use App\Notifications\NewEventComment;
 use App\Services\ActivityFeed;
 use Illuminate\Http\RedirectResponse;
@@ -22,10 +23,11 @@ class EventCommentController extends Controller
             'body' => $request->validated('body'),
         ]);
 
-        // The host hears about everyone's comments but their own.
-        if ($comment->user_id !== $event->user_id) {
-            $event->owner->notify((new NewEventComment($comment))->locale($event->owner->locale ?? 'en'));
-        }
+        // The hosts hear about everyone's comments but their own: the person
+        // who made the event, or every spokesperson of the organizer.
+        $event->hosts()
+            ->reject(fn (User $host) => $host->id === $comment->user_id)
+            ->each(fn (User $host) => $host->notify((new NewEventComment($comment))->locale($host->locale ?? 'en')));
 
         broadcast(new EventActivity($event->id, 'comment'))->toOthers();
 
@@ -48,8 +50,8 @@ class EventCommentController extends Controller
             'resolved_at' => now(),
         ]);
 
-        // The host's notification quotes the comment; it goes with it.
-        ActivityFeed::withdraw($event->owner, NewEventComment::class, 'comment_id', $comment->id);
+        // The hosts' notifications quote the comment; they go with it.
+        $event->hosts()->each(fn (User $host) => ActivityFeed::withdraw($host, NewEventComment::class, 'comment_id', $comment->id));
 
         broadcast(new EventActivity($event->id, 'comment'))->toOthers();
 

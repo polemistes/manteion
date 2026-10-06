@@ -6,6 +6,7 @@ use App\Enums\EventVisibility;
 use Carbon\CarbonImmutable;
 use Database\Factories\EventFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,6 +18,7 @@ use Illuminate\Support\Carbon;
 /**
  * @property int $id
  * @property int $user_id
+ * @property int|null $organizer_id
  * @property string $name
  * @property string|null $place
  * @property float|null $latitude
@@ -37,7 +39,7 @@ use Illuminate\Support\Carbon;
  * @property-read int $attending_count
  * @property-read int $interested_count
  */
-#[Fillable(['user_id', 'name', 'place', 'latitude', 'longitude', 'city', 'country', 'country_code', 'description', 'starts_at', 'ends_at', 'visibility', 'allow_invitee_invites', 'allow_invitee_comments', 'searchable_paid_at', 'followers_notified_at', 'is_deleted'])]
+#[Fillable(['user_id', 'organizer_id', 'name', 'place', 'latitude', 'longitude', 'city', 'country', 'country_code', 'description', 'starts_at', 'ends_at', 'visibility', 'allow_invitee_invites', 'allow_invitee_comments', 'searchable_paid_at', 'followers_notified_at', 'is_deleted'])]
 class Event extends Model
 {
     /** @use HasFactory<EventFactory> */
@@ -60,11 +62,58 @@ class Event extends Model
     }
 
     /**
+     * The person who made the event: the host, or the spokesperson who made
+     * it for the organizer.
+     *
      * @return BelongsTo<User, $this>
      */
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * The organizer hosting the event, if a spokesperson made it for one.
+     *
+     * @return BelongsTo<Organizer, $this>
+     */
+    public function organizer(): BelongsTo
+    {
+        return $this->belongsTo(Organizer::class);
+    }
+
+    /**
+     * Whether this person speaks for the event: made it themselves, or is
+     * a spokesperson of the organizer hosting it.
+     */
+    public function isHostedBy(User $user): bool
+    {
+        if ($this->user_id === $user->id) {
+            return true;
+        }
+
+        return $this->organizer_id !== null && $user->organizerIds()->contains($this->organizer_id);
+    }
+
+    /**
+     * The name the event is hosted under.
+     */
+    public function hostName(): string
+    {
+        return $this->organizer->name ?? $this->owner->name;
+    }
+
+    /**
+     * The people who speak for the event: its maker, or the organizer's
+     * spokespersons.
+     *
+     * @return Collection<int, User>
+     */
+    public function hosts(): Collection
+    {
+        return $this->organizer === null
+            ? $this->owner->newCollection([$this->owner])
+            : $this->organizer->activeSpokespersons()->get();
     }
 
     /**
@@ -137,7 +186,7 @@ class Event extends Model
 
     public function isVisibleTo(User $user): bool
     {
-        if ($this->user_id === $user->id) {
+        if ($this->isHostedBy($user)) {
             return true;
         }
 
@@ -150,7 +199,11 @@ class Event extends Model
         }
 
         if ($this->visibility === EventVisibility::Public) {
-            return $user->isFollowing($this->owner);
+            // An organizer's public events reach its followers; a person's,
+            // the people following them.
+            return $this->organizer_id !== null
+                ? $user->followedOrganizerIds()->contains($this->organizer_id)
+                : $user->isFollowing($this->owner);
         }
 
         return false;

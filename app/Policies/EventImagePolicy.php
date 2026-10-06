@@ -9,6 +9,6 @@ class EventImagePolicy
 {
     public function delete(User $user, EventImage $image): bool
     {
-        return $user->is($image->event->owner) || $user->isStaff();
+        return $image->event->isHostedBy($user) || $user->isStaff();
     }
 }

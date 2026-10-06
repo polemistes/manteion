@@ -4,6 +4,7 @@ use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\Settings\AccountController;
 use App\Http\Controllers\Settings\AppearanceController;
 use App\Http\Controllers\Settings\NotificationController;
+use App\Http\Controllers\Settings\OrganizerController as OrganizerSettingsController;
 use App\Http\Controllers\Settings\PrivacyController;
 use App\Http\Controllers\Settings\SettingsController;
 use Illuminate\Support\Facades\Route;
@@ -21,6 +22,7 @@ Route::put('/settings/notifications', [NotificationController::class, 'update'])
 Route::post('/settings/notifications/test', [NotificationController::class, 'test'])->middleware('throttle:6,1')->name('settings.notifications.test');
 Route::get('/settings/appearance', [AppearanceController::class, 'edit'])->name('settings.appearance');
 Route::put('/settings/appearance', [AppearanceController::class, 'update'])->name('settings.appearance.update');
+Route::get('/settings/organizers', [OrganizerSettingsController::class, 'index'])->name('settings.organizers');
 Route::get('/settings/language', [SettingsController::class, 'language'])->name('settings.language');
 
 // A device listed in the notification settings, removed by id (the other

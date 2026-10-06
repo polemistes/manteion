@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { Page } from '@inertiajs/core';
-import { Link, router } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import {
+    Building2,
     Calendar,
     CalendarPlus,
     Check,
@@ -26,6 +27,7 @@ import {
     update as approveFollowRequest,
 } from '@/routes/follows';
 import { update as answerFriendRequest } from '@/routes/friendships';
+import { update as answerSpokespersonInvitation } from '@/routes/organizers/spokespersons';
 import type { ActivityItem } from '@/types';
 
 /**
@@ -42,6 +44,7 @@ const props = defineProps<{
 
 const { t } = useI18n();
 const dates = useDates();
+const page = usePage();
 
 const actorName = computed(
     () => props.item.actor?.name ?? t('notifications.someone'),
@@ -51,9 +54,14 @@ const event = computed(() => context.value?.event ?? null);
 const isFollowRequest = computed(
     () => props.item.type === 'NewFollower' && props.item.pending === true,
 );
-/** A friend or follow request the user answers here (not a plain follow). */
+const isSpokespersonInvitation = computed(
+    () => props.item.type === 'SpokespersonInvited',
+);
+/** A friend, follow or spokesperson request the user answers here. */
 const request = computed(() =>
-    props.item.type === 'FriendRequestReceived' || isFollowRequest.value
+    props.item.type === 'FriendRequestReceived' ||
+    isFollowRequest.value ||
+    isSpokespersonInvitation.value
         ? (context.value?.request ?? null)
         : null,
 );
@@ -81,6 +89,8 @@ const icon = computed<Component>(() => {
             return Check;
         case 'NewLeafletResponse':
             return Newspaper;
+        case 'SpokespersonInvited':
+            return Building2;
         default:
             return Check;
     }
@@ -169,6 +179,28 @@ function answerFriendship(action: 'accept' | 'decline'): void {
                               name: actorName.value,
                           }),
                           icon: UserCheck,
+                      }
+                    : { title: t('notifications.savedDeclined') },
+            ),
+        ),
+    );
+}
+
+function answerSpokesperson(action: 'accept' | 'decline'): void {
+    router.patch(
+        answerSpokespersonInvitation([
+            props.item.subject_id,
+            page.props.auth.user.id,
+        ]).url,
+        { action },
+        visitOptions(() =>
+            toast(
+                action === 'accept'
+                    ? {
+                          title: t('notifications.savedSpokesperson', {
+                              organizer: props.item.subject_title,
+                          }),
+                          icon: Check,
                       }
                     : { title: t('notifications.savedDeclined') },
             ),
@@ -364,6 +396,16 @@ const hasExtra = computed(
                 “{{ props.item.excerpt }}”
             </blockquote>
 
+            <p
+                v-if="isSpokespersonInvitation && request?.status === 'pending'"
+                class="text-meta text-ink-muted"
+            >
+                {{
+                    t('notifications.spokespersonTerms', {
+                        organizer: props.item.subject_title,
+                    })
+                }}
+            </p>
             <div
                 v-if="request && request.status === 'pending'"
                 class="flex flex-wrap gap-2"
@@ -373,9 +415,11 @@ const hasExtra = computed(
                     size="sm"
                     :disabled="busy"
                     @click="
-                        isFollowRequest
-                            ? approveFollow()
-                            : answerFriendship('accept')
+                        isSpokespersonInvitation
+                            ? answerSpokesperson('accept')
+                            : isFollowRequest
+                              ? approveFollow()
+                              : answerFriendship('accept')
                     "
                 >
                     {{
@@ -388,9 +432,11 @@ const hasExtra = computed(
                     size="sm"
                     :disabled="busy"
                     @click="
-                        isFollowRequest
-                            ? declineFollow()
-                            : answerFriendship('decline')
+                        isSpokespersonInvitation
+                            ? answerSpokesperson('decline')
+                            : isFollowRequest
+                              ? declineFollow()
+                              : answerFriendship('decline')
                     "
                 >
                     {{ t('notifications.decline') }}
@@ -404,9 +450,11 @@ const hasExtra = computed(
                 {{
                     request.status === 'declined'
                         ? t('notifications.declined')
-                        : isFollowRequest
-                          ? t('notifications.approved')
-                          : t('notifications.friendsNow')
+                        : isSpokespersonInvitation
+                          ? t('notifications.spokespersonNow')
+                          : isFollowRequest
+                            ? t('notifications.approved')
+                            : t('notifications.friendsNow')
                 }}
             </p>
 

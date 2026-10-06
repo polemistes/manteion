@@ -15,6 +15,7 @@ enum NotificationCategory: string
     case FollowedEvents = 'followed_events';
     case FriendRequests = 'friend_requests';
     case Followers = 'followers';
+    case OrganizerInvites = 'organizer_invites';
     case LeafletResponses = 'leaflet_responses';
 
     /**
@@ -26,7 +27,7 @@ enum NotificationCategory: string
         return match ($this) {
             self::DirectMessages, self::GroupMessages => true,
             self::EventInvites, self::EventComments, self::FollowedEvents,
-            self::FriendRequests, self::Followers, self::LeafletResponses => false,
+            self::FriendRequests, self::Followers, self::OrganizerInvites, self::LeafletResponses => false,
         };
     }
 
@@ -49,6 +50,7 @@ enum NotificationCategory: string
             self::FollowedEvents,
             self::FriendRequests,
             self::Followers,
+            self::OrganizerInvites,
             self::LeafletResponses,
         ];
     }

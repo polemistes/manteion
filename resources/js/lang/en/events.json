@@ -111,7 +111,8 @@
         "deletedEvent": "This event was removed by a moderator.",
         "expandPoster": "Show the whole poster",
         "ended": "This event has ended.",
-        "mapLabel": "Map of {place}"
+        "mapLabel": "Map of {place}",
+        "spokesperson": "Spokesperson: {name}"
     },
     "search": {
         "title": "Public events",
@@ -135,7 +136,8 @@
         "going": "{n} going",
         "maybe": "{n} maybe",
         "away": "{distance} km away",
-        "noOneYet": "No one has answered yet"
+        "noOneYet": "No one has answered yet",
+        "by": "by {name}"
     },
     "rsvp": {
         "label": "Your answer",
@@ -247,6 +249,9 @@
         "imageRemoved": "Image removed",
         "confirmRemoveImageTitle": "Remove the image?",
         "confirmRemoveImage": "The event will show its date instead.",
-        "removeImage": "Remove image"
+        "removeImage": "Remove image",
+        "host": "Host",
+        "hostHint": "Yourself, or a venue or group you speak for.",
+        "hostYou": "You"
     }
 }

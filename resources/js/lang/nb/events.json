@@ -111,7 +111,8 @@
         "deletedEvent": "Dette arrangementet er fjernet av en moderator.",
         "expandPoster": "Vis hele plakaten",
         "ended": "Arrangementet er over.",
-        "mapLabel": "Kart over {place}"
+        "mapLabel": "Kart over {place}",
+        "spokesperson": "Talsperson: {name}"
     },
     "search": {
         "title": "Offentlige arrangementer",
@@ -135,7 +136,8 @@
         "going": "{n} deltar",
         "maybe": "{n} kanskje",
         "away": "{distance} km unna",
-        "noOneYet": "Ingen har svart ennå"
+        "noOneYet": "Ingen har svart ennå",
+        "by": "ved {name}"
     },
     "rsvp": {
         "label": "Svaret ditt",
@@ -247,6 +249,9 @@
         "imageRemoved": "Bildet er fjernet",
         "confirmRemoveImageTitle": "Fjerne bildet?",
         "confirmRemoveImage": "Arrangementet viser datoen i stedet.",
-        "removeImage": "Fjern bildet"
+        "removeImage": "Fjern bildet",
+        "host": "Arrangør",
+        "hostHint": "Deg selv, eller et sted eller en gruppe du taler for.",
+        "hostYou": "Deg"
     }
 }

@@ -8,6 +8,7 @@ use App\Enums\FollowStatus;
 use App\Models\ContactTagPreference;
 use App\Models\Event;
 use App\Models\Follow;
+use App\Models\Organizer;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -43,12 +44,22 @@ class EventFeedQuery
             ->pluck('contact_user_id')
             ->all();
 
+        $organizerIds = $this->viewer->organizerIds()->all();
+
         return $this->base()
-            ->where(function (Builder $query) use ($viewerId, $fullyMutedContactIds) {
+            ->where(function (Builder $query) use ($viewerId, $fullyMutedContactIds, $organizerIds) {
                 $query->where('user_id', $viewerId)
                     ->orWhereHas('attendees', fn (Builder $attendees) => $attendees->where('user_id', $viewerId))
+                    // A spokesperson sees everything of their organizers.
+                    ->orWhereIn('organizer_id', $organizerIds)
+                    // An organizer's public events reach whoever follows it.
+                    ->orWhere(fn (Builder $query) => $query
+                        ->whereIn('visibility', [EventVisibility::Public->value, EventVisibility::Searchable->value])
+                        ->whereIn('organizer_id', DB::table('organizer_follows')->select('organizer_id')->where('user_id', $viewerId)))
+                    // A person's public events reach the people following them.
                     ->orWhere(function (Builder $query) use ($viewerId, $fullyMutedContactIds) {
                         $query->whereIn('visibility', [EventVisibility::Public->value, EventVisibility::Searchable->value])
+                            ->whereNull('organizer_id')
                             ->whereIn('user_id', Follow::query()
                                 ->select('followed_id')
                                 ->where('follower_id', $viewerId)
@@ -75,6 +86,21 @@ class EventFeedQuery
     {
         return $this->base()
             ->where('user_id', $owner->id)
+            ->whereNull('organizer_id')
+            ->where(fn (Builder $query) => $query
+                ->whereIn('events.id', $this->visible()->select('events.id'))
+                ->orWhere('visibility', EventVisibility::Searchable));
+    }
+
+    /**
+     * An organizer's events that the viewer may see, for its page.
+     *
+     * @return Builder<Event>
+     */
+    public function ofOrganizer(Organizer $organizer): Builder
+    {
+        return $this->base()
+            ->where('organizer_id', $organizer->id)
             ->where(fn (Builder $query) => $query
                 ->whereIn('events.id', $this->visible()->select('events.id'))
                 ->orWhere('visibility', EventVisibility::Searchable));
@@ -168,7 +194,7 @@ class EventFeedQuery
 
         return Event::query()
             ->where('is_deleted', false)
-            ->with(['owner', 'tags', 'images', 'attendees' => fn ($attendees) => $attendees->where('user_id', $viewerId)])
+            ->with(['owner', 'organizer', 'tags', 'images', 'attendees' => fn ($attendees) => $attendees->where('user_id', $viewerId)])
             ->withCount([
                 'attendees as attending_count' => fn ($attendees) => $attendees->where('status', AttendanceStatus::Attending),
                 'attendees as interested_count' => fn ($attendees) => $attendees->where('status', AttendanceStatus::Interested),

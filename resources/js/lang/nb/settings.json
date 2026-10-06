@@ -5,7 +5,8 @@
         "privacy": "Personvern",
         "notifications": "Varsler",
         "appearance": "Utseende",
-        "language": "Språk"
+        "language": "Språk",
+        "organizers": "Arrangører"
     },
     "staff": "Ansatte",
     "moderation": "Moderering",
@@ -20,7 +21,8 @@
             "privacy": "Hvem som kan følge deg, finne deg og se vennene dine.",
             "notifications": "Hva som når telefonen din, og hva som bare vises her.",
             "appearance": "Lyst, mørkt eller det samme som enheten.",
-            "language": "Engelsk eller norsk."
+            "language": "Engelsk eller norsk.",
+            "organizers": "Steder og grupper du taler for, og arrangementene deres."
         }
     },
     "install": {
@@ -141,6 +143,10 @@
             "leaflet_responses": {
                 "title": "Svar på flyvebladene dine",
                 "description": "Når noen svarer på et flyveblad du har laget"
+            },
+            "organizer_invites": {
+                "title": "Invitasjoner til å tale for en arrangør",
+                "description": "Når noen ber deg bli talsperson for et sted eller en gruppe"
             }
         },
         "privacy": "Personvern",

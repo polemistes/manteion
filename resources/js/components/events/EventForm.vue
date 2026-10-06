@@ -15,10 +15,11 @@ import type { LocationValue } from '@/components/LocationPicker.vue';
 import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
 import OptionCards from '@/components/ui/OptionCards.vue';
+import SelectField from '@/components/ui/SelectField.vue';
 import SwitchRow from '@/components/ui/SwitchRow.vue';
 import TextArea from '@/components/ui/TextArea.vue';
 import TextField from '@/components/ui/TextField.vue';
-import type { CategoryOption, EventCover } from '@/events';
+import type { CategoryOption, EventCover, OrganizerSummary } from '@/events';
 import { usePlaces } from '@/lib/places';
 import DateTimeInputs from './DateTimeInputs.vue';
 import EventPreviewCard from './EventPreviewCard.vue';
@@ -35,6 +36,7 @@ export interface EventFormValues {
     starts_at: string | null;
     ends_at: string | null;
     visibility: 'private' | 'public';
+    organizer_id?: number | null;
     is_searchable?: boolean;
     allow_invitee_invites: boolean;
     allow_invitee_comments: boolean;
@@ -61,8 +63,10 @@ const props = withDefaults(
         processingLabel: string;
         note?: string;
         isNew?: boolean;
+        /** The organizers the user may host it as (new events only). */
+        organizers?: OrganizerSummary[];
     }>(),
-    { note: undefined, isNew: false },
+    { note: undefined, isNew: false, organizers: () => [] },
 );
 
 const emit = defineEmits<{ removeImage: [] }>();
@@ -79,6 +83,22 @@ const description = ref(props.values.description);
 const visibility = ref<string>(props.values.visibility);
 const allowInvites = ref(props.values.allow_invitee_invites);
 const allowComments = ref(props.values.allow_invitee_comments);
+
+// Who hosts: the person themself ('me') or one of their organizers.
+const hostId = ref<string>(props.values.organizer_id?.toString() ?? 'me');
+const hostOptions = computed(() => [
+    { value: 'me', label: t('events.form.hostYou') },
+    ...props.organizers.map((organizer) => ({
+        value: String(organizer.id),
+        label: organizer.name,
+    })),
+]);
+const chosenOrganizer = computed(
+    () =>
+        props.organizers.find(
+            (organizer) => String(organizer.id) === hostId.value,
+        ) ?? null,
+);
 
 // What the preview shows, as the fields report it.
 const startsAt = ref(props.values.starts_at ?? '');
@@ -165,6 +185,21 @@ const visibilityOptions = [
                     {{ errors.image }}
                 </p>
             </section>
+
+            <template v-if="props.isNew && props.organizers.length">
+                <input
+                    type="hidden"
+                    name="organizer_id"
+                    :value="chosenOrganizer?.id ?? ''"
+                />
+                <SelectField
+                    v-model="hostId"
+                    :options="hostOptions"
+                    :label="t('events.form.host')"
+                    :hint="t('events.form.hostHint')"
+                    :error="errors.organizer_id"
+                />
+            </template>
 
             <TextField
                 v-model="name"
@@ -330,6 +365,7 @@ const visibilityOptions = [
                 :cover="cover.url ? { url: cover.url, fit: cover.fit } : null"
                 :visibility="visibility === 'public' ? 'public' : 'private'"
                 :is-new="props.isNew"
+                :organizer="chosenOrganizer"
             />
             <section
                 v-if="props.isNew"

@@ -5,7 +5,8 @@
         "privacy": "Privacy",
         "notifications": "Notifications",
         "appearance": "Appearance",
-        "language": "Language"
+        "language": "Language",
+        "organizers": "Organizers"
     },
     "staff": "Staff",
     "moderation": "Moderation",
@@ -20,7 +21,8 @@
             "privacy": "Who can follow you, find you and see your friends.",
             "notifications": "What reaches your phone, and what only shows here.",
             "appearance": "Light, dark, or the same as your device.",
-            "language": "English or Norwegian."
+            "language": "English or Norwegian.",
+            "organizers": "Venues and groups you speak for, and their events."
         }
     },
     "install": {
@@ -141,6 +143,10 @@
             "leaflet_responses": {
                 "title": "Responses to your leaflets",
                 "description": "When someone responds to a leaflet of yours"
+            },
+            "organizer_invites": {
+                "title": "Invitations to speak for an organizer",
+                "description": "When someone asks you to join a venue or group as a spokesperson"
             }
         },
         "privacy": "Privacy",

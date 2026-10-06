@@ -27,7 +27,8 @@
         "NewFollower": "{name} begynte å følge deg",
         "NewFollowerRequest": "{name} vil følge deg",
         "FollowRequestApproved": "{name} godkjente forespørselen din om å følge",
-        "NewLeafletResponse": "{name} svarte på flyvebladet ditt {subject}"
+        "NewLeafletResponse": "{name} svarte på flyvebladet ditt {subject}",
+        "SpokespersonInvited": "{name} inviterte deg til å tale for {subject}"
     },
     "someone": "Noen",
     "accept": "Godta",
@@ -61,6 +62,10 @@
         "followed_events": "Nye arrangementer fra folk du følger",
         "friend_requests": "Venneforespørsler",
         "followers": "Nye følgere",
-        "leaflet_responses": "Svar på flyvebladene dine"
-    }
+        "leaflet_responses": "Svar på flyvebladene dine",
+        "organizer_invites": "Invitasjoner til å tale for en arrangør"
+    },
+    "spokespersonTerms": "Som talsperson vises det du gjør for {organizer}, med navnet ditt til alle som kan se det.",
+    "savedSpokesperson": "Du taler nå for {organizer}.",
+    "spokespersonNow": "Du taler for dem nå"
 }

@@ -1,0 +1,1 @@
+import{Or as e}from"./routes-B_kyM3kw.js";import{u as t}from"./realtime-BXc-WpPJ.js";var n=[`friends`,`pendingFriendRequests`,`sentFriendRequests`,`following`,`pendingFollowRequestsSent`,`followers`,`pendingFollowerRequests`,`friendGroups`,`followingGroups`,`findResults`];function r(n){e.post(t().url,{user_ids:[n.id]})}export{r as n,n as t};

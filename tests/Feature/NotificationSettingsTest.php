@@ -16,6 +16,7 @@ test('only the message categories push by default', function () {
         'followed_events' => false,
         'friend_requests' => false,
         'followers' => false,
+        'organizer_invites' => false,
         'leaflet_responses' => false,
     ]);
 });
@@ -41,6 +42,7 @@ test('a user who never changed anything gets the complete default settings', fun
             'followed_events' => false,
             'friend_requests' => false,
             'followers' => false,
+            'organizer_invites' => false,
             'leaflet_responses' => false,
         ],
         'message_previews' => true,
@@ -77,6 +79,7 @@ test('stored settings override the defaults and the rest keep them', function ()
         'followed_events' => false,
         'friend_requests' => false,
         'followers' => false,
+        'organizer_invites' => false,
         'leaflet_responses' => false,
     ]);
     expect($settings['message_previews'])->toBeFalse();
@@ -112,6 +115,7 @@ test('the factory push states change only the given categories', function () {
         'followed_events' => false,
         'friend_requests' => false,
         'followers' => true,
+        'organizer_invites' => false,
         'leaflet_responses' => true,
     ]);
 });

@@ -26,7 +26,7 @@ class NotifyFollowersOfEvent implements ShouldQueue
 
     public function handle(): void
     {
-        $event = $this->event->fresh(['owner', 'tags']);
+        $event = $this->event->fresh(['owner', 'organizer', 'tags']);
 
         if ($event === null || $event->followers_notified_at !== null) {
             return;
@@ -34,6 +34,18 @@ class NotifyFollowersOfEvent implements ShouldQueue
 
         // Made private or deleted while this waited in the queue.
         if ($event->is_deleted || ! in_array($event->visibility, [EventVisibility::Public, EventVisibility::Searchable], true)) {
+            return;
+        }
+
+        // An organizer's followers follow the organizer, not the person who
+        // made the event; mutes are per person, so none apply.
+        if ($event->organizer !== null) {
+            $event->forceFill(['followers_notified_at' => now()])->save();
+
+            $event->organizer->followers()->get()->each(fn (User $follower) => $follower->notify(
+                (new FollowedUserPublishedEvent($event))->locale($follower->locale ?? 'en')
+            ));
+
             return;
         }
 

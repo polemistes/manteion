@@ -330,6 +330,72 @@ class User extends Authenticatable
     }
 
     /**
+     * The organizers this person speaks for (accepted), newest first.
+     *
+     * @return BelongsToMany<Organizer, $this, OrganizerSpokesperson>
+     */
+    public function organizers(): BelongsToMany
+    {
+        return $this->belongsToMany(Organizer::class, 'organizer_spokespersons')
+            ->using(OrganizerSpokesperson::class)
+            ->withPivot(['id', 'role', 'listed', 'invited_by_user_id', 'accepted_at'])
+            ->wherePivotNotNull('accepted_at')
+            ->withTimestamps();
+    }
+
+    /**
+     * Invitations to speak for an organizer, not yet answered.
+     *
+     * @return HasMany<OrganizerSpokesperson, $this>
+     */
+    public function spokespersonInvitations(): HasMany
+    {
+        return $this->hasMany(OrganizerSpokesperson::class)->whereNull('accepted_at');
+    }
+
+    /**
+     * @return BelongsToMany<Organizer, $this>
+     */
+    public function followedOrganizers(): BelongsToMany
+    {
+        return $this->belongsToMany(Organizer::class, 'organizer_follows')->withTimestamps();
+    }
+
+    /** @var Collection<int, int>|null */
+    private ?Collection $organizerIds = null;
+
+    /** @var Collection<int, int>|null */
+    private ?Collection $followedOrganizerIds = null;
+
+    /**
+     * The ids of the organizers this person speaks for, read once per
+     * request: lists check it for every event.
+     *
+     * @return Collection<int, int>
+     */
+    public function organizerIds(): Collection
+    {
+        return $this->organizerIds ??= $this->organizers()->pluck('organizers.id');
+    }
+
+    /**
+     * @return Collection<int, int>
+     */
+    public function followedOrganizerIds(): Collection
+    {
+        return $this->followedOrganizerIds ??= $this->followedOrganizers()->pluck('organizers.id');
+    }
+
+    /**
+     * After a change to what this person speaks for or follows.
+     */
+    public function forgetOrganizerIds(): void
+    {
+        $this->organizerIds = null;
+        $this->followedOrganizerIds = null;
+    }
+
+    /**
      * @return HasMany<Event, $this>
      */
     public function events(): HasMany

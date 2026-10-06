@@ -5,6 +5,7 @@ namespace App\Notifications;
 use App\Enums\NotificationCategory;
 use App\Models\Event;
 use App\Models\Leaflet;
+use App\Models\Organizer;
 use App\Models\User;
 use App\Services\ActivityFeed;
 use App\Services\BadgeCounts;
@@ -56,9 +57,9 @@ abstract class ActivityNotification extends Notification implements ShouldQueue
     abstract public function actor(): User;
 
     /**
-     * The event, leaflet or user the notification is about.
+     * The event, leaflet, user or organizer the notification is about.
      */
-    abstract public function subject(): Event|Leaflet|User;
+    abstract public function subject(): Event|Leaflet|User|Organizer;
 
     abstract protected function pushTitle(): string;
 
@@ -224,6 +225,12 @@ abstract class ActivityNotification extends Notification implements ShouldQueue
                 'id' => $subject->id,
                 'title' => $subject->name,
                 'url' => route('users.show', $subject, false),
+            ],
+            $subject instanceof Organizer => [
+                'type' => 'organizer',
+                'id' => $subject->id,
+                'title' => $subject->name,
+                'url' => route('organizers.show', $subject, false),
             ],
         };
     }

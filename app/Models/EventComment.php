@@ -14,12 +14,13 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $event_id
  * @property int $user_id
+ * @property int|null $organizer_id
  * @property string $body
  * @property bool $is_deleted
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['event_id', 'user_id', 'body', 'is_deleted'])]
+#[Fillable(['event_id', 'user_id', 'organizer_id', 'body', 'is_deleted'])]
 class EventComment extends Model
 {
     /** @use HasFactory<EventCommentFactory> */
@@ -41,6 +42,14 @@ class EventComment extends Model
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
+    }
+
+    /**
+     * @return BelongsTo<Organizer, $this>
+     */
+    public function organizer(): BelongsTo
+    {
+        return $this->belongsTo(Organizer::class);
     }
 
     /**

@@ -47,7 +47,9 @@ const endLabel = computed(() =>
 const meta = computed(() =>
     [
         props.event.place ?? props.event.city,
-        props.event.is_host ? null : props.event.owner.name,
+        props.event.is_host
+            ? null
+            : (props.event.organizer?.name ?? props.event.owner.name),
     ]
         .filter(Boolean)
         .join(' · '),

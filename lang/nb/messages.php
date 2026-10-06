@@ -30,6 +30,13 @@ return [
         'friends_only' => 'Du kan bare legge til dine egne venner.',
     ],
 
+    'organizer' => [
+        'friends_only' => 'Du kan bare invitere vennene dine til å tale for en arrangør.',
+        'already_in' => 'De taler allerede for denne arrangøren, eller er invitert.',
+        'hand_over_first' => 'Gi rollen som hovedtalsperson til noen andre først, eller slett arrangøren.',
+        'hand_over_to_member' => 'Bare en talsperson som har takket ja, kan ta over.',
+    ],
+
     'leaflet' => [
         'one_attachment' => 'Et flyveblad kan ha enten et bilde eller en lenke, ikke begge.',
     ],

@@ -17,6 +17,7 @@ use Illuminate\Support\Carbon;
  *
  * @property int $id
  * @property int $user_id
+ * @property int|null $organizer_id
  * @property string $body
  * @property LeafletVisibility $visibility
  * @property string|null $image_path
@@ -28,7 +29,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['user_id', 'body', 'visibility', 'image_path', 'link_url', 'link_title', 'link_description', 'link_image_url', 'link_fetched_at'])]
+#[Fillable(['user_id', 'organizer_id', 'body', 'visibility', 'image_path', 'link_url', 'link_title', 'link_description', 'link_image_url', 'link_fetched_at'])]
 class Leaflet extends Model
 {
     /** @use HasFactory<LeafletFactory> */
@@ -52,6 +53,14 @@ class Leaflet extends Model
             'visibility' => LeafletVisibility::class,
             'link_fetched_at' => 'datetime',
         ];
+    }
+
+    /**
+     * @return BelongsTo<Organizer, $this>
+     */
+    public function organizer(): BelongsTo
+    {
+        return $this->belongsTo(Organizer::class);
     }
 
     /**

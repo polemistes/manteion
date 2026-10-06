@@ -53,7 +53,7 @@ class FollowedUserPublishedEvent extends ActivityNotification
     protected function pushBody(): string
     {
         return __('notifications.push.followed_user_published_event.body', [
-            'name' => $this->event->owner->name,
+            'name' => $this->event->hostName(),
             'event' => $this->event->name,
         ]);
     }

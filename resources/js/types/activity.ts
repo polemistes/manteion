@@ -23,6 +23,7 @@ export type NotificationCategory =
     | 'followed_events'
     | 'friend_requests'
     | 'followers'
+    | 'organizer_invites'
     | 'leaflet_responses';
 
 /** The notification class basename behind an activity item. */
@@ -34,7 +35,8 @@ export type ActivityType =
     | 'FriendRequestAccepted'
     | 'NewFollower'
     | 'FollowRequestApproved'
-    | 'NewLeafletResponse';
+    | 'NewLeafletResponse'
+    | 'SpokespersonInvited';
 
 export type ActivityActor = {
     id: number;
@@ -43,7 +45,7 @@ export type ActivityActor = {
     avatar_url: string | null;
 };
 
-export type ActivitySubjectType = 'event' | 'leaflet' | 'user';
+export type ActivitySubjectType = 'event' | 'leaflet' | 'user' | 'organizer';
 
 /** The event an item is about, while it exists and the user may see it. */
 export type ActivityEvent = {
@@ -64,7 +66,7 @@ export type ActivityEvent = {
  */
 export type ActivityContext = {
     event: ActivityEvent | null;
-    /** The friend or follow request the item brought, until withdrawn. */
+    /** The friend, follow or spokesperson request the item brought, until withdrawn. */
     request: { id: number; status: 'pending' | 'accepted' | 'declined' } | null;
     /** New followers only: whether the user follows them back. */
     following_actor: 'pending' | 'accepted' | null;

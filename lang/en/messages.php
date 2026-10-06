@@ -30,6 +30,13 @@ return [
         'friends_only' => 'You can only add your own friends.',
     ],
 
+    'organizer' => [
+        'friends_only' => 'You can only invite your friends to speak for an organizer.',
+        'already_in' => 'They already speak for this organizer, or have been invited.',
+        'hand_over_first' => 'Hand the main spokesperson role to someone else first, or delete the organizer.',
+        'hand_over_to_member' => 'Only a spokesperson who has accepted can take over.',
+    ],
+
     'leaflet' => [
         'one_attachment' => 'A leaflet can carry either an image or a link, not both.',
     ],

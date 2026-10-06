@@ -68,6 +68,7 @@ class BadgeCounts
     private static function pendingIncomingRequests(User $user): int
     {
         return $user->pendingFriendRequests()->count()
-            + Follow::query()->where('followed_id', $user->id)->pending()->count();
+            + Follow::query()->where('followed_id', $user->id)->pending()->count()
+            + $user->spokespersonInvitations()->count();
     }
 }

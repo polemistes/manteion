@@ -18,6 +18,7 @@ use App\Models\Event;
 use App\Models\EventAttendee;
 use App\Models\EventComment;
 use App\Models\EventImage;
+use App\Models\Organizer;
 use App\Models\Reaction;
 use App\Models\Tag;
 use App\Models\User;
@@ -164,14 +165,23 @@ class EventController extends Controller
 
         return Inertia::render('events/Create', [
             'categories' => Tag::categoriesTree(),
+            // The organizers the user may host it as.
+            'organizers' => $request->user()->organizers()->get()->map(fn (Organizer $organizer) => $organizer->summary())->values()->all(),
         ]);
     }
 
     public function store(StoreEventRequest $request): RedirectResponse
     {
-        $event = $request->user()->events()->create($request->safe()->only([
-            'name', 'place', 'latitude', 'longitude', 'city', 'country', 'country_code', 'description', 'starts_at', 'ends_at', 'visibility', 'allow_invitee_invites', 'allow_invitee_comments',
-        ]));
+        // Hosted by one of the user's organizers, or by themself.
+        $organizerId = $request->validated('organizer_id');
+        abort_if($organizerId !== null && ! $request->user()->organizerIds()->contains((int) $organizerId), 403);
+
+        $event = $request->user()->events()->create([
+            ...$request->safe()->only([
+                'name', 'place', 'latitude', 'longitude', 'city', 'country', 'country_code', 'description', 'starts_at', 'ends_at', 'visibility', 'allow_invitee_invites', 'allow_invitee_comments',
+            ]),
+            'organizer_id' => $organizerId === null ? null : (int) $organizerId,
+        ]);
 
         $this->syncTags($event, $request->input('tag_ids', []));
         $this->storeImage($event, $request->file('image'), $request->input('image_fit'));
@@ -181,7 +191,7 @@ class EventController extends Controller
         }
 
         AdminAlerts::send(AdminAlert::EventCreated, $request->user(), [
-            'host' => $request->user()->name,
+            'host' => $event->hostName(),
             'event' => $event->name,
             'visibility' => $event->visibility->value,
             'starts' => $event->starts_at->timezone(config('app.display_timezone'))->format('Y-m-d H:i'),
@@ -195,7 +205,7 @@ class EventController extends Controller
         Gate::authorize('view', $event);
 
         $viewer = $request->user();
-        $event->load(['owner', 'tags', 'images', 'comments.user', 'comments.reactions', 'attendees.user', 'attendees.invitedBy']);
+        $event->load(['owner', 'organizer', 'tags', 'images', 'comments.user', 'comments.reactions', 'attendees.user', 'attendees.invitedBy']);
 
         // Opening the event means its invitation, comments and so on have
         // been seen.
@@ -203,7 +213,7 @@ class EventController extends Controller
             ActivityFeed::markRead($viewer, 'event', $event->id);
         }
 
-        $isOwner = $viewer->is($event->owner);
+        $isOwner = $event->isHostedBy($viewer);
         $attendee = $event->attendeeFor($viewer);
         $viewerFriendIds = $viewer->friendIds();
         $canInvite = Gate::allows('invite', $event);
@@ -237,6 +247,7 @@ class EventController extends Controller
                 'allow_invitee_comments' => $event->allow_invitee_comments,
                 'is_searchable_paid' => $event->searchable_paid_at !== null,
                 'owner' => ['id' => $event->owner->id, 'name' => $event->owner->name, 'username' => $event->owner->username, 'avatar_url' => $event->owner->avatar_url],
+                'organizer' => $event->organizer?->summary(),
                 'tags' => $event->tags->map(fn (Tag $tag) => ['id' => $tag->id, 'name' => $tag->name, 'slug' => $tag->slug])->values(),
                 'images' => $event->images->map(fn (EventImage $image) => $image->presentation())->values(),
                 'is_owner' => $isOwner,
@@ -244,7 +255,7 @@ class EventController extends Controller
                 'can_invite' => $canInvite,
                 'can_comment' => Gate::allows('comment', $event),
                 'can_delete' => Gate::allows('delete', $event),
-                'can_report' => ! $event->is_deleted && Gate::allows('view', $event) && ! $viewer->is($event->owner),
+                'can_report' => ! $event->is_deleted && Gate::allows('view', $event) && ! $isOwner,
             ],
             'myAttendance' => $attendee === null ? null : [
                 'status' => $attendee->status->value,
@@ -405,7 +416,8 @@ class EventController extends Controller
                 'ends_at' => $event->ends_at?->toIso8601String(),
                 'visibility' => $event->visibility->value,
                 'owner' => ['id' => $event->owner->id, 'name' => $event->owner->name, 'username' => $event->owner->username, 'avatar_url' => $event->owner->avatar_url],
-                'is_host' => $event->user_id === $viewer->id,
+                'organizer' => $event->organizer?->summary(),
+                'is_host' => $event->isHostedBy($viewer),
                 'tags' => $event->tags->map(fn (Tag $tag) => ['id' => $tag->id, 'name' => $tag->name, 'slug' => $tag->slug])->values()->all(),
                 'my_status' => $attendee?->status->value,
                 'my_attendance_visibility' => $attendee?->attendance_visibility->value,
@@ -454,7 +466,7 @@ class EventController extends Controller
         }
 
         $friendIds = $viewer->friendIds();
-        $hostOf = $events->pluck('user_id', 'id');
+        $hostedIds = $events->filter(fn (Event $event) => $event->isHostedBy($viewer))->pluck('id')->flip();
 
         return EventAttendee::query()
             ->whereIn('event_id', $events->pluck('id')->all())
@@ -464,7 +476,7 @@ class EventController extends Controller
             ->get()
             ->groupBy('event_id')
             ->map(fn (Collection $attendees, int $eventId) => array_values($attendees
-                ->filter(fn (EventAttendee $attendee) => $hostOf[$eventId] === $viewer->id
+                ->filter(fn (EventAttendee $attendee) => $hostedIds->has($eventId)
                     || $attendee->user_id === $viewer->id
                     || $attendee->isVisibleGiven($friendIds))
                 ->sortBy(fn (EventAttendee $attendee) => $friendIds->contains($attendee->user_id) ? 0 : 1)
@@ -507,6 +519,7 @@ class EventController extends Controller
         return $feed->visible()
             ->where(fn (Builder $query) => $query
                 ->where('user_id', $user->id)
+                ->orWhereIn('organizer_id', $user->organizerIds()->all())
                 ->orWhereHas('attendees', fn (Builder $attendees) => $attendees
                     ->where('user_id', $user->id)
                     ->whereIn('status', [AttendanceStatus::Attending, AttendanceStatus::Interested])))
@@ -609,7 +622,9 @@ class EventController extends Controller
             'going' => $query->whereHas('attendees', fn (Builder $attendees) => $attendees
                 ->where('user_id', $user->id)
                 ->whereIn('status', [AttendanceStatus::Attending, AttendanceStatus::Interested])),
-            'hosting' => $query->where('user_id', $user->id),
+            'hosting' => $query->where(fn (Builder $hosting) => $hosting
+                ->where('user_id', $user->id)
+                ->orWhereIn('organizer_id', $user->organizerIds()->all())),
             default => null,
         };
 

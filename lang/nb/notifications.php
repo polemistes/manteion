@@ -21,6 +21,10 @@ return [
             'title' => 'Ny kommentar på «:event»',
             'body' => ':name: :excerpt',
         ],
+        'spokesperson_invited' => [
+            'title' => 'Invitasjon til å tale for en arrangør',
+            'body' => ':name inviterte deg til å tale for :organizer',
+        ],
         'friend_request_received' => [
             'title' => 'Venneforespørsel',
             'body' => ':name sendte deg en venneforespørsel',

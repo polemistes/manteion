@@ -14,6 +14,6 @@ class EventCommentPolicy
 
     public function delete(User $user, EventComment $comment): bool
     {
-        return $user->is($comment->user) || $user->is($comment->event->owner) || $user->isStaff();
+        return $user->is($comment->user) || $comment->event->isHostedBy($user) || $user->isStaff();
     }
 }

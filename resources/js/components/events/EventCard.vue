@@ -36,6 +36,9 @@ const dates = useDates();
 const { cityAndCountry } = usePlaces();
 
 const shape = computed(() => props.event.cover?.shape ?? 'none');
+
+/** Who hosts: the organizer when there is one, else the person. */
+const host = computed(() => props.event.organizer ?? props.event.owner);
 const href = computed(() => eventsShow(props.event.id).url);
 
 const isPast = computed(() =>
@@ -230,14 +233,12 @@ const layout = computed(
                     </li>
                     <li v-else class="flex min-w-0 items-center gap-2">
                         <Avatar
-                            :name="props.event.owner.name"
-                            :src="props.event.owner.avatar_url ?? null"
+                            :name="host.name"
+                            :src="host.avatar_url ?? null"
                             :size="20"
                             decorative
                         />
-                        <span class="truncate">{{
-                            props.event.owner.name
-                        }}</span>
+                        <span class="truncate">{{ host.name }}</span>
                     </li>
                 </ul>
             </div>

@@ -27,7 +27,8 @@
         "NewFollower": "{name} started following you",
         "NewFollowerRequest": "{name} asked to follow you",
         "FollowRequestApproved": "{name} approved your follow request",
-        "NewLeafletResponse": "{name} responded to your leaflet {subject}"
+        "NewLeafletResponse": "{name} responded to your leaflet {subject}",
+        "SpokespersonInvited": "{name} invited you to speak for {subject}"
     },
     "someone": "Someone",
     "accept": "Accept",
@@ -61,6 +62,10 @@
         "followed_events": "New events from people you follow",
         "friend_requests": "Friend requests",
         "followers": "New followers",
-        "leaflet_responses": "Responses to your leaflets"
-    }
+        "leaflet_responses": "Responses to your leaflets",
+        "organizer_invites": "Invitations to speak for an organizer"
+    },
+    "spokespersonTerms": "As a spokesperson, what you do for {organizer} is shown with your name to everyone who can see it.",
+    "savedSpokesperson": "You now speak for {organizer}.",
+    "spokespersonNow": "You speak for them now"
 }

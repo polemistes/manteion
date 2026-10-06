@@ -21,6 +21,10 @@ return [
             'title' => 'New comment on “:event”',
             'body' => ':name: :excerpt',
         ],
+        'spokesperson_invited' => [
+            'title' => 'Invitation to speak for an organizer',
+            'body' => ':name invited you to speak for :organizer',
+        ],
         'friend_request_received' => [
             'title' => 'Friend request',
             'body' => ':name sent you a friend request',

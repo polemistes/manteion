@@ -7,11 +7,12 @@ import EventForm, { EVENT_FORM_ID } from '@/components/events/EventForm.vue';
 import PageContainer from '@/components/shell/PageContainer.vue';
 import PageHeader from '@/components/shell/PageHeader.vue';
 import Button from '@/components/ui/Button.vue';
-import type { CategoryOption } from '@/events';
+import type { CategoryOption, OrganizerSummary } from '@/events';
 import { index as eventsIndex, store } from '@/routes/events';
 
 const props = defineProps<{
     categories: CategoryOption[];
+    organizers: OrganizerSummary[];
 }>();
 
 const { t } = useI18n();
@@ -52,6 +53,7 @@ const processing = ref(false);
             v-model:processing="processing"
             :form="store.form()"
             :categories="props.categories"
+            :organizers="props.organizers"
             :values="{
                 name: '',
                 place: null,
