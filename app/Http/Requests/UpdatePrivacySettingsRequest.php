@@ -27,6 +27,8 @@ class UpdatePrivacySettingsRequest extends FormRequest
             'show_friends_list' => ['sometimes', 'boolean:strict'],
             'appear_in_friends_lists' => ['sometimes', 'boolean:strict'],
             'searchable' => ['sometimes', 'boolean:strict'],
+            'share_typing' => ['sometimes', 'boolean:strict'],
+            'share_read_receipts' => ['sometimes', 'boolean:strict'],
         ];
     }
 }

@@ -73,7 +73,10 @@ class ConversationController extends Controller
             $participant->markRead();
 
             BadgesUpdated::dispatch($user->id);
-            ConversationRead::dispatch($participant);
+
+            if ($user->share_read_receipts) {
+                ConversationRead::dispatch($participant);
+            }
         }
 
         return Inertia::render('messages/Show', [
@@ -90,8 +93,9 @@ class ConversationController extends Controller
                 'username' => $member->user->username,
                 'avatar_url' => $member->user->avatar_url,
                 'is_me' => $member->user_id === $user->id,
-                // For "Seen" under the viewer's last message.
-                'last_read_at' => $member->last_read_at?->toIso8601String(),
+                // For "Seen" under the viewer's last message; only from those
+                // who chose to show when they have read.
+                'last_read_at' => $member->user->share_read_receipts ? $member->last_read_at?->toIso8601String() : null,
             ]),
             'messages' => fn () => $conversation->messages()
                 ->with(['sender', 'reactions'])

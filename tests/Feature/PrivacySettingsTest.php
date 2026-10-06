@@ -3,31 +3,40 @@
 use App\Enums\UserRole;
 use App\Models\User;
 
+/** Every switch as a new account has it: open to others, except showing that you have read. */
+const PRIVACY_DEFAULTS = [
+    'allow_public_follow' => true,
+    'show_friends_list' => true,
+    'appear_in_friends_lists' => true,
+    'searchable' => true,
+    'share_typing' => true,
+    'share_read_receipts' => false,
+];
+
 /**
  * @return array<string, bool>
  */
 function privacyOf(User $user): array
 {
-    return $user->fresh()->only(['allow_public_follow', 'show_friends_list', 'appear_in_friends_lists', 'searchable']);
+    return $user->fresh()->only(array_keys(PRIVACY_DEFAULTS));
 }
+
+test('a new account has the expected privacy defaults', function () {
+    expect(privacyOf(User::factory()->create()))->toBe(PRIVACY_DEFAULTS);
+});
 
 test('each privacy switch can be saved on its own, leaving the others alone', function (string $setting) {
     $user = User::factory()->create();
+    $flipped = ! PRIVACY_DEFAULTS[$setting];
 
     $this->actingAs($user)
         ->from('/settings/privacy')
-        ->put('/settings/privacy', [$setting => false])
+        ->put('/settings/privacy', [$setting => $flipped])
         ->assertRedirect('/settings/privacy')
         ->assertSessionHasNoErrors();
 
-    expect(privacyOf($user))->toBe([
-        'allow_public_follow' => true,
-        'show_friends_list' => true,
-        'appear_in_friends_lists' => true,
-        'searchable' => true,
-        $setting => false,
-    ]);
-})->with(['allow_public_follow', 'show_friends_list', 'appear_in_friends_lists', 'searchable']);
+    expect(privacyOf($user))->toBe([...PRIVACY_DEFAULTS, $setting => $flipped]);
+})->with(array_keys(PRIVACY_DEFAULTS));
 
 test('several privacy switches can be saved at once', function () {
     $user = User::factory()->privateFollow()->unsearchable()->create();
@@ -42,10 +51,8 @@ test('several privacy switches can be saved at once', function () {
         ->assertSessionHasNoErrors();
 
     expect(privacyOf($user))->toBe([
-        'allow_public_follow' => true,
+        ...PRIVACY_DEFAULTS,
         'show_friends_list' => false,
-        'appear_in_friends_lists' => true,
-        'searchable' => true,
     ]);
 });
 

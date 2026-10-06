@@ -53,7 +53,7 @@
         "deleteForGood": "Delete my account"
     },
     "privacy": {
-        "lede": "Who can follow you, find you and see who you know.",
+        "lede": "Who can follow you, find you and see who you know, and what chats show of you.",
         "followers": "Followers",
         "findingYou": "Finding you",
         "allow_public_follow": {
@@ -71,6 +71,15 @@
         "appear_in_friends_lists": {
             "title": "Appear in your friends’ lists",
             "description": "Your name shows when someone looks at a friend’s friends."
+        },
+        "messages": "Messages",
+        "share_typing": {
+            "title": "Show when you are typing",
+            "description": "People in the chat see that you are writing."
+        },
+        "share_read_receipts": {
+            "title": "Show when you have read messages",
+            "description": "Others see “Seen” under their message once you have read it. Off until you turn it on."
         }
     },
     "notifications": {

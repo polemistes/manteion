@@ -223,76 +223,86 @@ onBeforeUnmount(cancelPress);
                 </div>
 
                 <!-- Pointer devices: quick reactions and more, floating just
-                     above the bubble so they take none of its width. -->
+                     above the bubble so they take none of its width. The
+                     gap between bubble and pill is padding on this wrapper,
+                     so the pointer stays over the message on its way up
+                     (otherwise the message above takes over). -->
                 <div
                     v-if="canAct"
-                    class="invisible absolute bottom-full z-10 mb-1 flex items-center gap-0.5 rounded-full bg-surface p-0.5 opacity-0 shadow-sm ring-1 ring-line transition-opacity duration-120 group-hover/msg:visible group-hover/msg:opacity-100 group-has-[:focus-visible]/msg:visible group-has-[:focus-visible]/msg:opacity-100 has-[[data-state=open]]:visible has-[[data-state=open]]:opacity-100 pointer-coarse:hidden"
+                    class="invisible absolute bottom-full z-10 pb-1 opacity-0 transition-opacity duration-120 group-hover/msg:visible group-hover/msg:opacity-100 group-has-[:focus-visible]/msg:visible group-has-[:focus-visible]/msg:opacity-100 has-[[data-state=open]]:visible has-[[data-state=open]]:opacity-100 pointer-coarse:hidden"
                     :class="mine ? 'right-0' : 'left-0'"
-                    role="toolbar"
-                    :aria-label="t('messages.show.actions')"
                 >
-                    <button
-                        v-for="emoji in QUICK_REACTIONS"
-                        :key="emoji"
-                        type="button"
-                        :aria-label="t('messages.show.react', { emoji })"
-                        class="grid size-8 place-items-center rounded-full text-[17px] leading-none hover:bg-surface-2"
-                        @click="emit('react', emoji)"
+                    <div
+                        class="flex items-center gap-0.5 rounded-full bg-surface p-0.5 shadow-sm ring-1 ring-line"
+                        role="toolbar"
+                        :aria-label="t('messages.show.actions')"
                     >
-                        {{ emoji }}
-                    </button>
-                    <button
-                        type="button"
-                        :aria-label="t('messages.show.moreReactions')"
-                        class="grid size-8 place-items-center rounded-full text-ink-muted hover:bg-surface-2 hover:text-ink"
-                        @click="emit('pickReaction')"
-                    >
-                        <SmilePlus
-                            :size="17"
-                            :stroke-width="1.9"
+                        <button
+                            v-for="emoji in QUICK_REACTIONS"
+                            :key="emoji"
+                            type="button"
+                            :aria-label="t('messages.show.react', { emoji })"
+                            class="grid size-8 place-items-center rounded-full text-[17px] leading-none hover:bg-surface-2"
+                            @click="emit('react', emoji)"
+                        >
+                            {{ emoji }}
+                        </button>
+                        <button
+                            type="button"
+                            :aria-label="t('messages.show.moreReactions')"
+                            class="grid size-8 place-items-center rounded-full text-ink-muted hover:bg-surface-2 hover:text-ink"
+                            @click="emit('pickReaction')"
+                        >
+                            <SmilePlus
+                                :size="17"
+                                :stroke-width="1.9"
+                                aria-hidden="true"
+                            />
+                        </button>
+                        <span
+                            class="mx-0.5 h-5 w-px bg-line"
                             aria-hidden="true"
                         />
-                    </button>
-                    <span class="mx-0.5 h-5 w-px bg-line" aria-hidden="true" />
-                    <Menu :align="mine ? 'end' : 'start'">
-                        <template #trigger>
-                            <button
-                                type="button"
-                                :aria-label="t('ui.more')"
-                                class="grid size-8 place-items-center rounded-full text-ink-muted hover:bg-surface-2 hover:text-ink"
+                        <Menu :align="mine ? 'end' : 'start'">
+                            <template #trigger>
+                                <button
+                                    type="button"
+                                    :aria-label="t('ui.more')"
+                                    class="grid size-8 place-items-center rounded-full text-ink-muted hover:bg-surface-2 hover:text-ink"
+                                >
+                                    <Ellipsis
+                                        :size="17"
+                                        :stroke-width="1.9"
+                                        aria-hidden="true"
+                                    />
+                                </button>
+                            </template>
+                            <MenuItem :icon="Copy" @select="emit('copy')">{{
+                                t('messages.show.copy')
+                            }}</MenuItem>
+                            <template
+                                v-if="
+                                    props.message.can_delete ||
+                                    props.message.can_report
+                                "
                             >
-                                <Ellipsis
-                                    :size="17"
-                                    :stroke-width="1.9"
-                                    aria-hidden="true"
-                                />
-                            </button>
-                        </template>
-                        <MenuItem :icon="Copy" @select="emit('copy')">{{
-                            t('messages.show.copy')
-                        }}</MenuItem>
-                        <template
-                            v-if="
-                                props.message.can_delete ||
-                                props.message.can_report
-                            "
-                        >
-                            <MenuSeparator />
-                            <MenuItem
-                                v-if="props.message.can_delete"
-                                :icon="Trash"
-                                danger
-                                @select="emit('delete')"
-                                >{{ t('messages.show.delete') }}</MenuItem
-                            >
-                            <MenuItem
-                                v-if="props.message.can_report"
-                                :icon="Flag"
-                                @select="emit('report')"
-                                >{{ t('messages.show.report') }}</MenuItem
-                            >
-                        </template>
-                    </Menu>
+                                <MenuSeparator />
+                                <MenuItem
+                                    v-if="props.message.can_delete"
+                                    :icon="Trash"
+                                    danger
+                                    @select="emit('delete')"
+                                    >{{ t('messages.show.delete') }}</MenuItem
+                                >
+                                <MenuItem
+                                    v-if="props.message.can_report"
+                                    :icon="Flag"
+                                    @select="emit('report')"
+                                    >{{ t('messages.show.report') }}</MenuItem
+                                >
+                            </template>
+                        </Menu>
+                    </div>
                 </div>
             </div>
 

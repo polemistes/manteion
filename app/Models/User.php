@@ -39,6 +39,8 @@ use NotificationChannels\WebPush\PushSubscription as WebPushSubscription;
  * @property bool $allow_public_follow
  * @property bool $show_friends_list
  * @property bool $appear_in_friends_lists
+ * @property bool $share_typing
+ * @property bool $share_read_receipts
  * @property bool $searchable
  * @property array<string, mixed>|null $notification_settings
  * @property string|null $avatar_path
@@ -53,7 +55,7 @@ use NotificationChannels\WebPush\PushSubscription as WebPushSubscription;
  * @property Carbon|null $updated_at
  * @property-read string|null $avatar_url
  */
-#[Fillable(['name', 'username', 'email', 'password', 'role', 'allow_public_follow', 'show_friends_list', 'appear_in_friends_lists', 'searchable', 'notification_settings', 'avatar_path', 'bio', 'locale', 'theme_mode', 'suspended_at', 'suspended_reason', 'suspended_by'])]
+#[Fillable(['name', 'username', 'email', 'password', 'role', 'allow_public_follow', 'show_friends_list', 'appear_in_friends_lists', 'searchable', 'share_typing', 'share_read_receipts', 'notification_settings', 'avatar_path', 'bio', 'locale', 'theme_mode', 'suspended_at', 'suspended_reason', 'suspended_by'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -99,6 +101,8 @@ class User extends Authenticatable
             'allow_public_follow' => 'boolean',
             'show_friends_list' => 'boolean',
             'appear_in_friends_lists' => 'boolean',
+            'share_typing' => 'boolean',
+            'share_read_receipts' => 'boolean',
             'searchable' => 'boolean',
             'notification_settings' => 'array',
             'suspended_at' => 'datetime',

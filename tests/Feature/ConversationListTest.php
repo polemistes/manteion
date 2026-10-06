@@ -319,7 +319,18 @@ test('a conversation page costs the same few queries however many messages and r
     expect($withTwentyTwo)->toBe($withTwo);
 });
 
-test('the conversation page says when each participant last read it, for "Seen"', function () {
+test('the conversation page says when a participant who shows it last read it, for "Seen"', function () {
+    $user = User::factory()->create();
+    $friend = User::factory()->create(['share_read_receipts' => true]);
+    $conversation = chatListConversation([$user, $friend]);
+    ConversationParticipant::query()->where('user_id', $friend->id)->update(['last_read_at' => '2026-10-04 12:00:00']);
+
+    $this->actingAs($user)->get("/messages/{$conversation->id}")
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('participants', fn ($participants) => collect($participants)->firstWhere('id', $friend->id)['last_read_at'] === '2026-10-04T12:00:00+00:00'));
+});
+
+test('when a participant has not chosen to show that they have read, the page does not say', function () {
     $user = User::factory()->create();
     $friend = User::factory()->create();
     $conversation = chatListConversation([$user, $friend]);
@@ -327,5 +338,5 @@ test('the conversation page says when each participant last read it, for "Seen"'
 
     $this->actingAs($user)->get("/messages/{$conversation->id}")
         ->assertInertia(fn (Assert $page) => $page
-            ->where('participants', fn ($participants) => collect($participants)->firstWhere('id', $friend->id)['last_read_at'] === '2026-10-04T12:00:00+00:00'));
+            ->where('participants', fn ($participants) => collect($participants)->firstWhere('id', $friend->id)['last_read_at'] === null));
 });

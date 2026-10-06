@@ -58,7 +58,7 @@ export type ConversationChannelOptions = {
     lastMessageId?: () => number | null | undefined;
 };
 
-type Viewer = Pick<User, 'id' | 'name' | 'role'>;
+type Viewer = Pick<User, 'id' | 'name' | 'role' | 'share_typing'>;
 
 const viewed = shallowRef<number | null>(null);
 
@@ -412,8 +412,11 @@ export function useConversationChannel(
 
     function whisperTyping(): void {
         const now = Date.now();
+        const me = viewer();
 
+        // Showing that you type is a setting (on unless turned off).
         if (
+            !me.share_typing ||
             !joined?.channel.subscription.subscribed ||
             now - lastWhisperAt < TYPING_WHISPER_EVERY_MS
         ) {
@@ -421,8 +424,6 @@ export function useConversationChannel(
         }
 
         lastWhisperAt = now;
-
-        const me = viewer();
 
         try {
             joined.channel.whisper('typing', { id: me.id, name: me.name });

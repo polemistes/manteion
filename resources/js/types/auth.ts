@@ -7,6 +7,8 @@ export type User = {
     email: string;
     role: UserRole;
     allow_public_follow: boolean;
+    share_typing: boolean;
+    share_read_receipts: boolean;
     avatar_url: string | null;
     bio: string | null;
     email_verified_at: string | null;

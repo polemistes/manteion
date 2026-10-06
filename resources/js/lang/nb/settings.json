@@ -53,7 +53,7 @@
         "deleteForGood": "Slett kontoen min"
     },
     "privacy": {
-        "lede": "Hvem som kan følge deg, finne deg og se hvem du kjenner.",
+        "lede": "Hvem som kan følge deg, finne deg og se hvem du kjenner, og hva samtalene viser om deg.",
         "followers": "Følgere",
         "findingYou": "Å finne deg",
         "allow_public_follow": {
@@ -71,6 +71,15 @@
         "appear_in_friends_lists": {
             "title": "Vis deg i vennenes lister",
             "description": "Navnet ditt vises når noen ser på en venns venner."
+        },
+        "messages": "Meldinger",
+        "share_typing": {
+            "title": "Vis at du skriver",
+            "description": "De du skriver med, ser at du holder på å skrive."
+        },
+        "share_read_receipts": {
+            "title": "Vis at du har lest meldinger",
+            "description": "Andre ser «Sett» under meldingen sin når du har lest den. Av til du slår det på."
         }
     },
     "notifications": {

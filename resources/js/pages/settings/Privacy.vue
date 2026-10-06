@@ -12,9 +12,11 @@ type PrivacyKey =
     | 'allow_public_follow'
     | 'show_friends_list'
     | 'appear_in_friends_lists'
-    | 'searchable';
+    | 'searchable'
+    | 'share_typing'
+    | 'share_read_receipts';
 
-/** Who may follow you, find you and see your friends. Each switch saves at once. */
+/** Who may follow you, find you and see your friends, and what chats show of you. Each switch saves at once. */
 const props = defineProps<{
     privacy: Record<PrivacyKey, boolean>;
 }>();
@@ -55,6 +57,10 @@ const groups: { label: string; keys: PrivacyKey[] }[] = [
     {
         label: 'settings.privacy.findingYou',
         keys: ['searchable', 'show_friends_list', 'appear_in_friends_lists'],
+    },
+    {
+        label: 'settings.privacy.messages',
+        keys: ['share_typing', 'share_read_receipts'],
     },
 ];
 </script>

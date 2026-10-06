@@ -48,7 +48,7 @@ test('the account page gets the account details and nothing else about the user'
                 ->where('avatar_url', $user->avatar_url)));
 });
 
-test('the privacy page gets the four privacy switches', function () {
+test('the privacy page gets every privacy switch', function () {
     $user = User::factory()->privateFollow()->hideFromFriendsLists()->create();
 
     $this->actingAs($user)
@@ -61,6 +61,8 @@ test('the privacy page gets the four privacy switches', function () {
                 'show_friends_list' => true,
                 'appear_in_friends_lists' => false,
                 'searchable' => true,
+                'share_typing' => true,
+                'share_read_receipts' => false,
             ]));
 });
 

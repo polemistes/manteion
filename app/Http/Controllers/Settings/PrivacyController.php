@@ -19,6 +19,8 @@ class PrivacyController extends Controller
                 'show_friends_list',
                 'appear_in_friends_lists',
                 'searchable',
+                'share_typing',
+                'share_read_receipts',
             ]),
         ]);
     }

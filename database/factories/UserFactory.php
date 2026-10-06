@@ -35,6 +35,10 @@ class UserFactory extends Factory
             'show_friends_list' => true,
             'appear_in_friends_lists' => true,
             'searchable' => true,
+            // As the database defaults: typing shows unless turned off, read
+            // receipts only once turned on.
+            'share_typing' => true,
+            'share_read_receipts' => false,
             'remember_token' => Str::random(10),
         ];
     }

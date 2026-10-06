@@ -23,7 +23,10 @@ class ConversationReadController extends Controller
         $participant->markRead();
 
         BadgesUpdated::dispatch($participant->user_id);
-        ConversationRead::dispatch($participant);
+
+        if ($request->user()->share_read_receipts) {
+            ConversationRead::dispatch($participant);
+        }
 
         return response()->noContent();
     }

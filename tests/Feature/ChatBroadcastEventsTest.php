@@ -234,9 +234,10 @@ test('someone who left a group no longer gets its messages, whatever they still 
         ->toContain("private-App.Models.User.{$a->id}", "private-App.Models.User.{$b->id}");
 });
 
-test('reading a conversation tells the others when, for their "Seen"', function () {
+test('reading a conversation tells the others when, for their "Seen", if the reader shows that', function () {
     $broadcaster = chatBroadcaster();
     [$sender, $reader] = User::factory()->count(2)->create()->all();
+    $reader->update(['share_read_receipts' => true]);
     $conversation = chatBroadcastConversation([$sender, $reader]);
     Message::factory()->create(['conversation_id' => $conversation->id, 'user_id' => $sender->id]);
 
@@ -250,13 +251,28 @@ test('reading a conversation tells the others when, for their "Seen"', function 
         ->and($read[0]['payload']['read_at'])->not->toBeNull();
 });
 
-test('opening a conversation with something new in it tells the others it was read', function () {
+test('opening a conversation with something new in it tells the others it was read, if the reader shows that', function () {
     $broadcaster = chatBroadcaster();
     [$sender, $reader] = User::factory()->count(2)->create()->all();
+    $reader->update(['share_read_receipts' => true]);
     $conversation = chatBroadcastConversation([$sender, $reader]);
     Message::factory()->create(['conversation_id' => $conversation->id, 'user_id' => $sender->id]);
 
     $this->actingAs($reader)->get("/messages/{$conversation->id}")->assertOk();
 
     expect($broadcaster->named('conversation.read'))->toHaveCount(1);
+});
+
+test('a reader who has not chosen to show that they have read tells no one, by either route', function () {
+    $broadcaster = chatBroadcaster();
+    [$sender, $reader] = User::factory()->count(2)->create()->all();
+    $conversation = chatBroadcastConversation([$sender, $reader]);
+    Message::factory()->create(['conversation_id' => $conversation->id, 'user_id' => $sender->id]);
+
+    $this->actingAs($reader)->get("/messages/{$conversation->id}")->assertOk();
+    Message::factory()->create(['conversation_id' => $conversation->id, 'user_id' => $sender->id]);
+    $this->actingAs($reader)->postJson("/messages/{$conversation->id}/read")->assertNoContent();
+
+    expect($broadcaster->named('conversation.read'))->toHaveCount(0)
+        ->and($conversation->participantFor($reader)->fresh()->last_read_at)->not->toBeNull();
 });
