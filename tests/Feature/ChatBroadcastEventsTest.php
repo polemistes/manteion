@@ -125,6 +125,7 @@ test('a broadcast message is the same for everyone and says who reacted', functi
             ['emoji' => '👍', 'count' => 2, 'user_ids' => [$a->id, $c->id]],
             ['emoji' => '🎉', 'count' => 1, 'user_ids' => [$b->id]],
         ],
+        'seen_by' => [],
     ]]);
 });
 

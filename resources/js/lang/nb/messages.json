@@ -68,7 +68,9 @@
         "confirmLeave": "Du slutter å få meldingene herfra. Noen i samtalen kan legge deg til igjen.",
         "noMessagesYet": "Ingen meldinger ennå. Si hei.",
         "seen": "Sett",
-        "seenBy": "Sett av {names}"
+        "seenBy": "Sett av {names}",
+        "markSeen": "La {name} få vite at du har sett dette",
+        "seenByYou": "Sett av deg"
     },
     "create": {
         "title": "Ny melding",

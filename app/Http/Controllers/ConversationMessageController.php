@@ -12,6 +12,7 @@ use App\Models\Conversation;
 use App\Models\ConversationParticipant;
 use App\Models\Message;
 use App\Models\Reaction;
+use App\Models\User;
 use App\Notifications\NewMessageReceived;
 use App\Services\MessageSummary;
 use Illuminate\Http\JsonResponse;
@@ -49,7 +50,7 @@ class ConversationMessageController extends Controller
             'after' => ['required_without:before', 'integer'],
         ]);
 
-        $query = $conversation->messages()->with(['sender', 'reactions']);
+        $query = $conversation->messages()->with(['sender', 'reactions', 'seenBy']);
 
         if ($request->filled('after')) {
             $messages = $query
@@ -95,7 +96,8 @@ class ConversationMessageController extends Controller
         ]);
         $message->setRelation('conversation', $conversation)
             ->setRelation('sender', $sender)
-            ->setRelation('reactions', (new Reaction)->newCollection());
+            ->setRelation('reactions', (new Reaction)->newCollection())
+            ->setRelation('seenBy', (new User)->newCollection());
 
         $conversation->participantFor($sender)?->markRead();
 

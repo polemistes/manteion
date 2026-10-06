@@ -68,7 +68,9 @@
         "confirmLeave": "You stop getting its messages. Someone in it can add you again.",
         "noMessagesYet": "No messages yet. Say hello.",
         "seen": "Seen",
-        "seenBy": "Seen by {names}"
+        "seenBy": "Seen by {names}",
+        "markSeen": "Let {name} know you’ve seen this",
+        "seenByYou": "Seen by you"
     },
     "create": {
         "title": "New message",

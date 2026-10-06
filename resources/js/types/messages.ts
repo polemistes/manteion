@@ -4,6 +4,13 @@ export type { ReactionSummary } from '@/reactions';
 
 export type ConversationType = 'direct' | 'group';
 
+/** Someone shown by name and face under a message. */
+export type MessageFace = {
+    id: number;
+    name: string;
+    avatar_url: string | null;
+};
+
 /** The author of a message, as every message shape carries it. */
 export type MessageSender = {
     id: number;
@@ -35,6 +42,8 @@ export type BroadcastMessage = {
     sender: MessageSender;
     /** Ordered like Reaction::summarize: most used first, then oldest first. */
     reactions: BroadcastReaction[];
+    /** Who marked it as seen on purpose, oldest first. */
+    seen_by: MessageFace[];
 };
 
 /** A message as the conversation page renders it (App\Services\MessageSummary). */
@@ -49,6 +58,8 @@ export type MessageSummary = {
     can_delete: boolean;
     can_report: boolean;
     reactions: ReactionSummary[];
+    /** Who marked it as seen on purpose, oldest first. */
+    seen_by: MessageFace[];
 };
 
 /**

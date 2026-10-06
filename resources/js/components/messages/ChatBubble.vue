@@ -1,5 +1,13 @@
 <script setup lang="ts">
-import { Copy, Ellipsis, Flag, SmilePlus, Trash } from '@lucide/vue';
+import { usePage } from '@inertiajs/vue3';
+import {
+    CheckCheck,
+    Copy,
+    Ellipsis,
+    Flag,
+    SmilePlus,
+    Trash,
+} from '@lucide/vue';
 import { computed, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Avatar from '@/components/ui/Avatar.vue';
@@ -41,6 +49,7 @@ const emit = defineEmits<{
     delete: [];
     report: [];
     retry: [];
+    markSeen: [];
 }>();
 
 const { t, locale } = useI18n();
@@ -48,11 +57,47 @@ const { time } = useDates();
 
 const mine = computed(() => props.message.is_mine);
 
+const page = usePage();
+
+// Who has seen this message: the automatic "Seen" (your newest message,
+// governed by the privacy switches) and the deliberate marks on any
+// message, each person once.
+const seen = computed(() => {
+    const people = new Map<number, (typeof props.seenBy)[number]>();
+
+    for (const person of [...props.message.seen_by, ...props.seenBy]) {
+        people.set(person.id, person);
+    }
+
+    return [...people.values()];
+});
+
+const markedByMe = computed(() =>
+    props.message.seen_by.some(
+        (person) => person.id === page.props.auth.user.id,
+    ),
+);
+
+/** Only you marked it: say so, rather than "Seen" as if the sender had. */
+const seenCaption = computed(() =>
+    seen.value.length === 1 && seen.value[0].id === page.props.auth.user.id
+        ? t('messages.show.seenByYou')
+        : t('messages.show.seen'),
+);
+
+const canMarkSeen = computed(
+    () =>
+        !mine.value &&
+        !deleted.value &&
+        !props.message.pending &&
+        !markedByMe.value,
+);
+
 const seenLabel = computed(() =>
     t('messages.show.seenBy', {
         names: new Intl.ListFormat(locale.value === 'nb' ? 'nb' : 'en', {
             type: 'conjunction',
-        }).format(props.seenBy.map((person) => person.name)),
+        }).format(seen.value.map((person) => person.name)),
     }),
 );
 const deleted = computed(() => props.message.is_deleted);
@@ -68,7 +113,7 @@ const canAct = computed(() => !deleted.value && !props.message.pending);
 
 /** The time (or "Seen") line under the bubble. */
 const hasFoot = computed(
-    () => !props.message.pending && (props.showTime || props.seenBy.length > 0),
+    () => !props.message.pending && (props.showTime || seen.value.length > 0),
 );
 
 // Long-press on touch opens the actions sheet.
@@ -277,6 +322,16 @@ onBeforeUnmount(cancelPress);
                                     />
                                 </button>
                             </template>
+                            <MenuItem
+                                v-if="canMarkSeen"
+                                :icon="CheckCheck"
+                                @select="emit('markSeen')"
+                                >{{
+                                    t('messages.show.markSeen', {
+                                        name: props.message.sender.name,
+                                    })
+                                }}</MenuItem
+                            >
                             <MenuItem :icon="Copy" @select="emit('copy')">{{
                                 t('messages.show.copy')
                             }}</MenuItem>
@@ -326,7 +381,7 @@ onBeforeUnmount(cancelPress);
                 {{ t('messages.show.sending') }}
             </p>
             <p
-                v-else-if="props.showTime || props.seenBy.length"
+                v-else-if="props.showTime || seen.length"
                 class="flex items-center gap-1.5 px-1 text-caption text-ink-subtle"
                 :class="[
                     props.message.reactions.length ? 'mt-[19px]' : 'mt-1',
@@ -334,11 +389,11 @@ onBeforeUnmount(cancelPress);
                 ]"
             >
                 <span>{{ time(props.message.created_at) }}</span>
-                <template v-if="props.seenBy.length">
+                <template v-if="seen.length">
                     <span
                         v-if="props.seenAs === 'caption'"
                         :aria-label="seenLabel"
-                        >· {{ t('messages.show.seen') }}</span
+                        >· {{ seenCaption }}</span
                     >
                     <span
                         v-else
@@ -348,7 +403,7 @@ onBeforeUnmount(cancelPress);
                         :title="seenLabel"
                     >
                         <Avatar
-                            v-for="(person, index) in props.seenBy.slice(0, 3)"
+                            v-for="(person, index) in seen.slice(0, 3)"
                             :key="person.id"
                             :name="person.name"
                             :src="person.avatar_url"
@@ -358,10 +413,10 @@ onBeforeUnmount(cancelPress);
                             :class="index > 0 ? '-ml-1' : ''"
                         />
                         <span
-                            v-if="props.seenBy.length > 3"
+                            v-if="seen.length > 3"
                             class="ml-1 tabular-nums"
                             aria-hidden="true"
-                            >+{{ props.seenBy.length - 3 }}</span
+                            >+{{ seen.length - 3 }}</span
                         >
                     </span>
                 </template>

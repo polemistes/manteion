@@ -6,6 +6,7 @@ use App\Http\Controllers\ConversationMuteController;
 use App\Http\Controllers\ConversationParticipantController;
 use App\Http\Controllers\ConversationPresenceController;
 use App\Http\Controllers\ConversationReadController;
+use App\Http\Controllers\MessageSeenController;
 use Illuminate\Support\Facades\Route;
 
 // Messages (messages.*). Required from inside the `auth` group in
@@ -22,6 +23,7 @@ Route::delete('/messages/{conversation}/messages/{message}', [ConversationMessag
     ->scopeBindings();
 Route::post('/messages/{conversation}/participants', [ConversationParticipantController::class, 'store'])->name('messages.participants.store');
 Route::delete('/messages/{conversation}/participants', [ConversationParticipantController::class, 'destroy'])->name('messages.participants.destroy');
+Route::post('/messages/{conversation}/messages/{message}/seen', [MessageSeenController::class, 'store'])->name('messages.messages.seen');
 Route::post('/messages/{conversation}/read', [ConversationReadController::class, 'store'])->name('messages.read');
 Route::post('/messages/{conversation}/presence', [ConversationPresenceController::class, 'store'])->name('messages.presence');
 Route::put('/messages/{conversation}/mute', [ConversationMuteController::class, 'update'])->name('messages.mute');

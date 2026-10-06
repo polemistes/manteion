@@ -4,6 +4,7 @@ import {
     ArrowDown,
     Bell,
     BellOff,
+    CheckCheck,
     ChevronLeft,
     Copy,
     Flag,
@@ -42,6 +43,7 @@ import {
     mute as muteRoute,
     send as sendRoute,
 } from '@/routes/messages';
+import { seen as markMessageSeen } from '@/routes/messages/messages';
 import {
     destroy as destroyMessageRoute,
     index as messagesPageRoute,
@@ -422,6 +424,7 @@ async function send(body: string, retryOf?: ChatMessage): Promise<void> {
         can_delete: false,
         can_report: false,
         reactions: [],
+        seen_by: [],
         pending: 'sending',
         tempId,
     };
@@ -506,6 +509,46 @@ async function react(message: ChatMessage, emoji: string): Promise<void> {
 
         if (response?.reactions && latest) {
             setExtra({ ...latest, reactions: response.reactions });
+        }
+    } catch {
+        setExtra(before);
+        toastError(t('ui.somethingWentWrong'));
+    }
+}
+
+// A deliberate "I have seen this" on someone else's message, shown under
+// it to everyone whatever the privacy switches say.
+async function markSeen(message: ChatMessage): Promise<void> {
+    const me = page.props.auth.user;
+
+    if (
+        message.pending ||
+        message.is_deleted ||
+        message.is_mine ||
+        message.seen_by.some((person) => person.id === me.id)
+    ) {
+        return;
+    }
+
+    const before = message;
+
+    setExtra({
+        ...message,
+        seen_by: [
+            ...message.seen_by,
+            { id: me.id, name: me.name, avatar_url: me.avatar_url },
+        ],
+    });
+
+    try {
+        const response = await requestJson<{ message: MessageSummary }>(
+            markMessageSeen([props.conversation.id, message.id]),
+            {},
+        );
+        const latest = current(message.id);
+
+        if (response?.message && latest) {
+            setExtra({ ...latest, seen_by: response.message.seen_by });
         }
     } catch {
         setExtra(before);
@@ -807,6 +850,7 @@ async function leave(): Promise<void> {
                                 @delete="remove(message)"
                                 @report="report('message', message.id)"
                                 @retry="retry(message)"
+                                @mark-seen="markSeen(message)"
                             />
                         </div>
                     </section>
@@ -888,6 +932,30 @@ async function leave(): Promise<void> {
             </button>
         </div>
         <div class="border-t border-line pt-2">
+            <button
+                v-if="
+                    actionsFor &&
+                    !actionsFor.is_mine &&
+                    !actionsFor.is_deleted &&
+                    !actionsFor.seen_by.some(
+                        (person) => person.id === page.props.auth.user.id,
+                    )
+                "
+                type="button"
+                class="flex h-12 w-full items-center gap-3 rounded-md px-3 text-left hover:bg-surface-2"
+                @click="actOnSheet(markSeen)"
+            >
+                <CheckCheck
+                    :size="18"
+                    class="text-ink-muted"
+                    aria-hidden="true"
+                />
+                {{
+                    t('messages.show.markSeen', {
+                        name: actionsFor.sender.name,
+                    })
+                }}
+            </button>
             <button
                 type="button"
                 class="flex h-12 w-full items-center gap-3 rounded-md px-3 text-left hover:bg-surface-2"

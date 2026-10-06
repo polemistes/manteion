@@ -142,6 +142,7 @@ test('a message sent as JSON comes back as the thread shows it', function () {
         'can_delete' => true,
         'can_report' => false,
         'reactions' => [],
+        'seen_by' => [],
     ]]);
 });
 

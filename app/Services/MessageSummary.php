@@ -24,7 +24,7 @@ class MessageSummary
     public const PREVIEW_LENGTH = 120;
 
     /**
-     * @return array{id: int, body: string|null, is_deleted: bool, created_at: string, sender: array{id: int, name: string, username: string, avatar_url: string|null}, is_mine: bool, can_delete: bool, can_report: bool, reactions: array<int, array{emoji: string, count: int, reacted: bool}>}
+     * @return array{id: int, body: string|null, is_deleted: bool, created_at: string, sender: array{id: int, name: string, username: string, avatar_url: string|null}, is_mine: bool, can_delete: bool, can_report: bool, reactions: array<int, array{emoji: string, count: int, reacted: bool}>, seen_by: list<array{id: int, name: string, avatar_url: string|null}>}
      */
     public static function for(Message $message, User $viewer): array
     {
@@ -38,6 +38,7 @@ class MessageSummary
             'can_delete' => ! $message->is_deleted && Gate::forUser($viewer)->allows('delete', $message),
             'can_report' => ! $message->is_deleted && $message->user_id !== $viewer->id,
             'reactions' => Reaction::summarize($message->reactions, $viewer),
+            'seen_by' => self::seenBy($message),
         ];
     }
 
@@ -45,7 +46,7 @@ class MessageSummary
      * The same message for everyone in the conversation at once: who
      * reacted is listed instead of whether the viewer did.
      *
-     * @return array{id: int, conversation_id: int, body: string|null, is_deleted: bool, created_at: string, sender: array{id: int, name: string, username: string, avatar_url: string|null}, reactions: array<int, array{emoji: string, count: int, user_ids: array<int, int>}>}
+     * @return array{id: int, conversation_id: int, body: string|null, is_deleted: bool, created_at: string, sender: array{id: int, name: string, username: string, avatar_url: string|null}, reactions: array<int, array{emoji: string, count: int, user_ids: array<int, int>}>, seen_by: list<array{id: int, name: string, avatar_url: string|null}>}
      */
     public static function broadcast(Message $message): array
     {
@@ -74,7 +75,24 @@ class MessageSummary
             'created_at' => $message->created_at->toIso8601String(),
             'sender' => self::sender($message),
             'reactions' => $reactions,
+            'seen_by' => self::seenBy($message),
         ];
+    }
+
+    /**
+     * Who marked the message as seen on purpose, oldest first.
+     *
+     * @return list<array{id: int, name: string, avatar_url: string|null}>
+     */
+    private static function seenBy(Message $message): array
+    {
+        return array_values($message->seenBy
+            ->map(fn (User $person) => [
+                'id' => $person->id,
+                'name' => $person->name,
+                'avatar_url' => $person->avatar_url,
+            ])
+            ->all());
     }
 
     /**

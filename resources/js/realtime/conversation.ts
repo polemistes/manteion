@@ -95,6 +95,7 @@ export function toMessageSummary(
             count: reaction.count,
             reacted: reaction.user_ids.includes(viewer.id),
         })),
+        seen_by: message.seen_by ?? [],
     };
 }
 
