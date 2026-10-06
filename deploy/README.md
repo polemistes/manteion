@@ -1,6 +1,6 @@
 # Running Manteion on the server
 
-Manteion runs at **https://manteion.no** on the Arch Linux server (its own name is aldebaran.no), next to Nextcloud and Varians. Four processes make it work:
+Manteion runs at **https://www.manteion.no** on the Arch Linux server (its own name is aldebaran.no), next to Nextcloud and Varians. Four processes make it work:
 
 | | |
 |---|---|
@@ -123,7 +123,7 @@ As root (with `sudo`), except where it says otherwise.
 
     The site also asks for HTTP/2 and compression, which make a big difference over the 5G line (one connection for the many small built files, and text at a third of its size). Switch the two modules on in `/etc/httpd/conf/httpd.conf`, by removing the `#` in front of `LoadModule deflate_module modules/mod_deflate.so` and `LoadModule http2_module modules/mod_http2.so`, then `apachectl configtest && systemctl reload httpd`. Until then the site works without them.
 
-    www.manteion.no sends everyone on to manteion.no, so the site has one address. certbot's timer renews the certificate and reloads Apache. The modules the site uses (`proxy`, `proxy_http`, `proxy_fcgi`, `rewrite`, `headers`, `ssl`) are already on for the other sites.
+    manteion.no sends everyone on to www.manteion.no, the address the site has always had, so it keeps one address. certbot's timer renews the certificate and reloads Apache. The modules the site uses (`proxy`, `proxy_http`, `proxy_fcgi`, `rewrite`, `headers`, `ssl`) are already on for the other sites.
 
 11. **Backups.**
 
@@ -135,7 +135,7 @@ As root (with `sudo`), except where it says otherwise.
 
     The backups are on the same disk as the data, so copy `/home/manteion/backups` to another machine as well.
 
-12. **Check.** https://manteion.no should show the front page, and the browser's console should show no WebSocket errors once you are logged in. The test push in Settings → Notifications checks the queue worker and push in one go.
+12. **Check.** https://www.manteion.no should show the front page, and the browser's console should show no WebSocket errors once you are logged in. The test push in Settings → Notifications checks the queue worker and push in one go.
 
 ## Bringing the current site over
 
@@ -155,15 +155,17 @@ ssh proteus@manteion.no "sudo -n -u manteion sqlite3 /home/manteion/database/man
 
 The first release (step 7) migrates the copy to the new version. It keeps the accounts, friendships, follows, events, messages, leaflets and pictures. It clears the old activity notifications and resets everyone's notification settings to the new defaults.
 
-Then, once the release is current, clear what belonged to the old version: its logins, its cache and queue, and its push subscriptions, which its own service worker made and which carry nothing of what the new version keeps per device.
+Then, once the release is current, clear what belonged to the old version: its logins, its cache and its queue.
 
 ```sh
-ssh proteus@manteion.no "sudo -n -u manteion sqlite3 /home/manteion/database/manteion.sqlite 'DELETE FROM push_subscriptions; DELETE FROM sessions; DELETE FROM cache; DELETE FROM cache_locks; DELETE FROM jobs;'"
+ssh proteus@manteion.no "sudo -n -u manteion sqlite3 /home/manteion/database/manteion.sqlite 'DELETE FROM sessions; DELETE FROM cache; DELETE FROM cache_locks; DELETE FROM jobs;'"
 ```
 
-Since manteion.no points to this server, the old site gets no more visitors; leave it in maintenance mode as a fallback copy until the web hotel is given up.
+The push subscriptions can stay if `manteion.env` has the old site's VAPID keys: the site keeps its address and its keys, so the browsers' subscriptions stay valid and the testers keep getting push without doing anything (each device shows as "Unknown device" in Settings → Notifications until its browser reports itself again). With new keys, the old subscriptions are dead; delete them too (`DELETE FROM push_subscriptions;`), and the testers turn push on again on each device.
 
-The testers keep the address and log in with the same username and password. Push has to be turned on again on each device (Settings → Notifications). An app on the home screen keeps working: it belongs to the address.
+Since the names point to this server, the old site gets no more visitors; leave it in maintenance mode as a fallback copy until the web hotel is given up.
+
+The testers keep the address and log in again with the same username and password. An app on the home screen keeps working: it belongs to the address.
 
 ## Deploying a new version
 

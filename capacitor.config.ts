@@ -8,7 +8,7 @@ const config: CapacitorConfig = {
     // primary content source, since this app is a server-driven Inertia SPA.
     webDir: 'public/build',
     server: {
-        url: 'https://manteion.no',
+        url: 'https://www.manteion.no',
     },
 };
 
