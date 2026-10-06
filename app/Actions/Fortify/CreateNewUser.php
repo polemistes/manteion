@@ -2,7 +2,9 @@
 
 namespace App\Actions\Fortify;
 
+use App\Enums\AdminAlert;
 use App\Models\User;
+use App\Services\AdminAlerts;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -40,11 +42,19 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $this->passwordRules(),
         ])->validate();
 
-        return User::create([
+        $user = User::create([
             'name' => $input['name'],
             'username' => $input['username'],
             'email' => $input['email'],
             'password' => Hash::make($input['password']),
         ]);
+
+        AdminAlerts::send(AdminAlert::NewUser, $user, [
+            'name' => $user->name,
+            'username' => $user->username,
+            'email' => $user->email,
+        ], route('admin.users.index'));
+
+        return $user;
     }
 }

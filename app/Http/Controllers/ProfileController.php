@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AdminAlert;
+use App\Services\AdminAlerts;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -39,6 +41,12 @@ class ProfileController extends Controller
         Auth::guard('web')->logout();
 
         $user->delete();
+
+        AdminAlerts::send(AdminAlert::AccountDeleted, $user, [
+            'name' => $user->name,
+            'username' => $user->username,
+            'by' => __('admin_alerts.deleted_by_self'),
+        ], route('admin.users.index'));
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

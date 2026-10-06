@@ -158,6 +158,19 @@
             "removeTitle": "Remove this device?",
             "removeBody": "{device} stops getting notifications. You can turn them on there again at any time.",
             "removed": "{device} is removed."
+        },
+        "admin": {
+            "title": "Email me, as administrator, when",
+            "note": "For the testing period: one email per happening, to you only, and not about what you do yourself.",
+            "kinds": {
+                "new_user": "Someone registers",
+                "account_deleted": "An account is deleted",
+                "account_suspended": "An account is suspended, or a suspension lifted",
+                "message_sent": "A message is sent (who and where, never the text)",
+                "event_created": "An event is created",
+                "leaflet_published": "A leaflet is published",
+                "report_filed": "Something is reported"
+            }
         }
     },
     "appearance": {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AdminAlert;
 use App\Enums\ReportStatus;
 use App\Events\BadgesUpdated;
 use App\Events\IncomingMessage;
@@ -14,6 +15,7 @@ use App\Models\Message;
 use App\Models\Reaction;
 use App\Models\User;
 use App\Notifications\NewMessageReceived;
+use App\Services\AdminAlerts;
 use App\Services\MessageSummary;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -100,6 +102,12 @@ class ConversationMessageController extends Controller
             ->setRelation('seenBy', (new User)->newCollection());
 
         $conversation->participantFor($sender)?->markRead();
+
+        AdminAlerts::send(AdminAlert::MessageSent, $sender, [
+            'sender' => $sender->name,
+            'conversation' => $conversation->titleFor($sender),
+            'type' => $conversation->type->value,
+        ], route('messages.show', $conversation));
 
         broadcast(new MessageSent($message))->toOthers();
 

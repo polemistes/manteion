@@ -158,6 +158,19 @@
             "removeTitle": "Fjerne denne enheten?",
             "removeBody": "{device} slutter å få varsler. Du kan slå dem på der igjen når som helst.",
             "removed": "{device} er fjernet."
+        },
+        "admin": {
+            "title": "Send meg e-post, som administrator, når",
+            "note": "For testperioden: én e-post per hendelse, bare til deg, og ikke om det du gjør selv.",
+            "kinds": {
+                "new_user": "Noen registrerer seg",
+                "account_deleted": "En konto slettes",
+                "account_suspended": "En konto stenges, eller en stenging oppheves",
+                "message_sent": "En melding sendes (hvem og hvor, aldri teksten)",
+                "event_created": "Et arrangement opprettes",
+                "leaflet_published": "Et flyveblad publiseres",
+                "report_filed": "Noe rapporteres"
+            }
         }
     },
     "appearance": {

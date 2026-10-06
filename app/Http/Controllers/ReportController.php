@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AdminAlert;
 use App\Http\Requests\StoreReportRequest;
 use App\Models\Report;
+use App\Services\AdminAlerts;
 use Illuminate\Http\RedirectResponse;
 
 class ReportController extends Controller
@@ -19,6 +21,12 @@ class ReportController extends Controller
         ], [
             'reason' => $request->validated('reason'),
         ]);
+
+        AdminAlerts::send(AdminAlert::ReportFiled, $request->user(), [
+            'reporter' => $request->user()->name,
+            'what' => $reportable->getMorphClass(),
+            'reason' => $request->validated('reason'),
+        ], route('moderation.reports.index'));
 
         return back();
     }

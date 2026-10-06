@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AdminAlert;
 use App\Enums\LeafletVisibility;
 use App\Enums\ReportStatus;
 use App\Http\Requests\StoreLeafletRequest;
@@ -12,6 +13,7 @@ use App\Models\LeafletResponse;
 use App\Models\Reaction;
 use App\Models\User;
 use App\Services\ActivityFeed;
+use App\Services\AdminAlerts;
 use App\Services\ImageProcessor;
 use App\Services\LeafletFeedQuery;
 use Illuminate\Http\RedirectResponse;
@@ -64,6 +66,11 @@ class LeafletController extends Controller
 
         $this->storeImage($leaflet, $request->file('image'));
         $this->refreshLinkPreview($leaflet);
+
+        AdminAlerts::send(AdminAlert::LeafletPublished, $request->user(), [
+            'author' => $request->user()->name,
+            'visibility' => $leaflet->visibility->value,
+        ], route('leaflets.show', $leaflet));
 
         return redirect()->route('leaflets.index');
     }

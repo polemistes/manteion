@@ -5,6 +5,16 @@ import type {
 } from '@/events';
 
 /** App\Enums\NotificationCategory: what a push setting switches on or off. */
+/** What an administrator can ask to be emailed about (App\Enums\AdminAlert). */
+export type AdminAlertKind =
+    | 'new_user'
+    | 'account_deleted'
+    | 'account_suspended'
+    | 'message_sent'
+    | 'event_created'
+    | 'leaflet_published'
+    | 'report_filed';
+
 export type NotificationCategory =
     | 'direct_messages'
     | 'group_messages'

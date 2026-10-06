@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Enums\NotificationCategory;
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateNotificationSettingsRequest;
 use App\Models\PushSubscription;
@@ -74,6 +75,11 @@ class NotificationController extends Controller
     {
         $changes = array_filter($request->validated(), fn (mixed $value) => $value !== []);
 
+        // Only administrators have the email alerts to set.
+        if ($request->user()->role !== UserRole::Administrator) {
+            unset($changes['admin_email']);
+        }
+
         if ($changes !== []) {
             DB::transaction(function () use ($request, $changes): void {
                 $user = User::query()->lockForUpdate()->findOrFail($request->user()->id);
@@ -86,7 +92,7 @@ class NotificationController extends Controller
     }
 
     /**
-     * @param  array{push?: array<string, bool>, message_previews?: bool}  $changes
+     * @param  array{push?: array<string, bool>, message_previews?: bool, admin_email?: array<string, bool>}  $changes
      * @return array<string, mixed>
      */
     private static function merged(mixed $stored, array $changes): array
@@ -100,6 +106,11 @@ class NotificationController extends Controller
 
         if (array_key_exists('message_previews', $changes)) {
             $settings['message_previews'] = $changes['message_previews'];
+        }
+
+        if (isset($changes['admin_email'])) {
+            $storedAdmin = is_array($settings['admin_email'] ?? null) ? $settings['admin_email'] : [];
+            $settings['admin_email'] = [...$storedAdmin, ...$changes['admin_email']];
         }
 
         return $settings;

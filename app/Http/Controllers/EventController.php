@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AdminAlert;
 use App\Enums\AttendanceStatus;
 use App\Enums\AttendeeSource;
 use App\Enums\ContactGroupType;
@@ -21,6 +22,7 @@ use App\Models\Reaction;
 use App\Models\Tag;
 use App\Models\User;
 use App\Services\ActivityFeed;
+use App\Services\AdminAlerts;
 use App\Services\EventFeedQuery;
 use App\Services\ImageProcessor;
 use Carbon\CarbonImmutable;
@@ -177,6 +179,13 @@ class EventController extends Controller
         if ($event->visibility !== EventVisibility::Private) {
             NotifyFollowersOfEvent::dispatch($event);
         }
+
+        AdminAlerts::send(AdminAlert::EventCreated, $request->user(), [
+            'host' => $request->user()->name,
+            'event' => $event->name,
+            'visibility' => $event->visibility->value,
+            'starts' => $event->starts_at->timezone(config('app.display_timezone'))->format('Y-m-d H:i'),
+        ], route('events.show', $event));
 
         return redirect()->route('events.show', $event);
     }

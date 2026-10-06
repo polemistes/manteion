@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\AdminAlert;
 use App\Enums\NotificationCategory;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -30,6 +31,8 @@ class UpdateNotificationSettingsRequest extends FormRequest
             'push' => ['sometimes', 'bail', 'array', Rule::arrayKeys(NotificationCategory::cases())],
             'push.*' => ['boolean:strict'],
             'message_previews' => ['sometimes', 'boolean:strict'],
+            'admin_email' => ['sometimes', 'bail', 'array', Rule::arrayKeys(AdminAlert::cases())],
+            'admin_email.*' => ['boolean:strict'],
         ];
     }
 }

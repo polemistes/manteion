@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\AdminAlert;
 use App\Enums\FollowStatus;
 use App\Enums\FriendshipStatus;
 use App\Enums\NotificationCategory;
@@ -135,7 +136,7 @@ class User extends Authenticatable
      * category and the message-preview choice, with the defaults filled in
      * for whatever the user has not stored.
      *
-     * @return array{push: array<string, bool>, message_previews: bool}
+     * @return array{push: array<string, bool>, message_previews: bool, admin_email: array<string, bool>}
      */
     public function notificationSettings(): array
     {
@@ -148,10 +149,29 @@ class User extends Authenticatable
             $push[$category->value] = (bool) ($storedPush[$category->value] ?? $category->pushDefault());
         }
 
+        $storedAdmin = is_array($stored['admin_email'] ?? null) ? $stored['admin_email'] : [];
+        $adminEmail = [];
+
+        foreach (AdminAlert::cases() as $kind) {
+            $adminEmail[$kind->value] = (bool) ($storedAdmin[$kind->value] ?? false);
+        }
+
         return [
             'push' => $push,
             'message_previews' => (bool) ($stored['message_previews'] ?? true),
+            // Only acted on for administrators (see wantsAdminEmail).
+            'admin_email' => $adminEmail,
         ];
+    }
+
+    /**
+     * Whether this administrator asked to be emailed about this kind of
+     * thing (App\Services\AdminAlerts). Never true for anyone else.
+     */
+    public function wantsAdminEmail(AdminAlert $kind): bool
+    {
+        return $this->role === UserRole::Administrator
+            && $this->notificationSettings()['admin_email'][$kind->value];
     }
 
     /**

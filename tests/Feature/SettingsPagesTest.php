@@ -94,6 +94,15 @@ test('the notifications page gets the effective settings, the categories in disp
                     'leaflet_responses' => false,
                 ],
                 'message_previews' => false,
+                'admin_email' => [
+                    'new_user' => false,
+                    'account_deleted' => false,
+                    'account_suspended' => false,
+                    'message_sent' => false,
+                    'event_created' => false,
+                    'leaflet_published' => false,
+                    'report_filed' => false,
+                ],
             ])
             ->where('categories', [
                 ['value' => 'direct_messages', 'push_default' => true],

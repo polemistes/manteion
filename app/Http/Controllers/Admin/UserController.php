@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\AdminAlert;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreAdminEmailRequest;
@@ -9,6 +10,7 @@ use App\Http\Requests\StoreSuspensionRequest;
 use App\Http\Requests\UpdateUserRoleRequest;
 use App\Mail\AdminNotice;
 use App\Models\User;
+use App\Services\AdminAlerts;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -66,6 +68,14 @@ class UserController extends Controller
             'suspended_by' => $request->user()->id,
         ]);
 
+        AdminAlerts::send(AdminAlert::AccountSuspended, $request->user(), [
+            'action' => __('admin_alerts.suspended'),
+            'name' => $user->name,
+            'username' => $user->username,
+            'by' => $request->user()->name,
+            'reason' => __('admin_alerts.reason', ['reason' => $request->validated('reason')]),
+        ], route('admin.users.index'));
+
         return back();
     }
 
@@ -78,6 +88,14 @@ class UserController extends Controller
             'suspended_reason' => null,
             'suspended_by' => null,
         ]);
+
+        AdminAlerts::send(AdminAlert::AccountSuspended, $request->user(), [
+            'action' => __('admin_alerts.unsuspended'),
+            'name' => $user->name,
+            'username' => $user->username,
+            'by' => $request->user()->name,
+            'reason' => '',
+        ], route('admin.users.index'));
 
         return back();
     }
@@ -133,6 +151,12 @@ class UserController extends Controller
         }
 
         $user->delete();
+
+        AdminAlerts::send(AdminAlert::AccountDeleted, $request->user(), [
+            'name' => $user->name,
+            'username' => $user->username,
+            'by' => __('admin_alerts.deleted_by_admin', ['admin' => $request->user()->name]),
+        ], route('admin.users.index'));
 
         return redirect()->route('admin.users.index');
     }

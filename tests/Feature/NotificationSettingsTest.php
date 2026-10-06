@@ -44,6 +44,15 @@ test('a user who never changed anything gets the complete default settings', fun
             'leaflet_responses' => false,
         ],
         'message_previews' => true,
+        'admin_email' => [
+            'new_user' => false,
+            'account_deleted' => false,
+            'account_suspended' => false,
+            'message_sent' => false,
+            'event_created' => false,
+            'leaflet_published' => false,
+            'report_filed' => false,
+        ],
     ]);
     expect($user->wantsPush(NotificationCategory::DirectMessages))->toBeTrue();
     expect($user->wantsPush(NotificationCategory::EventInvites))->toBeFalse();

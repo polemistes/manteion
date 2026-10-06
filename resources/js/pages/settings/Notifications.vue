@@ -44,7 +44,7 @@ import {
     test as sendTestPush,
     update as updateNotifications,
 } from '@/routes/settings/notifications';
-import type { NotificationCategory } from '@/types';
+import type { AdminAlertKind, NotificationCategory } from '@/types';
 
 /**
  * What reaches the user, and where: this device's push switch (with a
@@ -55,6 +55,7 @@ const props = defineProps<{
     notificationSettings: {
         push: Record<NotificationCategory, boolean>;
         message_previews: boolean;
+        admin_email: Record<AdminAlertKind, boolean>;
     };
     categories: { value: NotificationCategory; push_default: boolean }[];
     devices: {
@@ -262,19 +263,45 @@ const groups = computed(() => {
 
 const push = reactive({ ...props.notificationSettings.push });
 const previews = ref(props.notificationSettings.message_previews);
+const adminEmail = reactive({ ...props.notificationSettings.admin_email });
 
 watch(
     () => props.notificationSettings,
     (next) => {
         Object.assign(push, next.push);
         previews.value = next.message_previews;
+        Object.assign(adminEmail, next.admin_email);
     },
 );
+
+// Administrators can ask to be emailed about what happens on the site.
+const isAdministrator = computed(
+    () => page.props.auth.user.role === 'administrator',
+);
+const adminKinds: AdminAlertKind[] = [
+    'new_user',
+    'account_deleted',
+    'account_suspended',
+    'message_sent',
+    'event_created',
+    'leaflet_published',
+    'report_filed',
+];
+
+function setAdminEmail(kind: AdminAlertKind, on: boolean): void {
+    const previous = adminEmail[kind];
+
+    adminEmail[kind] = on;
+    save({ admin_email: { [kind]: on } }, () => {
+        adminEmail[kind] = previous;
+    });
+}
 
 function save(
     changes: {
         push?: Partial<Record<NotificationCategory, boolean>>;
         message_previews?: boolean;
+        admin_email?: Partial<Record<AdminAlertKind, boolean>>;
     },
     revert: () => void,
 ): void {
@@ -497,6 +524,20 @@ async function removeDevice(device: { id: number; label: string }) {
                 :title="t('settings.notifications.previews.title')"
                 :description="t('settings.notifications.previews.description')"
                 @update:model-value="setPreviews"
+            />
+        </SettingsGroup>
+
+        <SettingsGroup
+            v-if="isAdministrator"
+            :label="t('settings.notifications.admin.title')"
+            :note="t('settings.notifications.admin.note')"
+        >
+            <SwitchRow
+                v-for="kind in adminKinds"
+                :key="kind"
+                :model-value="adminEmail[kind]"
+                :title="t(`settings.notifications.admin.kinds.${kind}`)"
+                @update:model-value="setAdminEmail(kind, $event)"
             />
         </SettingsGroup>
 
