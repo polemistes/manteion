@@ -15,5 +15,31 @@
         "later": "Ikke nå"
     },
     "blocked": "Varsler er slått av for Manteion i Android-innstillingene. Slå dem på under Innstillinger → Apper → Manteion → Varsler.",
-    "testMissing": "Testen kom ikke fram. Sjekk at varsler for Manteion er tillatt i Android-innstillingene."
+    "testMissing": "Testen kom ikke fram. Sjekk at varsler for Manteion er tillatt i Android-innstillingene.",
+    "download": {
+        "title": "Manteion for Android",
+        "lede": "Appen viser Manteions egne varsler, med bilder av vennene dine, og lar deg svare på en melding rett fra varselet.",
+        "point1": "Varsler fra Manteion, ikke fra nettleseren",
+        "point2": "Svar på en melding, eller merk den som lest, rett fra varselet",
+        "point3": "Velg lyd og viktighet for hver type varsel i Android-innstillingene",
+        "button": "Last ned appen",
+        "version": "Versjon {version}",
+        "stepsTitle": "Slik installerer du den",
+        "step1": "Trykk Last ned. Nettleseren kan advare om at filen kan skade telefonen: appen kommer fra Manteion selv, ikke fra Google Play, så last den ned likevel.",
+        "step2": "Åpne filen du lastet ned. Android spør om nettleseren får installere apper: tillat det.",
+        "step3": "Trykk Installer, åpne Manteion og logg inn.",
+        "updates": "Appen sier fra når det kommer en ny versjon.",
+        "iphone": "På iPhone og iPad legger du heller Manteion på Hjem-skjermen fra Safari.",
+        "back": "Tilbake til Manteion"
+    },
+    "update": {
+        "title": "En ny versjon av appen er klar",
+        "body": "Versjon {version} er ute.",
+        "action": "Last ned"
+    },
+    "get": {
+        "title": "Hent Android-appen",
+        "body": "Varsler fra Manteion selv, og svar rett fra varselet.",
+        "action": "Hent appen"
+    }
 }

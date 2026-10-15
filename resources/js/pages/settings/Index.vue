@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { ChevronRight, Download } from '@lucide/vue';
+import { ChevronRight, Download, Smartphone } from '@lucide/vue';
+import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { sections } from '@/components/settings/sections';
 import SettingsGroup from '@/components/settings/SettingsGroup.vue';
@@ -11,6 +12,8 @@ import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
 import ListRow from '@/components/ui/ListRow.vue';
 import { useInstallPrompt } from '@/pwa/install';
+import { isNativeShell } from '@/pwa/platform';
+import { android as androidApp } from '@/routes/app';
 
 /**
  * Settings, the Me tab. On a phone and a small tablet it is the list of
@@ -19,6 +22,15 @@ import { useInstallPrompt } from '@/pwa/install';
 const { t } = useI18n();
 
 const { canInstall, promptInstall } = useInstallPrompt();
+
+// On an Android phone's browser, the way to the app (whose notifications
+// come from Manteion rather than the browser). Known only once mounted.
+const offerAndroidApp = ref(false);
+
+onMounted(() => {
+    offerAndroidApp.value =
+        /Android/.test(navigator.userAgent) && !isNativeShell();
+});
 </script>
 
 <template>
@@ -27,6 +39,24 @@ const { canInstall, promptInstall } = useInstallPrompt();
     <PageContainer width="wide" class="pt-4 pb-16 sm:pt-0">
         <div class="md:hidden">
             <SettingsNav variant="list" />
+
+            <SettingsGroup v-if="offerAndroidApp" class="mt-6" :flush="false">
+                <p class="font-semibold text-ink">
+                    {{ t('app.get.title') }}
+                </p>
+                <p class="mt-1 text-meta text-ink-muted">
+                    {{ t('app.get.body') }}
+                </p>
+                <Button
+                    :as="Link"
+                    :href="androidApp().url"
+                    size="sm"
+                    :icon="Smartphone"
+                    class="mt-3"
+                >
+                    {{ t('app.get.action') }}
+                </Button>
+            </SettingsGroup>
 
             <SettingsGroup v-if="canInstall" class="mt-6" :flush="false">
                 <p class="font-semibold text-ink">

@@ -1,16 +1,26 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { Calendar, MessageCircle, Newspaper } from '@lucide/vue';
-import { computed } from 'vue';
+import { Calendar, MessageCircle, Newspaper, Smartphone } from '@lucide/vue';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
 import AlphaNotice from '@/components/shell/AlphaNotice.vue';
 import Button from '@/components/ui/Button.vue';
 import Mark from '@/components/ui/Mark.vue';
+import { isNativeShell } from '@/pwa/platform';
 import { login, register } from '@/routes';
+import { android as androidApp } from '@/routes/app';
 
 /** The front door for someone not signed in. */
 const { t } = useI18n();
+
+// The way to the Android app, except inside it. Known only once mounted,
+// so the server render and hydration agree.
+const offerApp = ref(false);
+
+onMounted(() => {
+    offerApp.value = !isNativeShell();
+});
 
 const features = computed(() => [
     {
@@ -79,6 +89,14 @@ const features = computed(() => [
                             {{ t('welcome.logIn') }}
                         </Button>
                     </div>
+                    <Link
+                        v-if="offerApp"
+                        :href="androidApp().url"
+                        class="mt-5 inline-flex items-center gap-2 text-meta font-semibold text-ink-muted underline underline-offset-4"
+                    >
+                        <Smartphone :size="16" :stroke-width="1.75" />
+                        {{ t('app.get.title') }}
+                    </Link>
                 </div>
 
                 <ul class="mt-12 flex flex-col gap-3 lg:mt-0">

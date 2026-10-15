@@ -205,6 +205,57 @@ ssh proteus@manteion.no "sudo -n -u manteion sh -c 'umask 077 && cat > /home/man
 
 `manteion.env` names it in `FCM_CREDENTIALS` (as in `manteion.env.example`); the project id is read from the key. The queue worker reads the settings when it starts, so the next deploy (or `sudo systemctl restart manteion-queue manteion-reverb`) puts them to use. Then delete the downloaded key from the development machine. Without the key, the app works but gets no pushes, and Settings → Notifications in the app says so.
 
+## The Android app
+
+The app (`android/`, built with Capacitor) shows the live site and gets its own notifications through Firebase Cloud Messaging. Three things need you, once each; the rest is in the repository.
+
+**A Firebase project.** In the [Firebase console](https://console.firebase.google.com), signed in with your Google account: *Add project*, name it Manteion, and leave Google Analytics off (push doesn't need it, and the app has no Analytics library). Then:
+
+1. *Add app* → Android, package name `no.manteion.app`, and download `google-services.json`. It tells the app which project it belongs to. Put it in `android/app/` (git ignores it) and give it to GitHub for the builds:
+
+   ```sh
+   gh secret set GOOGLE_SERVICES_JSON < android/app/google-services.json
+   ```
+
+2. *Project settings → Cloud Messaging*: check that "Firebase Cloud Messaging API (V1)" says Enabled.
+3. *Project settings → Service accounts → Generate new private key*. This file lets the server send the pushes: copy it to the server as described under "Pushes to the Android app" above, and delete the download.
+
+**A signing key.** Android only installs an update over the app when it is signed with the same key, so the key must never be lost: keep the file and its password in your password manager, with a backup. Make it once, outside the repository (keytool comes with Android Studio):
+
+```sh
+/opt/android-studio/jbr/bin/keytool -genkeypair -v -keystore ~/manteion-release.jks \
+    -alias manteion -keyalg RSA -keysize 2048 -validity 10000
+```
+
+and give it to GitHub, which signs the releases:
+
+```sh
+base64 -w0 ~/manteion-release.jks | gh secret set MANTEION_KEYSTORE_BASE64
+gh secret set MANTEION_KEYSTORE_PASSWORD
+gh secret set MANTEION_KEY_PASSWORD
+```
+
+(the last one is the same password, unless keytool was given a separate one for the key).
+
+**Releasing a version.** Raise `versionCode` (by one) and `versionName` in `android/app/build.gradle`, commit, and push a tag with that name:
+
+```sh
+git tag android-v1.1 && git push origin android-v1.1
+```
+
+The mobile-android workflow builds the signed app and publishes it as a GitHub release; https://www.manteion.no/app links to the newest one, and installed apps offer it within a day. Only the app's own files need a release (`android/`, `resources/native-shell/`, `capacitor.config.ts`): changes to the site reach the app with the next deploy, as they reach everyone.
+
+**Building on this machine.** Gradle 8 needs Java 21, not the Java 25 that comes with Android Studio. A Temurin 21 lives in `~/.jdks`; in Android Studio pick it under *Settings → Build Tools → Gradle → Gradle JDK*. From a terminal:
+
+```sh
+npx cap sync android
+cd android
+J=~/.jdks/jdk-21.0.12.1+1
+JAVA_HOME=$J ./gradlew -Dorg.gradle.java.home=$J assembleDebug
+```
+
+`MANTEION_APP_URL=http://10.0.2.2:8000 npx cap sync android` points a debug build at `php artisan serve` on this machine, for the Android emulator; sync again without it before building anything else.
+
 ## Looking after it
 
 | | |

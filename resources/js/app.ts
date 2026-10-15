@@ -17,7 +17,9 @@ createInertiaApp({
         color: '#4B5563',
     },
     layout: (name) =>
-        name === 'Welcome' || name.startsWith('auth/') ? null : AppLayout,
+        name === 'Welcome' || name.startsWith('auth/') || name === 'app/Android'
+            ? null
+            : AppLayout,
     withApp(app, { page, ssr }) {
         applyTheme(page.props.theme);
         router.on('navigate', (event) =>

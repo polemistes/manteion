@@ -57,6 +57,11 @@ class HandleInertiaRequests extends Middleware
             'vapidPublicKey' => config('webpush.vapid.public_key'),
             // Whether the server can push to the Android app.
             'fcmConfigured' => Fcm::configured(),
+            // Where the Android app is downloaded, and its newest version read.
+            'androidApp' => [
+                'downloadUrl' => config('services.android.download_url'),
+                'latestReleaseApi' => config('services.android.latest_release_api'),
+            ],
             'reverb' => self::reverbClient(),
             // The clock relative times ("2 min ago") count from while the
             // page renders on the server and hydrates in the browser, so

@@ -7,8 +7,11 @@ android {
         applicationId "no.manteion.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // Raise both for every release: Android only installs a higher
+        // versionCode over the app, and the in-app update notice compares
+        // versionName with the newest GitHub release (tag android-v<name>).
+        versionCode 2
+        versionName "1.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,10 +19,30 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // Release builds are signed with the owner's key, given in the
+    // environment (never in the repository): locally, or from the CI
+    // secrets in .github/workflows/mobile-android.yml. Without them a
+    // release build comes out unsigned, and debug builds are unaffected.
+    signingConfigs {
+        release {
+            def keystore = System.getenv('MANTEION_KEYSTORE_FILE')
+
+            if (keystore) {
+                storeFile file(keystore)
+                storePassword System.getenv('MANTEION_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('MANTEION_KEY_ALIAS') ?: 'manteion'
+                keyPassword System.getenv('MANTEION_KEY_PASSWORD') ?: System.getenv('MANTEION_KEYSTORE_PASSWORD')
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+
+            if (System.getenv('MANTEION_KEYSTORE_FILE')) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }

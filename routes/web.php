@@ -46,6 +46,9 @@ Route::get('/', function (Request $request) {
 
 Route::put('/locale', [LocaleController::class, 'update'])->name('locale.update');
 
+// The Android app: what it does and how to install it, for everyone.
+Route::get('/app', fn () => Inertia::render('app/Android'))->name('app.android');
+
 // Password reset (replaces Fortify's own, disabled in config/fortify.php —
 // see app/Http/Controllers/Auth/ for why: email no longer identifies a
 // single account).

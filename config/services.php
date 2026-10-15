@@ -38,6 +38,16 @@ return [
         'project_id' => env('FCM_PROJECT_ID'),
     ],
 
+    /*
+     * The Android app: the stable download address of the newest signed
+     * build (attached to every GitHub release by the mobile-android
+     * workflow), and where the app reads the newest version from.
+     */
+    'android' => [
+        'download_url' => env('ANDROID_APP_DOWNLOAD_URL', 'https://github.com/polemistes/manteion/releases/latest/download/manteion.apk'),
+        'latest_release_api' => env('ANDROID_APP_LATEST_RELEASE_API', 'https://api.github.com/repos/polemistes/manteion/releases/latest'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

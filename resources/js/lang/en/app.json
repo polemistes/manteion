@@ -15,5 +15,31 @@
         "later": "Not now"
     },
     "blocked": "Notifications are off for Manteion in Android’s settings. Turn them on under Settings → Apps → Manteion → Notifications.",
-    "testMissing": "No test arrived. Check that notifications for Manteion are allowed in Android’s settings."
+    "testMissing": "No test arrived. Check that notifications for Manteion are allowed in Android’s settings.",
+    "download": {
+        "title": "Manteion for Android",
+        "lede": "The app shows Manteion’s own notifications, with your friends’ pictures, and lets you answer a message straight from the notification.",
+        "point1": "Notifications from Manteion, not from your browser",
+        "point2": "Reply to a message, or mark it read, from the notification",
+        "point3": "Set the sound and importance of each kind of notification in Android’s settings",
+        "button": "Download the app",
+        "version": "Version {version}",
+        "stepsTitle": "Installing it",
+        "step1": "Tap Download. Your browser may warn that the file could harm your phone: the app comes from Manteion itself, not from Google Play, so download it anyway.",
+        "step2": "Open the downloaded file. Android asks whether your browser may install apps: allow it.",
+        "step3": "Tap Install, open Manteion, and sign in.",
+        "updates": "The app tells you when there is a new version.",
+        "iphone": "On iPhone and iPad, add Manteion to your Home Screen from Safari instead.",
+        "back": "Back to Manteion"
+    },
+    "update": {
+        "title": "A new version of the app is ready",
+        "body": "Version {version} is out.",
+        "action": "Download"
+    },
+    "get": {
+        "title": "Get the Android app",
+        "body": "Notifications from Manteion itself, and replies straight from the notification.",
+        "action": "Get the app"
+    }
 }

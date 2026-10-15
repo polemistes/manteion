@@ -32,6 +32,7 @@ declare module '@inertiajs/core' {
             theme: Theme;
             vapidPublicKey: string | null;
             fcmConfigured: boolean;
+            androidApp: { downloadUrl: string; latestReleaseApi: string };
             /** Where to open the WebSocket; null without Reverb. */
             reverb: {
                 key: string;

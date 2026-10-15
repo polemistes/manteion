@@ -2,6 +2,8 @@ import { App } from '@capacitor/app';
 import { Capacitor, SystemBars, SystemBarsStyle } from '@capacitor/core';
 import type { Page } from '@inertiajs/core';
 import { router } from '@inertiajs/vue3';
+import { Download } from '@lucide/vue';
+import { toast } from '@/lib/toast';
 import { dispatchPushMessage } from '@/pwa/serviceWorker';
 import { refreshBadges } from '@/realtime';
 import { themeColors } from '@/theme';
@@ -9,6 +11,7 @@ import type { NotificationCategory } from '@/types';
 import { ManteionPush, ManteionShell } from './plugin';
 import type { NativeChannel } from './plugin';
 import { refreshRegistration } from './push';
+import { isNewerVersion, latestAndroidRelease } from './release';
 
 type Translate = (key: string, named?: Record<string, unknown>) => string;
 
@@ -67,6 +70,74 @@ export function setupNativeShell(): void {
     });
 }
 
+const UPDATE_CHECKED_KEY = 'manteion.appUpdate.checkedAt';
+const UPDATE_SHOWN_KEY = 'manteion.appUpdate.shown';
+const UPDATE_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
+
+function stored(key: string): string | null {
+    try {
+        return window.localStorage.getItem(key);
+    } catch {
+        return null;
+    }
+}
+
+function store(key: string, value: string): void {
+    try {
+        window.localStorage.setItem(key, value);
+    } catch {
+        // Asked again next time.
+    }
+}
+
+/**
+ * Once a day, asks GitHub for the newest app; when it is newer than this
+ * one, says so once, with the download. Never forced.
+ */
+async function offerUpdate(page: Page, t: Translate): Promise<void> {
+    const checkedAt = Number(stored(UPDATE_CHECKED_KEY)) || 0;
+
+    if (Date.now() - checkedAt < UPDATE_CHECK_INTERVAL_MS) {
+        return;
+    }
+
+    store(UPDATE_CHECKED_KEY, String(Date.now()));
+
+    const androidApp = page.props.androidApp as
+        { downloadUrl: string; latestReleaseApi: string } | undefined;
+
+    if (!androidApp) {
+        return;
+    }
+
+    const [installed, latest] = await Promise.all([
+        App.getInfo().catch(() => null),
+        latestAndroidRelease(androidApp.latestReleaseApi),
+    ]);
+
+    if (
+        !installed ||
+        !latest ||
+        !isNewerVersion(latest.version, installed.version) ||
+        stored(UPDATE_SHOWN_KEY) === latest.version
+    ) {
+        return;
+    }
+
+    store(UPDATE_SHOWN_KEY, latest.version);
+    toast({
+        title: t('app.update.title'),
+        description: t('app.update.body', { version: latest.version }),
+        icon: Download,
+        duration: 15_000,
+        action: {
+            label: t('app.update.action'),
+            // Another site: the app hands it to the browser, which downloads it.
+            onClick: () => window.location.assign(androidApp.downloadUrl),
+        },
+    });
+}
+
 function userIdOf(page: Page): number | null {
     const auth = page.props.auth as { user?: { id?: unknown } } | undefined;
     const id = auth?.user?.id;
@@ -118,7 +189,8 @@ function configureNotifications(t: Translate): void {
  * The app's push notifications, once the first page is known (app.ts):
  * channels in the user's language, the page in front (whose own pushes the
  * app leaves out), opening a tapped notification's page, letting the open
- * page hear of a push, and keeping the device's FCM token registered.
+ * page hear of a push, and keeping the device's FCM token registered. Also
+ * the notice of a newer version of the app.
  */
 export function startNativePush(initialPage: Page, t: Translate): void {
     if (!isApp()) {
@@ -131,6 +203,7 @@ export function startNativePush(initialPage: Page, t: Translate): void {
     configureNotifications(t);
     void ManteionPush.setCurrentPath({ path: pathOf(initialPage.url) });
     void refreshRegistration(userId);
+    void offerUpdate(initialPage, t);
 
     router.on('navigate', (event) => {
         const page = event.detail.page;
