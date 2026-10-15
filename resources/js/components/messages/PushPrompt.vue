@@ -6,15 +6,24 @@ import { useI18n } from 'vue-i18n';
 import Button from '@/components/ui/Button.vue';
 import IconButton from '@/components/ui/IconButton.vue';
 import { toast, toastError } from '@/lib/toast';
-import { isSubscribed, permission, pushSupport, subscribe } from '@/pwa/push';
+import { PUSH_PROMPT_DISMISSED_KEY } from '@/native/pushPrompt';
+import { isNativeShell } from '@/pwa/platform';
+import {
+    isSubscribed,
+    permission,
+    pushConfigured,
+    pushSupport,
+    subscribe,
+} from '@/pwa/push';
 
 /**
  * Invites the user to turn on message notifications on this device, or (on
  * iPhone/iPad in Safari) explains how to install the app first. Only shown
- * in the browser, once it knows the device can get pushes and doesn't yet;
- * dismissing it is remembered on the device.
+ * in the browser or the Android app, once it knows the device can get
+ * pushes and doesn't yet; dismissing it is remembered on the device (and
+ * shared with the app's first-run sheet, AppPushSheet).
  */
-const DISMISSED_KEY = 'manteion.pushPrompt.dismissed';
+const DISMISSED_KEY = PUSH_PROMPT_DISMISSED_KEY;
 
 const { t } = useI18n();
 const page = usePage();
@@ -41,8 +50,8 @@ onMounted(async () => {
 
     if (
         support === 'supported' &&
-        permission() !== 'denied' &&
-        page.props.vapidPublicKey &&
+        pushConfigured(page.props) &&
+        (await permission()) !== 'denied' &&
         !(await isSubscribed())
     ) {
         state.value = 'offer';
@@ -60,23 +69,26 @@ function dismiss(): void {
 }
 
 async function turnOn(): Promise<void> {
-    const key = page.props.vapidPublicKey;
-
-    if (!key) {
+    if (!pushConfigured(page.props)) {
         return;
     }
 
     busy.value = true;
 
     try {
-        const result = await subscribe(key);
+        const result = await subscribe(
+            page.props.vapidPublicKey ?? '',
+            page.props.auth.user?.id ?? null,
+        );
 
         if (result === 'subscribed') {
             state.value = 'hidden';
             toast({ title: t('messages.push.enabled'), icon: BellRing });
         } else if (result === 'denied') {
             state.value = 'hidden';
-            toastError(t('messages.push.denied'));
+            toastError(
+                isNativeShell() ? t('app.blocked') : t('messages.push.denied'),
+            );
         } else if (result === 'failed') {
             toastError(t('messages.push.failed'));
         }

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Terracotta, the site's accent, on the app's notifications. -->
+    <color name="notification_accent">#C23132</color>
+    <!-- The site's canvas (resources/js/theme.ts), behind the system bars
+         until the page sets it for its own mode. -->
+    <color name="manteion_canvas">#F7F3EC</color>
+</resources>

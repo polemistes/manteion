@@ -1,5 +1,6 @@
 import type { Page, SharedPageProps } from '@inertiajs/core';
 import { router } from '@inertiajs/vue3';
+import { isNativeShell } from '@/pwa/platform';
 import { forgetSubscription } from '@/pwa/push';
 import { clearNotifications } from '@/pwa/serviceWorker';
 import { logout } from '@/routes';
@@ -98,9 +99,13 @@ function follow(page: Page): void {
         if (signingOut) {
             // Logged out on purpose (not a session that ran out): on a
             // shared browser the next person must not get the previous
-            // user's pushes or see their notifications.
+            // user's pushes or see their notifications. (The app did its
+            // part before the logout went out; see setupRealtime.)
             clearNotifications();
-            void forgetSubscription();
+
+            if (!isNativeShell()) {
+                void forgetSubscription();
+            }
         }
 
         return;
@@ -137,6 +142,12 @@ export function setupRealtime(initialPage: Page): void {
     router.on('before', (event) => {
         if (isLogout(event.detail.visit)) {
             signingOut = true;
+
+            // The app removes its device from the account while it is still
+            // signed in to ask.
+            if (isNativeShell()) {
+                void forgetSubscription();
+            }
         }
     });
 

@@ -1,6 +1,8 @@
 import { router } from '@inertiajs/vue3';
 import { getCurrentScope, onScopeDispose } from 'vue';
+import { ManteionPush } from '@/native/plugin';
 import { xsrfToken } from '@/realtime/http';
+import { isNativeShell } from './platform';
 
 /**
  * The `data` of a push that the service worker handed to this page instead
@@ -56,10 +58,16 @@ function handleMessage(event: MessageEvent): void {
     }
 
     if (message.type === 'push') {
-        const data = (message.data ?? {}) as PushData;
-
-        pushListeners.forEach((listener) => listener(data));
+        dispatchPushMessage((message.data ?? {}) as PushData);
     }
+}
+
+/**
+ * Hands a push that arrived while the page was open to onPushMessage()'s
+ * listeners: from the service worker, or from the Android app.
+ */
+export function dispatchPushMessage(data: PushData): void {
+    pushListeners.forEach((listener) => listener(data));
 }
 
 /**
@@ -155,6 +163,13 @@ export function postFromServiceWorker(
  * all of the app's notifications without one.
  */
 export function clearNotifications(tag?: string): void {
+    // The Android app shows its notifications itself.
+    if (isNativeShell()) {
+        void ManteionPush.cancel({ tag }).catch(() => undefined);
+
+        return;
+    }
+
     if (!supported()) {
         return;
     }

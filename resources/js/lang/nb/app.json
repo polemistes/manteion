@@ -1,0 +1,19 @@
+{
+    "notifications": {
+        "you": "Deg",
+        "reply": "Svar",
+        "markRead": "Merk som lest",
+        "replyFailed": "Svaret ditt ble ikke sendt",
+        "replyFailedBody": "Åpne samtalen for å prøve igjen.",
+        "conversations": "{n} samtaler",
+        "activity": "{n} varsler"
+    },
+    "pushSheet": {
+        "title": "Få beskjed når venner skriver",
+        "body": "Manteion sier fra om nye meldinger, og om det andre du slår på under Innstillinger → Varsler. Du bestemmer hva du får.",
+        "allow": "Slå på varsler",
+        "later": "Ikke nå"
+    },
+    "blocked": "Varsler er slått av for Manteion i Android-innstillingene. Slå dem på under Innstillinger → Apper → Manteion → Varsler.",
+    "testMissing": "Testen kom ikke fram. Sjekk at varsler for Manteion er tillatt i Android-innstillingene."
+}

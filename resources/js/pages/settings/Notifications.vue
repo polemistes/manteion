@@ -29,9 +29,11 @@ import Tag from '@/components/ui/Tag.vue';
 import { confirmAction } from '@/composables/useConfirm';
 import { useDates } from '@/lib/dates';
 import { toast, toastError } from '@/lib/toast';
+import { isNativeShell } from '@/pwa/platform';
 import {
     currentEndpoint,
     permission,
+    pushConfigured,
     pushSupport,
     subscribe,
     unsubscribe,
@@ -114,7 +116,10 @@ async function setDevice(on: boolean): Promise<void> {
     try {
         if (on) {
             // Straight from the tap: browsers only ask for permission then.
-            const result = await subscribe(page.props.vapidPublicKey ?? '');
+            const result = await subscribe(
+                page.props.vapidPublicKey ?? '',
+                page.props.auth.user.id,
+            );
 
             if (result === 'denied') {
                 blocked.value = true;
@@ -188,10 +193,10 @@ onMounted(async () => {
     const supported = pushSupport();
 
     support.value =
-        supported === 'supported' && !page.props.vapidPublicKey
+        supported === 'supported' && !pushConfigured(page.props)
             ? 'unconfigured'
             : supported;
-    blocked.value = permission() === 'denied';
+    blocked.value = (await permission()) === 'denied';
 
     try {
         lastTestAt.value =
@@ -216,9 +221,13 @@ const deviceStatus = computed(() => {
         });
     }
 
-    return blocked.value
-        ? t('settings.notifications.device.blocked')
-        : t('settings.notifications.device.off');
+    if (!blocked.value) {
+        return t('settings.notifications.device.off');
+    }
+
+    return isNativeShell()
+        ? t('app.blocked')
+        : t('settings.notifications.device.blocked');
 });
 
 const testStatus = computed(() => {
@@ -227,7 +236,9 @@ const testStatus = computed(() => {
     }
 
     if (testMissing.value) {
-        return t('settings.notifications.device.testMissing');
+        return isNativeShell()
+            ? t('app.testMissing')
+            : t('settings.notifications.device.testMissing');
     }
 
     return lastTestAt.value

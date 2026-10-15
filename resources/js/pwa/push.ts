@@ -1,3 +1,4 @@
+import * as appPush from '@/native/push';
 import { requestJson } from '@/realtime/http';
 import {
     destroy as destroyPushSubscription,
@@ -5,6 +6,12 @@ import {
 } from '@/routes/push-subscriptions';
 import { iosVersion, isIos, isNativeShell, isStandalone } from './platform';
 import { activeServiceWorker } from './serviceWorker';
+
+/*
+ * Inside the Android app there is no web push: each function here hands
+ * over to native/push.ts, which does the same through the app's own
+ * notifications (Firebase Cloud Messaging).
+ */
 
 /**
  * Whether this browser can get pushes: "needs-install" is iOS/iPadOS 16.4+
@@ -36,8 +43,12 @@ function hasPushApis(): boolean {
 }
 
 export function pushSupport(): PushSupport {
-    if (typeof window === 'undefined' || isNativeShell()) {
+    if (typeof window === 'undefined') {
         return 'unsupported';
+    }
+
+    if (isNativeShell()) {
+        return appPush.pushSupport();
     }
 
     if (isIos() && !isStandalone()) {
@@ -53,9 +64,26 @@ export function pushSupport(): PushSupport {
     return hasPushApis() ? 'supported' : 'unsupported';
 }
 
-/** The site's notification permission in this browser. */
-export function permission(): PushPermission {
+/** The site's notification permission in this browser (or the app). */
+export async function permission(): Promise<PushPermission> {
+    if (isNativeShell()) {
+        return appPush.permission();
+    }
+
     return hasPushApis() ? Notification.permission : 'unsupported';
+}
+
+/**
+ * Whether the server can push to this device: VAPID keys for browsers, a
+ * Firebase project for the app.
+ */
+export function pushConfigured(props: {
+    vapidPublicKey?: string | null;
+    fcmConfigured?: boolean;
+}): boolean {
+    return isNativeShell()
+        ? props.fcmConfigured === true
+        : Boolean(props.vapidPublicKey);
 }
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
@@ -96,6 +124,10 @@ async function currentSubscription(): Promise<PushSubscription | null> {
 
 /** This browser's push endpoint, while it has a subscription. */
 export async function currentEndpoint(): Promise<string | null> {
+    if (isNativeShell()) {
+        return appPush.currentEndpoint();
+    }
+
     if (!hasPushApis()) {
         return null;
     }
@@ -109,6 +141,10 @@ export async function currentEndpoint(): Promise<string | null> {
 
 /** Whether this browser holds a push subscription (with permission). */
 export async function isSubscribed(): Promise<boolean> {
+    if (isNativeShell()) {
+        return appPush.isSubscribed();
+    }
+
     if (!hasPushApis() || Notification.permission !== 'granted') {
         return false;
     }
@@ -123,11 +159,17 @@ export async function isSubscribed(): Promise<boolean> {
 /**
  * Asks for notification permission, subscribes this browser and registers
  * it as one of the user's devices (POST /push-subscriptions). Must be called
- * straight from a tap or click: browsers only show the prompt then.
+ * straight from a tap or click: browsers only show the prompt then. The app
+ * registers itself for `userId`, the signed-in user.
  */
 export async function subscribe(
     vapidPublicKey: string,
+    userId: number | null = null,
 ): Promise<SubscribeResult> {
+    if (isNativeShell()) {
+        return appPush.subscribe(userId);
+    }
+
     if (pushSupport() !== 'supported') {
         return 'unsupported';
     }
@@ -193,6 +235,10 @@ export async function subscribe(
  * device from the user's account (DELETE /push-subscriptions).
  */
 export async function unsubscribe(): Promise<void> {
+    if (isNativeShell()) {
+        return appPush.unsubscribe();
+    }
+
     if (!hasPushApis()) {
         return;
     }
@@ -221,6 +267,10 @@ export async function unsubscribe(): Promise<void> {
  * user's notifications.
  */
 export async function forgetSubscription(): Promise<void> {
+    if (isNativeShell()) {
+        return appPush.forgetSubscription();
+    }
+
     if (!hasPushApis()) {
         return;
     }

@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - 'android/**'
-      - 'resources/**'
+      - 'resources/native-shell/**'
       - 'capacitor.config.ts'
       - 'package.json'
       - 'package-lock.json'
@@ -26,13 +26,6 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
-        with:
-          php-version: '8.5'
-          tools: composer:v2
-          coverage: none
-
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -44,22 +37,26 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Install Composer dependencies
-        # The Vite build shells out to `artisan wayfinder:generate`, so the
-        # app needs to be bootable (vendor/ + .env + APP_KEY) before it runs.
-        run: |
-          composer install --no-interaction --prefer-dist --no-dev --optimize-autoloader
-          cp .env.example .env
-          php artisan key:generate
-
+      # The app shows the live site, so only Capacitor's own packages are
+      # needed: no PHP and no Vite build. The one page built into the app is
+      # resources/native-shell/index.html.
       - name: Install dependencies
         run: npm ci
 
-      - name: Build web assets
-        run: npm run build
-
       - name: Sync Capacitor
         run: npx cap sync android
+
+      # The Firebase project's app config, for push notifications. Without
+      # the secret the app builds and runs, but gets no pushes.
+      - name: Add the Firebase config
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+          else
+            echo "No GOOGLE_SERVICES_JSON secret: building without push notifications."
+          fi
 
       - name: Build debug APK
         working-directory: android

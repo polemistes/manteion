@@ -51,7 +51,7 @@ export function isStandalone(): boolean {
     );
 }
 
-/** Inside the Capacitor app shell, where web push and installing don't apply. */
+/** Inside the Android app, where pushes come through the app (native/push.ts) and installing doesn't apply. */
 export function isNativeShell(): boolean {
     if (typeof window === 'undefined') {
         return false;

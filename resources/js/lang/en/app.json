@@ -1,0 +1,19 @@
+{
+    "notifications": {
+        "you": "You",
+        "reply": "Reply",
+        "markRead": "Mark as read",
+        "replyFailed": "Your reply wasn’t sent",
+        "replyFailedBody": "Open the conversation to try again.",
+        "conversations": "{n} conversations",
+        "activity": "{n} notifications"
+    },
+    "pushSheet": {
+        "title": "Get notified when friends write",
+        "body": "Manteion tells you about new messages, and about whatever else you turn on in Settings → Notifications. You decide what you get.",
+        "allow": "Turn on notifications",
+        "later": "Not now"
+    },
+    "blocked": "Notifications are off for Manteion in Android’s settings. Turn them on under Settings → Apps → Manteion → Notifications.",
+    "testMissing": "No test arrived. Check that notifications for Manteion are allowed in Android’s settings."
+}

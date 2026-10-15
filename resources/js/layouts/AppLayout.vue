@@ -7,6 +7,7 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import ImpersonationBanner from '@/components/ImpersonationBanner.vue';
 import ReportDialog from '@/components/ReportDialog.vue';
 import AlphaNotice from '@/components/shell/AlphaNotice.vue';
+import AppPushSheet from '@/components/shell/AppPushSheet.vue';
 import { rememberTab, useNavigation } from '@/components/shell/useNavigation';
 import StaffDeleteDialog from '@/components/StaffDeleteDialog.vue';
 import Avatar from '@/components/ui/Avatar.vue';
@@ -351,6 +352,7 @@ onIncomingMessage((message) => {
         </nav>
 
         <Toaster />
+        <AppPushSheet v-if="page.props.auth.user" />
         <ConfirmDialog />
         <StaffDeleteDialog />
         <ReportDialog />

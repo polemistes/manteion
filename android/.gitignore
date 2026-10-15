@@ -61,8 +61,10 @@ captures/
 .externalNativeBuild
 .cxx/
 
-# Google Services (e.g. APIs or Firebase)
-# google-services.json
+# Google Services (e.g. APIs or Firebase): the Firebase project's app
+# config, put in place by hand locally and from the GOOGLE_SERVICES_JSON
+# secret in CI (.github/workflows/mobile-android.yml).
+app/google-services.json
 
 # Freeline
 freeline.py
