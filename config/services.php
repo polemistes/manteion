@@ -46,6 +46,9 @@ return [
     'android' => [
         'download_url' => env('ANDROID_APP_DOWNLOAD_URL', 'https://github.com/polemistes/manteion/releases/latest/download/manteion.apk'),
         'latest_release_api' => env('ANDROID_APP_LATEST_RELEASE_API', 'https://api.github.com/repos/polemistes/manteion/releases/latest'),
+        // SHA-256 fingerprints (AB:CD:…) of the keys the app is signed with,
+        // comma-separated, for /.well-known/assetlinks.json.
+        'certificate_fingerprints' => env('ANDROID_APP_CERT_SHA256'),
     ],
 
     'slack' => [

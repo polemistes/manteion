@@ -18,6 +18,31 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- App Links: links to the site's pages open in the app once
+                 Android has checked https://www.manteion.no/.well-known/
+                 assetlinks.json (AndroidAssetLinksController). Not the
+                 download page, the stored pictures or the built files. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:host="www.manteion.no" />
+                <data android:path="/" />
+                <data android:pathPrefix="/events" />
+                <data android:pathPrefix="/messages" />
+                <data android:pathPrefix="/users" />
+                <data android:pathPrefix="/leaflets" />
+                <data android:pathPrefix="/organizers" />
+                <data android:pathPrefix="/notifications" />
+                <data android:pathPrefix="/contacts" />
+                <data android:pathPrefix="/settings" />
+                <data android:pathPrefix="/login" />
+                <data android:pathPrefix="/register" />
+                <data android:pathPrefix="/forgot-password" />
+                <data android:pathPrefix="/reset-password" />
+            </intent-filter>
         </activity>
 
         <!-- Pushes from the site, through Firebase Cloud Messaging. -->

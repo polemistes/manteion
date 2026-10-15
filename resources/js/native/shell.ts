@@ -232,6 +232,21 @@ export function startNativePush(initialPage: Page, t: Translate): void {
         router.visit(target.pathname + target.search + target.hash);
     });
 
+    // A link to the site opened while the app runs (App Links): its page.
+    void App.addListener('appUrlOpen', ({ url }) => {
+        const link = new URL(url);
+
+        if (link.hostname !== 'www.manteion.no') {
+            return;
+        }
+
+        const path = link.pathname + link.search + link.hash;
+
+        if (path !== window.location.pathname + window.location.search) {
+            router.visit(path);
+        }
+    });
+
     void ManteionPush.addListener('received', (data) => {
         dispatchPushMessage(data);
     });

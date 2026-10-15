@@ -237,13 +237,21 @@ gh secret set MANTEION_KEY_PASSWORD
 
 (the last one is the same password, unless keytool was given a separate one for the key).
 
+The key's fingerprint also tells Android that the app may open links to the site itself (a password-reset email, say). Read it with
+
+```sh
+/opt/android-studio/jbr/bin/keytool -list -v -keystore ~/manteion-release.jks | grep SHA256
+```
+
+and put the `AB:CD:…` part in `ANDROID_APP_CERT_SHA256` in `/home/manteion/manteion.env`; the site then serves `/.well-known/assetlinks.json`. Android checks it when the app is installed, so it takes effect from the next install or update.
+
 **Releasing a version.** Raise `versionCode` (by one) and `versionName` in `android/app/build.gradle`, commit, and push a tag with that name:
 
 ```sh
 git tag android-v1.1 && git push origin android-v1.1
 ```
 
-The mobile-android workflow builds the signed app and publishes it as a GitHub release; https://www.manteion.no/app links to the newest one, and installed apps offer it within a day. Only the app's own files need a release (`android/`, `resources/native-shell/`, `capacitor.config.ts`): changes to the site reach the app with the next deploy, as they reach everyone.
+The mobile-android workflow builds the signed app and publishes it as a GitHub release; https://www.manteion.no/android links to the newest one, and installed apps offer it within a day. Only the app's own files need a release (`android/`, `resources/native-shell/`, `capacitor.config.ts`): changes to the site reach the app with the next deploy, as they reach everyone.
 
 **Building on this machine.** Gradle 8 needs Java 21, not the Java 25 that comes with Android Studio. A Temurin 21 lives in `~/.jdks`; in Android Studio pick it under *Settings → Build Tools → Gradle → Gradle JDK*. From a terminal:
 

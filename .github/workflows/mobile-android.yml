@@ -149,5 +149,5 @@ jobs:
           gh release create "$TAG" manteion.apk manteion.apk.sha256 \
             --repo "$GITHUB_REPOSITORY" \
             --title "Manteion for Android ${TAG#android-v}" \
-            --notes "Download manteion.apk and open it on your phone; see https://www.manteion.no/app."
+            --notes "Download manteion.apk and open it on your phone; see https://www.manteion.no/android."
 

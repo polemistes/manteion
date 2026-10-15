@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\AndroidAssetLinksController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\UserPasswordController;
@@ -47,7 +48,9 @@ Route::get('/', function (Request $request) {
 Route::put('/locale', [LocaleController::class, 'update'])->name('locale.update');
 
 // The Android app: what it does and how to install it, for everyone.
-Route::get('/app', fn () => Inertia::render('app/Android'))->name('app.android');
+// (Not /app: Apache hands /app/ to Reverb.)
+Route::get('/android', fn () => Inertia::render('app/Android'))->name('app.android');
+Route::get('/.well-known/assetlinks.json', AndroidAssetLinksController::class)->name('android.asset-links');
 
 // Password reset (replaces Fortify's own, disabled in config/fortify.php —
 // see app/Http/Controllers/Auth/ for why: email no longer identifies a
