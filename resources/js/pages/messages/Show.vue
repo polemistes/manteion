@@ -347,7 +347,9 @@ function arrived(message: MessageSummary): void {
 
     setExtra(message);
 
-    if (!message.is_mine && document.visibilityState === 'visible') {
+    // Read now if the chat is on screen; if the tab is in the background,
+    // markRead() waits until it is shown again, when the message is seen.
+    if (!message.is_mine) {
         markRead();
     }
 
