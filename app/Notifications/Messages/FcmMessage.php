@@ -34,8 +34,9 @@ class FcmMessage
      *   as one JSON string, the same shape as the web push body.
      * - priority high for every kind: a normal-priority data message waits
      *   for the phone to wake up, and the app shows each one it gets.
-     * - collapse_key: the web push topic (one per conversation), so an
-     *   offline phone gets the latest rather than a pile.
+     * - No collapse key: FCM keeps at most four per device, so with one per
+     *   conversation an offline phone would silently lose whole
+     *   conversations. The app folds a conversation's messages itself.
      *
      * @return array<string, mixed>
      */
@@ -45,10 +46,6 @@ class FcmMessage
 
         if (isset($this->options['TTL']) && is_numeric($this->options['TTL'])) {
             $android['ttl'] = ((int) $this->options['TTL']).'s';
-        }
-
-        if (isset($this->options['topic']) && is_string($this->options['topic'])) {
-            $android['collapse_key'] = $this->options['topic'];
         }
 
         return [

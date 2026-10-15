@@ -1,5 +1,6 @@
 package no.manteion.app;
 
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationChannelGroup;
 import android.app.NotificationManager;
@@ -11,6 +12,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.service.notification.StatusBarNotification;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.app.Person;
@@ -140,8 +142,11 @@ final class Notifier {
             rememberPush(context, tag, payload);
         }
 
-        post(context, tag, builder);
-        updateSummary(context, "message".equals(type) ? CONVERSATIONS_GROUP : ACTIVITY_GROUP, channel, null);
+        Notification posted = post(context, tag, builder);
+
+        if (posted != null) {
+            updateSummary(context, "message".equals(type) ? CONVERSATIONS_GROUP : ACTIVITY_GROUP, channel, null, tag, posted);
+        }
     }
 
     private static NotificationCompat.Builder message(
@@ -340,45 +345,76 @@ final class Notifier {
 
         manager.cancel(tag, ITEM_ID);
         Strings.preferences(context).edit().remove(LAST_PUSH_PREFIX + tag).apply();
-        updateSummary(context, CONVERSATIONS_GROUP, null, tag);
-        updateSummary(context, ACTIVITY_GROUP, null, tag);
+        updateSummary(context, CONVERSATIONS_GROUP, null, tag, null, null);
+        updateSummary(context, ACTIVITY_GROUP, null, tag, null, null);
     }
 
     /**
-     * One summary per group while it holds two or more notifications, as
-     * Android wants for bundles; gone when fewer remain.
+     * One summary per group once it holds two or more notifications, as
+     * Android wants for bundles. The summary stays while any notification
+     * is left in its group and goes with the last one: Android cancels a
+     * group's notifications along with its summary, so cancelling it any
+     * earlier would take the remaining ones too. `arriving` is the
+     * notification just posted under `arrivingTag`, which the list of
+     * active ones may not hold yet; `leavingTag` the one just cancelled,
+     * which it may still hold.
      */
-    private static void updateSummary(Context context, String group, @Nullable String channel, @Nullable String leavingTag) {
+    private static void updateSummary(
+        Context context,
+        String group,
+        @Nullable String channel,
+        @Nullable String leavingTag,
+        @Nullable String arrivingTag,
+        @Nullable Notification arriving
+    ) {
         NotificationManager manager = context.getSystemService(NotificationManager.class);
         int summaryId = CONVERSATIONS_GROUP.equals(group) ? CONVERSATIONS_SUMMARY_ID : ACTIVITY_SUMMARY_ID;
-        List<StatusBarNotification> children = new ArrayList<>();
+        List<Notification> children = new ArrayList<>();
+        boolean summaryShown = false;
+
+        if (arriving != null) {
+            children.add(arriving);
+        }
 
         for (StatusBarNotification active : manager.getActiveNotifications()) {
-            boolean isChild = active.getId() == ITEM_ID && group.equals(active.getNotification().getGroup());
+            if (active.getId() == summaryId && active.getTag() == null) {
+                summaryShown = true;
 
-            if (isChild && (leavingTag == null || !leavingTag.equals(active.getTag()))) {
-                children.add(active);
+                continue;
+            }
+
+            boolean isChild = active.getId() == ITEM_ID && group.equals(active.getNotification().getGroup());
+            String tag = active.getTag();
+
+            if (isChild && !(tag != null && (tag.equals(leavingTag) || tag.equals(arrivingTag)))) {
+                children.add(active.getNotification());
             }
         }
 
-        if (children.size() < 2) {
+        if (children.isEmpty()) {
             manager.cancel(summaryId);
 
             return;
         }
 
-        String summaryChannel = channel != null ? channel : children.get(0).getNotification().getChannelId();
+        if (children.size() < 2 && !summaryShown) {
+            return;
+        }
+
+        String summaryChannel = channel != null ? channel : channelOf(children.get(0));
         NotificationCompat.InboxStyle inbox = new NotificationCompat.InboxStyle();
 
         for (int i = 0; i < Math.min(children.size(), 6); i++) {
-            Bundle extras = children.get(i).getNotification().extras;
+            Bundle extras = children.get(i).extras;
             CharSequence title = extras.getCharSequence(NotificationCompat.EXTRA_TITLE, "");
             CharSequence text = extras.getCharSequence(NotificationCompat.EXTRA_TEXT, "");
 
             inbox.addLine(title + ": " + text);
         }
 
-        String title = Strings.count(context, CONVERSATIONS_GROUP.equals(group) ? Strings.NEW_MESSAGES : Strings.NEW_ACTIVITY, children.size());
+        String title = children.size() >= 2
+            ? Strings.count(context, CONVERSATIONS_GROUP.equals(group) ? Strings.NEW_MESSAGES : Strings.NEW_ACTIVITY, children.size())
+            : String.valueOf(children.get(0).extras.getCharSequence(NotificationCompat.EXTRA_TITLE, "Manteion"));
 
         post(
             context,
@@ -398,6 +434,12 @@ final class Notifier {
         );
     }
 
+    private static String channelOf(Notification notification) {
+        String id = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? notification.getChannelId() : null;
+
+        return id != null ? id : DEFAULT_CHANNELS[0][0];
+    }
+
     /**
      * Creates or renames the channel groups and channels. `groups` is
      * [{id, name}], `channels` [{id, name, description, group, importance:
@@ -405,6 +447,11 @@ final class Notifier {
      * channel; only names and descriptions follow.
      */
     static void createChannels(Context context, @Nullable JSONArray groups, @Nullable JSONArray channels) throws JSONException {
+        // Channels came with Android 8; before it there is nothing to name.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            return;
+        }
+
         NotificationManager manager = context.getSystemService(NotificationManager.class);
 
         if (groups != null) {
@@ -427,6 +474,10 @@ final class Notifier {
     }
 
     private static void ensureDefaultChannels(Context context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            return;
+        }
+
         NotificationManager manager = context.getSystemService(NotificationManager.class);
 
         if (manager.getNotificationChannel(DEFAULT_CHANNELS[0][0]) != null) {
@@ -442,6 +493,7 @@ final class Notifier {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private static NotificationChannel channel(String id, String name, @Nullable String group, boolean high, @Nullable String description) {
         NotificationChannel channel = new NotificationChannel(id, name, high ? NotificationManager.IMPORTANCE_HIGH : NotificationManager.IMPORTANCE_DEFAULT);
 
@@ -463,6 +515,12 @@ final class Notifier {
     /** The push's category is its channel; anything unknown goes with direct messages. */
     private static String channelFor(Context context, JSONObject data) {
         String category = data.optString("category", "");
+
+        // Before Android 8 the channel is ignored.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            return category.isEmpty() ? DEFAULT_CHANNELS[0][0] : category;
+        }
+
         NotificationManager manager = context.getSystemService(NotificationManager.class);
 
         return !category.isEmpty() && manager.getNotificationChannel(category) != null ? category : DEFAULT_CHANNELS[0][0];
@@ -542,15 +600,22 @@ final class Notifier {
         return data != null ? data : new JSONObject();
     }
 
-    private static void post(Context context, String tag, NotificationCompat.Builder builder) {
-        post(context, tag, ITEM_ID, builder);
+    @Nullable
+    private static Notification post(Context context, String tag, NotificationCompat.Builder builder) {
+        return post(context, tag, ITEM_ID, builder);
     }
 
-    private static void post(Context context, @Nullable String tag, int id, NotificationCompat.Builder builder) {
+    /** Posts it and hands it back, or null when notifications aren't allowed (any more). */
+    @Nullable
+    private static Notification post(Context context, @Nullable String tag, int id, NotificationCompat.Builder builder) {
+        Notification notification = builder.build();
+
         try {
-            NotificationManagerCompat.from(context).notify(tag, id, builder.build());
+            NotificationManagerCompat.from(context).notify(tag, id, notification);
+
+            return notification;
         } catch (SecurityException ignored) {
-            // Notifications aren't allowed (any more): nothing to show.
+            return null;
         }
     }
 }

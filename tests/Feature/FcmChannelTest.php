@@ -107,14 +107,15 @@ test('a message reaches the app as a data-only FCM message carrying the web push
     app(FcmChannel::class)->send($recipient, $notification);
 
     Http::assertSentCount(1);
-    Http::assertSent(function (Request $request) use ($app, $message, $recipient, $notification) {
+    Http::assertSent(function (Request $request) use ($app, $recipient, $notification) {
         $sent = $request['message'];
 
         expect($request->url())->toBe(fcmSendUrl());
         expect($request->header('Authorization'))->toBe(['Bearer access-token-0']);
         expect($sent['token'])->toBe($app->endpoint);
         expect($sent)->not->toHaveKey('notification');
-        expect($sent['android'])->toBe(['priority' => 'high', 'ttl' => '86400s', 'collapse_key' => "c{$message->conversation_id}"]);
+        // No collapse key: FCM keeps only four per device.
+        expect($sent['android'])->toBe(['priority' => 'high', 'ttl' => '86400s']);
         expect($sent['data'])->each->toBeString();
         expect(fcmPayload($request))->toBe(json_decode(json_encode($notification->toWebPush($recipient, $notification)->toArray()), true));
         expect(fcmPayload($request)['data'])
@@ -308,7 +309,7 @@ test('every FCM data value is a string, as FCM requires', function () {
     $message = (new FcmMessage(['title' => 'Kari', 'data' => ['badge_count' => 3, 'url' => '/messages/1']], ['TTL' => 300, 'urgency' => 'high', 'topic' => 'c1']))->toArray();
 
     expect($message['data'])->toBe(['payload' => '{"title":"Kari","data":{"badge_count":3,"url":"/messages/1"}}']);
-    expect($message['android'])->toBe(['priority' => 'high', 'ttl' => '300s', 'collapse_key' => 'c1']);
+    expect($message['android'])->toBe(['priority' => 'high', 'ttl' => '300s']);
 });
 
 test('every page says whether the server can push to the app', function () {

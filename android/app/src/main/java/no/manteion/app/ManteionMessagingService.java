@@ -28,6 +28,9 @@ public class ManteionMessagingService extends FirebaseMessagingService {
             Notifier.handlePush(getApplicationContext(), new JSONObject(payload));
         } catch (JSONException ignored) {
             // Not ours to show.
+        } catch (RuntimeException e) {
+            // One push that can't be shown must not take the app down.
+            android.util.Log.w("ManteionPush", "Push not shown", e);
         }
     }
 

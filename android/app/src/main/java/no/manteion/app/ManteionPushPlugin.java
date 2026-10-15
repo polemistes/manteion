@@ -196,6 +196,13 @@ public class ManteionPushPlugin extends Plugin {
             return;
         }
 
+        // Reopened from Recents with the intent of an old tap: seen already.
+        if ((intent.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0) {
+            intent.removeExtra(Notifier.EXTRA_URL);
+
+            return;
+        }
+
         String url = intent.getStringExtra(Notifier.EXTRA_URL);
 
         // Once: a recreated activity gets the same intent again.

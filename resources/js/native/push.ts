@@ -143,8 +143,9 @@ export async function forgetSubscription(): Promise<void> {
 /**
  * At every start and whenever FCM hands out a new token: registers the new
  * token in place of the old one, so pushes keep arriving. A device turned
- * on for someone else (whose session ran out on this phone) is dropped
- * rather than moved to whoever is signed in now; they can turn it on.
+ * on for someone else (whose session ran out on this phone) is dropped,
+ * with that user's notifications, rather than moved to whoever is signed
+ * in now; they can turn it on.
  */
 export async function refreshRegistration(
     userId: number | null,
@@ -157,6 +158,10 @@ export async function refreshRegistration(
 
     if (device.userId !== userId) {
         storeDevice(null);
+        // The previous user's notifications and conversation shortcuts go
+        // too: their text is not for whoever is signed in now, and a reply
+        // from one would go out under this account.
+        await ManteionPush.cancel({}).catch(() => undefined);
         await ManteionPush.deleteToken().catch(() => undefined);
 
         return;

@@ -16,7 +16,15 @@ public class MainActivity extends BridgeActivity {
         // Started by tapping a notification or a link to the site: load its
         // page straight away instead of the front page and then the page.
         // (While the app runs, the page itself visits it instead.)
-        String startPath = savedInstanceState == null ? startPath(getIntent()) : null;
+        // Not when Android restores the activity, or reopens it from Recents
+        // with the intent that once started it: that page was seen already.
+        Intent intent = getIntent();
+        boolean seenBefore = savedInstanceState != null || (intent != null && (intent.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0);
+        String startPath = seenBefore ? null : startPath(intent);
+
+        if (seenBefore && intent != null) {
+            intent.removeExtra(Notifier.EXTRA_URL);
+        }
 
         super.onCreate(savedInstanceState);
 
