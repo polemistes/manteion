@@ -31,6 +31,7 @@ declare module '@inertiajs/core' {
             availableLocales: Record<string, string>;
             theme: Theme;
             vapidPublicKey: string | null;
+            fcmConfigured: boolean;
             /** Where to open the WebSocket; null without Reverb. */
             reverb: {
                 key: string;

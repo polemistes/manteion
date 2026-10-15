@@ -10,6 +10,7 @@ use App\Models\Friendship;
 use App\Models\Leaflet;
 use App\Models\LeafletResponse;
 use App\Models\User;
+use App\Notifications\Channels\FcmChannel;
 use App\Notifications\FollowedUserPublishedEvent;
 use App\Notifications\FollowRequestApproved;
 use App\Notifications\FriendRequestAccepted;
@@ -215,7 +216,7 @@ test('each kind is queued, stored and broadcast, and pushed only once its own ca
 
     expect($notification->via(User::factory()->create()))->toBe(['database', 'broadcast']);
     expect($notification->via(User::factory()->pushEnabledFor(...$otherCategories)->create()))->toBe(['database', 'broadcast']);
-    expect($notification->via(User::factory()->pushEnabledFor($kind['category'])->create()))->toBe(['database', 'broadcast', WebPushChannel::class]);
+    expect($notification->via(User::factory()->pushEnabledFor($kind['category'])->create()))->toBe(['database', 'broadcast', WebPushChannel::class, FcmChannel::class]);
 })->with(activityNotificationKinds());
 
 test('each kind stores the same data about its subject', function (array $kind) {
@@ -279,6 +280,7 @@ test('each kind pushes a message about its subject, with the recipients badge co
         'data' => [
             'url' => $kind['data']['url'],
             'type' => $type,
+            'category' => $kind['category']->value,
             'badge_count' => 1,
         ],
     ]);

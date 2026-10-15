@@ -12,6 +12,11 @@ namespace App\Services;
 class DeviceLabel
 {
     /**
+     * What parse() calls the Manteion app; for() puts it in the locale.
+     */
+    public const APP = 'Manteion app';
+
+    /**
      * Browsers by the user agent token that gives them away, most specific
      * first: every Chromium-based browser also claims to be Chrome, and
      * nearly every browser claims to be Safari.
@@ -19,6 +24,8 @@ class DeviceLabel
      * @var array<string, string>
      */
     private const BROWSERS = [
+        // The Android app's WebView adds this to Chrome's user agent.
+        '/Manteion-Android/' => self::APP,
         '/Edg(e|A|iOS)?\//' => 'Edge',
         '/OPR\/|OPT\/|OPiOS\/|Opera/' => 'Opera',
         '/SamsungBrowser\//' => 'Samsung Internet',
@@ -52,6 +59,11 @@ class DeviceLabel
     public static function for(?string $userAgent): string
     {
         ['browser' => $browser, 'platform' => $platform] = self::parse($userAgent);
+
+        if ($browser === self::APP) {
+            $appName = __('devices.app');
+            $browser = is_string($appName) ? $appName : self::APP;
+        }
 
         if ($browser !== null && $platform !== null) {
             return __('devices.browser_on_platform', ['browser' => $browser, 'platform' => $platform]);

@@ -81,6 +81,10 @@ test('a user agent is reduced to its browser and platform', function (?string $u
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 OPR/114.0.0.0',
         'Opera', 'Windows',
     ],
+    'the Manteion app on Android' => [
+        'Mozilla/5.0 (Linux; Android 15; Pixel 8 Build/AP3A; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/129.0.6668.100 Mobile Safari/537.36 Manteion-Android',
+        DeviceLabel::APP, 'Android',
+    ],
     'Samsung Internet on Android' => [
         'Mozilla/5.0 (Linux; Android 14; SAMSUNG SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/26.0 Chrome/122.0.0.0 Mobile Safari/537.36',
         'Samsung Internet', 'Android',

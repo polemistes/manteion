@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\PushKind;
 use App\Models\PushSubscription;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -28,5 +29,20 @@ class PushSubscriptionFactory extends Factory
             'content_encoding' => 'aes128gcm',
             'user_agent' => fake()->userAgent(),
         ];
+    }
+
+    /**
+     * The Android app on a phone: its FCM registration token, no keys.
+     */
+    public function app(): static
+    {
+        return $this->state(fn () => [
+            'kind' => PushKind::Fcm,
+            'endpoint' => Str::random(22).':APA91b'.Str::random(134),
+            'public_key' => null,
+            'auth_token' => null,
+            'content_encoding' => null,
+            'user_agent' => 'Mozilla/5.0 (Linux; Android 15; Pixel 8 Build/AP3A; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/129.0.6668.100 Mobile Safari/537.36 Manteion-Android',
+        ]);
     }
 }

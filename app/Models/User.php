@@ -7,6 +7,7 @@ use App\Enums\AdminAlert;
 use App\Enums\FollowStatus;
 use App\Enums\FriendshipStatus;
 use App\Enums\NotificationCategory;
+use App\Enums\PushKind;
 use App\Enums\ThemeMode;
 use App\Enums\UserRole;
 use App\Notifications\PushTest;
@@ -184,18 +185,39 @@ class User extends Authenticatable
     }
 
     /**
-     * The devices a push goes to: every one of the user's, except for a test
-     * push, which goes only to the device that asked for it.
+     * The browsers a web push goes to: every one of the user's, except for a
+     * test push, which goes only to the device that asked for it.
      *
      * @return EloquentCollection<int, WebPushSubscription>
      */
     public function routeNotificationForWebPush(?Notification $notification = null): EloquentCollection
     {
+        return $this->pushDevices(PushKind::WebPush, $notification);
+    }
+
+    /**
+     * The Android app installs a push goes to through Firebase Cloud
+     * Messaging, by the same rule as routeNotificationForWebPush().
+     *
+     * @return EloquentCollection<int, WebPushSubscription>
+     */
+    public function routeNotificationForFcm(?Notification $notification = null): EloquentCollection
+    {
+        return $this->pushDevices(PushKind::Fcm, $notification);
+    }
+
+    /**
+     * @return EloquentCollection<int, WebPushSubscription>
+     */
+    private function pushDevices(PushKind $kind, ?Notification $notification): EloquentCollection
+    {
+        $devices = $this->pushSubscriptions()->where('kind', $kind);
+
         if ($notification instanceof PushTest) {
-            return $this->pushSubscriptions()->where('endpoint', $notification->endpoint)->get();
+            $devices->where('endpoint', $notification->endpoint);
         }
 
-        return $this->pushSubscriptions;
+        return $devices->get();
     }
 
     /**

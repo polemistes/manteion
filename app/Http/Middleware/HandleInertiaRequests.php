@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Enums\ThemeMode;
 use App\Models\User;
 use App\Services\BadgeCounts;
+use App\Services\Fcm;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -54,6 +55,8 @@ class HandleInertiaRequests extends Middleware
             'theme' => self::themeFor($user),
             'availableLocales' => config('app.supported_locales'),
             'vapidPublicKey' => config('webpush.vapid.public_key'),
+            // Whether the server can push to the Android app.
+            'fcmConfigured' => Fcm::configured(),
             'reverb' => self::reverbClient(),
             // The clock relative times ("2 min ago") count from while the
             // page renders on the server and hydrates in the browser, so

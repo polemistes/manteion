@@ -194,6 +194,17 @@ ssh proteus@manteion.no "sudo -n -u manteion ln -sfn /home/manteion/releases/<ea
 
 Migrations are not undone by going back. If one has to be, restore the copy taken before that deploy, from `backups/before-deploy/`, as below.
 
+## Pushes to the Android app
+
+Browsers get pushes with the VAPID keys; the Android app gets them through Firebase Cloud Messaging, which needs the Firebase project's service-account key on the server. It stays outside the releases, beside `manteion.env`, readable by manteion alone. From the development machine, with the key downloaded from the Firebase console:
+
+```sh
+# Copy the key over as the manteion user, readable by it alone.
+ssh proteus@manteion.no "sudo -n -u manteion sh -c 'umask 077 && cat > /home/manteion/firebase-service-account.json'" < ~/Downloads/<the key>.json
+```
+
+`manteion.env` names it in `FCM_CREDENTIALS` (as in `manteion.env.example`); the project id is read from the key. The queue worker reads the settings when it starts, so the next deploy (or `sudo systemctl restart manteion-queue manteion-reverb`) puts them to use. Then delete the downloaded key from the development machine. Without the key, the app works but gets no pushes, and Settings → Notifications in the app says so.
+
 ## Looking after it
 
 | | |

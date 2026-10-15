@@ -28,6 +28,16 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    /*
+     * Firebase Cloud Messaging, for pushes to the Android app: the absolute
+     * path of the Firebase project's service-account key (JSON), and the
+     * project id when it should differ from the key file's own.
+     */
+    'fcm' => [
+        'credentials' => env('FCM_CREDENTIALS'),
+        'project_id' => env('FCM_PROJECT_ID'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

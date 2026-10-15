@@ -65,8 +65,14 @@ test('a direct message push shows the sender and the text', function () {
         'data' => [
             'url' => "/messages/{$conversation->id}",
             'type' => 'message',
+            'category' => 'direct_messages',
             'conversation_id' => $conversation->id,
             'message_id' => $message->id,
+            'conversation_type' => 'direct',
+            'conversation_title' => null,
+            'sender_name' => 'Kari',
+            'sender_avatar' => url($sender->avatar_url),
+            'text' => 'See you at eight?',
             'badge_count' => 1,
         ],
         'timestamp' => $message->created_at->getTimestampMs(),
@@ -95,6 +101,15 @@ test('a group message push shows the group as title and who wrote it in the body
 
     $inUnnamed = chatPushFor(Message::factory()->create(['conversation_id' => $unnamed->id, 'user_id' => $sender->id, 'body' => 'Hello']), $recipient);
     expect($inUnnamed['payload'])->title->toBe('Kari, Per')->body->toBe('Kari: Hello');
+
+    // The parts the Android app builds its conversation notification from.
+    expect($inNamed['payload']['data'])
+        ->category->toBe('group_messages')
+        ->conversation_type->toBe('group')
+        ->conversation_title->toBe('Hyttetur')
+        ->sender_name->toBe('Kari')
+        ->sender_avatar->toBeNull()
+        ->text->toBe('Who brings coffee?');
 });
 
 test('without previews a push only says there is a new message', function () {
@@ -108,6 +123,10 @@ test('without previews a push only says there is a new message', function () {
 
     $inGroup = chatPushFor(Message::factory()->create(['conversation_id' => $group->id, 'user_id' => $sender->id, 'body' => 'Secret']), $recipient);
     expect($inGroup['payload'])->title->toBe('Hyttetur')->body->toBe('New message');
+
+    expect($inDirect['payload']['data']['text'])->toBeNull();
+    expect($inGroup['payload']['data']['text'])->toBeNull();
+    expect(json_encode([$inDirect, $inGroup]))->not->toContain('Secret');
 });
 
 test('a long message is cut short in the push', function () {

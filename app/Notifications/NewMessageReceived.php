@@ -7,6 +7,7 @@ use App\Enums\NotificationCategory;
 use App\Models\ConversationParticipant;
 use App\Models\Message;
 use App\Models\User;
+use App\Notifications\Channels\FcmChannel;
 use App\Notifications\Messages\TimestampedWebPushMessage;
 use App\Services\BadgeCounts;
 use App\Services\MessageSummary;
@@ -18,7 +19,8 @@ use Illuminate\Queue\SerializesModels;
 use NotificationChannels\WebPush\WebPushChannel;
 
 /**
- * A push to one recipient's devices about a new message. Only a push:
+ * A push to one recipient's devices (browsers and the Android app) about a
+ * new message. Only a push:
  * messages have their own badge and list, so nothing is stored for the
  * Activity page, and open tabs hear about it over the WebSocket instead.
  *
@@ -52,7 +54,7 @@ class NewMessageReceived extends Notification implements ShouldQueue
     public function via(User $notifiable): array
     {
         if ($notifiable->wantsPush($this->category())) {
-            return [WebPushChannel::class];
+            return [WebPushChannel::class, FcmChannel::class];
         }
 
         return [];
@@ -93,8 +95,10 @@ class NewMessageReceived extends Notification implements ShouldQueue
         $isGroup = $conversation->type === ConversationType::Group;
         $text = MessageSummary::preview($this->message, self::PREVIEW_LENGTH) ?? '';
 
+        $previews = $notifiable->showsMessagePreviews();
+
         $body = match (true) {
-            ! $notifiable->showsMessagePreviews() => __('chat.push.new_message'),
+            ! $previews => __('chat.push.new_message'),
             $isGroup => __('chat.push.group_body', ['name' => $sender->name, 'text' => $text]),
             default => $text,
         };
@@ -111,8 +115,16 @@ class NewMessageReceived extends Notification implements ShouldQueue
             ->data([
                 'url' => route('messages.show', $conversation, false),
                 'type' => 'message',
+                'category' => $this->category()->value,
                 'conversation_id' => $conversation->id,
                 'message_id' => $this->message->id,
+                // The parts, for the Android app's conversation-style
+                // notification; without previews no text.
+                'conversation_type' => $conversation->type->value,
+                'conversation_title' => $isGroup ? $conversation->titleFor($notifiable) : null,
+                'sender_name' => $sender->name,
+                'sender_avatar' => $sender->avatar_url !== null ? url($sender->avatar_url) : null,
+                'text' => $previews ? $text : null,
                 'badge_count' => array_sum(BadgeCounts::for($notifiable)),
             ])
             ->options([

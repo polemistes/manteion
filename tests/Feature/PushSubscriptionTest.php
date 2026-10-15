@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\PushKind;
 use App\Models\PushSubscription;
 use App\Models\User;
 
@@ -211,4 +212,123 @@ test('an account keeps its newest ten devices', function () {
 
     expect($user->pushSubscriptions()->count())->toBe(10)
         ->and($user->pushSubscriptions()->whereKey($oldest->id)->exists())->toBeFalse();
+});
+
+/**
+ * What an FCM registration token looks like.
+ */
+function fcmToken(string $seed = 'a'): string
+{
+    return str_repeat($seed, 22).':APA91b'.str_repeat($seed, 134);
+}
+
+const ANDROID_APP_USER_AGENT = 'Mozilla/5.0 (Linux; Android 15; Pixel 8 Build/AP3A; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/129.0.6668.100 Mobile Safari/537.36 Manteion-Android';
+
+test('the Android app registers itself as a device by its FCM token', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->withHeader('User-Agent', ANDROID_APP_USER_AGENT)
+        ->postJson('/push-subscriptions', ['kind' => 'fcm', 'endpoint' => fcmToken()])
+        ->assertNoContent();
+
+    $device = $user->pushSubscriptions()->sole();
+    expect($device->kind)->toBe(PushKind::Fcm)
+        ->and($device->endpoint)->toBe(fcmToken())
+        ->and($device->public_key)->toBeNull()
+        ->and($device->auth_token)->toBeNull()
+        ->and($device->content_encoding)->toBeNull()
+        ->and($device->user_agent)->toBe(ANDROID_APP_USER_AGENT);
+});
+
+test('a browser is a web push device unless it says otherwise', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->postJson('/push-subscriptions', ['endpoint' => 'https://fcm.googleapis.com/fcm/send/abc', 'content_encoding' => 'aes128gcm'])
+        ->assertNoContent();
+
+    expect($user->pushSubscriptions()->sole()->kind)->toBe(PushKind::WebPush);
+});
+
+test('registering the app again with the same token refreshes that device', function () {
+    $user = User::factory()->create();
+    $device = PushSubscription::factory()->app()->for($user, 'subscribable')->create(['endpoint' => fcmToken(), 'user_agent' => 'old']);
+
+    $this->actingAs($user)
+        ->withHeader('User-Agent', ANDROID_APP_USER_AGENT)
+        ->postJson('/push-subscriptions', ['kind' => 'fcm', 'endpoint' => fcmToken()])
+        ->assertNoContent();
+
+    expect($user->pushSubscriptions()->sole())
+        ->id->toBe($device->id)
+        ->user_agent->toBe(ANDROID_APP_USER_AGENT);
+});
+
+test('an app token another account had moves to whoever signed in on that phone', function () {
+    $before = User::factory()->create();
+    $now = User::factory()->create();
+    PushSubscription::factory()->app()->for($before, 'subscribable')->create(['endpoint' => fcmToken()]);
+
+    $this->actingAs($now)
+        ->postJson('/push-subscriptions', ['kind' => 'fcm', 'endpoint' => fcmToken()])
+        ->assertNoContent();
+
+    expect($before->pushSubscriptions()->count())->toBe(0)
+        ->and($now->pushSubscriptions()->sole()->endpoint)->toBe(fcmToken());
+});
+
+test('an app device must send an FCM token', function (string $endpoint) {
+    $this->actingAs(User::factory()->create())
+        ->postJson('/push-subscriptions', ['kind' => 'fcm', 'endpoint' => $endpoint])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('endpoint');
+})->with([
+    'a URL' => ['https://fcm.googleapis.com/fcm/send/abc'],
+    'too short' => ['abc:def'],
+    'with spaces' => ['abcdefghijklmnopqrstuvwxyz 0123456789'],
+]);
+
+test('an app device sends no web push keys', function (string $field, string $value) {
+    $this->actingAs(User::factory()->create())
+        ->postJson('/push-subscriptions', ['kind' => 'fcm', 'endpoint' => fcmToken(), $field => $value])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors($field);
+})->with([
+    'key' => ['key', 'public-key'],
+    'token' => ['token', 'auth-token'],
+    'content encoding' => ['content_encoding', 'aes128gcm'],
+]);
+
+test('an unknown kind of device is rejected', function () {
+    $this->actingAs(User::factory()->create())
+        ->postJson('/push-subscriptions', ['kind' => 'apns', 'endpoint' => fcmToken()])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('kind');
+});
+
+test('the ten-device limit counts browsers and app installs together', function () {
+    $user = User::factory()->create();
+    $oldest = PushSubscription::factory()->for($user, 'subscribable')->create();
+    PushSubscription::factory()->count(5)->for($user, 'subscribable')->create();
+    PushSubscription::factory()->count(4)->app()->for($user, 'subscribable')->create();
+
+    $this->actingAs($user)
+        ->postJson('/push-subscriptions', ['kind' => 'fcm', 'endpoint' => fcmToken()])
+        ->assertNoContent();
+
+    expect($user->pushSubscriptions()->count())->toBe(10)
+        ->and($user->pushSubscriptions()->whereKey($oldest->id)->exists())->toBeFalse();
+});
+
+test('the app removes itself by its token', function () {
+    $user = User::factory()->create();
+    PushSubscription::factory()->app()->for($user, 'subscribable')->create(['endpoint' => fcmToken()]);
+    $browser = PushSubscription::factory()->for($user, 'subscribable')->create();
+
+    $this->actingAs($user)
+        ->deleteJson('/push-subscriptions', ['endpoint' => fcmToken()])
+        ->assertNoContent();
+
+    expect($user->pushSubscriptions()->pluck('id')->all())->toBe([$browser->id]);
 });

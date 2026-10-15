@@ -7,6 +7,7 @@ use App\Models\Event;
 use App\Models\Leaflet;
 use App\Models\Organizer;
 use App\Models\User;
+use App\Notifications\Channels\FcmChannel;
 use App\Services\ActivityFeed;
 use App\Services\BadgeCounts;
 use Illuminate\Bus\Queueable;
@@ -24,7 +25,8 @@ use NotificationChannels\WebPush\WebPushMessage;
  * Something someone did that concerns the recipient: an invitation, a
  * comment on their event, a friend or follow request and so on. Stored for
  * the Activity page, broadcast so open tabs can show it straight away, and
- * pushed to the recipient's devices when they turned its category on.
+ * pushed to the recipient's devices (browsers and the Android app) when they
+ * turned its category on.
  *
  * Every kind stores the same data, about one subject (an event, a leaflet
  * or a user), so the Activity page lists them alike and opening the subject
@@ -102,6 +104,7 @@ abstract class ActivityNotification extends Notification implements ShouldQueue
 
         if ($notifiable->wantsPush(static::category())) {
             $channels[] = WebPushChannel::class;
+            $channels[] = FcmChannel::class;
         }
 
         return $channels;
@@ -170,6 +173,7 @@ abstract class ActivityNotification extends Notification implements ShouldQueue
             ->data([
                 'url' => $subject['url'],
                 'type' => $type,
+                'category' => static::category()->value,
                 'badge_count' => array_sum(BadgeCounts::for($notifiable)),
             ])
             ->options(['TTL' => 86400, 'urgency' => 'normal']);

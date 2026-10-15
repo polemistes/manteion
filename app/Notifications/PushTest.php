@@ -2,14 +2,16 @@
 
 namespace App\Notifications;
 
+use App\Enums\NotificationCategory;
+use App\Notifications\Channels\FcmChannel;
 use Illuminate\Notifications\Notification;
 use NotificationChannels\WebPush\WebPushChannel;
 use NotificationChannels\WebPush\WebPushMessage;
 
 /**
  * "Send a test" in the notification settings: a push to the one device that
- * asked (see User::routeNotificationForWebPush), sent at once, so the user
- * sees that notifications get through to it.
+ * asked (see User::routeNotificationForWebPush and routeNotificationForFcm),
+ * sent at once, so the user sees that notifications get through to it.
  */
 class PushTest extends Notification
 {
@@ -20,7 +22,7 @@ class PushTest extends Notification
      */
     public function via(object $notifiable): array
     {
-        return [WebPushChannel::class];
+        return [WebPushChannel::class, FcmChannel::class];
     }
 
     public function toWebPush(object $notifiable, self $notification): WebPushMessage
@@ -39,6 +41,9 @@ class PushTest extends Notification
             ->data([
                 'url' => route('settings.notifications', absolute: false),
                 'type' => 'test',
+                // The Android app shows it in the direct messages channel,
+                // the one people keep on.
+                'category' => NotificationCategory::DirectMessages->value,
             ])
             ->options(['TTL' => 300, 'urgency' => 'high']);
     }

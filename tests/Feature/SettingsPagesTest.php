@@ -5,6 +5,7 @@ use App\Enums\ThemeMode;
 use App\Enums\UserRole;
 use App\Models\PushSubscription;
 use App\Models\User;
+use App\Notifications\Channels\FcmChannel;
 use App\Notifications\PushTest;
 use Illuminate\Support\Facades\Notification;
 use NotificationChannels\WebPush\WebPushChannel;
@@ -124,6 +125,18 @@ test('the notifications page gets the effective settings, the categories in disp
             ]));
 });
 
+test('the Android app is named as the app, in the users language', function (string $locale, string $label) {
+    $user = User::factory()->create(['locale' => $locale]);
+    PushSubscription::factory()->app()->for($user, 'subscribable')->create();
+
+    $this->actingAs($user)
+        ->get('/settings/notifications')
+        ->assertInertia(fn ($page) => $page->where('devices.0.label', $label));
+})->with([
+    'English' => ['en', 'Manteion app on Android'],
+    'Norwegian' => ['nb', 'Manteion-appen på Android'],
+]);
+
 test('device names follow the users language, and fall back to whichever half is recognised', function () {
     $user = User::factory()->create(['locale' => 'nb']);
 
@@ -199,7 +212,7 @@ test('a test push goes to the device that asked, and only to it', function () {
     Notification::assertSentTo($user, PushTest::class, function (PushTest $notification, array $channels) use ($user, $device) {
         $routed = $user->routeNotificationForWebPush($notification);
 
-        return $channels === [WebPushChannel::class]
+        return $channels === [WebPushChannel::class, FcmChannel::class]
             && $routed->pluck('id')->all() === [$device->id];
     });
     expect($user->routeNotificationForWebPush()->pluck('id')->sort()->values()->all())
