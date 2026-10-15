@@ -115,7 +115,7 @@ export function holdMessagesBadge(): void {
 /**
  * The live badge counts, and their sum. One store for the whole app: it
  * starts from the page props and follows `.badges.updated` broadcasts, page
- * visits and catch-up requests, so every badge and the tab title agree.
+ * visits and catch-up requests, so every badge and the favicon dot agree.
  * Call it from a component's setup (on the server it reads the request's
  * own page props).
  */
@@ -141,7 +141,7 @@ export function useBadges(): {
     return { badges: storeView, total: storeTotal };
 }
 
-/** The store's total, for modules outside components (the tab title). */
+/** The store's total, for modules outside components (the favicon dot). */
 export const badgeTotal: ComputedRef<number> = storeTotal;
 
 /**

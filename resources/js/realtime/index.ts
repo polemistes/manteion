@@ -119,8 +119,8 @@ function follow(page: Page): void {
 }
 
 /**
- * Starts the real-time client: Echo, the live badge store, the tab title,
- * favicon and app badge, the message sound, and the signed-in user's
+ * Starts the real-time client: Echo, the live badge store, the favicon dot
+ * and app badge, the message sound, and the signed-in user's
  * channel. Call once, on the client, with the initial page (app.ts).
  */
 export function setupRealtime(initialPage: Page): void {
