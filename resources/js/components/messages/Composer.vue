@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { ArrowUp, ImagePlus, Smile, X } from '@lucide/vue';
-import { computed, nextTick, onBeforeUnmount, ref } from 'vue';
+import { ArrowUp, Camera, ImagePlus, Smile, X } from '@lucide/vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import EmojiPicker from '@/components/EmojiPicker.vue';
 import TextArea from '@/components/ui/TextArea.vue';
 import { prepareImageUpload } from '@/lib/image';
 import type { PreparedImage } from '@/lib/image';
 import { toastError } from '@/lib/toast';
+import { canTakePhotos } from '@/native/shell';
 import { IMAGE_MAX_EDGE } from './chat';
 import type { MessageDraft } from './chat';
 
@@ -15,7 +16,12 @@ import type { MessageDraft } from './chat';
  * scrolls. With a hardware keyboard Enter sends and Shift+Enter breaks the
  * line; on touch screens Enter is a line break and the arrow sends. A
  * picture can be attached: it is shown above the field until sent or
- * removed, and goes out as one message with the words, if any.
+ * removed, and goes out as one message with the words, if any. On touch
+ * screens a second button takes the picture with the camera instead: the
+ * browser, or the Android app (Capacitor opens the camera app for a
+ * capture request), goes straight to the back camera. Desktop browsers
+ * ignore capture, so the button is not offered there, nor in apps that
+ * can't open the camera (see canTakePhotos).
  */
 const props = withDefaults(defineProps<{ disabled?: boolean }>(), {
     disabled: false,
@@ -29,6 +35,10 @@ const text = ref('');
 const pickerOpen = ref(false);
 const field = ref<InstanceType<typeof TextArea> | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
+const cameraInput = ref<HTMLInputElement | null>(null);
+// Shown until the app says otherwise, so the server and the browser draw
+// the same field.
+const cameraAvailable = ref(true);
 const image = ref<PreparedImage | null>(null);
 const preparing = ref(false);
 
@@ -96,6 +106,10 @@ function pickImage(): void {
     fileInput.value?.click();
 }
 
+function takePhoto(): void {
+    cameraInput.value?.click();
+}
+
 // The picked file is scaled down and stripped of its metadata here, so a
 // phone photo goes out small and the picture replaces any earlier one.
 async function onImageChosen(event: Event): Promise<void> {
@@ -130,6 +144,10 @@ function removeImage(): void {
         image.value = null;
     }
 }
+
+onMounted(async () => {
+    cameraAvailable.value = await canTakePhotos();
+});
 
 onBeforeUnmount(removeImage);
 
@@ -179,6 +197,16 @@ defineExpose({ focus: () => field.value?.focus() });
                         aria-hidden="true"
                     />
                 </button>
+                <button
+                    v-if="cameraAvailable"
+                    type="button"
+                    :aria-label="t('messages.show.takePhoto')"
+                    :disabled="props.disabled || preparing"
+                    class="mb-0.5 hidden size-10 shrink-0 place-items-center rounded-full text-ink-muted hover:text-ink disabled:pointer-events-none disabled:opacity-45 md:mb-1 pointer-coarse:grid"
+                    @click="takePhoto"
+                >
+                    <Camera :size="20" :stroke-width="1.8" aria-hidden="true" />
+                </button>
                 <div class="min-w-0 flex-1 pl-1">
                     <TextArea
                         ref="field"
@@ -218,6 +246,15 @@ defineExpose({ focus: () => field.value?.focus() });
             ref="fileInput"
             type="file"
             accept="image/*"
+            class="hidden"
+            tabindex="-1"
+            @change="onImageChosen"
+        />
+        <input
+            ref="cameraInput"
+            type="file"
+            accept="image/*"
+            capture="environment"
             class="hidden"
             tabindex="-1"
             @change="onImageChosen"

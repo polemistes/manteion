@@ -78,6 +78,17 @@
         </provider>
     </application>
 
+    <!-- The camera app, for a page's "take a photo" request: since Android
+         11 an app only sees the other apps it says it looks for, and
+         without this Capacitor falls back to the photo picker. No camera
+         permission is declared, so none is asked for: the camera app
+         takes the photo. -->
+    <queries>
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE" />
+        </intent>
+    </queries>
+
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />

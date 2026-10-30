@@ -71,6 +71,7 @@
         "seenBy": "Seen by {names}",
         "markSeen": "Let {name} know you’ve seen this",
         "attachPhoto": "Add a photo",
+        "takePhoto": "Take a photo",
         "removePhoto": "Remove the photo",
         "photo": "Photo",
         "photoUnreadable": "That photo couldn’t be read.",

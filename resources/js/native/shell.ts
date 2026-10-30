@@ -34,6 +34,41 @@ function isApp(): boolean {
 }
 
 /**
+ * The first Android app whose camera requests reach a camera app: from
+ * 1.2 its manifest says it looks for one (Android 11 hides other apps'
+ * screens otherwise), and older ones open the photo picker instead.
+ */
+const CAMERA_SINCE_ANDROID_VERSION = '1.2';
+
+let photoCapture: Promise<boolean> | null = null;
+
+/**
+ * Whether asking for a photo from the camera opens a camera here. Browsers
+ * decide for themselves, so yes. The Android app from 1.2 on. Not the iOS
+ * app, which has no camera usage text yet (iOS would close it).
+ */
+export function canTakePhotos(): Promise<boolean> {
+    if (!isApp()) {
+        return Promise.resolve(true);
+    }
+
+    photoCapture ??=
+        Capacitor.getPlatform() === 'android'
+            ? App.getInfo()
+                  .then(
+                      (info) =>
+                          !isNewerVersion(
+                              CAMERA_SINCE_ANDROID_VERSION,
+                              info.version,
+                          ),
+                  )
+                  .catch(() => false)
+            : Promise.resolve(false);
+
+    return photoCapture;
+}
+
+/**
  * The back button and the system bars, inside the Android app. A no-op on
  * the web. Called before the Inertia app starts.
  */

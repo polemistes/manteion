@@ -10,8 +10,8 @@ android {
         // Raise both for every release: Android only installs a higher
         // versionCode over the app, and the in-app update notice compares
         // versionName with the newest GitHub release (tag android-v<name>).
-        versionCode 2
-        versionName "1.1"
+        versionCode 3
+        versionName "1.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

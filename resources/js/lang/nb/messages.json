@@ -71,6 +71,7 @@
         "seenBy": "Sett av {names}",
         "markSeen": "La {name} få vite at du har sett dette",
         "attachPhoto": "Legg til et bilde",
+        "takePhoto": "Ta et bilde",
         "removePhoto": "Fjern bildet",
         "photo": "Bilde",
         "photoUnreadable": "Bildet kunne ikke leses.",
