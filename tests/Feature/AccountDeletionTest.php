@@ -13,6 +13,7 @@ use App\Models\PushSubscription;
 use App\Models\User;
 use App\Notifications\InvitedToEvent;
 use App\Notifications\NewEventComment;
+use App\Services\ImageProcessor;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -60,6 +61,7 @@ test('deleting an account requires a password to be provided', function () {
 
 test('deleting an account removes the avatar and owned event images from storage, and cascades related data', function () {
     Storage::fake('public');
+    Storage::fake(ImageProcessor::PRIVATE_DISK);
     $user = User::factory()->create(['avatar_path' => 'avatars/mine.jpg']);
     Storage::disk('public')->put('avatars/mine.jpg', 'fake-content');
 
@@ -71,12 +73,12 @@ test('deleting an account removes the avatar and owned event images from storage
 
     $event = Event::factory()->create(['user_id' => $user->id]);
     $image = EventImage::factory()->for($event)->create(['path' => 'events/mine.jpg']);
-    Storage::disk('public')->put('events/mine.jpg', 'fake-content');
+    Storage::disk(ImageProcessor::PRIVATE_DISK)->put('events/mine.jpg', 'fake-content');
 
     $this->actingAs($user)->delete('/profile', ['password' => 'password'])->assertRedirect('/');
 
     Storage::disk('public')->assertMissing('avatars/mine.jpg');
-    Storage::disk('public')->assertMissing('events/mine.jpg');
+    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertMissing('events/mine.jpg');
     expect(Friendship::find($friendship->id))->toBeNull();
     expect(Event::find($event->id))->toBeNull();
     expect(EventImage::find($image->id))->toBeNull();

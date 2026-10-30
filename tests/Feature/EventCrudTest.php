@@ -5,11 +5,12 @@ use App\Models\Event;
 use App\Models\Follow;
 use App\Models\Tag;
 use App\Models\User;
+use App\Services\ImageProcessor;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
 test('a user can create a private event with categories and images', function () {
-    Storage::fake('public');
+    Storage::fake(ImageProcessor::PRIVATE_DISK);
     $user = User::factory()->create();
     $games = Tag::query()->where('slug', 'games')->firstOrFail();
 
@@ -34,15 +35,15 @@ test('a user can create a private event with categories and images', function ()
     // Selecting the "Games" subcategory should also attach its "Social" parent category.
     expect($event->tags()->pluck('slug')->sort()->values()->all())->toBe(['games', 'social']);
     expect($event->images)->toHaveCount(1);
-    Storage::disk('public')->assertExists($event->images->first()->path);
+    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertExists($event->images->first()->path);
 });
 
 test('uploading a new event image replaces and deletes the old one', function () {
-    Storage::fake('public');
+    Storage::fake(ImageProcessor::PRIVATE_DISK);
     $user = User::factory()->create();
     $event = Event::factory()->create(['user_id' => $user->id]);
     $event->images()->create(['path' => 'events/1/old.jpg', 'position' => 0]);
-    Storage::disk('public')->put('events/1/old.jpg', 'fake-content');
+    Storage::disk(ImageProcessor::PRIVATE_DISK)->put('events/1/old.jpg', 'fake-content');
 
     $this->actingAs($user)->put("/events/{$event->id}", [
         'name' => $event->name,
@@ -58,8 +59,8 @@ test('uploading a new event image replaces and deletes the old one', function ()
     $event->refresh();
     expect($event->images)->toHaveCount(1);
     expect($event->images->first()->path)->not->toBe('events/1/old.jpg');
-    Storage::disk('public')->assertMissing('events/1/old.jpg');
-    Storage::disk('public')->assertExists($event->images->first()->path);
+    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertMissing('events/1/old.jpg');
+    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertExists($event->images->first()->path);
 });
 
 test('a user can create an event with a map location', function () {
@@ -202,7 +203,7 @@ test('only the owner can update or delete an event', function () {
 });
 
 test('an oversized event image is scaled down to fit before it is stored', function () {
-    Storage::fake('public');
+    Storage::fake(ImageProcessor::PRIVATE_DISK);
     $owner = User::factory()->create();
 
     $this->actingAs($owner)->post('/events', [
@@ -216,7 +217,7 @@ test('an oversized event image is scaled down to fit before it is stored', funct
     ])->assertRedirect();
 
     $path = Event::query()->where('name', 'Big Picture')->firstOrFail()->images->first()->path;
-    [$width, $height] = getimagesize(Storage::disk('public')->path($path));
+    [$width, $height] = getimagesize(Storage::disk(ImageProcessor::PRIVATE_DISK)->path($path));
 
     expect($width)->toBe(1600)->and($height)->toBe(800);
 });

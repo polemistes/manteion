@@ -20,6 +20,7 @@ use App\Http\Controllers\EventSearchabilityController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\FriendshipController;
 use App\Http\Controllers\LeafletController;
+use App\Http\Controllers\LeafletImageController;
 use App\Http\Controllers\LeafletResponseController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Moderation\ReportController as ModerationReportController;
@@ -105,6 +106,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('/events/{event}/comments/{comment}', [EventCommentController::class, 'destroy'])
         ->name('events.comments.destroy')
         ->scopeBindings();
+    Route::get('/events/{event}/images/{image}/{file}', [EventImageController::class, 'show'])
+        ->name('events.images.show')
+        ->scopeBindings();
     Route::delete('/events/{event}/images/{image}', [EventImageController::class, 'destroy'])
         ->name('events.images.destroy')
         ->scopeBindings();
@@ -126,6 +130,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/leaflets', [LeafletController::class, 'store'])->name('leaflets.store');
     Route::get('/leaflets/{leaflet}', [LeafletController::class, 'show'])->name('leaflets.show');
     Route::get('/leaflets/{leaflet}/edit', [LeafletController::class, 'edit'])->name('leaflets.edit');
+    Route::get('/leaflets/{leaflet}/image/{file}', [LeafletImageController::class, 'show'])
+        ->name('leaflets.image');
     Route::put('/leaflets/{leaflet}', [LeafletController::class, 'update'])->name('leaflets.update');
     Route::delete('/leaflets/{leaflet}', [LeafletController::class, 'destroy'])->name('leaflets.destroy');
     Route::post('/leaflets/{leaflet}/responses', [LeafletResponseController::class, 'store'])->name('leaflets.responses.store');

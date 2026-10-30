@@ -24,6 +24,15 @@ class ImageProcessor
     public const MESSAGE_MAX_EDGE = 1600;
 
     /**
+     * Where pictures that only some people may see are kept: events,
+     * leaflets and chat messages. Nothing on it has an address of its own
+     * (Laravel's route for it refuses unsigned requests); each picture is
+     * served by a controller that checks who is asking (see
+     * ServesPrivateImages). Avatars stay on the public disk.
+     */
+    public const PRIVATE_DISK = 'local';
+
+    /**
      * Re-encodes an uploaded image through GD, scaled to fit within
      * `$maxEdge` pixels on its longer side, and stores it as a JPEG on
      * `$disk` (the public one unless said otherwise).

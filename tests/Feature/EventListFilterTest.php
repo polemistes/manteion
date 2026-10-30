@@ -150,7 +150,7 @@ test('the list reports the cover image and attendance counts for each event', fu
     $interested = User::factory()->create();
 
     $eventWithImage = Event::factory()->create(['user_id' => $owner->id, 'name' => 'Has A Photo', 'starts_at' => now()->addDay()]);
-    EventImage::factory()->create(['event_id' => $eventWithImage->id, 'path' => 'events/cover.jpg', 'position' => 0]);
+    $cover = EventImage::factory()->create(['event_id' => $eventWithImage->id, 'path' => 'events/cover.jpg', 'position' => 0]);
     EventAttendee::factory()->attending()->create(['event_id' => $eventWithImage->id, 'user_id' => $attending->id]);
     EventAttendee::factory()->create(['event_id' => $eventWithImage->id, 'user_id' => $interested->id, 'status' => AttendanceStatus::Interested]);
 
@@ -160,7 +160,7 @@ test('the list reports the cover image and attendance counts for each event', fu
 
     $response->assertInertia(fn ($page) => $page
         ->has('events', 2)
-        ->where('events.0.cover.url', fn ($url) => str_contains($url, 'events/cover.jpg'))
+        ->where('events.0.cover.url', route('events.images.show', [$eventWithImage, $cover, 'cover.jpg']))
         ->where('events.0.attending_count', 1)
         ->where('events.0.interested_count', 1)
         ->where('events.1.cover', null)

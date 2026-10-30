@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\ImageProcessor;
 use Database\Factories\MessageFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -29,13 +30,6 @@ class Message extends Model
 {
     /** @use HasFactory<MessageFactory> */
     use HasFactory;
-
-    /**
-     * Where attached pictures are kept: the private disk, so a picture
-     * has no address of its own that anyone could open. It is served by
-     * MessageImageController, which checks who is asking.
-     */
-    public const IMAGE_DISK = 'local';
 
     /**
      * As the column defaults, so a message just created (and broadcast
@@ -72,8 +66,9 @@ class Message extends Model
 
     /**
      * The attached picture as the chat frames it: its address (which only
-     * the conversation may open) and its size, so a thread can leave room
-     * for it before it loads. Null without a picture, and once deleted.
+     * the conversation may open, see MessageImageController) and its size,
+     * so a thread can leave room for it before it loads. Null without a
+     * picture, and once deleted.
      *
      * @return array{url: string, width: int|null, height: int|null}|null
      */
@@ -97,7 +92,7 @@ class Message extends Model
     public function deleteImageFile(): void
     {
         if ($this->image_path !== null) {
-            Storage::disk(self::IMAGE_DISK)->delete($this->image_path);
+            Storage::disk(ImageProcessor::PRIVATE_DISK)->delete($this->image_path);
         }
     }
 

@@ -142,7 +142,8 @@ class OrganizerController extends Controller
 
     /**
      * Deleting an organizer takes its events and leaflets with it (the
-     * database cascades), and everyone's Activity about them.
+     * database cascades), their pictures and its own, and everyone's
+     * Activity about them.
      */
     public function destroy(Request $request, Organizer $organizer): RedirectResponse
     {
@@ -152,6 +153,7 @@ class OrganizerController extends Controller
         $organizer->leaflets()->pluck('id')->each(fn (int $id) => ActivityFeed::withdrawAbout('leaflet', $id));
         ActivityFeed::withdrawAbout('organizer', $organizer->id);
 
+        $organizer->deleteUploadedFiles();
         $organizer->delete();
         $request->user()->forgetOrganizerIds();
 

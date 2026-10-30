@@ -11,6 +11,7 @@ use App\Models\EventImage;
 use App\Models\Friendship;
 use App\Models\Reaction;
 use App\Models\User;
+use App\Services\ImageProcessor;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Event as EventFacade;
@@ -34,7 +35,7 @@ function presentationEventPayload(array $overrides = []): array
 }
 
 test('a landscape upload is stored with its size and counts as a photo', function () {
-    Storage::fake('public');
+    Storage::fake(ImageProcessor::PRIVATE_DISK);
     $user = User::factory()->create();
 
     $this->actingAs($user)->post('/events', presentationEventPayload([
@@ -50,7 +51,7 @@ test('a landscape upload is stored with its size and counts as a photo', functio
 });
 
 test('a portrait upload is a poster, and "show it whole" makes any image a poster', function () {
-    Storage::fake('public');
+    Storage::fake(ImageProcessor::PRIVATE_DISK);
     $user = User::factory()->create();
 
     $this->actingAs($user)->post('/events', presentationEventPayload([

@@ -99,7 +99,7 @@ class ConversationMessageController extends Controller
         $image = $request->file('image');
         $stored = $image === null
             ? null
-            : $this->imageProcessor->storeWithSize($image, "messages/{$conversation->id}", ImageProcessor::MESSAGE_MAX_EDGE, Message::IMAGE_DISK);
+            : $this->imageProcessor->storeWithSize($image, "messages/{$conversation->id}", ImageProcessor::MESSAGE_MAX_EDGE, ImageProcessor::PRIVATE_DISK);
 
         $message = $conversation->messages()->create([
             'user_id' => $sender->id,

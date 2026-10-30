@@ -10,7 +10,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | resources/css/app.css | .ai/rules/css.md |
 | database/factories/UserFactory.php | .ai/rules/factories.md |
 | app/Actions/Fortify/** | .ai/rules/fortify.md |
-| app/Http/Controllers/MessageImageController.php, app/Models/Message.php, app/Http/Controllers/ConversationMessageController.php | .ai/rules/http-controllers.md |
+| app/Http/Controllers/*ImageController.php, app/Http/Controllers/Concerns/ServesPrivateImages.php, app/Models/EventImage.php, app/Models/Leaflet.php, app/Models/Message.php, app/Services/ImageProcessor.php | .ai/rules/http-controllers.md |
 | resources/js/lang/** | .ai/rules/js-lang.md |
 | resources/js/** | .ai/rules/js.md |
 | lang/** | .ai/rules/lang.md |

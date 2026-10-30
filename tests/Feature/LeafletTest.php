@@ -8,6 +8,7 @@ use App\Models\Friendship;
 use App\Models\Leaflet;
 use App\Models\Report;
 use App\Models\User;
+use App\Services\ImageProcessor;
 use App\Services\LinkPreview;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Bus;
@@ -145,7 +146,7 @@ test('link previews are never fetched from private or local addresses', function
 });
 
 test('a leaflet may carry an image or a link but not both', function () {
-    Storage::fake('public');
+    Storage::fake(ImageProcessor::PRIVATE_DISK);
     $user = User::factory()->create();
 
     $this->actingAs($user)->post('/leaflets', [
@@ -163,14 +164,14 @@ test('a leaflet may carry an image or a link but not both', function () {
 
     $leaflet = Leaflet::query()->firstOrFail();
     expect($leaflet->image_path)->not->toBeNull();
-    Storage::disk('public')->assertExists($leaflet->image_path);
+    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertExists($leaflet->image_path);
 });
 
 test('the author can edit everything about a leaflet, including swapping the image for a link', function () {
-    Storage::fake('public');
+    Storage::fake(ImageProcessor::PRIVATE_DISK);
     Bus::fake();
     $user = User::factory()->create();
-    Storage::disk('public')->put('leaflets/1/old.jpg', 'x');
+    Storage::disk(ImageProcessor::PRIVATE_DISK)->put('leaflets/1/old.jpg', 'x');
     $leaflet = Leaflet::factory()->create(['user_id' => $user->id, 'image_path' => 'leaflets/1/old.jpg']);
 
     $this->actingAs($user)->put("/leaflets/{$leaflet->id}", [
@@ -185,7 +186,7 @@ test('the author can edit everything about a leaflet, including swapping the ima
         ->and($leaflet->visibility)->toBe(LeafletVisibility::Official)
         ->and($leaflet->image_path)->toBeNull()
         ->and($leaflet->link_url)->toBe('https://example.com/new');
-    Storage::disk('public')->assertMissing('leaflets/1/old.jpg');
+    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertMissing('leaflets/1/old.jpg');
     Bus::assertDispatchedAfterResponse(FetchLeafletLinkPreview::class);
 });
 

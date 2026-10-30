@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\SpokespersonRole;
+use App\Services\ImageProcessor;
 use Database\Factories\OrganizerFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -84,6 +85,23 @@ class Organizer extends Model
     public function leaflets(): HasMany
     {
         return $this->hasMany(Leaflet::class);
+    }
+
+    /**
+     * Removes the organizer's picture and the pictures on its events and
+     * leaflets, which the database deletes along with it without touching
+     * their files.
+     */
+    public function deleteUploadedFiles(): void
+    {
+        if ($this->avatar_path !== null) {
+            Storage::disk('public')->delete($this->avatar_path);
+        }
+
+        Storage::disk(ImageProcessor::PRIVATE_DISK)->delete([
+            ...EventImage::query()->whereIn('event_id', $this->events()->select('id'))->pluck('path')->all(),
+            ...$this->leaflets()->whereNotNull('image_path')->pluck('image_path')->all(),
+        ]);
     }
 
     public function membershipOf(User $user): ?OrganizerSpokesperson

@@ -3,12 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Enums\AdminAlert;
-use App\Models\Message;
 use App\Services\AdminAlerts;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 
 class ProfileController extends Controller
 {
@@ -29,20 +27,7 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        foreach ($user->events as $event) {
-            foreach ($event->images as $image) {
-                Storage::disk('public')->delete($image->path);
-            }
-        }
-
-        if ($user->avatar_path) {
-            Storage::disk('public')->delete($user->avatar_path);
-        }
-
-        Message::query()
-            ->where('user_id', $user->id)
-            ->whereNotNull('image_path')
-            ->each(fn (Message $message) => $message->deleteImageFile());
+        $user->deleteUploadedFiles();
 
         Auth::guard('web')->logout();
 

@@ -15,7 +15,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -140,16 +139,7 @@ class UserController extends Controller
             'password' => ['required', 'current_password'],
         ]);
 
-        foreach ($user->events as $event) {
-            foreach ($event->images as $image) {
-                Storage::disk('public')->delete($image->path);
-            }
-        }
-
-        if ($user->avatar_path) {
-            Storage::disk('public')->delete($user->avatar_path);
-        }
-
+        $user->deleteUploadedFiles();
         $user->delete();
 
         AdminAlerts::send(AdminAlert::AccountDeleted, $request->user(), [

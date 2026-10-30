@@ -42,7 +42,8 @@ ln -sfn "$BASE/storage" storage
 
 composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-progress
 
-# public/storage serves the uploads (avatars, event and leaflet pictures).
+# public/storage serves the public uploads (avatars). Event, leaflet and
+# message pictures live in storage/app/private and go through the app.
 php artisan storage:link --force
 
 # While the database is migrated, both releases show the maintenance page.

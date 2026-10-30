@@ -1,6 +1,7 @@
 ---
 paths:
-  - 'resources/js/routes/**, resources/js/actions/**'
+  - 'resources/js/routes/**'
+  - 'resources/js/actions/**'
 ---
 
 # Actions

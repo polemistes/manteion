@@ -9,9 +9,11 @@ use App\Models\Message;
 use App\Models\Report;
 use App\Models\User;
 use App\Notifications\NewMessageReceived;
+use App\Services\ImageProcessor;
 use App\Services\MessageSummary;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Testing\TestResponse;
 use Inertia\Testing\AssertableInertia as Assert;
 
 /**
@@ -30,7 +32,7 @@ function pictureChat(User $user, User $other): Conversation
  * Sends a picture (with the given words, if any) as the user, the way the
  * chat does: a multipart request that wants JSON back.
  *
- * @return array{response: \Illuminate\Testing\TestResponse, message: Message}
+ * @return array{response: TestResponse, message: Message}
  */
 function sendPicture(User $user, Conversation $conversation, UploadedFile $picture, ?string $body = null): array
 {
@@ -44,7 +46,7 @@ function sendPicture(User $user, Conversation $conversation, UploadedFile $pictu
 }
 
 beforeEach(function () {
-    Storage::fake(Message::IMAGE_DISK);
+    Storage::fake(ImageProcessor::PRIVATE_DISK);
     Storage::fake('public');
 });
 
@@ -67,7 +69,7 @@ test('a participant can send a picture without words', function () {
         ->and($message->image_height)->toBe(600);
 
     // On the private disk, where nothing has an address of its own.
-    Storage::disk(Message::IMAGE_DISK)->assertExists($message->image_path);
+    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertExists($message->image_path);
     Storage::disk('public')->assertMissing($message->image_path);
 });
 
@@ -161,7 +163,7 @@ test('deleting a message removes its picture for good', function () {
 
     $this->actingAs($user)->delete("/messages/{$conversation->id}/messages/{$message->id}")->assertRedirect();
 
-    Storage::disk(Message::IMAGE_DISK)->assertMissing($path);
+    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertMissing($path);
     $message->refresh();
     expect($message->is_deleted)->toBeTrue()
         ->and($message->image_path)->toBeNull()

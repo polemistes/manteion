@@ -695,7 +695,7 @@ class ShowcaseSeeder extends Seeder
             ['visibility' => $visibility, ...$link],
         );
 
-        if ($picsumId !== null && ($leaflet->image_path === null || ! Storage::disk('public')->exists($leaflet->image_path))) {
+        if ($picsumId !== null && ($leaflet->image_path === null || ! Storage::disk(ImageProcessor::PRIVATE_DISK)->exists($leaflet->image_path))) {
             $leaflet->image_path = $this->storePicture($picsumId, self::LEAFLET_PICTURE, "leaflets/{$leaflet->id}")['path'];
         }
 
@@ -814,7 +814,7 @@ class ShowcaseSeeder extends Seeder
     private function attachPicture(Event $event, int $picsumId, array $size): void
     {
         $image = $event->images()->first();
-        $disk = Storage::disk('public');
+        $disk = Storage::disk(ImageProcessor::PRIVATE_DISK);
 
         if ($image !== null && $disk->exists($image->path)) {
             // Pictures stored before images remembered their size.
@@ -842,7 +842,7 @@ class ShowcaseSeeder extends Seeder
     /**
      * A picture from Lorem Picsum, or a drawn stand-in when it cannot be
      * had, put through ImageProcessor exactly as an upload is, so it lands
-     * re-encoded on the public disk. Returns its path there and its size.
+     * re-encoded on the private disk. Returns its path there and its size.
      *
      * @param  array{int<1, max>, int<1, max>}  $size
      * @return array{path: string, width: int, height: int}
@@ -888,7 +888,7 @@ class ShowcaseSeeder extends Seeder
         try {
             file_put_contents($temporaryPath, $picture);
 
-            return $this->imageProcessor->storeWithSize(new UploadedFile($temporaryPath, 'picture.jpg', test: true), $directory, ImageProcessor::EVENT_MAX_EDGE);
+            return $this->imageProcessor->storeWithSize(new UploadedFile($temporaryPath, 'picture.jpg', test: true), $directory, ImageProcessor::EVENT_MAX_EDGE, ImageProcessor::PRIVATE_DISK);
         } finally {
             unlink($temporaryPath);
         }

@@ -21,7 +21,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -113,7 +112,7 @@ class LeafletController extends Controller
                 'body' => $leaflet->body,
                 'visibility' => $leaflet->visibility->value,
                 'link_url' => $leaflet->link_url,
-                'image_url' => $leaflet->image_path === null ? null : Storage::disk('public')->url($leaflet->image_path),
+                'image_url' => $leaflet->imageUrl(),
                 'organizer' => $leaflet->organizer?->summary(),
             ],
         ]);
@@ -174,7 +173,7 @@ class LeafletController extends Controller
             'is_edited' => $leaflet->updated_at->gt($leaflet->created_at->addMinute()),
             'owner' => ['id' => $leaflet->owner->id, 'name' => $leaflet->owner->name, 'username' => $leaflet->owner->username, 'avatar_url' => $leaflet->owner->avatar_url],
             'organizer' => $leaflet->organizer?->summary(),
-            'image_url' => $leaflet->image_path === null ? null : Storage::disk('public')->url($leaflet->image_path),
+            'image_url' => $leaflet->imageUrl(),
             'link' => $leaflet->link_url === null ? null : [
                 'url' => $leaflet->link_url,
                 'host' => parse_url($leaflet->link_url, PHP_URL_HOST),
@@ -210,7 +209,7 @@ class LeafletController extends Controller
         $this->removeImage($leaflet);
 
         $leaflet->update([
-            'image_path' => $this->imageProcessor->store($file, "leaflets/{$leaflet->id}", ImageProcessor::EVENT_MAX_EDGE),
+            'image_path' => $this->imageProcessor->store($file, "leaflets/{$leaflet->id}", ImageProcessor::EVENT_MAX_EDGE, ImageProcessor::PRIVATE_DISK),
         ]);
     }
 
@@ -220,7 +219,7 @@ class LeafletController extends Controller
             return;
         }
 
-        Storage::disk('public')->delete($leaflet->image_path);
+        $leaflet->deleteImageFile();
         $leaflet->update(['image_path' => null]);
     }
 

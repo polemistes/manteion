@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\ImageProcessor;
 use Database\Factories\EventImageFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -70,7 +71,9 @@ class EventImage extends Model
     }
 
     /**
-     * What a page needs to frame the image without measuring it.
+     * What a page needs to frame the image without measuring it. The
+     * address only opens for someone who may see the event (see
+     * EventImageController).
      *
      * @return array{id: int, url: string, width: int|null, height: int|null, shape: 'photo'|'poster', fit: 'cover'|'contain'|null}
      */
@@ -78,11 +81,19 @@ class EventImage extends Model
     {
         return [
             'id' => $this->id,
-            'url' => Storage::disk('public')->url($this->path),
+            'url' => route('events.images.show', [$this->event_id, $this->id, basename($this->path)]),
             'width' => $this->width,
             'height' => $this->height,
             'shape' => $this->shape(),
             'fit' => $this->fit,
         ];
+    }
+
+    /**
+     * Removes the picture's file; the row is the caller's to delete.
+     */
+    public function deleteFile(): void
+    {
+        Storage::disk(ImageProcessor::PRIVATE_DISK)->delete($this->path);
     }
 }

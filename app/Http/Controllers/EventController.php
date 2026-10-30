@@ -36,7 +36,6 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -394,7 +393,7 @@ class EventController extends Controller
         }
 
         foreach ($event->images as $image) {
-            Storage::disk('public')->delete($image->path);
+            $image->deleteFile();
         }
 
         $event->reports()->where('status', ReportStatus::Pending)->update([
@@ -780,11 +779,11 @@ class EventController extends Controller
         }
 
         foreach ($event->images as $existingImage) {
-            Storage::disk('public')->delete($existingImage->path);
+            $existingImage->deleteFile();
             $existingImage->delete();
         }
 
-        $stored = $this->imageProcessor->storeWithSize($file, "events/{$event->id}", ImageProcessor::EVENT_MAX_EDGE);
+        $stored = $this->imageProcessor->storeWithSize($file, "events/{$event->id}", ImageProcessor::EVENT_MAX_EDGE, ImageProcessor::PRIVATE_DISK);
 
         $event->images()->create([
             'path' => $stored['path'],

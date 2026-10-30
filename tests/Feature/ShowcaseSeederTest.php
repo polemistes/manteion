@@ -9,6 +9,7 @@ use App\Models\Friendship;
 use App\Models\Leaflet;
 use App\Models\User;
 use App\Services\BadgeCounts;
+use App\Services\ImageProcessor;
 use Carbon\CarbonImmutable;
 use Database\Seeders\DemoSeeder;
 use Database\Seeders\ShowcaseSeeder;
@@ -51,6 +52,7 @@ beforeEach(function () {
     $this->travelTo(CarbonImmutable::parse('2026-10-07 09:30', 'Europe/Oslo'));
 
     Storage::fake('public');
+    Storage::fake(ImageProcessor::PRIVATE_DISK);
     Queue::fake();
     Http::preventStrayRequests();
 
@@ -84,7 +86,7 @@ test('it seeds a current showcase around alice and the owner', function () {
     });
 
     $shapes = EventImage::query()->get()->map(function (EventImage $image) {
-        [$width, $height] = getimagesizefromstring(Storage::disk('public')->get($image->path));
+        [$width, $height] = getimagesizefromstring(Storage::disk(ImageProcessor::PRIVATE_DISK)->get($image->path));
 
         return $width > $height ? 'photo' : 'poster';
     });
@@ -94,7 +96,7 @@ test('it seeds a current showcase around alice and the owner', function () {
     // The rows remember their size, so pages frame posters whole.
     expect(EventImage::query()->get()->map(fn (EventImage $image) => $image->shape())->countBy()->sortKeys()->all())
         ->toBe(['photo' => 3, 'poster' => 2]);
-    Storage::disk('public')->assertExists(Leaflet::query()->whereNotNull('image_path')->sole()->image_path);
+    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertExists(Leaflet::query()->whereNotNull('image_path')->sole()->image_path);
     Http::assertSentCount(6);
     Queue::assertNothingPushed();
 });
@@ -145,7 +147,7 @@ test('it draws stand-in pictures when Lorem Picsum cannot be reached', function 
 
     $this->seed(ShowcaseSeeder::class);
 
-    $sizes = EventImage::query()->get()->map(fn (EventImage $image) => array_slice(getimagesizefromstring(Storage::disk('public')->get($image->path)), 0, 2));
+    $sizes = EventImage::query()->get()->map(fn (EventImage $image) => array_slice(getimagesizefromstring(Storage::disk(ImageProcessor::PRIVATE_DISK)->get($image->path)), 0, 2));
 
     expect($sizes->filter(fn (array $size) => $size === [1600, 1000]))->toHaveCount(3)
         ->and($sizes->filter(fn (array $size) => $size === [1000, 1500]))->toHaveCount(2);
