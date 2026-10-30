@@ -1,0 +1,1 @@
+import{_r as e,st as t}from"./IconButton-Ck3PPYvx.js";import{a as n}from"./usePrimitiveElement-LJ2cTl7u.js";function r(r){return t(()=>!e(r)||!!n(r)?.closest(`form`))}export{r as t};
