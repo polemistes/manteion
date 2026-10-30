@@ -63,6 +63,12 @@ class HandleInertiaRequests extends Middleware
                 'latestReleaseApi' => config('services.android.latest_release_api'),
             ],
             'reverb' => self::reverbClient(),
+            // Video calls: on or off, and the STUN servers (never a relay)
+            // the browser hands to RTCPeerConnection.
+            'calls' => [
+                'enabled' => (bool) config('calls.enabled'),
+                'iceServers' => array_map(fn (string $url) => ['urls' => $url], config('calls.stun_servers')),
+            ],
             // The clock relative times ("2 min ago") count from while the
             // page renders on the server and hydrates in the browser, so
             // both write the same.

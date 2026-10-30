@@ -1,0 +1,91 @@
+{
+    "start": "Videosamtale",
+    "incoming": "Innkommende videosamtale",
+    "accept": "Svar",
+    "decline": "Avvis",
+    "calling": "Ringer …",
+    "connecting": "Kobler til …",
+    "reconnecting": "Forbindelsen falt ut, prøver igjen …",
+    "audioOnly": "Bare lyd",
+    "hangUp": "Avslutt samtalen",
+    "mute": "Slå av mikrofonen",
+    "unmute": "Slå på mikrofonen",
+    "cameraOff": "Slå av kameraet",
+    "cameraOn": "Slå på kameraet",
+    "yourCameraOff": "Kameraet ditt er av",
+    "peerCameraOff": "{name} har slått av kameraet",
+    "peerAudioOnly": "{name} er med på bare lyd",
+    "peerMuted": "{name} har slått av mikrofonen",
+    "expand": "Større",
+    "shrink": "Mindre",
+    "close": "Lukk",
+    "tryAgain": "Ring igjen",
+    "messageInstead": "Send en melding i stedet",
+    "missed": "Tapt anrop fra {name}",
+    "ended": {
+        "hungUp": {
+            "title": "Samtalen er avsluttet",
+            "body": "Samtalen varte i {duration}."
+        },
+        "cancelled": {
+            "title": "Anropet ble avbrutt",
+            "body": "{name} la på før samtalen kom i gang."
+        },
+        "declined": {
+            "title": "{name} avviste anropet",
+            "body": "Kanskje en annen gang."
+        },
+        "busy": {
+            "title": "{name} er opptatt",
+            "body": "De er i en annen samtale akkurat nå."
+        },
+        "noAnswer": {
+            "title": "Ingen svar",
+            "body": "{name} svarte ikke. De må ha Manteion åpent i en nettleser for å få anropet."
+        },
+        "connectionFailed": {
+            "title": "Fikk ikke koblet til",
+            "body": "Manteion kobler samtaler direkte mellom dere to, uten å gå via en server. Nettverkene deres tillot ikke det denne gangen – det skjer oftest når begge bruker mobildata. Prøv igjen på Wi-Fi, eller send en melding i stedet."
+        },
+        "connectionLost": {
+            "title": "Forbindelsen ble brutt",
+            "body": "Den direkte forbindelsen til {name} falt ut og kom ikke tilbake. Sjekk nettet ditt og ring igjen."
+        },
+        "setupFailed": {
+            "title": "Fikk ikke satt opp samtalen",
+            "body": "Noe gikk galt mens de to nettleserne ble enige om hvordan de skulle snakke sammen. Prøv igjen; skjer det flere ganger, kan en av dere trenge en nyere nettleser."
+        },
+        "mediaDenied": {
+            "title": "Kamera og mikrofon er blokkert",
+            "body": "Gi Manteion tilgang til kamera og mikrofon i nettleserens innstillinger for dette nettstedet, og prøv igjen."
+        },
+        "noDevices": {
+            "title": "Fant ingen mikrofon",
+            "body": "En samtale trenger minst en mikrofon. Koble til en, eller bruk en annen enhet."
+        },
+        "mediaBusy": {
+            "title": "Kameraet eller mikrofonen er i bruk",
+            "body": "Et annet program eller en annen fane bruker den. Lukk den og prøv igjen."
+        },
+        "mediaFailed": {
+            "title": "Fikk ikke startet kameraet",
+            "body": "Noe gikk galt med kameraet eller mikrofonen. Prøv igjen."
+        },
+        "peerMediaFailed": {
+            "title": "{name} fikk ikke startet kameraet sitt",
+            "body": "Nettleseren deres slapp ikke samtalen gjennom. Send en melding i stedet."
+        },
+        "unsupported": {
+            "title": "Samtaler er ikke tilgjengelig her",
+            "body": "Denne nettleseren eller appen kan ikke ringe videosamtaler. Åpne Manteion i en oppdatert nettleser."
+        },
+        "offline": {
+            "title": "Ingen direkteforbindelse",
+            "body": "Manteion har ikke kontakt med serveren akkurat nå, så samtalen kan ikke settes opp. Sjekk nettet og prøv igjen."
+        },
+        "signalFailed": {
+            "title": "Fikk ikke kontakt med serveren",
+            "body": "Samtalen kunne ikke settes opp. Prøv igjen om litt."
+        }
+    }
+}

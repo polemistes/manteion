@@ -11,6 +11,7 @@ import {
     Info,
     SmilePlus,
     Trash,
+    Video,
 } from '@lucide/vue';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -38,9 +39,12 @@ import { staffDelete } from '@/composables/useStaffDelete';
 import { useDates } from '@/lib/dates';
 import { toast, toastError } from '@/lib/toast';
 import {
+    callsAvailable,
     onIncomingMessage,
     requestJson,
+    startCall,
     useBadges,
+    useCalls,
     useConversationChannel,
 } from '@/realtime';
 import {
@@ -99,6 +103,33 @@ const isGroup = computed(() => props.conversation.type === 'group');
 const others = computed(() =>
     props.participants.filter((person) => !person.is_me),
 );
+
+// Video calls: direct conversations, in browsers that can (decided after
+// mount, so the server and the first paint agree on no button).
+const { call: activeCall, incoming: incomingCall } = useCalls();
+const canCall = ref(false);
+
+onMounted(() => {
+    canCall.value = callsAvailable();
+});
+
+const callBusy = computed(
+    () =>
+        (activeCall.value !== null && activeCall.value.status !== 'ended') ||
+        incomingCall.value !== null,
+);
+
+function callOther(): void {
+    const other = others.value[0];
+
+    if (other) {
+        void startCall(props.conversation.id, {
+            id: other.id,
+            name: other.name,
+            avatar_url: other.avatar_url,
+        });
+    }
+}
 
 // When each of the others last read the conversation: from the page, then
 // live as they read.
@@ -830,6 +861,13 @@ async function leave(): Promise<void> {
                         :stroke-width="1.9"
                         class="shrink-0 text-ink-subtle"
                         :aria-label="t('messages.index.muted')"
+                    />
+                    <IconButton
+                        v-if="canCall && !isGroup && others.length === 1"
+                        :icon="Video"
+                        :label="t('calls.start')"
+                        :disabled="callBusy"
+                        @click="callOther"
                     />
                     <IconButton
                         :icon="Info"

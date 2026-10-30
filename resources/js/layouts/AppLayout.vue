@@ -3,6 +3,7 @@ import { Link, usePage } from '@inertiajs/vue3';
 import { Settings } from '@lucide/vue';
 import { computed, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import CallOverlay from '@/components/calls/CallOverlay.vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import ImpersonationBanner from '@/components/ImpersonationBanner.vue';
 import ReportDialog from '@/components/ReportDialog.vue';
@@ -352,6 +353,7 @@ onIncomingMessage((message) => {
         </nav>
 
         <Toaster />
+        <CallOverlay v-if="page.props.auth.user" />
         <AppPushSheet v-if="page.props.auth.user" />
         <ConfirmDialog />
         <StaffDeleteDialog />

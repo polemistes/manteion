@@ -1,0 +1,91 @@
+{
+    "start": "Video call",
+    "incoming": "Incoming video call",
+    "accept": "Answer",
+    "decline": "Decline",
+    "calling": "Calling…",
+    "connecting": "Connecting…",
+    "reconnecting": "Connection dropped, trying again…",
+    "audioOnly": "Audio only",
+    "hangUp": "End call",
+    "mute": "Mute microphone",
+    "unmute": "Unmute microphone",
+    "cameraOff": "Turn camera off",
+    "cameraOn": "Turn camera on",
+    "yourCameraOff": "Your camera is off",
+    "peerCameraOff": "{name} has turned the camera off",
+    "peerAudioOnly": "{name} is on audio only",
+    "peerMuted": "{name} has muted the microphone",
+    "expand": "Larger",
+    "shrink": "Smaller",
+    "close": "Close",
+    "tryAgain": "Call again",
+    "messageInstead": "Send a message instead",
+    "missed": "Missed call from {name}",
+    "ended": {
+        "hungUp": {
+            "title": "Call ended",
+            "body": "The call lasted {duration}."
+        },
+        "cancelled": {
+            "title": "Call cancelled",
+            "body": "{name} hung up before the call connected."
+        },
+        "declined": {
+            "title": "{name} declined",
+            "body": "Maybe another time."
+        },
+        "busy": {
+            "title": "{name} is busy",
+            "body": "They’re in another call right now."
+        },
+        "noAnswer": {
+            "title": "No answer",
+            "body": "{name} didn’t pick up. They need Manteion open in a browser to get the call."
+        },
+        "connectionFailed": {
+            "title": "Couldn’t connect",
+            "body": "Manteion connects calls directly between the two of you, without going through a server. Your networks didn’t allow that this time — it happens most often when both of you are on mobile data. Try again on Wi-Fi, or send a message instead."
+        },
+        "connectionLost": {
+            "title": "Connection lost",
+            "body": "The direct connection to {name} dropped and didn’t come back. Check your network and call again."
+        },
+        "setupFailed": {
+            "title": "Couldn’t set up the call",
+            "body": "Something went wrong while the two browsers were agreeing on how to talk. Try again; if it keeps happening, one of you may need a newer browser."
+        },
+        "mediaDenied": {
+            "title": "Camera and microphone blocked",
+            "body": "Allow Manteion to use your camera and microphone in the browser’s settings for this site, then try again."
+        },
+        "noDevices": {
+            "title": "No microphone found",
+            "body": "A call needs at least a microphone. Plug one in, or use another device."
+        },
+        "mediaBusy": {
+            "title": "Camera or microphone in use",
+            "body": "Another app or tab is using it. Close that and try again."
+        },
+        "mediaFailed": {
+            "title": "Couldn’t start the camera",
+            "body": "Something went wrong with your camera or microphone. Try again."
+        },
+        "peerMediaFailed": {
+            "title": "{name} couldn’t start their camera",
+            "body": "Their browser didn’t let the call through. Send a message instead."
+        },
+        "unsupported": {
+            "title": "Calls aren’t available here",
+            "body": "This browser or app can’t make video calls. Open Manteion in an up-to-date browser."
+        },
+        "offline": {
+            "title": "No live connection",
+            "body": "Manteion isn’t connected to the server right now, so the call can’t be set up. Check your network and try again."
+        },
+        "signalFailed": {
+            "title": "Couldn’t reach the server",
+            "body": "The call couldn’t be set up. Try again in a moment."
+        }
+    }
+}

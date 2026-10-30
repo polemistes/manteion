@@ -30,6 +30,15 @@ class ConversationPolicy
         return $conversation->isVisibleTo($user);
     }
 
+    /**
+     * Video calls are between the two people of a direct conversation;
+     * groups would need every phone to send a stream to everyone else.
+     */
+    public function call(User $user, Conversation $conversation): bool
+    {
+        return $conversation->type === ConversationType::Direct && $conversation->isVisibleTo($user);
+    }
+
     public function addParticipant(User $user, Conversation $conversation): bool
     {
         return $conversation->type === ConversationType::Group && $conversation->isVisibleTo($user);

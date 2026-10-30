@@ -4,7 +4,7 @@ import { isNativeShell } from '@/pwa/platform';
 import { forgetSubscription } from '@/pwa/push';
 import { clearNotifications } from '@/pwa/serviceWorker';
 import { logout } from '@/routes';
-import type { Badges, IncomingMessage } from '@/types';
+import type { Badges, CallSignal, IncomingMessage } from '@/types';
 import {
     emitActivity,
     emitIncomingMessage,
@@ -18,6 +18,7 @@ import {
     setupBadges,
     syncBadgesFromPage,
 } from './badges';
+import { configureCalls, receiveCallSignal, setCallsViewer } from './calls';
 import { viewedConversationId } from './conversation';
 import { joinPrivateChannel, setupEcho } from './echo';
 import type { ReverbClient } from './echo';
@@ -31,6 +32,25 @@ export {
     setMessageSoundEnabled,
 } from './activity';
 export { refreshBadges, useBadges } from './badges';
+export {
+    acceptCall,
+    callsAvailable,
+    declineCall,
+    dismissCall,
+    hangUp,
+    onMissedCall,
+    retryCall,
+    startCall,
+    toggleCamera,
+    toggleMic,
+    useCalls,
+} from './calls';
+export type {
+    ActiveCall,
+    CallEndReason,
+    CallStatus,
+    IncomingCall,
+} from './calls';
 export {
     toMessageSummary,
     useConversationChannel,
@@ -62,6 +82,9 @@ const handleIncomingMessage = (message: IncomingMessage): void => {
 const handleNotification = (notification: Record<string, unknown>): void =>
     emitActivity(notification);
 
+const handleCallSignal = (signal: CallSignal): void =>
+    receiveCallSignal(signal);
+
 function pageUserId(page: Page): number | null {
     const auth = page.props.auth as SharedPageProps['auth'] | undefined;
     const id = auth?.user?.id;
@@ -83,11 +106,13 @@ function follow(page: Page): void {
     }
 
     userId = next;
+    setCallsViewer(next);
 
     if (userChannel) {
         userChannel.channel
             .stopListening('.badges.updated', handleBadges)
             .stopListening('.message.received', handleIncomingMessage)
+            .stopListening('.call.signal', handleCallSignal)
             .stopListeningForNotification(handleNotification);
         userChannel.release();
         userChannel = null;
@@ -115,6 +140,7 @@ function follow(page: Page): void {
     userChannel?.channel
         .listen('.badges.updated', handleBadges)
         .listen('.message.received', handleIncomingMessage)
+        .listen('.call.signal', handleCallSignal)
         .notification(handleNotification);
 }
 
@@ -131,6 +157,7 @@ export function setupRealtime(initialPage: Page): void {
     started = true;
 
     setupEcho((initialPage.props.reverb as ReverbClient | undefined) ?? null);
+    configureCalls(initialPage);
     follow(initialPage);
     setupBadges();
     setupAttention();
@@ -152,6 +179,7 @@ export function setupRealtime(initialPage: Page): void {
     });
 
     router.on('success', (event) => {
+        configureCalls(event.detail.page);
         follow(event.detail.page);
         syncBadgesFromPage(event.detail.page);
     });

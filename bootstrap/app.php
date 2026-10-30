@@ -28,6 +28,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // the server so the first paint already leaves it out.
         $middleware->encryptCookies(except: ['alpha_notice_dismissed']);
 
+        // A call's session description (SDP) ends every line, the last one
+        // too, with CRLF; trimmed off, the browser at the other end rejects
+        // it ("Invalid SDP line"). See CallSignalController.
+        $middleware->trimStrings(except: ['data.sdp.sdp']);
+
         $middleware->web(append: [
             SetLocale::class,
             EnsureUserIsNotSuspended::class,

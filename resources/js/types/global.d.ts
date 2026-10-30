@@ -1,6 +1,7 @@
 import type { Theme } from '@/theme';
 import type { Auth } from '@/types/auth';
 import type { Badges } from '@/types/badges';
+import type { CallsConfig } from '@/types/calls';
 
 // Extend ImportMeta interface for Vite...
 declare module 'vite/client' {
@@ -40,6 +41,8 @@ declare module '@inertiajs/core' {
                 port: number;
                 scheme: string;
             } | null;
+            /** Video calls: on or off, and the STUN servers for the browser. */
+            calls: CallsConfig;
             /** The server's clock, for relative times during hydration. */
             now: string;
             impersonating: boolean;

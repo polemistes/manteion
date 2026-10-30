@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CallSignalController;
 use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\ConversationMessageController;
 use App\Http\Controllers\ConversationMuteController;
@@ -31,3 +32,5 @@ Route::post('/messages/{conversation}/messages/{message}/seen', [MessageSeenCont
 Route::post('/messages/{conversation}/read', [ConversationReadController::class, 'store'])->name('messages.read');
 Route::post('/messages/{conversation}/presence', [ConversationPresenceController::class, 'store'])->name('messages.presence');
 Route::put('/messages/{conversation}/mute', [ConversationMuteController::class, 'update'])->name('messages.mute');
+// A call's set-up messages; a connecting call sends a few dozen in a second.
+Route::post('/messages/{conversation}/call', [CallSignalController::class, 'store'])->middleware('throttle:240,1')->name('messages.call');

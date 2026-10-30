@@ -120,19 +120,23 @@ export function setMessageSoundEnabled(enabled: boolean): void {
 }
 
 /**
- * Whether another tab of the app just played the sound for the same message
- * (every open tab receives the broadcast), claiming it for this one if not.
+ * Whether another tab of the app just played the same sound (every open
+ * tab receives the broadcast), claiming it for this one if not. `key` names
+ * the sound; `windowMs` is how long a claim lasts.
  */
-function claimSound(): boolean {
+export function claimSound(
+    key: string = SOUND_PLAYED_KEY,
+    windowMs: number = 1500,
+): boolean {
     try {
         const now = Date.now();
-        const last = Number(window.localStorage.getItem(SOUND_PLAYED_KEY));
+        const last = Number(window.localStorage.getItem(key));
 
-        if (now - last < 1500) {
+        if (now - last < windowMs) {
             return false;
         }
 
-        window.localStorage.setItem(SOUND_PLAYED_KEY, String(now));
+        window.localStorage.setItem(key, String(now));
     } catch {
         // No storage to coordinate through: play.
     }
@@ -140,7 +144,16 @@ function claimSound(): boolean {
     return true;
 }
 
-function tone(
+/**
+ * The shared audio context, once the user's first tap or key press has
+ * unlocked it (setupMessageSound); null before that and on the server.
+ */
+export function audioContext(): AudioContext | null {
+    return audio;
+}
+
+/** A soft sine note: `frequency` Hz from `start` (context time) for `length` seconds. */
+export function tone(
     context: AudioContext,
     frequency: number,
     start: number,

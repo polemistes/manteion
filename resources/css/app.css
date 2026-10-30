@@ -151,6 +151,10 @@
     --color-mark: #c23132; /* the tripod mark */
     --color-focus: #b02b2c; /* focus ring */
     --color-scrim: rgb(31 22 16 / 0.42);
+    --color-stage: #15110f; /* the video call window, dark in both modes */
+    --color-on-stage: #f7f3ec;
+    --color-hangup: #d93a2f; /* the one solid red: ending a call */
+    --color-on-hangup: #ffffff;
 }
 
 /* Shadow colours (see --shadow-* above). Plain variables, not theme keys. */
