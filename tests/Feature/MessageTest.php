@@ -135,6 +135,7 @@ test('a message sent as JSON comes back as the thread shows it', function () {
     $response->assertCreated()->assertExactJson(['message' => [
         'id' => $message->id,
         'body' => 'Hey there!',
+        'image' => null,
         'is_deleted' => false,
         'created_at' => $message->created_at->toIso8601String(),
         'sender' => ['id' => $user->id, 'name' => $user->name, 'username' => $user->username, 'avatar_url' => null],

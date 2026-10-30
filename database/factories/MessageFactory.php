@@ -25,4 +25,18 @@ class MessageFactory extends Factory
             'body' => fake()->sentence(),
         ];
     }
+
+    /**
+     * With a picture on record but no file behind it: enough for shapes
+     * and previews. A test that reads the file sends one through the
+     * controller instead.
+     */
+    public function withImage(int $width = 1200, int $height = 900): static
+    {
+        return $this->state(fn () => [
+            'image_path' => 'messages/'.fake()->uuid().'.jpg',
+            'image_width' => $width,
+            'image_height' => $height,
+        ]);
+    }
 }

@@ -42,7 +42,9 @@ export function socketId(): string | null {
  * token from the XSRF-TOKEN cookie, `Accept: application/json` (so Laravel
  * answers with JSON and status codes instead of redirects), and the Echo
  * socket id so a `->toOthers()` broadcast skips this tab. `keepalive` lets
- * the request outlive the page (presence when the tab closes).
+ * the request outlive the page (presence when the tab closes). A `body`
+ * goes as JSON, unless it is a FormData (a file upload), which goes as it
+ * is.
  *
  * Resolves with the decoded JSON body, or null when there is none (204, or
  * a non-JSON answer); rejects with a RequestError otherwise.
@@ -67,7 +69,9 @@ export async function requestJson<T>(
         headers['X-Socket-ID'] = socket;
     }
 
-    if (body !== undefined) {
+    const isForm = body instanceof FormData;
+
+    if (body !== undefined && !isForm) {
         headers['Content-Type'] = 'application/json';
     }
 
@@ -78,7 +82,10 @@ export async function requestJson<T>(
         response = await fetch(endpoint.url, {
             method,
             headers,
-            body: body === undefined ? undefined : JSON.stringify(body),
+            body:
+                body === undefined || isForm
+                    ? (body as FormData | undefined)
+                    : JSON.stringify(body),
             credentials: 'same-origin',
             keepalive: options.keepalive,
             signal: options.signal,

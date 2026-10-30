@@ -4,11 +4,13 @@ Before planning or editing, find the row whose globs match the file's path and r
 
 | Applies to | Rule file |
 | --- | --- |
+| resources/js/routes/**, resources/js/actions/** | .ai/rules/actions.md |
 | android/** | .ai/rules/android.md |
 | app/Http/Controllers/EventController.php | .ai/rules/controllers.md |
 | resources/css/app.css | .ai/rules/css.md |
 | database/factories/UserFactory.php | .ai/rules/factories.md |
 | app/Actions/Fortify/** | .ai/rules/fortify.md |
+| app/Http/Controllers/MessageImageController.php, app/Models/Message.php, app/Http/Controllers/ConversationMessageController.php | .ai/rules/http-controllers.md |
 | resources/js/lang/** | .ai/rules/js-lang.md |
 | resources/js/** | .ai/rules/js.md |
 | lang/** | .ai/rules/lang.md |

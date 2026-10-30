@@ -24,13 +24,14 @@ class MessageSummary
     public const PREVIEW_LENGTH = 120;
 
     /**
-     * @return array{id: int, body: string|null, is_deleted: bool, created_at: string, sender: array{id: int, name: string, username: string, avatar_url: string|null}, is_mine: bool, can_delete: bool, can_report: bool, reactions: array<int, array{emoji: string, count: int, reacted: bool}>, seen_by: list<array{id: int, name: string, avatar_url: string|null}>}
+     * @return array{id: int, body: string|null, image: array{url: string, width: int|null, height: int|null}|null, is_deleted: bool, created_at: string, sender: array{id: int, name: string, username: string, avatar_url: string|null}, is_mine: bool, can_delete: bool, can_report: bool, reactions: array<int, array{emoji: string, count: int, reacted: bool}>, seen_by: list<array{id: int, name: string, avatar_url: string|null}>}
      */
     public static function for(Message $message, User $viewer): array
     {
         return [
             'id' => $message->id,
             'body' => $message->visibleBody(),
+            'image' => $message->imagePresentation(),
             'is_deleted' => $message->is_deleted,
             'created_at' => $message->created_at->toIso8601String(),
             'sender' => self::sender($message),
@@ -46,7 +47,7 @@ class MessageSummary
      * The same message for everyone in the conversation at once: who
      * reacted is listed instead of whether the viewer did.
      *
-     * @return array{id: int, conversation_id: int, body: string|null, is_deleted: bool, created_at: string, sender: array{id: int, name: string, username: string, avatar_url: string|null}, reactions: array<int, array{emoji: string, count: int, user_ids: array<int, int>}>, seen_by: list<array{id: int, name: string, avatar_url: string|null}>}
+     * @return array{id: int, conversation_id: int, body: string|null, image: array{url: string, width: int|null, height: int|null}|null, is_deleted: bool, created_at: string, sender: array{id: int, name: string, username: string, avatar_url: string|null}, reactions: array<int, array{emoji: string, count: int, user_ids: array<int, int>}>, seen_by: list<array{id: int, name: string, avatar_url: string|null}>}
      */
     public static function broadcast(Message $message): array
     {
@@ -71,6 +72,7 @@ class MessageSummary
             'id' => $message->id,
             'conversation_id' => $message->conversation_id,
             'body' => $message->visibleBody(),
+            'image' => $message->imagePresentation(),
             'is_deleted' => $message->is_deleted,
             'created_at' => $message->created_at->toIso8601String(),
             'sender' => self::sender($message),
@@ -96,14 +98,26 @@ class MessageSummary
     }
 
     /**
-     * The message text on one line and cut to the given length, for lists,
-     * toasts and pushes. Null for a wiped delete.
+     * The message on one line and cut to the given length, for lists,
+     * toasts and pushes: its text, or "📷 Photo" for a picture without
+     * words (in `$locale`, else the current one); a caption gets the
+     * camera in front. Null for a wiped delete.
      */
-    public static function preview(Message $message, int $length = self::PREVIEW_LENGTH): ?string
+    public static function preview(Message $message, int $length = self::PREVIEW_LENGTH, ?string $locale = null): ?string
     {
         $body = $message->visibleBody();
 
-        return $body === null ? null : Str::limit(Str::squish($body), $length, '…');
+        if ($body === null) {
+            return null;
+        }
+
+        if ($message->image_path === null) {
+            return Str::limit(Str::squish($body), $length, '…');
+        }
+
+        $text = $body === '' ? __('chat.preview.photo', [], $locale) : Str::squish($body);
+
+        return Str::limit('📷 '.$text, $length, '…');
     }
 
     /**

@@ -44,6 +44,8 @@ interface ReportedUser {
 interface Reportable {
     type: 'message' | 'event' | 'comment' | 'leaflet' | 'leaflet_response';
     excerpt: string | null;
+    /** The picture on a reported message, while it is there. */
+    image_url?: string | null;
     is_deleted: boolean;
     author: ReportedUser;
     url: string;
@@ -252,7 +254,22 @@ function suspend(): void {
                     </Menu>
                 </div>
 
+                <div
+                    v-if="report.reportable.image_url"
+                    class="mt-3 overflow-hidden rounded-md bg-canvas"
+                >
+                    <img
+                        :src="report.reportable.image_url"
+                        alt=""
+                        class="mx-auto block max-h-80 w-auto max-w-full"
+                        loading="lazy"
+                    />
+                </div>
                 <blockquote
+                    v-if="
+                        report.reportable.excerpt ||
+                        !report.reportable.image_url
+                    "
                     class="mt-3 rounded-r-sm border-l-2 border-line-strong bg-canvas px-3.5 py-2.5 whitespace-pre-line text-ink"
                     :class="
                         report.reportable.excerpt
@@ -275,7 +292,7 @@ function suspend(): void {
 
                 <div class="mt-4 flex flex-wrap items-center gap-2">
                     <Button
-                        v-if="report.reportable.excerpt"
+                        v-if="!report.reportable.is_deleted"
                         variant="danger"
                         size="sm"
                         :icon="Trash"

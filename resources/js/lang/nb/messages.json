@@ -70,6 +70,12 @@
         "seen": "Sett",
         "seenBy": "Sett av {names}",
         "markSeen": "La {name} få vite at du har sett dette",
+        "attachPhoto": "Legg til et bilde",
+        "removePhoto": "Fjern bildet",
+        "photo": "Bilde",
+        "photoUnreadable": "Bildet kunne ikke leses.",
+        "viewPhoto": "Vis bildet",
+        "closePhoto": "Lukk bildet",
         "markedSeen": "{name} får vite at du har sett det"
     },
     "create": {

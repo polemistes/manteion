@@ -20,9 +20,13 @@ class ImageProcessor
 
     public const AVATAR_MAX_EDGE = 512;
 
+    /** A picture in a chat message is kept at an event photo's size. */
+    public const MESSAGE_MAX_EDGE = 1600;
+
     /**
      * Re-encodes an uploaded image through GD, scaled to fit within
-     * `$maxEdge` pixels on its longer side, and stores it as a JPEG.
+     * `$maxEdge` pixels on its longer side, and stores it as a JPEG on
+     * `$disk` (the public one unless said otherwise).
      * Decoding and re-encoding never carries EXIF metadata through (GD has
      * no concept of it), so this strips camera/GPS metadata as a side
      * effect — a defensive backstop behind the client-side cropper, which
@@ -30,9 +34,9 @@ class ImageProcessor
      * applied first where the exif extension is available, so a stripped
      * photo is not left rotated.
      */
-    public function store(UploadedFile $file, string $directory, int $maxEdge = self::EVENT_MAX_EDGE): string
+    public function store(UploadedFile $file, string $directory, int $maxEdge = self::EVENT_MAX_EDGE, string $disk = 'public'): string
     {
-        return $this->storeWithSize($file, $directory, $maxEdge)['path'];
+        return $this->storeWithSize($file, $directory, $maxEdge, $disk)['path'];
     }
 
     /**
@@ -40,7 +44,7 @@ class ImageProcessor
      *
      * @return array{path: string, width: int, height: int}
      */
-    public function storeWithSize(UploadedFile $file, string $directory, int $maxEdge = self::EVENT_MAX_EDGE): array
+    public function storeWithSize(UploadedFile $file, string $directory, int $maxEdge = self::EVENT_MAX_EDGE, string $disk = 'public'): array
     {
         $image = $this->orient($this->decode($file), $file);
         $image = $this->fit($image, $maxEdge);
@@ -66,7 +70,7 @@ class ImageProcessor
 
         $path = trim($directory, '/').'/'.Str::random(40).'.jpg';
 
-        Storage::disk('public')->put($path, $contents);
+        Storage::disk($disk)->put($path, $contents);
 
         return ['path' => $path, 'width' => $width, 'height' => $height];
     }

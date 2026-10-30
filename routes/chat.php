@@ -6,6 +6,7 @@ use App\Http\Controllers\ConversationMuteController;
 use App\Http\Controllers\ConversationParticipantController;
 use App\Http\Controllers\ConversationPresenceController;
 use App\Http\Controllers\ConversationReadController;
+use App\Http\Controllers\MessageImageController;
 use App\Http\Controllers\MessageSeenController;
 use Illuminate\Support\Facades\Route;
 
@@ -20,6 +21,9 @@ Route::post('/messages/{conversation}/send', [ConversationMessageController::cla
 Route::get('/messages/{conversation}/messages', [ConversationMessageController::class, 'index'])->name('messages.messages.index');
 Route::delete('/messages/{conversation}/messages/{message}', [ConversationMessageController::class, 'destroy'])
     ->name('messages.messages.destroy')
+    ->scopeBindings();
+Route::get('/messages/{conversation}/messages/{message}/image', [MessageImageController::class, 'show'])
+    ->name('messages.messages.image')
     ->scopeBindings();
 Route::post('/messages/{conversation}/participants', [ConversationParticipantController::class, 'store'])->name('messages.participants.store');
 Route::delete('/messages/{conversation}/participants', [ConversationParticipantController::class, 'destroy'])->name('messages.participants.destroy');

@@ -70,6 +70,12 @@
         "seen": "Seen",
         "seenBy": "Seen by {names}",
         "markSeen": "Let {name} know you’ve seen this",
+        "attachPhoto": "Add a photo",
+        "removePhoto": "Remove the photo",
+        "photo": "Photo",
+        "photoUnreadable": "That photo couldn’t be read.",
+        "viewPhoto": "View the photo",
+        "closePhoto": "Close the photo",
         "markedSeen": "{name} will see that you’ve seen it"
     },
     "create": {

@@ -16,6 +16,7 @@ use App\Models\Reaction;
 use App\Models\User;
 use App\Notifications\NewMessageReceived;
 use App\Services\AdminAlerts;
+use App\Services\ImageProcessor;
 use App\Services\MessageSummary;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -36,6 +37,8 @@ class ConversationMessageController extends Controller
      * more asks again from the last one it got.
      */
     public const CATCH_UP_LIMIT = 200;
+
+    public function __construct(private ImageProcessor $imageProcessor) {}
 
     /**
      * A page of messages as plain JSON, for the open thread: `before` an id
@@ -81,7 +84,8 @@ class ConversationMessageController extends Controller
     }
 
     /**
-     * Save the message and tell everyone: the open thread over the
+     * Save the message (and its picture, on the private disk) and tell
+     * everyone: the open thread over the
      * conversation channel, every recipient who has not muted it wherever
      * they are in the app (and their badges), and each recipient's devices
      * by push unless they are reading along. Sending also marks the
@@ -92,9 +96,17 @@ class ConversationMessageController extends Controller
         $sender = $request->user();
         $conversation->loadMissing('participants.user');
 
+        $image = $request->file('image');
+        $stored = $image === null
+            ? null
+            : $this->imageProcessor->storeWithSize($image, "messages/{$conversation->id}", ImageProcessor::MESSAGE_MAX_EDGE, Message::IMAGE_DISK);
+
         $message = $conversation->messages()->create([
             'user_id' => $sender->id,
-            'body' => $request->validated('body'),
+            'body' => $request->validated('body') ?? '',
+            'image_path' => $stored['path'] ?? null,
+            'image_width' => $stored['width'] ?? null,
+            'image_height' => $stored['height'] ?? null,
         ]);
         $message->setRelation('conversation', $conversation)
             ->setRelation('sender', $sender)
@@ -139,7 +151,8 @@ class ConversationMessageController extends Controller
             ? __('messages.moderation.deleted_placeholder')
             : '';
 
-        $message->update(['body' => $body, 'is_deleted' => true]);
+        $message->deleteImageFile();
+        $message->update(['body' => $body, 'is_deleted' => true, 'image_path' => null, 'image_width' => null, 'image_height' => null]);
 
         $message->reports()->where('status', ReportStatus::Pending)->update([
             'status' => ReportStatus::Resolved,

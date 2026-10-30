@@ -118,6 +118,7 @@ test('a broadcast message is the same for everyone and says who reacted', functi
         'id' => $message->id,
         'conversation_id' => $message->conversation_id,
         'body' => 'Pizza tonight?',
+        'image' => null,
         'is_deleted' => false,
         'created_at' => $message->created_at->toIso8601String(),
         'sender' => ['id' => $sender->id, 'name' => $sender->name, 'username' => $sender->username, 'avatar_url' => $sender->avatar_url],

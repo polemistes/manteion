@@ -75,6 +75,7 @@ class ReportController extends Controller
             $reportable instanceof Message => [
                 'type' => 'message',
                 'excerpt' => $reportable->is_deleted ? null : $reportable->body,
+                'image_url' => $reportable->imagePresentation()['url'] ?? null,
                 'is_deleted' => $reportable->is_deleted,
                 'author' => $this->summarizeUser($reportable->sender),
                 'url' => route('messages.show', $reportable->conversation_id),

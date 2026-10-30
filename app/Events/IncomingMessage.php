@@ -43,7 +43,8 @@ class IncomingMessage implements ShouldBroadcastNow, ShouldRescue
 
     /**
      * The conversation's title is the recipient's, e.g. a group without a
-     * name is called after its other members.
+     * name is called after its other members, and so is the language of a
+     * picture's label in the preview.
      *
      * @return array{conversation_id: int, conversation_type: string, conversation_title: string, message_id: int, sender: array{id: int, name: string, avatar_url: string|null}, preview: string}
      */
@@ -64,7 +65,7 @@ class IncomingMessage implements ShouldBroadcastNow, ShouldRescue
                 'name' => $sender->name,
                 'avatar_url' => $sender->avatar_url,
             ],
-            'preview' => MessageSummary::preview($this->message) ?? '',
+            'preview' => MessageSummary::preview($this->message, locale: $recipient->locale) ?? '',
         ];
     }
 }

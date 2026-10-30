@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\AdminAlert;
+use App\Models\Message;
 use App\Services\AdminAlerts;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -37,6 +38,11 @@ class ProfileController extends Controller
         if ($user->avatar_path) {
             Storage::disk('public')->delete($user->avatar_path);
         }
+
+        Message::query()
+            ->where('user_id', $user->id)
+            ->whereNotNull('image_path')
+            ->each(fn (Message $message) => $message->deleteImageFile());
 
         Auth::guard('web')->logout();
 

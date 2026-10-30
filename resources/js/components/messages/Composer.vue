@@ -1,28 +1,43 @@
 <script setup lang="ts">
-import { ArrowUp, Smile } from '@lucide/vue';
-import { computed, nextTick, ref } from 'vue';
+import { ArrowUp, ImagePlus, Smile, X } from '@lucide/vue';
+import { computed, nextTick, onBeforeUnmount, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import EmojiPicker from '@/components/EmojiPicker.vue';
 import TextArea from '@/components/ui/TextArea.vue';
+import { prepareImageUpload } from '@/lib/image';
+import type { PreparedImage } from '@/lib/image';
+import { toastError } from '@/lib/toast';
+import { IMAGE_MAX_EDGE } from './chat';
+import type { MessageDraft } from './chat';
 
 /**
  * The message field pinned under a thread. It grows to six lines, then
  * scrolls. With a hardware keyboard Enter sends and Shift+Enter breaks the
- * line; on touch screens Enter is a line break and the arrow sends.
+ * line; on touch screens Enter is a line break and the arrow sends. A
+ * picture can be attached: it is shown above the field until sent or
+ * removed, and goes out as one message with the words, if any.
  */
 const props = withDefaults(defineProps<{ disabled?: boolean }>(), {
     disabled: false,
 });
 
-const emit = defineEmits<{ send: [body: string]; typing: [] }>();
+const emit = defineEmits<{ send: [draft: MessageDraft]; typing: [] }>();
 
 const { t } = useI18n();
 
 const text = ref('');
 const pickerOpen = ref(false);
 const field = ref<InstanceType<typeof TextArea> | null>(null);
+const fileInput = ref<HTMLInputElement | null>(null);
+const image = ref<PreparedImage | null>(null);
+const preparing = ref(false);
 
-const canSend = computed(() => text.value.trim() !== '' && !props.disabled);
+const canSend = computed(
+    () =>
+        (text.value.trim() !== '' || image.value !== null) &&
+        !props.disabled &&
+        !preparing.value,
+);
 
 function hasHardwareKeyboard(): boolean {
     return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
@@ -33,8 +48,10 @@ function submit(): void {
         return;
     }
 
-    emit('send', text.value.trim());
+    // The thread takes the picture (and its preview URL) over from here.
+    emit('send', { body: text.value.trim(), image: image.value });
     text.value = '';
+    image.value = null;
     nextTick(() => field.value?.focus());
 }
 
@@ -75,6 +92,47 @@ function insertEmoji(emoji: string): void {
     });
 }
 
+function pickImage(): void {
+    fileInput.value?.click();
+}
+
+// The picked file is scaled down and stripped of its metadata here, so a
+// phone photo goes out small and the picture replaces any earlier one.
+async function onImageChosen(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    // So the same file can be picked again later.
+    input.value = '';
+
+    if (!file) {
+        return;
+    }
+
+    preparing.value = true;
+
+    try {
+        const prepared = await prepareImageUpload(file, IMAGE_MAX_EDGE);
+
+        removeImage();
+        image.value = prepared;
+        nextTick(() => field.value?.focus());
+    } catch {
+        toastError(t('messages.show.photoUnreadable'));
+    } finally {
+        preparing.value = false;
+    }
+}
+
+function removeImage(): void {
+    if (image.value) {
+        URL.revokeObjectURL(image.value.previewUrl);
+        image.value = null;
+    }
+}
+
+onBeforeUnmount(removeImage);
+
 defineExpose({ focus: () => field.value?.focus() });
 </script>
 
@@ -82,14 +140,46 @@ defineExpose({ focus: () => field.value?.focus() });
     <div
         class="flex-none border-t border-line bg-canvas p-2 pb-[calc(8px+env(safe-area-inset-bottom))] md:px-4 md:pt-3"
     >
+        <div v-if="image" class="mx-auto mb-2.5 flex max-w-thread px-1 pt-1">
+            <div class="relative">
+                <img
+                    :src="image.previewUrl"
+                    :width="image.width"
+                    :height="image.height"
+                    alt=""
+                    class="block h-24 w-auto max-w-[200px] rounded-md object-cover ring-1 ring-line"
+                />
+                <button
+                    type="button"
+                    :aria-label="t('messages.show.removePhoto')"
+                    class="absolute -top-2 -right-2 grid size-7 place-items-center rounded-full bg-ink text-canvas shadow-sm transition-transform duration-120 after:absolute after:-inset-1.5 active:scale-[.98]"
+                    @click="removeImage"
+                >
+                    <X :size="14" :stroke-width="2.25" aria-hidden="true" />
+                </button>
+            </div>
+        </div>
         <form
             class="mx-auto flex max-w-thread items-end gap-2"
             @submit.prevent="submit"
         >
             <div
-                class="flex min-h-11 min-w-0 flex-1 items-end rounded-xl bg-surface pr-0.5 pl-4 ring-1 ring-line-strong ring-inset focus-within:ring-2 focus-within:ring-ink md:min-h-12"
+                class="flex min-h-11 min-w-0 flex-1 items-end rounded-xl bg-surface px-0.5 ring-1 ring-line-strong ring-inset focus-within:ring-2 focus-within:ring-ink md:min-h-12"
             >
-                <div class="min-w-0 flex-1">
+                <button
+                    type="button"
+                    :aria-label="t('messages.show.attachPhoto')"
+                    :disabled="props.disabled || preparing"
+                    class="mb-0.5 grid size-10 shrink-0 place-items-center rounded-full text-ink-muted hover:text-ink disabled:pointer-events-none disabled:opacity-45 md:mb-1"
+                    @click="pickImage"
+                >
+                    <ImagePlus
+                        :size="20"
+                        :stroke-width="1.8"
+                        aria-hidden="true"
+                    />
+                </button>
+                <div class="min-w-0 flex-1 pl-1">
                     <TextArea
                         ref="field"
                         v-model="text"
@@ -124,6 +214,14 @@ defineExpose({ focus: () => field.value?.focus() });
                 <ArrowUp :size="20" :stroke-width="2.25" aria-hidden="true" />
             </button>
         </form>
+        <input
+            ref="fileInput"
+            type="file"
+            accept="image/*"
+            class="hidden"
+            tabindex="-1"
+            @change="onImageChosen"
+        />
         <p
             class="mx-auto mt-1.5 hidden max-w-thread px-4 text-caption text-ink-subtle pointer-fine:md:block"
         >

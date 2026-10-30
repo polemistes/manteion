@@ -15,8 +15,13 @@ import {
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import EmojiPicker from '@/components/EmojiPicker.vue';
+import ImageLightbox from '@/components/ImageLightbox.vue';
 import { QUICK_REACTIONS } from '@/components/messages/chat';
-import type { BubblePosition, ChatMessage } from '@/components/messages/chat';
+import type {
+    BubblePosition,
+    ChatMessage,
+    MessageDraft,
+} from '@/components/messages/chat';
 import ChatBubble from '@/components/messages/ChatBubble.vue';
 import Composer from '@/components/messages/Composer.vue';
 import ConversationDetails from '@/components/messages/ConversationDetails.vue';
@@ -56,6 +61,7 @@ import { store as reactionsStore } from '@/routes/reactions';
 import type {
     ConversationListItem,
     ConversationParticipantSummary,
+    MessageImage,
     MessageSummary,
     ReactionSummary,
 } from '@/types';
@@ -405,15 +411,27 @@ function reloadList(): void {
 
 onIncomingMessage(reloadList);
 
-// Sending: the message shows at once, then is swapped for the server's.
+// Sending: the message shows at once (a picture from the composer's own
+// preview), then is swapped for the server's.
 let pendingSeq = 0;
 
-async function send(body: string, retryOf?: ChatMessage): Promise<void> {
+async function send(draft: MessageDraft, retryOf?: ChatMessage): Promise<void> {
     const me = page.props.auth.user;
     const tempId = retryOf?.tempId ?? `pending-${++pendingSeq}`;
-    const draft: ChatMessage = {
+    const image: MessageImage | null =
+        retryOf?.image ??
+        (draft.image
+            ? {
+                  url: draft.image.previewUrl,
+                  width: draft.image.width,
+                  height: draft.image.height,
+              }
+            : null);
+    const imageFile = retryOf?.imageFile ?? draft.image?.file;
+    const message: ChatMessage = {
         id: -pendingSeq,
-        body,
+        body: draft.body,
+        image,
         is_deleted: false,
         created_at: new Date().toISOString(),
         sender: {
@@ -429,23 +447,42 @@ async function send(body: string, retryOf?: ChatMessage): Promise<void> {
         seen_by: [],
         pending: 'sending',
         tempId,
+        imageFile,
     };
 
     pending.value = retryOf
-        ? pending.value.map((item) => (item.tempId === tempId ? draft : item))
-        : [...pending.value, draft];
+        ? pending.value.map((item) => (item.tempId === tempId ? message : item))
+        : [...pending.value, message];
     void nextTick(() => scrollToBottom(true));
 
     try {
+        let payload: FormData | { body: string } = { body: draft.body };
+
+        if (imageFile) {
+            payload = new FormData();
+            payload.append('body', draft.body);
+            payload.append('image', imageFile);
+        }
+
         const response = await requestJson<{ message: MessageSummary }>(
             sendRoute(props.conversation.id),
-            { body },
+            payload,
         );
+
+        // The server's copy of the picture is fetched before the swap, so
+        // the bubble does not go blank in between.
+        if (response?.message.image) {
+            await warm(response.message.image.url);
+        }
 
         pending.value = pending.value.filter((item) => item.tempId !== tempId);
 
         if (response?.message) {
             setExtra(response.message);
+        }
+
+        if (image) {
+            URL.revokeObjectURL(image.url);
         }
 
         reloadList();
@@ -456,9 +493,25 @@ async function send(body: string, retryOf?: ChatMessage): Promise<void> {
     }
 }
 
-function retry(message: ChatMessage): void {
-    void send(message.body ?? '', message);
+/** Resolves once the browser has the picture, or has given up on it. */
+function warm(url: string): Promise<void> {
+    return new Promise((resolve) => {
+        const picture = new Image();
+        const done = (): void => resolve();
+
+        picture.onload = done;
+        picture.onerror = done;
+        setTimeout(done, 4000);
+        picture.src = url;
+    });
 }
+
+function retry(message: ChatMessage): void {
+    void send({ body: message.body ?? '', image: null }, message);
+}
+
+// A picture full size, over the thread.
+const viewing = ref<MessageImage | null>(null);
 
 // One reaction per person: the same emoji again takes it back.
 function toggled(
@@ -595,6 +648,7 @@ async function remove(message: ChatMessage): Promise<void> {
     setExtra({
         ...message,
         body: null,
+        image: null,
         is_deleted: true,
         can_delete: false,
         can_report: false,
@@ -860,6 +914,7 @@ async function leave(): Promise<void> {
                                 @report="report('message', message.id)"
                                 @retry="retry(message)"
                                 @mark-seen="markSeen(message)"
+                                @view-image="viewing = message.image"
                             />
                         </div>
                     </section>
@@ -966,6 +1021,7 @@ async function leave(): Promise<void> {
                 }}
             </button>
             <button
+                v-if="actionsFor?.body"
                 type="button"
                 class="flex h-12 w-full items-center gap-3 rounded-md px-3 text-left hover:bg-surface-2"
                 @click="actOnSheet(copy)"
@@ -995,4 +1051,5 @@ async function leave(): Promise<void> {
     </AppDialog>
 
     <EmojiPicker v-model:open="pickerOpen" @select="onPicked" />
+    <ImageLightbox v-model:image="viewing" />
 </template>

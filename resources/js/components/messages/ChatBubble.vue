@@ -15,15 +15,18 @@ import Menu from '@/components/ui/Menu.vue';
 import MenuItem from '@/components/ui/MenuItem.vue';
 import MenuSeparator from '@/components/ui/MenuSeparator.vue';
 import { useDates } from '@/lib/dates';
+import { fitInFrame } from '@/lib/image';
 import { isEmojiOnly, linkify } from '@/lib/text';
-import { BUBBLE_CORNERS, QUICK_REACTIONS } from './chat';
+import { BUBBLE_CORNERS, IMAGE_FRAME, QUICK_REACTIONS } from './chat';
 import type { BubblePosition, ChatMessage } from './chat';
 
 /**
  * One message in a thread. Consecutive messages from the same person form
  * a group: corners on the sender's side tighten inside it, the name sits
  * above the first bubble (others, in groups), the face and the time beside
- * and under the last.
+ * and under the last. A picture sits at the top of its bubble, framed to
+ * fit IMAGE_FRAME from its known size so the thread never jumps, with the
+ * words (if any) under it; a tap asks for it full size.
  */
 const props = withDefaults(
     defineProps<{
@@ -50,6 +53,7 @@ const emit = defineEmits<{
     report: [];
     retry: [];
     markSeen: [];
+    viewImage: [];
 }>();
 
 const { t, locale } = useI18n();
@@ -129,6 +133,12 @@ const deleted = computed(() => props.message.is_deleted);
 const body = computed(() => props.message.body ?? '');
 const emojiOnly = computed(() => !deleted.value && isEmojiOnly(body.value));
 const segments = computed(() => linkify(body.value));
+const image = computed(() => (deleted.value ? null : props.message.image));
+const frame = computed(() =>
+    image.value
+        ? fitInFrame(image.value.width, image.value.height, IMAGE_FRAME)
+        : null,
+);
 
 const corners = computed(
     () => BUBBLE_CORNERS[mine.value ? 'mine' : 'theirs'][props.position],
@@ -226,14 +236,14 @@ onBeforeUnmount(cancelPress);
                         {{ props.message.body || t('messages.show.deleted') }}
                     </p>
                     <p
-                        v-else-if="emojiOnly"
+                        v-else-if="emojiOnly && !image"
                         class="px-0.5 text-[40px] leading-[48px]"
                     >
                         {{ body }}
                     </p>
-                    <p
+                    <div
                         v-else
-                        class="rounded-lg px-3.5 py-2 text-chat [overflow-wrap:anywhere] whitespace-pre-wrap"
+                        class="overflow-hidden rounded-lg text-chat"
                         :class="[
                             corners,
                             mine
@@ -243,22 +253,49 @@ onBeforeUnmount(cancelPress);
                                 ? 'opacity-70'
                                 : '',
                         ]"
+                        :style="
+                            image ? { maxWidth: `${IMAGE_FRAME}px` } : undefined
+                        "
                     >
-                        <template
-                            v-for="(segment, index) in segments"
-                            :key="index"
+                        <button
+                            v-if="image && frame"
+                            type="button"
+                            :aria-label="t('messages.show.viewPhoto')"
+                            class="block max-w-full"
+                            :style="{ width: `${frame.width}px` }"
+                            @click="emit('viewImage')"
                         >
-                            <a
-                                v-if="segment.kind === 'link'"
-                                :href="segment.href"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="underline underline-offset-2"
-                                >{{ segment.value }}</a
+                            <img
+                                :src="image.url"
+                                :width="frame.width"
+                                :height="frame.height"
+                                alt=""
+                                class="block h-auto w-full"
+                                :style="{
+                                    aspectRatio: `${frame.width} / ${frame.height}`,
+                                }"
+                            />
+                        </button>
+                        <p
+                            v-if="body"
+                            class="px-3.5 py-2 [overflow-wrap:anywhere] whitespace-pre-wrap"
+                        >
+                            <template
+                                v-for="(segment, index) in segments"
+                                :key="index"
                             >
-                            <template v-else>{{ segment.value }}</template>
-                        </template>
-                    </p>
+                                <a
+                                    v-if="segment.kind === 'link'"
+                                    :href="segment.href"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="underline underline-offset-2"
+                                    >{{ segment.value }}</a
+                                >
+                                <template v-else>{{ segment.value }}</template>
+                            </template>
+                        </p>
+                    </div>
 
                     <div
                         v-if="props.message.reactions.length"
@@ -359,9 +396,12 @@ onBeforeUnmount(cancelPress);
                                     })
                                 }}</MenuItem
                             >
-                            <MenuItem :icon="Copy" @select="emit('copy')">{{
-                                t('messages.show.copy')
-                            }}</MenuItem>
+                            <MenuItem
+                                v-if="body"
+                                :icon="Copy"
+                                @select="emit('copy')"
+                                >{{ t('messages.show.copy') }}</MenuItem
+                            >
                             <template
                                 v-if="
                                     props.message.can_delete ||

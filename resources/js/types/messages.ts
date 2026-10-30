@@ -11,6 +11,13 @@ export type MessageFace = {
     avatar_url: string | null;
 };
 
+/** The picture attached to a message, with its size so a thread can leave room for it. */
+export type MessageImage = {
+    url: string;
+    width: number | null;
+    height: number | null;
+};
+
 /** The author of a message, as every message shape carries it. */
 export type MessageSender = {
     id: number;
@@ -37,6 +44,8 @@ export type BroadcastMessage = {
     conversation_id: number;
     /** Null once deleted; a moderator's placeholder text passes through. */
     body: string | null;
+    /** The attached picture; null without one, and once deleted. */
+    image: MessageImage | null;
     is_deleted: boolean;
     created_at: string;
     sender: MessageSender;
@@ -51,6 +60,8 @@ export type MessageSummary = {
     id: number;
     /** Null once deleted; a moderator's placeholder text passes through. */
     body: string | null;
+    /** The attached picture; null without one, and once deleted. */
+    image: MessageImage | null;
     is_deleted: boolean;
     created_at: string;
     sender: MessageSender;
@@ -73,7 +84,7 @@ export type IncomingMessage = {
     conversation_title: string;
     message_id: number;
     sender: { id: number; name: string; avatar_url: string | null };
-    /** The message text, cut to 120 characters. */
+    /** The message text, cut to 120 characters ("📷 Photo" for a picture). */
     preview: string;
 };
 
