@@ -1,1 +1,0 @@
-import{Or as e}from"./IconButton-Ck3PPYvx.js";import{gt as t}from"./app-Cf-0k2hO.js";var n=[`friends`,`pendingFriendRequests`,`sentFriendRequests`,`following`,`pendingFollowRequestsSent`,`followers`,`pendingFollowerRequests`,`friendGroups`,`followingGroups`,`followedOrganizers`,`findResults`,`findOrganizers`];function r(n){e.post(t().url,{user_ids:[n.id]})}export{r as n,n as t};
