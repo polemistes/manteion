@@ -7,6 +7,11 @@
     "connecting": "Kobler til …",
     "reconnecting": "Forbindelsen falt ut, prøver igjen …",
     "audioOnly": "Bare lyd",
+    "camera": {
+        "missing": "Bare lyd – ingen kamera på denne enheten",
+        "busy": "Bare lyd – kameraet ditt er i bruk et annet sted",
+        "failed": "Bare lyd – kameraet ditt kunne ikke startes"
+    },
     "hangUp": "Avslutt samtalen",
     "mute": "Slå av mikrofonen",
     "unmute": "Slå på mikrofonen",

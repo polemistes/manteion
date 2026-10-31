@@ -9,6 +9,7 @@ import {
     shallowRef,
 } from 'vue';
 import type { DeepReadonly, Ref, ShallowRef } from 'vue';
+import { ManteionShell } from '@/native/plugin';
 import { isNewerVersion } from '@/native/release';
 import { isNativeShell } from '@/pwa/platform';
 import { clearNotifications, onPushMessage } from '@/pwa/serviceWorker';
@@ -21,12 +22,7 @@ import type {
     CallsConfig,
     PendingRing,
 } from '@/types';
-import {
-    claimSound,
-    ensureAudio,
-    isMessageSoundEnabled,
-    tone,
-} from './activity';
+import { claimSound, ensureAudio, tone } from './activity';
 import { connectionState } from './echo';
 import { requestJson } from './http';
 
@@ -63,6 +59,9 @@ export type CallEndReason =
     | 'offline'
     | 'signalFailed';
 
+/** Why this side has no camera in the call: none, taken, or it won't start. */
+export type CameraIssue = 'missing' | 'busy' | 'failed';
+
 export type ActiveCall = {
     id: string;
     conversationId: number;
@@ -80,6 +79,7 @@ export type ActiveCall = {
     cameraOn: boolean;
     /** False when no camera could be started: audio only from this side. */
     hasCamera: boolean;
+    cameraIssue: CameraIssue | null;
     /** Whether a video track has arrived from the peer. */
     peerVideo: boolean;
     /** The peer's camera and microphone, as their `media` signals say. */
@@ -118,12 +118,21 @@ const LATE_RING_MIN_MS = 5_000;
  */
 const CALLS_SINCE_ANDROID_VERSION = '1.3';
 
+/**
+ * The first Android app that rings like a phone for a call the page shows:
+ * from 1.5 ManteionShell.startRinging() plays the phone's ringtone at the
+ * ring volume, with vibration. Older apps get the page's own tone, at the
+ * media volume.
+ */
+const NATIVE_RING_SINCE_ANDROID_VERSION = '1.5';
+
 const tabId = newId();
 
 let me: number | null = null;
 let config: CallsConfig = { enabled: false, iceServers: [] };
 let listenersBound = false;
 let nativeCalls = false;
+let nativeRing = false;
 let nativeProbe: Promise<void> | null = null;
 
 const current = ref<ActiveCall | null>(null);
@@ -135,6 +144,9 @@ let rtc: RTCPeerConnection | null = null;
 let queuedCandidates: RTCIceCandidateInit[] = [];
 let outgoingCandidates: RTCIceCandidateInit[] = [];
 let toneKind: 'ring' | 'ringback' | null = null;
+/** Counts the tone's bursts, so a burst held back by the browser plays only while it is the newest. */
+let toneTicket = 0;
+let nativeRinging = false;
 
 type TimerName =
     | 'ring'
@@ -197,6 +209,7 @@ function freshCall(
         micOn: true,
         cameraOn: true,
         hasCamera: true,
+        cameraIssue: null,
         peerVideo: false,
         peerCameraOn: true,
         peerMicOn: true,
@@ -232,6 +245,10 @@ function probeNativeCalls(): void {
                   .then((info) => {
                       nativeCalls = !isNewerVersion(
                           CALLS_SINCE_ANDROID_VERSION,
+                          info.version,
+                      );
+                      nativeRing = !isNewerVersion(
+                          NATIVE_RING_SINCE_ANDROID_VERSION,
                           info.version,
                       );
                   })
@@ -435,14 +452,14 @@ export async function startCall(
 
     if (current.value?.id !== id) {
         // Hung up while the permission prompt was open.
-        if (media instanceof MediaStream) {
-            stopTracks(media);
+        if (typeof media !== 'string') {
+            stopTracks(media.stream);
         }
 
         return;
     }
 
-    if (!(media instanceof MediaStream)) {
+    if (typeof media === 'string') {
         finish(media);
 
         return;
@@ -496,14 +513,14 @@ export async function acceptCall(): Promise<void> {
     const media = await acquireMedia();
 
     if (current.value?.id !== ring.id) {
-        if (media instanceof MediaStream) {
-            stopTracks(media);
+        if (typeof media !== 'string') {
+            stopTracks(media.stream);
         }
 
         return;
     }
 
-    if (!(media instanceof MediaStream)) {
+    if (typeof media === 'string') {
         void send(current.value, 'decline', ring.fromTab, { reason: 'media' });
         finish(media);
 
@@ -810,13 +827,17 @@ function handleRing(
 
 /**
  * Whether the page itself should sound the ring. In the Android app the
- * ring's notification plays the phone's ringtone wherever the app is,
- * except on the conversation's own page, where the app leaves the
+ * ring's notification rings wherever the app is, except on the
+ * conversation's own page while it is on screen: there the app leaves the
  * notification out and the page rings instead. Browsers always ring here.
  */
 function ringsInPage(conversationId: number): boolean {
     if (!isNativeShell()) {
         return true;
+    }
+
+    if (document.visibilityState !== 'visible') {
+        return false;
     }
 
     const path = window.location.pathname.replace(/\/+$/, '');
@@ -837,39 +858,104 @@ function announceMissed(peer: CallPeer): void {
     missedListeners.forEach((listener) => listener(peer));
 }
 
-/**
- * Camera and microphone; with sound alone when there is no camera or it
- * won't start. A reason instead of a stream when not even that works.
- */
-async function acquireMedia(): Promise<MediaStream | CallEndReason> {
-    try {
-        return await navigator.mediaDevices.getUserMedia({
-            audio: true,
-            video: {
-                width: { ideal: 1280 },
-                height: { ideal: 720 },
-                facingMode: 'user',
-            },
-        });
-    } catch (error) {
-        const name = errorName(error);
+type AcquiredMedia = {
+    stream: MediaStream;
+    /** Why there is no video track, when there is none. */
+    cameraIssue: CameraIssue | null;
+};
 
-        if (
-            name === 'NotFoundError' ||
-            name === 'DevicesNotFoundError' ||
-            name === 'OverconstrainedError' ||
-            name === 'NotReadableError'
-        ) {
-            try {
-                return await navigator.mediaDevices.getUserMedia({
-                    audio: true,
-                });
-            } catch (audioError) {
-                return mediaReason(audioError);
-            }
+/** Failures that lie with the camera alone, so sound alone may still do. */
+const CAMERA_ERRORS = [
+    'NotFoundError',
+    'DevicesNotFoundError',
+    'OverconstrainedError',
+    'NotReadableError',
+    'TrackStartError',
+    'AbortError',
+];
+
+/** The camera is there but won't start with the first constraints; plain ones may do. */
+const RETRY_CAMERA_ERRORS = [
+    'OverconstrainedError',
+    'NotReadableError',
+    'TrackStartError',
+    'AbortError',
+];
+
+/**
+ * Camera and microphone: the front camera at HD if it can, failing that
+ * any camera as it comes; with sound alone when there is no camera or it
+ * won't start, and a note of why for the call window. A reason instead of
+ * media when not even that works.
+ */
+async function acquireMedia(): Promise<AcquiredMedia | CallEndReason> {
+    const devices = navigator.mediaDevices;
+    let cameraError: unknown;
+
+    try {
+        return {
+            stream: await devices.getUserMedia({
+                audio: true,
+                video: {
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 },
+                    facingMode: 'user',
+                },
+            }),
+            cameraIssue: null,
+        };
+    } catch (error) {
+        if (!CAMERA_ERRORS.includes(errorName(error))) {
+            return mediaReason(error);
         }
 
+        cameraError = error;
+    }
+
+    if (RETRY_CAMERA_ERRORS.includes(errorName(cameraError))) {
+        try {
+            return {
+                stream: await devices.getUserMedia({
+                    audio: true,
+                    video: true,
+                }),
+                cameraIssue: null,
+            };
+        } catch (error) {
+            if (!CAMERA_ERRORS.includes(errorName(error))) {
+                return mediaReason(error);
+            }
+
+            cameraError = error;
+        }
+    }
+
+    console.warn(
+        'Manteion calls: no camera could be started, so the call is sound only.',
+        cameraError,
+    );
+
+    try {
+        return {
+            stream: await devices.getUserMedia({ audio: true }),
+            cameraIssue: cameraIssue(cameraError),
+        };
+    } catch (error) {
         return mediaReason(error);
+    }
+}
+
+function cameraIssue(error: unknown): CameraIssue {
+    switch (errorName(error)) {
+        case 'NotFoundError':
+        case 'DevicesNotFoundError':
+        case 'OverconstrainedError':
+            return 'missing';
+        case 'NotReadableError':
+        case 'TrackStartError':
+            return 'busy';
+        default:
+            return 'failed';
     }
 }
 
@@ -898,11 +984,11 @@ function mediaReason(error: unknown): CallEndReason {
     }
 }
 
-function attachLocal(stream: MediaStream): void {
+function attachLocal({ stream, cameraIssue }: AcquiredMedia): void {
     const hasCamera = stream.getVideoTracks().length > 0;
 
     localStream.value = stream;
-    patch({ hasCamera, cameraOn: hasCamera });
+    patch({ hasCamera, cameraOn: hasCamera, cameraIssue });
 }
 
 function createConnection(call: ActiveCall): RTCPeerConnection {
@@ -1185,38 +1271,72 @@ function finish(reason: CallEndReason, show = true, notifyPeer = true): void {
 }
 
 /**
- * The ring (a telephone's "ring-ring": two bursts of a 440 + 480 Hz
- * chord) or the caller's ringback (one 425 Hz note), repeated until
- * stopped. Audio starts on demand where the browser allows it and
- * otherwise at the user's first tap; silent when they turned sounds off,
- * and in tabs where another tab has just rung.
+ * The ring, or the caller's ringback, until stopped. In the Android app
+ * (1.5+) the ring is the phone's own: its ringtone at the ring volume, and
+ * vibration. Elsewhere, and for the ringback, the page plays one; see
+ * startPageTone. A call rings like a phone: this does not follow the
+ * message-sound switch.
  */
 function startTone(kind: 'ring' | 'ringback'): void {
     stopTone();
     toneKind = kind;
 
+    if (kind === 'ring' && nativeRing) {
+        nativeRinging = true;
+        void ManteionShell.startRinging().catch(() => {
+            nativeRinging = false;
+
+            if (toneKind === 'ring') {
+                startPageTone('ring');
+            }
+        });
+
+        return;
+    }
+
+    startPageTone(kind);
+}
+
+/**
+ * The page's own tone, repeated: a telephone's "ring-ring" (two bursts of
+ * a 440 + 480 Hz chord) or the single 425 Hz ringback note. It plays at
+ * once where the browser lets a page start audio by itself, and otherwise
+ * from the user's first tap, when only the newest burst still due plays.
+ * A tab where another tab has just rung stays quiet.
+ */
+function startPageTone(kind: 'ring' | 'ringback'): void {
     const tick = (): void => {
         if (toneKind !== kind) {
             return;
         }
 
         const context = ensureAudio();
+        const ticket = ++toneTicket;
 
-        if (
-            context &&
-            isMessageSoundEnabled() &&
-            claimSound(`manteion.calls.${kind}`, 1_000)
-        ) {
-            const now = context.currentTime;
+        if (context) {
+            void context
+                .resume()
+                .then(() => {
+                    if (
+                        toneKind !== kind ||
+                        ticket !== toneTicket ||
+                        !claimSound(`manteion.calls.${kind}`, 1_000)
+                    ) {
+                        return;
+                    }
 
-            if (kind === 'ring') {
-                for (const offset of [0, 0.6]) {
-                    tone(context, 440, now + offset, 0.4, 0.3, true);
-                    tone(context, 480, now + offset, 0.4, 0.3, true);
-                }
-            } else {
-                tone(context, 425, now, 1, 0.2, true);
-            }
+                    const now = context.currentTime;
+
+                    if (kind === 'ring') {
+                        for (const offset of [0, 0.6]) {
+                            tone(context, 440, now + offset, 0.4, 0.3, true);
+                            tone(context, 480, now + offset, 0.4, 0.3, true);
+                        }
+                    } else {
+                        tone(context, 425, now, 1, 0.2, true);
+                    }
+                })
+                .catch(() => undefined);
         }
 
         timers.tone = setTimeout(
@@ -1230,7 +1350,13 @@ function startTone(kind: 'ring' | 'ringback'): void {
 
 function stopTone(): void {
     toneKind = null;
+    toneTicket++;
     clearTimer('tone');
+
+    if (nativeRinging) {
+        nativeRinging = false;
+        void ManteionShell.stopRinging().catch(() => undefined);
+    }
 }
 
 /**

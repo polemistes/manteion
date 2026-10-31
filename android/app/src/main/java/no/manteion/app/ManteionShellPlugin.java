@@ -8,12 +8,12 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
 /**
- * The window around the page (resources/js/native/shell.ts), and the way
- * back to the site from the app's error page. Where the
- * WebView stays clear of the status and navigation bars (WebView before
- * version 140, see Capacitor's SystemBars), the window shows behind them;
- * it takes the page's canvas colour, so the bars read as part of the page
- * in light and dark mode.
+ * The window around the page (resources/js/native/shell.ts), the way back
+ * to the site from the app's error page, and the phone's ring for a call
+ * the page shows. Where the WebView stays clear of the status and
+ * navigation bars (WebView before version 140, see Capacitor's
+ * SystemBars), the window shows behind them; it takes the page's canvas
+ * colour, so the bars read as part of the page in light and dark mode.
  */
 @CapacitorPlugin(name = "ManteionShell")
 public class ManteionShellPlugin extends Plugin {
@@ -38,6 +38,30 @@ public class ManteionShellPlugin extends Plugin {
         getBridge().getWebView().post(() -> getBridge().getWebView().loadUrl(site != null ? site : getBridge().getAppUrl()));
 
         return true;
+    }
+
+    /**
+     * Rings like a phone for the call the page is showing (Ringer), until
+     * stopRinging or a ring's length. The page asks only while it is on
+     * screen on the conversation's page; everywhere else the ring's
+     * notification rings instead.
+     */
+    @PluginMethod
+    public void startRinging(PluginCall call) {
+        Ringer.start(getContext());
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void stopRinging(PluginCall call) {
+        Ringer.stop();
+        call.resolve();
+    }
+
+    @Override
+    protected void handleOnDestroy() {
+        super.handleOnDestroy();
+        Ringer.stop();
     }
 
     @PluginMethod

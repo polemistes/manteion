@@ -59,11 +59,17 @@ final class Notifier {
     /** The newest push per conversation, so a reply can rebuild its notification. */
     private static final String LAST_PUSH_PREFIX = "push:";
 
-    /** The channel a ring comes in on: the phone's ringtone, not a notification ding. */
-    private static final String CALLS_CHANNEL = "video_calls";
+    /**
+     * The channel a ring comes in on: the phone's ringtone, not a
+     * notification ding. Its id is not the push category's ("video_calls"):
+     * 1.3 made a channel by that name with the notification sound, and
+     * Android gives a deleted channel its old settings back as soon as one
+     * with the same id is made again, so the ringtone needed a new id.
+     */
+    private static final String CALLS_CHANNEL = "calls";
 
-    /** Set once the calls channel has been made with the ringtone (1.4). */
-    private static final String CALLS_CHANNEL_RINGS_KEY = "channel:video_calls:rings";
+    /** The calls channel of 1.3 and 1.4, removed wherever it is still found. */
+    private static final String LEGACY_CALLS_CHANNEL = "video_calls";
 
     /**
      * The channels until the page names them in the user's language
@@ -72,7 +78,7 @@ final class Notifier {
     private static final String[][] DEFAULT_CHANNELS = {
         { "direct_messages", "Direct messages", "messages", "high" },
         { "group_messages", "Group messages", "messages", "high" },
-        { "video_calls", "Video calls", "messages", "high" },
+        { CALLS_CHANNEL, "Video calls", "messages", "high" },
         { "event_invites", "Event invitations", "events", "default" },
         { "event_comments", "Comments on events", "events", "default" },
         { "followed_events", "Events from people you follow", "events", "default" },
@@ -498,7 +504,7 @@ final class Notifier {
 
         NotificationManager manager = context.getSystemService(NotificationManager.class);
 
-        refreshCallsChannel(context, manager);
+        removeLegacyCallsChannel(manager);
 
         if (groups != null) {
             for (int i = 0; i < groups.length(); i++) {
@@ -513,7 +519,7 @@ final class Notifier {
                 JSONObject spec = channels.getJSONObject(i);
 
                 manager.createNotificationChannel(
-                    channel(spec.getString("id"), spec.getString("name"), spec.optString("group", null), "high".equals(spec.optString("importance")), spec.optString("description", null))
+                    channel(channelId(spec.getString("id")), spec.getString("name"), spec.optString("group", null), "high".equals(spec.optString("importance")), spec.optString("description", null))
                 );
             }
         }
@@ -526,7 +532,7 @@ final class Notifier {
 
         NotificationManager manager = context.getSystemService(NotificationManager.class);
 
-        refreshCallsChannel(context, manager);
+        removeLegacyCallsChannel(manager);
 
         // Only the channels that are missing (a kind added since the app
         // was installed): the page renames the others in the user's
@@ -556,25 +562,16 @@ final class Notifier {
         }
     }
 
-    /**
-     * The calls channel got the ringtone in 1.4. Android never changes a
-     * channel's sound once it exists, so one made by 1.3 (with the
-     * notification sound) is removed, once, and made again by whoever
-     * creates channels next.
-     */
+    /** The push category's channel: the same name, except for calls (see CALLS_CHANNEL). */
+    private static String channelId(String category) {
+        return LEGACY_CALLS_CHANNEL.equals(category) ? CALLS_CHANNEL : category;
+    }
+
     @RequiresApi(Build.VERSION_CODES.O)
-    private static void refreshCallsChannel(Context context, NotificationManager manager) {
-        SharedPreferences preferences = Strings.preferences(context);
-
-        if (preferences.getBoolean(CALLS_CHANNEL_RINGS_KEY, false)) {
-            return;
+    private static void removeLegacyCallsChannel(NotificationManager manager) {
+        if (manager.getNotificationChannel(LEGACY_CALLS_CHANNEL) != null) {
+            manager.deleteNotificationChannel(LEGACY_CALLS_CHANNEL);
         }
-
-        if (manager.getNotificationChannel(CALLS_CHANNEL) != null) {
-            manager.deleteNotificationChannel(CALLS_CHANNEL);
-        }
-
-        preferences.edit().putBoolean(CALLS_CHANNEL_RINGS_KEY, true).apply();
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -610,18 +607,19 @@ final class Notifier {
         return channel;
     }
 
-    /** The push's category is its channel; anything unknown goes with direct messages. */
+    /** The push's category names its channel; anything unknown goes with direct messages. */
     private static String channelFor(Context context, JSONObject data) {
         String category = data.optString("category", "");
 
         // Before Android 8 the channel is ignored.
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-            return category.isEmpty() ? DEFAULT_CHANNELS[0][0] : category;
+            return category.isEmpty() ? DEFAULT_CHANNELS[0][0] : channelId(category);
         }
 
         NotificationManager manager = context.getSystemService(NotificationManager.class);
+        String channel = channelId(category);
 
-        return !category.isEmpty() && manager.getNotificationChannel(category) != null ? category : DEFAULT_CHANNELS[0][0];
+        return !category.isEmpty() && manager.getNotificationChannel(channel) != null ? channel : DEFAULT_CHANNELS[0][0];
     }
 
     static PendingIntent openIntent(Context context, String url, String tag) {

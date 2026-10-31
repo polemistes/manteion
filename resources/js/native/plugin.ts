@@ -53,9 +53,17 @@ export const ManteionPush = registerPlugin<ManteionPushPlugin>('ManteionPush');
 /**
  * The app's window (ManteionShellPlugin.java): its colour shows behind the
  * status and navigation bars where the WebView doesn't reach under them.
+ * And the phone's ring for a call the page shows.
  */
 export interface ManteionShellPlugin {
     setWindowColor(options: { color: string }): Promise<void>;
+    /**
+     * Rings like a phone — the ringtone at the ring volume, vibration —
+     * until stopRinging(), or for a ring's length at most. App 1.5+; older
+     * apps reject the call.
+     */
+    startRinging(): Promise<void>;
+    stopRinging(): Promise<void>;
 }
 
 export const ManteionShell =

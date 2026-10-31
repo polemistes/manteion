@@ -145,10 +145,14 @@ export function claimSound(
 }
 
 /**
- * Starts the audio context right now when the browser lets a page do that
- * without a tap (the Android app, an installed app, a site the user plays
- * media on), for a sound that can't wait for one: a call ringing. Null when
- * it must still wait; the first tap then unlocks it (setupMessageSound).
+ * The audio context, made and started right now, for a sound that can't
+ * wait for a tap: a call ringing. Whether it may play yet is for the caller
+ * to find out from `resume()`: the promise settles at once where the
+ * browser lets a page start audio by itself (the Android app, an installed
+ * app, a site the user plays media on, a page they have tapped before) and
+ * otherwise waits for the first tap. Don't read `state` for that: Firefox
+ * reports a context it has just made as suspended for a moment even when
+ * it is allowed to run. Null when there is no Web Audio.
  */
 export function ensureAudio(): AudioContext | null {
     if (typeof window === 'undefined') {
@@ -166,15 +170,11 @@ export function ensureAudio(): AudioContext | null {
 
     try {
         audio ??= new Context();
-
-        if (audio.state !== 'running') {
-            void audio.resume().catch(() => undefined);
-        }
     } catch {
         return null;
     }
 
-    return audio.state === 'running' ? audio : null;
+    return audio;
 }
 
 /**

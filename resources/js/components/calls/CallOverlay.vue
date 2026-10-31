@@ -105,6 +105,13 @@ const showingPeerVideo = computed(
         call.value.peerCameraOn,
 );
 
+/** "Audio only", and why, while this side has no camera in the call. */
+const audioOnlyText = computed(() => {
+    const issue = call.value?.cameraIssue;
+
+    return issue ? t(`calls.camera.${issue}`) : t('calls.audioOnly');
+});
+
 /** Under the avatar while there is no picture of the peer to show. */
 const avatarCaption = computed(() => {
     const live = call.value;
@@ -305,7 +312,7 @@ const windowClass = computed(() => {
                     <p class="text-meta text-on-stage/80" aria-live="polite">
                         {{ statusText
                         }}<span v-if="!call.hasCamera">
-                            · {{ t('calls.audioOnly') }}</span
+                            · {{ audioOnlyText }}</span
                         >
                     </p>
                 </div>

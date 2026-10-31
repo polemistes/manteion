@@ -7,6 +7,11 @@
     "connecting": "Connecting…",
     "reconnecting": "Connection dropped, trying again…",
     "audioOnly": "Audio only",
+    "camera": {
+        "missing": "Audio only — no camera on this device",
+        "busy": "Audio only — your camera is in use elsewhere",
+        "failed": "Audio only — your camera couldn’t be started"
+    },
     "hangUp": "End call",
     "mute": "Mute microphone",
     "unmute": "Unmute microphone",

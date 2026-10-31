@@ -55,6 +55,7 @@ export type {
     ActiveCall,
     CallEndReason,
     CallStatus,
+    CameraIssue,
     IncomingCall,
 } from './calls';
 export {
