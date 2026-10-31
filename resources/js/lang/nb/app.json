@@ -37,6 +37,15 @@
         "body": "Versjon {version} er ute.",
         "action": "Last ned"
     },
+    "version": {
+        "installed": "Versjon {version} er installert.",
+        "ready": "Versjon {version} er klar til nedlasting.",
+        "upToDate": "Du har den nyeste versjonen.",
+        "unknown": "Fikk ikke sjekket etter ny versjon nå.",
+        "checking": "Ser etter ny versjon …",
+        "download": "Last ned versjon {version}",
+        "howTo": "Slik installerer du"
+    },
     "get": {
         "title": "Hent Android-appen",
         "body": "Varsler fra Manteion selv, og svar rett fra varselet.",

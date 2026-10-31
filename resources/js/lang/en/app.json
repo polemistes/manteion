@@ -37,6 +37,15 @@
         "body": "Version {version} is out.",
         "action": "Download"
     },
+    "version": {
+        "installed": "Version {version} is installed.",
+        "ready": "Version {version} is ready to download.",
+        "upToDate": "You have the newest version.",
+        "unknown": "Couldn’t check for a new version right now.",
+        "checking": "Checking for a new version…",
+        "download": "Download version {version}",
+        "howTo": "How to install"
+    },
     "get": {
         "title": "Get the Android app",
         "body": "Notifications from Manteion itself, and replies straight from the notification.",

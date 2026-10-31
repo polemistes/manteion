@@ -129,8 +129,9 @@ function store(key: string, value: string): void {
 }
 
 /**
- * Once a day, asks GitHub for the newest app; when it is newer than this
- * one, says so once, with the download. Never forced.
+ * Once a day, asks GitHub for the newest app; while it is newer than this
+ * one, says so once a day, with the download. Never forced; Settings shows
+ * the same at any time.
  */
 async function offerUpdate(page: Page, t: Translate): Promise<void> {
     const checkedAt = Number(stored(UPDATE_CHECKED_KEY)) || 0;
@@ -156,13 +157,22 @@ async function offerUpdate(page: Page, t: Translate): Promise<void> {
     if (
         !installed ||
         !latest ||
-        !isNewerVersion(latest.version, installed.version) ||
-        stored(UPDATE_SHOWN_KEY) === latest.version
+        !isNewerVersion(latest.version, installed.version)
     ) {
         return;
     }
 
-    store(UPDATE_SHOWN_KEY, latest.version);
+    // "version:when" of the last notice; the same version again only after a day.
+    const [shownVersion, shownAt] = (stored(UPDATE_SHOWN_KEY) ?? '').split(':');
+
+    if (
+        shownVersion === latest.version &&
+        Date.now() - (Number(shownAt) || 0) < UPDATE_CHECK_INTERVAL_MS
+    ) {
+        return;
+    }
+
+    store(UPDATE_SHOWN_KEY, `${latest.version}:${Date.now()}`);
     toast({
         title: t('app.update.title'),
         description: t('app.update.body', { version: latest.version }),

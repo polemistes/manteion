@@ -3,6 +3,7 @@ import { Link } from '@inertiajs/vue3';
 import { ChevronRight, Download, Smartphone } from '@lucide/vue';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import AndroidAppCard from '@/components/settings/AndroidAppCard.vue';
 import { sections } from '@/components/settings/sections';
 import SettingsGroup from '@/components/settings/SettingsGroup.vue';
 import SettingsNav from '@/components/settings/SettingsNav.vue';
@@ -57,6 +58,8 @@ onMounted(() => {
                     {{ t('app.get.action') }}
                 </Button>
             </SettingsGroup>
+
+            <AndroidAppCard class="mt-6" />
 
             <SettingsGroup v-if="canInstall" class="mt-6" :flush="false">
                 <p class="font-semibold text-ink">
@@ -121,6 +124,8 @@ onMounted(() => {
                         </template>
                     </ListRow>
                 </Card>
+
+                <AndroidAppCard />
 
                 <SettingsGroup v-if="canInstall" :flush="false">
                     <p class="font-semibold text-ink">
