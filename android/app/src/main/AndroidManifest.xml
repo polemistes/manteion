@@ -91,6 +91,8 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- The calls channel vibrates with the ringtone. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <!-- Video calls: the page's getUserMedia() reaches Capacitor's WebView
          client, which asks the user for these and grants the request. A

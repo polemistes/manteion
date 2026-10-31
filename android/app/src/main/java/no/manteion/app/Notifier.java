@@ -7,7 +7,10 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.media.AudioAttributes;
+import android.media.RingtoneManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.service.notification.StatusBarNotification;
@@ -55,6 +58,12 @@ final class Notifier {
 
     /** The newest push per conversation, so a reply can rebuild its notification. */
     private static final String LAST_PUSH_PREFIX = "push:";
+
+    /** The channel a ring comes in on: the phone's ringtone, not a notification ding. */
+    private static final String CALLS_CHANNEL = "video_calls";
+
+    /** Set once the calls channel has been made with the ringtone (1.4). */
+    private static final String CALLS_CHANNEL_RINGS_KEY = "channel:video_calls:rings";
 
     /**
      * The channels until the page names them in the user's language
@@ -489,6 +498,8 @@ final class Notifier {
 
         NotificationManager manager = context.getSystemService(NotificationManager.class);
 
+        refreshCallsChannel(context, manager);
+
         if (groups != null) {
             for (int i = 0; i < groups.length(); i++) {
                 JSONObject group = groups.getJSONObject(i);
@@ -515,7 +526,22 @@ final class Notifier {
 
         NotificationManager manager = context.getSystemService(NotificationManager.class);
 
-        if (manager.getNotificationChannel(DEFAULT_CHANNELS[0][0]) != null) {
+        refreshCallsChannel(context, manager);
+
+        // Only the channels that are missing (a kind added since the app
+        // was installed): the page renames the others in the user's
+        // language, and making one again would put the English name back.
+        boolean missing = false;
+
+        for (String[] spec : DEFAULT_CHANNELS) {
+            if (manager.getNotificationChannel(spec[0]) == null) {
+                missing = true;
+
+                break;
+            }
+        }
+
+        if (!missing) {
             return;
         }
 
@@ -524,8 +550,31 @@ final class Notifier {
         }
 
         for (String[] spec : DEFAULT_CHANNELS) {
-            manager.createNotificationChannel(channel(spec[0], spec[1], spec[2], "high".equals(spec[3]), null));
+            if (manager.getNotificationChannel(spec[0]) == null) {
+                manager.createNotificationChannel(channel(spec[0], spec[1], spec[2], "high".equals(spec[3]), null));
+            }
         }
+    }
+
+    /**
+     * The calls channel got the ringtone in 1.4. Android never changes a
+     * channel's sound once it exists, so one made by 1.3 (with the
+     * notification sound) is removed, once, and made again by whoever
+     * creates channels next.
+     */
+    @RequiresApi(Build.VERSION_CODES.O)
+    private static void refreshCallsChannel(Context context, NotificationManager manager) {
+        SharedPreferences preferences = Strings.preferences(context);
+
+        if (preferences.getBoolean(CALLS_CHANNEL_RINGS_KEY, false)) {
+            return;
+        }
+
+        if (manager.getNotificationChannel(CALLS_CHANNEL) != null) {
+            manager.deleteNotificationChannel(CALLS_CHANNEL);
+        }
+
+        preferences.edit().putBoolean(CALLS_CHANNEL_RINGS_KEY, true).apply();
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -543,6 +592,20 @@ final class Notifier {
         channel.setShowBadge(true);
         channel.enableLights(true);
         channel.setLightColor(ACCENT);
+
+        if (CALLS_CHANNEL.equals(id)) {
+            // A ring sounds like a call: the phone's ringtone, played as
+            // one, and the phone vibrates. The user can change it in
+            // Android's settings like any channel.
+            channel.setSound(
+                RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE),
+                new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+            );
+            channel.enableVibration(true);
+        }
 
         return channel;
     }

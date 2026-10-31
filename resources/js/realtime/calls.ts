@@ -22,8 +22,8 @@ import type {
     PendingRing,
 } from '@/types';
 import {
-    audioContext,
     claimSound,
+    ensureAudio,
     isMessageSoundEnabled,
     tone,
 } from './activity';
@@ -105,8 +105,9 @@ const DISCONNECT_GRACE_MS = 8_000;
 const CANDIDATE_BATCH_MS = 150;
 /** How long "Call ended" stays after a normal hang-up. */
 const ENDED_CARD_MS = 4_000;
-const RING_TONE_MS = 2_600;
-const RINGBACK_MS = 3_000;
+/** The ring repeats every 3 s ("ring-ring", then quiet); the ringback every 4 s (the Norwegian 1 s on, 3 s off). */
+const RING_TONE_MS = 3_000;
+const RINGBACK_MS = 4_000;
 /** A ring found on the server is shown at least this long, whatever the clocks say. */
 const LATE_RING_MIN_MS = 5_000;
 
@@ -795,7 +796,9 @@ function handleRing(
         fromTab: signal.from_tab,
     };
 
-    startTone('ring');
+    if (ringsInPage(signal.conversation_id)) {
+        startTone('ring');
+    }
 
     timers.incoming = setTimeout(() => {
         if (incoming.value?.id === signal.call_id) {
@@ -803,6 +806,22 @@ function handleRing(
             announceMissed(signal.from);
         }
     }, ringFor);
+}
+
+/**
+ * Whether the page itself should sound the ring. In the Android app the
+ * ring's notification plays the phone's ringtone wherever the app is,
+ * except on the conversation's own page, where the app leaves the
+ * notification out and the page rings instead. Browsers always ring here.
+ */
+function ringsInPage(conversationId: number): boolean {
+    if (!isNativeShell()) {
+        return true;
+    }
+
+    const path = window.location.pathname.replace(/\/+$/, '');
+
+    return path === `/messages/${conversationId}`;
 }
 
 function clearIncoming(): void {
@@ -1166,10 +1185,11 @@ function finish(reason: CallEndReason, show = true, notifyPeer = true): void {
 }
 
 /**
- * The ring (two rising pairs) or the caller's ringback (one low note),
- * repeated until stopped. Silent before the user's first interaction with
- * the page, when they turned sounds off, and in tabs where another tab
- * has just rung.
+ * The ring (a telephone's "ring-ring": two bursts of a 440 + 480 Hz
+ * chord) or the caller's ringback (one 425 Hz note), repeated until
+ * stopped. Audio starts on demand where the browser allows it and
+ * otherwise at the user's first tap; silent when they turned sounds off,
+ * and in tabs where another tab has just rung.
  */
 function startTone(kind: 'ring' | 'ringback'): void {
     stopTone();
@@ -1180,23 +1200,22 @@ function startTone(kind: 'ring' | 'ringback'): void {
             return;
         }
 
-        const context = audioContext();
+        const context = ensureAudio();
 
         if (
             context &&
-            context.state === 'running' &&
             isMessageSoundEnabled() &&
             claimSound(`manteion.calls.${kind}`, 1_000)
         ) {
             const now = context.currentTime;
 
             if (kind === 'ring') {
-                tone(context, 880, now, 0.18);
-                tone(context, 1318.5, now + 0.14, 0.3);
-                tone(context, 880, now + 0.5, 0.18);
-                tone(context, 1318.5, now + 0.64, 0.3);
+                for (const offset of [0, 0.6]) {
+                    tone(context, 440, now + offset, 0.4, 0.3, true);
+                    tone(context, 480, now + offset, 0.4, 0.3, true);
+                }
             } else {
-                tone(context, 440, now, 0.9);
+                tone(context, 425, now, 1, 0.2, true);
             }
         }
 

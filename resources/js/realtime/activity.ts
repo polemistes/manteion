@@ -145,19 +145,50 @@ export function claimSound(
 }
 
 /**
- * The shared audio context, once the user's first tap or key press has
- * unlocked it (setupMessageSound); null before that and on the server.
+ * Starts the audio context right now when the browser lets a page do that
+ * without a tap (the Android app, an installed app, a site the user plays
+ * media on), for a sound that can't wait for one: a call ringing. Null when
+ * it must still wait; the first tap then unlocks it (setupMessageSound).
  */
-export function audioContext(): AudioContext | null {
-    return audio;
+export function ensureAudio(): AudioContext | null {
+    if (typeof window === 'undefined') {
+        return null;
+    }
+
+    const Context =
+        window.AudioContext ??
+        (window as unknown as { webkitAudioContext?: typeof AudioContext })
+            .webkitAudioContext;
+
+    if (!Context) {
+        return null;
+    }
+
+    try {
+        audio ??= new Context();
+
+        if (audio.state !== 'running') {
+            void audio.resume().catch(() => undefined);
+        }
+    } catch {
+        return null;
+    }
+
+    return audio.state === 'running' ? audio : null;
 }
 
-/** A soft sine note: `frequency` Hz from `start` (context time) for `length` seconds. */
+/**
+ * A sine note: `frequency` Hz from `start` (context time) for `length`
+ * seconds, at `level` (0–1). A chime by default, fading all the way; with
+ * `sustain` it holds its level and stops short, like a ring.
+ */
 export function tone(
     context: AudioContext,
     frequency: number,
     start: number,
     length: number,
+    level: number = 0.16,
+    sustain: boolean = false,
 ): void {
     const oscillator = context.createOscillator();
     const gain = context.createGain();
@@ -165,8 +196,15 @@ export function tone(
     oscillator.type = 'sine';
     oscillator.frequency.setValueAtTime(frequency, start);
     gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.exponentialRampToValueAtTime(0.16, start + 0.012);
-    gain.gain.exponentialRampToValueAtTime(0.0001, start + length);
+    gain.gain.exponentialRampToValueAtTime(level, start + 0.012);
+
+    if (sustain) {
+        gain.gain.setValueAtTime(level, start + length - 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + length);
+    } else {
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + length);
+    }
+
     oscillator.connect(gain).connect(context.destination);
     oscillator.start(start);
     oscillator.stop(start + length + 0.02);
