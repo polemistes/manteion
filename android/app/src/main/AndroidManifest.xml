@@ -80,9 +80,7 @@
 
     <!-- The camera app, for a page's "take a photo" request: since Android
          11 an app only sees the other apps it says it looks for, and
-         without this Capacitor falls back to the photo picker. No camera
-         permission is declared, so none is asked for: the camera app
-         takes the photo. -->
+         without this Capacitor falls back to the photo picker. -->
     <queries>
         <intent>
             <action android:name="android.media.action.IMAGE_CAPTURE" />
@@ -93,4 +91,15 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Video calls: the page's getUserMedia() reaches Capacitor's WebView
+         client, which asks the user for these and grants the request. A
+         side effect since 1.3: the first "take a photo" asks for the
+         camera too, as Capacitor requests a declared CAMERA permission
+         before opening the camera app. Neither is required to install. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
 </manifest>

@@ -1,3 +1,5 @@
+import { App } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
 import type { Page } from '@inertiajs/core';
 import {
     getCurrentScope,
@@ -7,13 +9,17 @@ import {
     shallowRef,
 } from 'vue';
 import type { DeepReadonly, Ref, ShallowRef } from 'vue';
+import { isNewerVersion } from '@/native/release';
 import { isNativeShell } from '@/pwa/platform';
+import { clearNotifications, onPushMessage } from '@/pwa/serviceWorker';
+import { ringing as ringingRoute } from '@/routes/calls';
 import { call as callRoute } from '@/routes/messages';
 import type {
     CallPeer,
     CallSignal,
     CallSignalType,
     CallsConfig,
+    PendingRing,
 } from '@/types';
 import {
     audioContext,
@@ -101,12 +107,23 @@ const CANDIDATE_BATCH_MS = 150;
 const ENDED_CARD_MS = 4_000;
 const RING_TONE_MS = 2_600;
 const RINGBACK_MS = 3_000;
+/** A ring found on the server is shown at least this long, whatever the clocks say. */
+const LATE_RING_MIN_MS = 5_000;
+
+/**
+ * The first Android app whose WebView may use the camera and microphone:
+ * from 1.3 its manifest declares them (Capacitor asks the user and grants
+ * the page's request). The iOS app has no usage texts yet.
+ */
+const CALLS_SINCE_ANDROID_VERSION = '1.3';
 
 const tabId = newId();
 
 let me: number | null = null;
 let config: CallsConfig = { enabled: false, iceServers: [] };
-let pageHideBound = false;
+let listenersBound = false;
+let nativeCalls = false;
+let nativeProbe: Promise<void> | null = null;
 
 const current = ref<ActiveCall | null>(null);
 const incoming = ref<IncomingCall | null>(null);
@@ -198,7 +215,27 @@ export function configureCalls(page: Page): void {
         iceServers: Array.isArray(calls?.iceServers) ? calls.iceServers : [],
     };
 
-    bindPageHide();
+    bindListeners();
+    probeNativeCalls();
+}
+
+/** Asks the Android app its version once; until it answers, no calls there. */
+function probeNativeCalls(): void {
+    if (nativeProbe || !isNativeShell()) {
+        return;
+    }
+
+    nativeProbe =
+        Capacitor.getPlatform() === 'android'
+            ? App.getInfo()
+                  .then((info) => {
+                      nativeCalls = !isNewerVersion(
+                          CALLS_SINCE_ANDROID_VERSION,
+                          info.version,
+                      );
+                  })
+                  .catch(() => undefined)
+            : Promise.resolve();
 }
 
 /**
@@ -216,17 +253,75 @@ export function setCallsViewer(userId: number | null): void {
 
 /**
  * Whether this page can place and take calls: calls are on, the browser
- * has WebRTC and camera access, and this is not the native app (whose
- * WebView has no camera or microphone permission yet).
+ * has WebRTC and camera access, and the native app, if this is one, is
+ * new enough to let its WebView use them.
  */
 export function callsAvailable(): boolean {
     return (
         typeof window !== 'undefined' &&
         config.enabled &&
-        !isNativeShell() &&
+        (!isNativeShell() || nativeCalls) &&
         window.isSecureContext &&
         typeof RTCPeerConnection === 'function' &&
         typeof navigator.mediaDevices?.getUserMedia === 'function'
+    );
+}
+
+/** callsAvailable() once the native app, if any, has said its version. */
+export async function callsAvailableSoon(): Promise<boolean> {
+    probeNativeCalls();
+    await nativeProbe;
+
+    return callsAvailable();
+}
+
+/**
+ * Asks the server whether someone is ringing this user right now and, if
+ * so, rings here: for a page that opened after the broadcast (from the
+ * push notification, after a reload, the app brought back), and after a
+ * reconnect. Nothing happens when a call or ring is already on.
+ */
+export async function checkPendingRing(): Promise<void> {
+    if (me === null || !(await callsAvailableSoon()) || busy()) {
+        return;
+    }
+
+    let ring: PendingRing | null | undefined;
+
+    try {
+        ring = (await requestJson<{ ring: PendingRing | null }>(ringingRoute()))
+            ?.ring;
+    } catch {
+        return;
+    }
+
+    if (!ring || ring.from.id === me || busy()) {
+        return;
+    }
+
+    handleRing(
+        {
+            conversation_id: ring.conversation_id,
+            call_id: ring.call_id,
+            type: 'ring',
+            from: ring.from,
+            from_tab: ring.from_tab,
+            to_tab: null,
+            data: {},
+        },
+        null,
+        Math.max(
+            LATE_RING_MIN_MS,
+            Math.min(RING_MS, ring.expires_at - Date.now()),
+        ),
+    );
+}
+
+/** A call, or a ring waiting to be answered, is on in this tab. */
+function busy(): boolean {
+    return (
+        incoming.value !== null ||
+        (current.value !== null && current.value.status !== 'ended')
     );
 }
 
@@ -386,6 +481,7 @@ export async function acceptCall(): Promise<void> {
 
     clearIncoming();
     clearTimer('ended');
+    clearNotifications(`call-${ring.id}`);
 
     current.value = freshCall({
         id: ring.id,
@@ -430,6 +526,7 @@ export function declineCall(): void {
     }
 
     clearIncoming();
+    clearNotifications(`call-${ring.id}`);
     void send(ring, 'decline', ring.fromTab);
 }
 
@@ -666,7 +763,11 @@ function peerHangupReason(call: ActiveCall, reason: unknown): CallEndReason {
     return call.status === 'connected' ? 'hungUp' : 'cancelled';
 }
 
-function handleRing(signal: CallSignal, call: ActiveCall | null): void {
+function handleRing(
+    signal: CallSignal,
+    call: ActiveCall | null,
+    ringFor: number = RING_MS,
+): void {
     if (!callsAvailable()) {
         // This tab can't take it; another tab or device of theirs may.
         return;
@@ -701,7 +802,7 @@ function handleRing(signal: CallSignal, call: ActiveCall | null): void {
             clearIncoming();
             announceMissed(signal.from);
         }
-    }, RING_MS);
+    }, ringFor);
 }
 
 function clearIncoming(): void {
@@ -1113,13 +1214,30 @@ function stopTone(): void {
     clearTimer('tone');
 }
 
-/** Tells the peer when the tab closes mid-call, so they don't wait for the connection to time out. */
-function bindPageHide(): void {
-    if (pageHideBound || typeof window === 'undefined') {
+/**
+ * Once: tells the peer when the tab closes mid-call, so they don't wait
+ * for the connection to time out; looks for a pending ring when the tab
+ * comes back into view (the app brought to the front) and when a ring's
+ * push reaches the open page.
+ */
+function bindListeners(): void {
+    if (listenersBound || typeof window === 'undefined') {
         return;
     }
 
-    pageHideBound = true;
+    listenersBound = true;
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            void checkPendingRing();
+        }
+    });
+
+    onPushMessage((data) => {
+        if (data.type === 'call') {
+            void checkPendingRing();
+        }
+    });
 
     window.addEventListener('pagehide', () => {
         const call = current.value;

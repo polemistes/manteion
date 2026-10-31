@@ -63,6 +63,7 @@ final class Notifier {
     private static final String[][] DEFAULT_CHANNELS = {
         { "direct_messages", "Direct messages", "messages", "high" },
         { "group_messages", "Group messages", "messages", "high" },
+        { "video_calls", "Video calls", "messages", "high" },
         { "event_invites", "Event invitations", "events", "default" },
         { "event_comments", "Comments on events", "events", "default" },
         { "followed_events", "Events from people you follow", "events", "default" },
@@ -123,10 +124,24 @@ final class Notifier {
             tag = type + ":" + url;
         }
 
+        // A video call that was taken or refused elsewhere, or given up:
+        // its ring comes down and nothing replaces it.
+        if ("call_over".equals(type)) {
+            cancel(context, tag);
+
+            return;
+        }
+
         String channel = channelFor(context, data);
         NotificationCompat.Builder builder = "message".equals(type)
             ? message(context, payload, data, tag, channel, ownReply)
-            : activity(context, payload, data, channel);
+            : "call".equals(type)
+                ? call(context, payload, data, channel)
+                : activity(context, payload, data, channel);
+
+        if ("missed_call".equals(type)) {
+            builder.setCategory(NotificationCompat.CATEGORY_MISSED_CALL);
+        }
 
         builder
             .setSmallIcon(R.drawable.ic_stat_manteion)
@@ -281,6 +296,26 @@ final class Notifier {
 
         if (avatar != null) {
             builder.setLargeIcon(avatar);
+        }
+
+        return builder;
+    }
+
+    /**
+     * Someone is ringing: a heads-up notification with the caller's
+     * picture that goes away by itself when the ring runs out (the push
+     * says when), and sooner when "missed" replaces it or "over" takes it
+     * down. Tapping it opens the conversation, where the page picks the
+     * ring up from the server and offers to answer.
+     */
+    private static NotificationCompat.Builder call(Context context, JSONObject payload, JSONObject data, String channel) {
+        NotificationCompat.Builder builder = activity(context, payload, data, channel)
+            .setCategory(NotificationCompat.CATEGORY_CALL)
+            .setPriority(NotificationCompat.PRIORITY_HIGH);
+        long expiresAt = data.optLong("expires_at", 0);
+
+        if (expiresAt > 0) {
+            builder.setTimeoutAfter(Math.max(1000, expiresAt - System.currentTimeMillis()));
         }
 
         return builder;

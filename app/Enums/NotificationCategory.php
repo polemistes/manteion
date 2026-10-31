@@ -10,6 +10,7 @@ enum NotificationCategory: string
 {
     case DirectMessages = 'direct_messages';
     case GroupMessages = 'group_messages';
+    case VideoCalls = 'video_calls';
     case EventInvites = 'event_invites';
     case EventComments = 'event_comments';
     case FollowedEvents = 'followed_events';
@@ -25,7 +26,7 @@ enum NotificationCategory: string
     public function pushDefault(): bool
     {
         return match ($this) {
-            self::DirectMessages, self::GroupMessages => true,
+            self::DirectMessages, self::GroupMessages, self::VideoCalls => true,
             self::EventInvites, self::EventComments, self::FollowedEvents,
             self::FriendRequests, self::Followers, self::OrganizerInvites, self::LeafletResponses => false,
         };
@@ -36,7 +37,7 @@ enum NotificationCategory: string
      */
     public static function messageCategories(): array
     {
-        return [self::DirectMessages, self::GroupMessages];
+        return [self::DirectMessages, self::GroupMessages, self::VideoCalls];
     }
 
     /**

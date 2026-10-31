@@ -34,3 +34,5 @@ Route::post('/messages/{conversation}/presence', [ConversationPresenceController
 Route::put('/messages/{conversation}/mute', [ConversationMuteController::class, 'update'])->name('messages.mute');
 // A call's set-up messages; a connecting call sends a few dozen in a second.
 Route::post('/messages/{conversation}/call', [CallSignalController::class, 'store'])->middleware('throttle:240,1')->name('messages.call');
+// Whether someone is ringing the user right now (a page opening late asks).
+Route::get('/calls/ringing', [CallSignalController::class, 'ringing'])->name('calls.ringing');

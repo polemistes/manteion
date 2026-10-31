@@ -39,7 +39,7 @@ import { staffDelete } from '@/composables/useStaffDelete';
 import { useDates } from '@/lib/dates';
 import { toast, toastError } from '@/lib/toast';
 import {
-    callsAvailable,
+    callsAvailableSoon,
     onIncomingMessage,
     requestJson,
     startCall,
@@ -109,8 +109,8 @@ const others = computed(() =>
 const { call: activeCall, incoming: incomingCall } = useCalls();
 const canCall = ref(false);
 
-onMounted(() => {
-    canCall.value = callsAvailable();
+onMounted(async () => {
+    canCall.value = await callsAvailableSoon();
 });
 
 const callBusy = computed(

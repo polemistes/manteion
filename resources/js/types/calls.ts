@@ -36,6 +36,17 @@ export type CallSignal = {
     data: Record<string, unknown>;
 };
 
+/** A ring the server still holds for the user (GET calls.ringing), for a page that opened after the broadcast. */
+export type PendingRing = {
+    conversation_id: number;
+    call_id: string;
+    from: CallPeer;
+    from_tab: string;
+    /** Server clock, milliseconds. */
+    started_at: number;
+    expires_at: number;
+};
+
 /** The shared `calls` page prop: on or off, and the STUN servers (never a relay). */
 export type CallsConfig = {
     enabled: boolean;

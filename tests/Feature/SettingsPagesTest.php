@@ -87,6 +87,7 @@ test('the notifications page gets the effective settings, the categories in disp
                 'push' => [
                     'direct_messages' => true,
                     'group_messages' => true,
+                    'video_calls' => true,
                     'event_invites' => false,
                     'event_comments' => false,
                     'followed_events' => false,
@@ -109,6 +110,7 @@ test('the notifications page gets the effective settings, the categories in disp
             ->where('categories', [
                 ['value' => 'direct_messages', 'push_default' => true],
                 ['value' => 'group_messages', 'push_default' => true],
+                ['value' => 'video_calls', 'push_default' => true],
                 ['value' => 'event_invites', 'push_default' => false],
                 ['value' => 'event_comments', 'push_default' => false],
                 ['value' => 'followed_events', 'push_default' => false],

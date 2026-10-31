@@ -18,9 +18,14 @@ import {
     setupBadges,
     syncBadgesFromPage,
 } from './badges';
-import { configureCalls, receiveCallSignal, setCallsViewer } from './calls';
+import {
+    checkPendingRing,
+    configureCalls,
+    receiveCallSignal,
+    setCallsViewer,
+} from './calls';
 import { viewedConversationId } from './conversation';
-import { joinPrivateChannel, setupEcho } from './echo';
+import { joinPrivateChannel, onSubscribed, setupEcho } from './echo';
 import type { ReverbClient } from './echo';
 import type { PrivateChannel } from './echo';
 
@@ -35,6 +40,7 @@ export { refreshBadges, useBadges } from './badges';
 export {
     acceptCall,
     callsAvailable,
+    callsAvailableSoon,
     declineCall,
     dismissCall,
     hangUp,
@@ -65,6 +71,7 @@ export { RequestError, requestJson } from './http';
 let started = false;
 let userId: number | null = null;
 let userChannel: { channel: PrivateChannel; release: () => void } | null = null;
+let stopRingCheck: (() => void) | null = null;
 let signingOut = false;
 
 const handleBadges = (counts: Badges): void => receiveBadges(counts);
@@ -109,6 +116,8 @@ function follow(page: Page): void {
     setCallsViewer(next);
 
     if (userChannel) {
+        stopRingCheck?.();
+        stopRingCheck = null;
         userChannel.channel
             .stopListening('.badges.updated', handleBadges)
             .stopListening('.message.received', handleIncomingMessage)
@@ -142,6 +151,14 @@ function follow(page: Page): void {
         .listen('.message.received', handleIncomingMessage)
         .listen('.call.signal', handleCallSignal)
         .notification(handleNotification);
+
+    // A ring sent while this tab was away (loading, offline) is on the
+    // server for its 45 seconds; ask on every (re)subscription.
+    if (userChannel) {
+        stopRingCheck = onSubscribed(userChannel.channel, () => {
+            void checkPendingRing();
+        });
+    }
 }
 
 /**

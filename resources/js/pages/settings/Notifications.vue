@@ -250,7 +250,10 @@ const testStatus = computed(() => {
 
 // The kinds of notification, grouped as people think of them.
 const groupOrder: { key: string; categories: NotificationCategory[] }[] = [
-    { key: 'messages', categories: ['direct_messages', 'group_messages'] },
+    {
+        key: 'messages',
+        categories: ['direct_messages', 'group_messages', 'video_calls'],
+    },
     {
         key: 'events',
         categories: ['event_invites', 'event_comments', 'followed_events'],

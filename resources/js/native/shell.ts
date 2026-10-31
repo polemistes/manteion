@@ -17,7 +17,10 @@ type Translate = (key: string, named?: Record<string, unknown>) => string;
 
 /** The notification channels, grouped as Settings → Notifications groups them. */
 const CHANNEL_GROUPS: { id: string; categories: NotificationCategory[] }[] = [
-    { id: 'messages', categories: ['direct_messages', 'group_messages'] },
+    {
+        id: 'messages',
+        categories: ['direct_messages', 'group_messages', 'video_calls'],
+    },
     {
         id: 'events',
         categories: ['event_invites', 'event_comments', 'followed_events'],

@@ -164,6 +164,21 @@ async function showPush(data) {
 
     await setAppBadge(info.badge_count);
 
+    // A video call that was taken or refused on another device, or given
+    // up: its ring comes down. Nothing to show (except where every push
+    // must show something: then a quiet line replaces it).
+    if (info.type === 'call_over') {
+        const ringing = await self.registration.getNotifications(
+            payload.tag ? { tag: payload.tag } : undefined,
+        );
+
+        ringing.forEach((notification) => notification.close());
+
+        if (!mustShowEveryPush) {
+            return;
+        }
+    }
+
     // The user is looking at this very page: let the page show it.
     const windows = await self.clients.matchAll({
         type: 'window',
@@ -203,6 +218,11 @@ async function showPush(data) {
 
     if (payload.image) {
         options.image = payload.image;
+    }
+
+    // A ring waits to be answered rather than sliding away.
+    if (info.type === 'call') {
+        options.requireInteraction = true;
     }
 
     if (Array.isArray(payload.actions)) {

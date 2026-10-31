@@ -423,7 +423,7 @@ test('the activity page says which notifications reach the phone', function () {
 
     $this->actingAs($user)->get('/notifications')
         ->assertInertia(fn (Assert $page) => $page
-            ->where('push.categories', ['direct_messages', 'group_messages'])
+            ->where('push.categories', ['direct_messages', 'group_messages', 'video_calls'])
             ->where('push.has_device', false));
 
     $user->updatePushSubscription('https://push.example.test/abc', 'key', 'token');

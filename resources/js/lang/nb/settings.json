@@ -120,6 +120,10 @@
                 "title": "Gruppemeldinger",
                 "description": "Nye meldinger i gruppesamtalene dine"
             },
+            "video_calls": {
+                "title": "Videosamtaler",
+                "description": "Når noen ringer deg"
+            },
             "event_invites": {
                 "title": "Invitasjoner",
                 "description": "Når noen inviterer deg til et arrangement"

@@ -18,6 +18,7 @@ export type AdminAlertKind =
 export type NotificationCategory =
     | 'direct_messages'
     | 'group_messages'
+    | 'video_calls'
     | 'event_invites'
     | 'event_comments'
     | 'followed_events'

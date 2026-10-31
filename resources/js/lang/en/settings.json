@@ -120,6 +120,10 @@
                 "title": "Group messages",
                 "description": "New messages in your group chats"
             },
+            "video_calls": {
+                "title": "Video calls",
+                "description": "When someone calls you"
+            },
             "event_invites": {
                 "title": "Invitations",
                 "description": "When someone invites you to an event"

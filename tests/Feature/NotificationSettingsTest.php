@@ -11,6 +11,7 @@ test('only the message categories push by default', function () {
     expect($defaults)->toBe([
         'direct_messages' => true,
         'group_messages' => true,
+        'video_calls' => true,
         'event_invites' => false,
         'event_comments' => false,
         'followed_events' => false,
@@ -23,7 +24,7 @@ test('only the message categories push by default', function () {
 
 test('every category is either a message or an activity category', function () {
     expect(NotificationCategory::messageCategories())
-        ->toBe([NotificationCategory::DirectMessages, NotificationCategory::GroupMessages]);
+        ->toBe([NotificationCategory::DirectMessages, NotificationCategory::GroupMessages, NotificationCategory::VideoCalls]);
 
     expect([...NotificationCategory::messageCategories(), ...NotificationCategory::activityCategories()])
         ->toBe(NotificationCategory::cases());
@@ -37,6 +38,7 @@ test('a user who never changed anything gets the complete default settings', fun
         'push' => [
             'direct_messages' => true,
             'group_messages' => true,
+            'video_calls' => true,
             'event_invites' => false,
             'event_comments' => false,
             'followed_events' => false,
@@ -74,6 +76,7 @@ test('stored settings override the defaults and the rest keep them', function ()
     expect($settings['push'])->toBe([
         'direct_messages' => false,
         'group_messages' => true,
+        'video_calls' => true,
         'event_invites' => true,
         'event_comments' => false,
         'followed_events' => false,
@@ -110,6 +113,7 @@ test('the factory push states change only the given categories', function () {
     expect($user->fresh()->notificationSettings()['push'])->toBe([
         'direct_messages' => true,
         'group_messages' => false,
+        'video_calls' => true,
         'event_invites' => false,
         'event_comments' => false,
         'followed_events' => false,

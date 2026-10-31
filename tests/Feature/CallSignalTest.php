@@ -1,12 +1,15 @@
 <?php
 
+use App\Enums\CallPushKind;
 use App\Enums\ConversationType;
 use App\Enums\UserRole;
 use App\Events\CallSignal;
 use App\Models\Conversation;
 use App\Models\ConversationParticipant;
 use App\Models\User;
+use App\Notifications\CallNotification;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 
 /**
@@ -163,4 +166,82 @@ test('calls can be switched off', function () {
     $this->actingAs($caller)->get('/messages')->assertInertia(fn ($page) => $page->where('calls.enabled', false));
 
     Event::assertNotDispatched(CallSignal::class);
+});
+
+test('a ring is remembered for the callee, pushed to them, and found by a page that opens late', function () {
+    Event::fake([CallSignal::class]);
+    Notification::fake();
+    [$caller, $callee, $conversation] = callSignalSetup();
+    $callId = Str::uuid()->toString();
+
+    $this->actingAs($caller)->postJson("/messages/{$conversation->id}/call", callSignalPayload(['call_id' => $callId]))->assertNoContent();
+
+    Notification::assertSentTo($callee, CallNotification::class, fn (CallNotification $push) => $push->kind === CallPushKind::Ring
+        && $push->callId === $callId
+        && $push->caller->is($caller)
+        && $push->locale === ($callee->locale ?? 'en'));
+    Notification::assertNotSentTo($caller, CallNotification::class);
+
+    $this->actingAs($callee)->getJson('/calls/ringing')
+        ->assertOk()
+        ->assertJsonPath('ring.call_id', $callId)
+        ->assertJsonPath('ring.conversation_id', $conversation->id)
+        ->assertJsonPath('ring.from.id', $caller->id)
+        ->assertJsonPath('ring.from.name', 'Ada Caller')
+        ->assertJsonPath('ring.from_tab', 'tab-caller');
+    $this->actingAs($caller)->getJson('/calls/ringing')->assertOk()->assertJsonPath('ring', null);
+
+    // A ring runs out on its own.
+    $this->travel(51)->seconds();
+    $this->actingAs($callee)->getJson('/calls/ringing')->assertOk()->assertJsonPath('ring', null);
+});
+
+test('giving up a ring that nobody took turns it into a missed call', function () {
+    Event::fake([CallSignal::class]);
+    Notification::fake();
+    [$caller, $callee, $conversation] = callSignalSetup();
+    $callId = Str::uuid()->toString();
+
+    $this->actingAs($caller)->postJson("/messages/{$conversation->id}/call", callSignalPayload(['call_id' => $callId]))->assertNoContent();
+    $this->actingAs($caller)->postJson("/messages/{$conversation->id}/call", callSignalPayload(['call_id' => $callId, 'type' => 'cancel']))->assertNoContent();
+
+    Notification::assertSentTo($callee, CallNotification::class, fn (CallNotification $push) => $push->kind === CallPushKind::Missed && $push->callId === $callId);
+    Notification::assertSentToTimes($callee, CallNotification::class, 2);
+    $this->actingAs($callee)->getJson('/calls/ringing')->assertJsonPath('ring', null);
+
+    // Cancelling again, or another call's id, changes nothing.
+    $this->actingAs($caller)->postJson("/messages/{$conversation->id}/call", callSignalPayload(['call_id' => $callId, 'type' => 'cancel']))->assertNoContent();
+    Notification::assertSentToTimes($callee, CallNotification::class, 2);
+});
+
+test('taking or refusing a ring takes it down on the callee’s other devices, and a later cancel is not a missed call', function (string $answer) {
+    Event::fake([CallSignal::class]);
+    Notification::fake();
+    [$caller, $callee, $conversation] = callSignalSetup();
+    $callId = Str::uuid()->toString();
+
+    $this->actingAs($caller)->postJson("/messages/{$conversation->id}/call", callSignalPayload(['call_id' => $callId]))->assertNoContent();
+    $this->actingAs($callee)->postJson("/messages/{$conversation->id}/call", callSignalPayload(['call_id' => $callId, 'type' => $answer, 'from_tab' => 'tab-callee', 'to_tab' => 'tab-caller']))->assertNoContent();
+
+    Notification::assertSentTo($callee, CallNotification::class, fn (CallNotification $push) => $push->kind === CallPushKind::Over && $push->callId === $callId && $push->caller->is($caller));
+    $this->actingAs($callee)->getJson('/calls/ringing')->assertJsonPath('ring', null);
+
+    $this->actingAs($caller)->postJson("/messages/{$conversation->id}/call", callSignalPayload(['call_id' => $callId, 'type' => 'cancel']))->assertNoContent();
+
+    Notification::assertSentToTimes($callee, CallNotification::class, 2);
+    Notification::assertNotSentTo($callee, CallNotification::class, fn (CallNotification $push) => $push->kind === CallPushKind::Missed);
+})->with(['accept', 'decline', 'busy']);
+
+test('the pending ring is private to the signed-in user and gone when calls are off', function () {
+    Event::fake([CallSignal::class]);
+    Notification::fake();
+    [$caller, $callee, $conversation] = callSignalSetup();
+
+    $this->getJson('/calls/ringing')->assertUnauthorized();
+
+    $this->actingAs($caller)->postJson("/messages/{$conversation->id}/call", callSignalPayload())->assertNoContent();
+    $this->actingAs(User::factory()->create())->getJson('/calls/ringing')->assertJsonPath('ring', null);
+
+    config(['calls.enabled' => false]);
+    $this->actingAs($callee)->getJson('/calls/ringing')->assertJsonPath('ring', null);
 });
