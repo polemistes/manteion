@@ -345,7 +345,7 @@ const showMenu = computed(
         class="pb-[calc(140px+env(safe-area-inset-bottom))] sm:pb-0"
         :class="!canAnswer ? 'pb-10' : ''"
     >
-        <div class="xl:grid xl:grid-cols-[minmax(0,1fr)_360px] xl:gap-14">
+        <div class="xl:grid xl:grid-cols-[minmax(0,1fr)_360px] xl:gap-10">
             <article class="min-w-0">
                 <!-- Tablet and desktop: crumb and actions. -->
                 <div

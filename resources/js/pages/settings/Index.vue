@@ -80,7 +80,7 @@ onMounted(() => {
         </div>
 
         <div
-            class="hidden md:grid md:grid-cols-[220px_minmax(0,40rem)] md:gap-12 lg:grid-cols-[240px_minmax(0,40rem)]"
+            class="hidden md:grid md:grid-cols-[220px_minmax(0,40rem)] md:gap-10 lg:grid-cols-[240px_minmax(0,40rem)]"
         >
             <div>
                 <div class="sticky top-6">

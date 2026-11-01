@@ -22,4 +22,5 @@ Before planning or editing, find the row whose globs match the file's path and r
 | routes/web.php | .ai/rules/routes-2.md |
 | resources/js/routes/** | .ai/rules/routes.md |
 | app/Services/EventFeedQuery.php, app/Services/ActivityFeed.php | .ai/rules/services.md |
+| resources/js/components/shell/PageContainer.vue | .ai/rules/shell.md |
 | tests/** | .ai/rules/tests.md |

@@ -267,7 +267,7 @@ usePressedChipInView(chipRow, kind);
 
     <PageContainer width="wide" class="pt-3 sm:pt-0">
         <div
-            class="xl:grid xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start xl:gap-12"
+            class="xl:grid xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start xl:gap-10"
         >
             <div class="min-w-0">
                 <div

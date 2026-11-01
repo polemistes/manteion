@@ -246,7 +246,7 @@ usePressedChipInView(chipRow, mine);
 
     <PageContainer width="wide" class="pt-3 sm:pt-0">
         <div
-            class="xl:grid xl:grid-cols-[minmax(0,1fr)_var(--spacing-aside)] xl:gap-12"
+            class="xl:grid xl:grid-cols-[minmax(0,1fr)_var(--spacing-aside)] xl:gap-10"
         >
             <div class="min-w-0">
                 <!-- Phone: the view switches get a row of their own. -->
