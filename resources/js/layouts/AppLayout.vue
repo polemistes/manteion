@@ -117,7 +117,6 @@ onIncomingMessage((message) => {
                 :aria-label="t('ui.mainNavigation')"
                 class="sticky top-0 hidden h-dvh w-rail shrink-0 flex-col items-center border-r border-line bg-canvas px-1 pt-[18px] pb-4 sm:flex lg:hidden"
             >
-                <span class="skin-frieze" aria-hidden="true" />
                 <Link
                     :href="eventsIndex().url"
                     :aria-label="t('nav.home')"
@@ -190,7 +189,6 @@ onIncomingMessage((message) => {
                 :aria-label="t('ui.mainNavigation')"
                 class="sticky top-0 hidden h-dvh w-sidebar shrink-0 flex-col border-r border-line bg-canvas px-4 pt-[22px] pb-4 lg:flex"
             >
-                <span class="skin-frieze" aria-hidden="true" />
                 <Link
                     :href="eventsIndex().url"
                     :aria-label="t('nav.home')"
