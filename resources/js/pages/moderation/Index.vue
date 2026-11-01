@@ -256,7 +256,7 @@ function suspend(): void {
 
                 <div
                     v-if="report.reportable.image_url"
-                    class="mt-3 overflow-hidden rounded-md bg-canvas"
+                    class="mt-3 overflow-hidden rounded-md bg-inset"
                 >
                     <img
                         :src="report.reportable.image_url"
@@ -270,7 +270,7 @@ function suspend(): void {
                         report.reportable.excerpt ||
                         !report.reportable.image_url
                     "
-                    class="mt-3 rounded-r-sm border-l-2 border-line-strong bg-canvas px-3.5 py-2.5 whitespace-pre-line text-ink"
+                    class="mt-3 rounded-r-sm border-l-2 border-line-strong bg-inset px-3.5 py-2.5 whitespace-pre-line text-ink"
                     :class="
                         report.reportable.excerpt
                             ? ''

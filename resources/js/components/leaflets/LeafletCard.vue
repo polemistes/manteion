@@ -224,7 +224,7 @@ async function remove(): Promise<void> {
             :href="props.leaflet.link.url"
             target="_blank"
             rel="noopener noreferrer"
-            class="mx-4 mt-3 flex items-center gap-3 rounded-md border border-line bg-canvas p-2.5 pr-3.5 transition-colors duration-120 hover:bg-surface-2 sm:mx-5"
+            class="mx-4 mt-3 flex items-center gap-3 rounded-md border border-line bg-inset p-2.5 pr-3.5 transition-colors duration-120 hover:bg-surface-2 sm:mx-5"
         >
             <img
                 v-if="props.leaflet.link.image_url"

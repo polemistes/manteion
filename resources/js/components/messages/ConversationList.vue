@@ -170,7 +170,7 @@ function preview(conversation: ConversationListItem): string {
                         class="mx-2 flex min-h-[72px] items-center gap-3 rounded-md px-2 py-2.5 transition-colors duration-120 sm:mx-3"
                         :class="
                             conversation.id === props.activeId
-                                ? 'bg-surface ring-1 ring-line [--avatar-ring:var(--color-surface)] ring-inset'
+                                ? 'bg-surface ring-1 ring-inset ring-line [--avatar-ring:var(--color-surface)]'
                                 : 'hover:bg-surface-2/60'
                         "
                     >

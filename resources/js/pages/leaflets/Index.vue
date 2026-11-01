@@ -90,7 +90,7 @@ usePressedChipInView(chipRow, () => props.scope);
                 decorative
             />
             <span
-                class="flex h-11 min-w-0 flex-1 items-center rounded-full bg-canvas px-4 text-input text-ink-subtle ring-1 ring-line ring-inset"
+                class="flex h-11 min-w-0 flex-1 items-center rounded-full bg-inset px-4 text-input text-ink-subtle ring-1 ring-inset ring-line"
                 >{{ t('leaflets.index.prompt') }}</span
             >
         </button>

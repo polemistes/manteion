@@ -134,7 +134,7 @@ defineExpose({ toggle });
             type="button"
             :aria-label="summaryLabel"
             :title="summaryLabel"
-            class="relative inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-caption font-semibold tabular-nums ring-1 transition-colors duration-120 ring-inset after:absolute after:inset-x-0 after:-inset-y-1.5"
+            class="relative inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-caption font-semibold tabular-nums ring-1 ring-inset transition-colors duration-120 after:absolute after:inset-x-0 after:-inset-y-1.5"
             :class="
                 mine
                     ? 'bg-accent-soft text-accent-ink ring-accent-line'
@@ -160,7 +160,7 @@ defineExpose({ toggle });
                     : t('reactions.add', { emoji: nameOf(reaction.emoji) })
             "
             :title="nameOf(reaction.emoji)"
-            class="relative inline-flex h-8 animate-[pop-in_160ms_var(--ease-enter)] items-center gap-1 rounded-full px-2.5 text-caption font-semibold tabular-nums ring-1 transition-colors duration-120 ring-inset after:absolute after:inset-x-0 after:-inset-y-1.5"
+            class="relative inline-flex h-8 animate-[pop-in_160ms_var(--ease-enter)] items-center gap-1 rounded-full px-2.5 text-caption font-semibold tabular-nums ring-1 ring-inset transition-colors duration-120 after:absolute after:inset-x-0 after:-inset-y-1.5"
             :class="
                 reaction.reacted
                     ? 'bg-accent-soft text-accent-ink ring-accent-line'

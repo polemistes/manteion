@@ -69,7 +69,7 @@ const value = computed({
             v-for="option in options"
             :key="option.value"
             :value="option.value"
-            class="relative flex h-11 min-w-max flex-1 items-center justify-center gap-1.5 rounded-full bg-surface px-3 text-label font-semibold text-ink ring-1 ring-line-strong transition-[background-color,color,box-shadow] duration-200 ring-inset hover:bg-surface-2 active:scale-[.98] disabled:opacity-45 @max-[18.5rem]/rsvp:px-2"
+            class="relative flex h-11 min-w-max flex-1 items-center justify-center gap-1.5 rounded-full bg-surface px-3 text-label font-semibold text-ink ring-1 ring-inset ring-line-strong transition-[background-color,color,box-shadow] duration-200 hover:bg-surface-2 active:scale-[.98] disabled:opacity-45 @max-[18.5rem]/rsvp:px-2"
             :class="option.checked"
         >
             <component

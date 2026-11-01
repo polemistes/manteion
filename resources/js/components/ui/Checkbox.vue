@@ -33,7 +33,7 @@ const model = defineModel<boolean>({ default: false });
         :aria-label="props.label"
         class="relative grid size-[22px] shrink-0 place-items-center rounded-xs bg-surface shadow-[inset_0_0_0_1.5px_var(--color-control)] transition-colors duration-120 after:absolute after:-inset-[11px] disabled:cursor-not-allowed disabled:opacity-45 data-[state=checked]:bg-ink data-[state=checked]:shadow-none"
     >
-        <CheckboxIndicator class="grid place-items-center text-canvas">
+        <CheckboxIndicator class="grid place-items-center text-on-ink">
             <Check :size="16" :stroke-width="3" aria-hidden="true" />
         </CheckboxIndicator>
     </CheckboxRoot>

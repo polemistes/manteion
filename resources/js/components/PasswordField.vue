@@ -64,7 +64,7 @@ const describedBy = computed(
                 "
                 :aria-describedby="describedBy"
                 v-bind="$attrs"
-                class="h-12 w-full rounded-md bg-surface pr-12 pl-3.5 text-input text-ink ring-1 ring-control transition-shadow duration-120 ring-inset hover:ring-ink-subtle focus:ring-2 focus:ring-ink focus:outline-none"
+                class="h-12 w-full rounded-md bg-surface pr-12 pl-3.5 text-input text-ink ring-1 ring-control ring-inset transition-shadow duration-120 hover:ring-ink-subtle focus:ring-2 focus:ring-ink focus:outline-none"
                 :class="
                     props.invalid || props.error ? 'ring-2 ring-danger' : ''
                 "

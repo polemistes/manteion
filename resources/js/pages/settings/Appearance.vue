@@ -45,7 +45,7 @@ const styles = computed(() => [
         value: 'taverna',
         title: t('settings.appearance.taverna'),
         description: t('settings.appearance.tavernaHint'),
-        swatch: ['#D6933A', '#1F5FB5', '#C4542A', '#FCF7EE'],
+        swatch: ['#B34A23', '#E9C27E', '#1F5FB5', '#FFF6EA'],
     },
 ]);
 

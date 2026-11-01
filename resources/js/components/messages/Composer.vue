@@ -170,7 +170,7 @@ defineExpose({ focus: () => field.value?.focus() });
                 <button
                     type="button"
                     :aria-label="t('messages.show.removePhoto')"
-                    class="absolute -top-2 -right-2 grid size-7 place-items-center rounded-full bg-ink text-canvas shadow-sm transition-transform duration-120 after:absolute after:-inset-1.5 active:scale-[.98]"
+                    class="absolute -top-2 -right-2 grid size-7 place-items-center rounded-full bg-ink text-on-ink shadow-sm transition-transform duration-120 after:absolute after:-inset-1.5 active:scale-[.98]"
                     @click="removeImage"
                 >
                     <X :size="14" :stroke-width="2.25" aria-hidden="true" />
@@ -182,7 +182,7 @@ defineExpose({ focus: () => field.value?.focus() });
             @submit.prevent="submit"
         >
             <div
-                class="flex min-h-11 min-w-0 flex-1 items-end rounded-xl bg-surface px-0.5 ring-1 ring-line-strong ring-inset focus-within:ring-2 focus-within:ring-ink md:min-h-12"
+                class="flex min-h-11 min-w-0 flex-1 items-end rounded-xl bg-surface px-0.5 ring-1 ring-inset ring-line-strong focus-within:ring-2 focus-within:ring-ink md:min-h-12"
             >
                 <button
                     type="button"

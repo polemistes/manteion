@@ -248,7 +248,7 @@ onBeforeUnmount(cancelPress);
                             corners,
                             mine
                                 ? 'bg-bubble-mine text-on-bubble-mine'
-                                : 'bg-bubble-theirs text-ink ring-1 ring-line ring-inset',
+                                : 'bg-bubble-theirs text-ink ring-1 ring-inset ring-line',
                             props.message.pending === 'sending'
                                 ? 'opacity-70'
                                 : '',

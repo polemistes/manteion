@@ -16,7 +16,7 @@ enum ThemeStyle: string
     /** Clay, olive, ochre and Greek blue on rough plaster. */
     case Aegean = 'aegean';
 
-    /** A courtyard: an ochre wall, a cobalt door, terracotta pots. */
+    /** A courtyard: a terracotta wall, ochre tables, a cobalt door. */
     case Taverna = 'taverna';
 
     public static function default(): self

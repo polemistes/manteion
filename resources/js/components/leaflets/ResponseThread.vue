@@ -174,7 +174,7 @@ async function remove(response: LeafletResponseSummary): Promise<void> {
             />
             <div class="min-w-0 flex-1">
                 <div
-                    class="flex min-h-11 items-end rounded-xl bg-surface pr-1 pl-4 ring-1 ring-line-strong ring-inset focus-within:ring-2 focus-within:ring-ink"
+                    class="flex min-h-11 items-end rounded-xl bg-surface pr-1 pl-4 ring-1 ring-inset ring-line-strong focus-within:ring-2 focus-within:ring-ink"
                 >
                     <div class="min-w-0 flex-1">
                         <TextArea

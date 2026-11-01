@@ -391,7 +391,7 @@ const hasExtra = computed(
 
             <blockquote
                 v-if="props.item.excerpt"
-                class="w-full rounded-r-sm border-l-2 border-line-strong bg-surface px-3.5 py-2.5 font-display text-input text-ink italic sm:bg-canvas"
+                class="w-full rounded-r-sm border-l-2 border-line-strong bg-surface px-3.5 py-2.5 font-display text-input text-ink italic sm:bg-inset"
             >
                 “{{ props.item.excerpt }}”
             </blockquote>

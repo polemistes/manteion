@@ -173,7 +173,7 @@ function openList(): void {
                         />
                         <span
                             v-if="person.id === props.host.id"
-                            class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 rounded-xs bg-ink px-1.5 text-kicker leading-4 whitespace-nowrap text-canvas uppercase ring-2 ring-surface"
+                            class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 rounded-xs bg-ink px-1.5 text-kicker leading-4 whitespace-nowrap text-on-ink uppercase ring-2 ring-surface"
                             >{{ t('events.show.hostTag') }}</span
                         >
                     </span>
