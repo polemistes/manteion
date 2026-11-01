@@ -10,6 +10,7 @@ import {
 } from 'vue';
 import type { DeepReadonly, Ref, ShallowRef } from 'vue';
 import { ManteionShell } from '@/native/plugin';
+import type { NativeAudioOutput, NativeAudioOutputs } from '@/native/plugin';
 import { isNewerVersion } from '@/native/release';
 import { isNativeShell } from '@/pwa/platform';
 import { clearNotifications, onPushMessage } from '@/pwa/serviceWorker';
@@ -62,6 +63,10 @@ export type CallEndReason =
 /** Why this side has no camera in the call: none, taken, or it won't start. */
 export type CameraIssue = 'missing' | 'busy' | 'failed';
 
+/** One place this side's sound can come out of, where the app lists them. */
+export type AudioOutput = NativeAudioOutput;
+export type AudioOutputKind = AudioOutput['kind'];
+
 export type ActiveCall = {
     id: string;
     conversationId: number;
@@ -87,11 +92,14 @@ export type ActiveCall = {
     peerMicOn: boolean;
     peerHasCamera: boolean;
     /**
-     * Where this side's sound comes out, where the page can choose (the
-     * Android app from 1.6): the loudspeaker, or the phone at the ear.
-     * Null where the browser decides.
+     * Where this side's sound can come out, where the app can say and
+     * switch (the Android app from 1.6): the loudspeaker, the earpiece, a
+     * headset. Empty until the call connects; null where the browser
+     * decides.
      */
-    loudspeaker: boolean | null;
+    audioOutputs: AudioOutput[] | null;
+    /** The output in use, by its id. */
+    audioOutput: string | null;
 };
 
 export type IncomingCall = {
@@ -133,10 +141,11 @@ const CALLS_SINCE_ANDROID_VERSION = '1.3';
 const NATIVE_RING_SINCE_ANDROID_VERSION = '1.5';
 
 /**
- * The first Android app that sends a call's sound where the page says:
- * the loudspeaker or the ear (ManteionShell.setAudioOutput). The WebView
- * picks the loudspeaker on its own, and Android's browsers have no
- * setSinkId, so nowhere else on a phone is there a choice.
+ * The first Android app that lists where a call's sound can come out and
+ * sends it there (ManteionShell.getAudioOutputs/setAudioOutput). The
+ * WebView routes it on its own (a headset, else the loudspeaker), and
+ * Android's browsers have no setSinkId, so nowhere else on a phone is
+ * there a choice.
  */
 const AUDIO_OUTPUT_SINCE_ANDROID_VERSION = '1.6';
 
@@ -229,7 +238,8 @@ function freshCall(
         peerCameraOn: true,
         peerMicOn: true,
         peerHasCamera: true,
-        loudspeaker: nativeAudioOutput ? true : null,
+        audioOutputs: nativeAudioOutput ? [] : null,
+        audioOutput: null,
     };
 }
 
@@ -271,6 +281,17 @@ function probeNativeCalls(): void {
                           AUDIO_OUTPUT_SINCE_ANDROID_VERSION,
                           info.version,
                       );
+
+                      if (nativeAudioOutput) {
+                          void ManteionShell.addListener(
+                              'audioOutputsChanged',
+                              (state) => {
+                                  if (current.value) {
+                                      takeAudioOutputs(current.value.id, state);
+                                  }
+                              },
+                          ).catch(() => undefined);
+                      }
                   })
                   .catch(() => undefined)
             : Promise.resolve();
@@ -657,44 +678,51 @@ export function toggleCamera(): void {
 }
 
 /**
- * Switches this side's sound between the loudspeaker and the ear, where
- * the app can (loudspeaker is null elsewhere). A call starts on the
- * loudspeaker, as a video call does on a phone.
+ * Sends this side's sound to one of the call's audioOutputs, where the
+ * app can. A call starts where the app put it: a connected headset, else
+ * the loudspeaker, as a video call does on a phone.
  */
-export function toggleLoudspeaker(): void {
+export function selectAudioOutput(id: string): void {
     const call = current.value;
 
-    if (!call || call.loudspeaker === null) {
+    if (!call || call.audioOutputs === null || call.status !== 'connected') {
         return;
     }
 
-    patch({ loudspeaker: !call.loudspeaker });
-    applyAudioOutput();
+    void ManteionShell.setAudioOutput({ id })
+        .then((state) => takeAudioOutputs(call.id, state))
+        .catch(() => undefined);
 }
 
 /**
- * Asks the app to route the sound as `loudspeaker` says, once the call is
- * connected (before that there is nothing to route). What the app answers
- * is what stands; a device with nothing to choose between drops the choice.
+ * Asks the app which outputs there are and which is in use, once the call
+ * is connected (before that there is nothing routed); from then on the app
+ * tells of changes by itself.
  */
-function applyAudioOutput(): void {
+function watchAudioOutputs(): void {
     const call = current.value;
 
-    if (!call || call.loudspeaker === null || call.status !== 'connected') {
+    if (!call || call.audioOutputs === null || call.status !== 'connected') {
         return;
     }
 
-    const wanted = call.loudspeaker;
-
-    void ManteionShell.setAudioOutput({ loudspeaker: wanted })
-        .then(({ loudspeaker, choice }) => {
-            const now = current.value;
-
-            if (now?.id === call.id && now.loudspeaker === wanted) {
-                patch({ loudspeaker: choice ? loudspeaker : null });
-            }
-        })
+    void ManteionShell.getAudioOutputs()
+        .then((state) => takeAudioOutputs(call.id, state))
         .catch(() => undefined);
+}
+
+/** What the app says about the outputs, for the call it was asked about. */
+function takeAudioOutputs(callId: string, state: NativeAudioOutputs): void {
+    const call = current.value;
+
+    if (call?.id !== callId || call.status !== 'connected') {
+        return;
+    }
+
+    patch({
+        audioOutputs: state.outputs ?? [],
+        audioOutput: state.current ?? null,
+    });
 }
 
 /** Tells the peer which of this side's camera and microphone are on. */
@@ -1108,7 +1136,7 @@ function createConnection(call: ActiveCall): RTCPeerConnection {
                     sendMediaState();
                 }
 
-                applyAudioOutput();
+                watchAudioOutputs();
 
                 return;
             }

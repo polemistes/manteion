@@ -18,7 +18,14 @@
     "cameraOff": "Slå av kameraet",
     "cameraOn": "Slå på kameraet",
     "yourCameraOff": "Kameraet ditt er av",
-    "loudspeaker": "Høyttaler",
+    "output": {
+        "label": "Lydutgang",
+        "speaker": "Høyttaler",
+        "earpiece": "Telefon",
+        "wired": "Hodetelefoner",
+        "bluetooth": "Bluetooth",
+        "other": "Annen utgang"
+    },
     "peerCameraOff": "{name} har slått av kameraet",
     "peerAudioOnly": "{name} er med på bare lyd",
     "peerMuted": "{name} har slått av mikrofonen",

@@ -46,14 +46,16 @@ export {
     hangUp,
     onMissedCall,
     retryCall,
+    selectAudioOutput,
     startCall,
     toggleCamera,
-    toggleLoudspeaker,
     toggleMic,
     useCalls,
 } from './calls';
 export type {
     ActiveCall,
+    AudioOutput,
+    AudioOutputKind,
     CallEndReason,
     CallStatus,
     CameraIssue,

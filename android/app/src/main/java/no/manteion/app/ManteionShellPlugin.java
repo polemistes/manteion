@@ -61,26 +61,39 @@ public class ManteionShellPlugin extends Plugin {
     }
 
     /**
-     * Sends a call's sound to the loudspeaker, or to the ear (a connected
-     * headset, else the earpiece, with the screen dark near the face).
-     * Answers with what stands, and whether there was a choice: a tablet
-     * with no earpiece keeps its loudspeaker (AudioOutput).
+     * The outputs a call's sound can come out of — the loudspeaker, the
+     * earpiece, a wired or Bluetooth headset — and the one in use. From
+     * then on the page hears of every change (audioOutputsChanged: a
+     * headset connected, the route moved) until resetAudioOutput
+     * (AudioOutput).
      */
     @PluginMethod
-    public void setAudioOutput(PluginCall call) {
-        boolean loudspeaker = Boolean.TRUE.equals(call.getBoolean("loudspeaker", true));
-
+    public void getAudioOutputs(PluginCall call) {
         AppState.onMain(() -> {
-            AudioOutput.Route route = AudioOutput.set(getContext(), loudspeaker);
-            JSObject result = new JSObject();
-
-            result.put("loudspeaker", route.loudspeaker);
-            result.put("choice", route.choice);
-            call.resolve(result);
+            AudioOutput.watch(getContext(), state -> notifyListeners("audioOutputsChanged", state));
+            call.resolve(AudioOutput.state(getContext()));
         });
     }
 
-    /** After a call: the app's own routing again, and the screen stays on. */
+    /**
+     * Sends a call's sound to the output with this id (from
+     * getAudioOutputs); answers as getAudioOutputs does. With the earpiece
+     * in use the screen goes dark near the face.
+     */
+    @PluginMethod
+    public void setAudioOutput(PluginCall call) {
+        String id = call.getString("id");
+
+        if (id == null) {
+            call.reject("No output id", "INVALID");
+
+            return;
+        }
+
+        AppState.onMain(() -> call.resolve(AudioOutput.select(getContext(), id)));
+    }
+
+    /** After a call: the app's own routing again, the screen stays on, no more news. */
     @PluginMethod
     public void resetAudioOutput(PluginCall call) {
         AppState.onMain(() -> {

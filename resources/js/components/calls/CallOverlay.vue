@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import {
+    Bluetooth,
+    Check,
+    Headphones,
     Maximize2,
     Mic,
     MicOff,
     Minimize2,
+    Phone,
     PhoneIncoming,
     PhoneMissed,
     PhoneOff,
@@ -14,6 +18,7 @@ import {
     Volume2,
 } from '@lucide/vue';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import type { Component } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Avatar from '@/components/ui/Avatar.vue';
 import Button from '@/components/ui/Button.vue';
@@ -25,11 +30,12 @@ import {
     hangUp,
     onMissedCall,
     retryCall,
+    selectAudioOutput,
     toggleCamera,
-    toggleLoudspeaker,
     toggleMic,
     useCalls,
 } from '@/realtime';
+import type { AudioOutput, AudioOutputKind } from '@/realtime';
 import { show as messagesShow } from '@/routes/messages';
 
 /**
@@ -46,6 +52,7 @@ const { call, incoming, localStream, remoteStream } = useCalls();
 const remoteVideo = ref<HTMLVideoElement | null>(null);
 const localVideo = ref<HTMLVideoElement | null>(null);
 const expanded = ref(false);
+const outputsOpen = ref(false);
 const now = ref(Date.now());
 let clock: ReturnType<typeof setInterval> | undefined;
 
@@ -101,6 +108,73 @@ onMissedCall((peer) => {
 const live = computed(
     () => call.value !== null && call.value.status !== 'ended',
 );
+
+watch(live, (isLive) => {
+    if (!isLive) {
+        outputsOpen.value = false;
+    }
+});
+
+/**
+ * Where the sound comes out, where the app can say (the Android app): a
+ * toggle between the phone's own two, a list once a headset joins them.
+ */
+const audioOutputs = computed(() => call.value?.audioOutputs ?? []);
+const currentOutput = computed(
+    () =>
+        audioOutputs.value.find(
+            (output) => output.id === call.value?.audioOutput,
+        ) ?? null,
+);
+const hasOutputChoice = computed(() => audioOutputs.value.length >= 2);
+const outputToggle = computed(() => {
+    const kinds = audioOutputs.value.map((output) => output.kind);
+
+    return (
+        kinds.length === 2 &&
+        kinds.includes('speaker') &&
+        kinds.includes('earpiece')
+    );
+});
+const onLoudspeaker = computed(() => currentOutput.value?.kind === 'speaker');
+
+const OUTPUT_ICONS: Record<AudioOutputKind, Component> = {
+    speaker: Volume2,
+    earpiece: Phone,
+    wired: Headphones,
+    bluetooth: Bluetooth,
+    other: Volume1,
+};
+
+function outputIcon(output: AudioOutput | null): Component {
+    return output ? OUTPUT_ICONS[output.kind] : Volume1;
+}
+
+/** A headset by its name, the built-in ones by what they are. */
+function outputName(output: AudioOutput): string {
+    return output.name || t(`calls.output.${output.kind}`);
+}
+
+function chooseOutput(): void {
+    if (!outputToggle.value) {
+        outputsOpen.value = !outputsOpen.value;
+
+        return;
+    }
+
+    const other = audioOutputs.value.find(
+        (output) => output.id !== call.value?.audioOutput,
+    );
+
+    if (other) {
+        selectAudioOutput(other.id);
+    }
+}
+
+function pickOutput(id: string): void {
+    outputsOpen.value = false;
+    selectAudioOutput(id);
+}
 const showingPeerVideo = computed(
     () =>
         call.value?.status === 'connected' &&
@@ -320,22 +394,27 @@ const windowClass = computed(() => {
                     </p>
                 </div>
                 <div class="flex shrink-0 gap-2">
-                    <!-- Only where the app can route the sound (Android 1.6+). -->
+                    <!-- Only where the app lists the outputs (Android 1.6+). -->
                     <button
-                        v-if="call.loudspeaker !== null"
+                        v-if="hasOutputChoice"
                         type="button"
                         class="relative grid size-10 place-items-center rounded-full transition-colors after:absolute after:-inset-1"
                         :class="
-                            call.loudspeaker
+                            onLoudspeaker
                                 ? 'bg-on-stage text-stage'
                                 : 'bg-on-stage/10 hover:bg-on-stage/20'
                         "
-                        :aria-label="t('calls.loudspeaker')"
-                        :aria-pressed="call.loudspeaker"
-                        @click="toggleLoudspeaker"
+                        :aria-label="
+                            outputToggle
+                                ? t('calls.output.speaker')
+                                : t('calls.output.label')
+                        "
+                        :aria-pressed="outputToggle ? onLoudspeaker : undefined"
+                        :aria-expanded="outputToggle ? undefined : outputsOpen"
+                        @click="chooseOutput"
                     >
                         <component
-                            :is="call.loudspeaker ? Volume2 : Volume1"
+                            :is="outputIcon(currentOutput)"
                             :size="18"
                             aria-hidden="true"
                         />
@@ -432,6 +511,47 @@ const windowClass = computed(() => {
                         aria-hidden="true"
                     />
                 </button>
+            </div>
+
+            <!-- The outputs to pick from, over the call, as a sheet at the bottom. -->
+            <div
+                v-if="outputsOpen"
+                class="absolute inset-0 z-10 flex flex-col justify-end bg-stage/60"
+                @click.self="outputsOpen = false"
+                @keydown.escape="outputsOpen = false"
+            >
+                <div
+                    role="radiogroup"
+                    :aria-label="t('calls.output.label')"
+                    class="m-3 mb-[calc(12px+env(safe-area-inset-bottom))] rounded-xl bg-surface p-1.5 text-ink shadow-lg ring-1 ring-line sm:mb-3"
+                >
+                    <button
+                        v-for="output in audioOutputs"
+                        :key="output.id"
+                        type="button"
+                        role="radio"
+                        :aria-checked="output.id === call.audioOutput"
+                        class="flex h-12 w-full items-center gap-3 rounded-md px-3 text-left text-body hover:bg-surface-2"
+                        @click="pickOutput(output.id)"
+                    >
+                        <component
+                            :is="outputIcon(output)"
+                            :size="18"
+                            :stroke-width="1.9"
+                            class="shrink-0 text-ink-muted"
+                            aria-hidden="true"
+                        />
+                        <span class="min-w-0 flex-1 truncate">
+                            {{ outputName(output) }}
+                        </span>
+                        <Check
+                            v-if="output.id === call.audioOutput"
+                            :size="18"
+                            class="shrink-0"
+                            aria-hidden="true"
+                        />
+                    </button>
+                </div>
             </div>
         </template>
 

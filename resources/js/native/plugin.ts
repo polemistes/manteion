@@ -50,6 +50,21 @@ export interface ManteionPushPlugin {
 
 export const ManteionPush = registerPlugin<ManteionPushPlugin>('ManteionPush');
 
+/** One place a call's sound can come out of, in the Android app. */
+export type NativeAudioOutput = {
+    /** Android's device id, or the kind itself on Android 11 and older. */
+    id: string;
+    kind: 'speaker' | 'earpiece' | 'wired' | 'bluetooth' | 'other';
+    /** The product's name for a headset; empty for the built-in ones. */
+    name: string;
+};
+
+/** The outputs there are and the one in use, by id (null when Android can't say). */
+export type NativeAudioOutputs = {
+    outputs: NativeAudioOutput[];
+    current: string | null;
+};
+
 /**
  * The app's window (ManteionShellPlugin.java): its colour shows behind the
  * status and navigation bars where the WebView doesn't reach under them.
@@ -66,16 +81,24 @@ export interface ManteionShellPlugin {
     startRinging(): Promise<void>;
     stopRinging(): Promise<void>;
     /**
-     * Sends a call's sound to the loudspeaker, or to the ear — a connected
-     * headset, else the earpiece, with the screen dark near the face. App
-     * 1.6+. Answers with what stands, and whether there was anything to
-     * choose between (a tablet without an earpiece keeps its loudspeaker).
+     * The outputs a call's sound can come out of and the one in use, and
+     * from then on an audioOutputsChanged event for every change (a
+     * headset connected, the route moved) until resetAudioOutput(). App
+     * 1.6+; older apps reject the call.
      */
-    setAudioOutput(options: {
-        loudspeaker: boolean;
-    }): Promise<{ loudspeaker: boolean; choice: boolean }>;
-    /** After a call: back to the app's own routing, and the screen stays on. */
+    getAudioOutputs(): Promise<NativeAudioOutputs>;
+    /**
+     * Sends the sound to this output (an id from getAudioOutputs) and
+     * answers as it does. With the earpiece in use the screen goes dark
+     * near the face.
+     */
+    setAudioOutput(options: { id: string }): Promise<NativeAudioOutputs>;
+    /** After a call: the app's own routing again, the screen stays on, no more events. */
     resetAudioOutput(): Promise<void>;
+    addListener(
+        event: 'audioOutputsChanged',
+        listener: (state: NativeAudioOutputs) => void,
+    ): Promise<PluginListenerHandle>;
 }
 
 export const ManteionShell =

@@ -18,7 +18,14 @@
     "cameraOff": "Turn camera off",
     "cameraOn": "Turn camera on",
     "yourCameraOff": "Your camera is off",
-    "loudspeaker": "Loudspeaker",
+    "output": {
+        "label": "Audio output",
+        "speaker": "Loudspeaker",
+        "earpiece": "Phone",
+        "wired": "Headphones",
+        "bluetooth": "Bluetooth",
+        "other": "Other output"
+    },
     "peerCameraOff": "{name} has turned the camera off",
     "peerAudioOnly": "{name} is on audio only",
     "peerMuted": "{name} has muted the microphone",
