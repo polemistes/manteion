@@ -18,6 +18,7 @@
     "cameraOff": "Turn camera off",
     "cameraOn": "Turn camera on",
     "yourCameraOff": "Your camera is off",
+    "loudspeaker": "Loudspeaker",
     "peerCameraOff": "{name} has turned the camera off",
     "peerAudioOnly": "{name} is on audio only",
     "peerMuted": "{name} has muted the microphone",

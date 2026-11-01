@@ -10,6 +10,8 @@ import {
     PhoneOff,
     Video,
     VideoOff,
+    Volume1,
+    Volume2,
 } from '@lucide/vue';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -24,6 +26,7 @@ import {
     onMissedCall,
     retryCall,
     toggleCamera,
+    toggleLoudspeaker,
     toggleMic,
     useCalls,
 } from '@/realtime';
@@ -316,20 +319,42 @@ const windowClass = computed(() => {
                         >
                     </p>
                 </div>
-                <button
-                    type="button"
-                    class="hidden size-10 shrink-0 place-items-center rounded-full bg-on-stage/10 hover:bg-on-stage/20 sm:grid"
-                    :aria-label="
-                        expanded ? t('calls.shrink') : t('calls.expand')
-                    "
-                    @click="expanded = !expanded"
-                >
-                    <component
-                        :is="expanded ? Minimize2 : Maximize2"
-                        :size="18"
-                        aria-hidden="true"
-                    />
-                </button>
+                <div class="flex shrink-0 gap-2">
+                    <!-- Only where the app can route the sound (Android 1.6+). -->
+                    <button
+                        v-if="call.loudspeaker !== null"
+                        type="button"
+                        class="relative grid size-10 place-items-center rounded-full transition-colors after:absolute after:-inset-1"
+                        :class="
+                            call.loudspeaker
+                                ? 'bg-on-stage text-stage'
+                                : 'bg-on-stage/10 hover:bg-on-stage/20'
+                        "
+                        :aria-label="t('calls.loudspeaker')"
+                        :aria-pressed="call.loudspeaker"
+                        @click="toggleLoudspeaker"
+                    >
+                        <component
+                            :is="call.loudspeaker ? Volume2 : Volume1"
+                            :size="18"
+                            aria-hidden="true"
+                        />
+                    </button>
+                    <button
+                        type="button"
+                        class="hidden size-10 place-items-center rounded-full bg-on-stage/10 hover:bg-on-stage/20 sm:grid"
+                        :aria-label="
+                            expanded ? t('calls.shrink') : t('calls.expand')
+                        "
+                        @click="expanded = !expanded"
+                    >
+                        <component
+                            :is="expanded ? Minimize2 : Maximize2"
+                            :size="18"
+                            aria-hidden="true"
+                        />
+                    </button>
+                </div>
             </div>
 
             <div

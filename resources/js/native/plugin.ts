@@ -53,7 +53,8 @@ export const ManteionPush = registerPlugin<ManteionPushPlugin>('ManteionPush');
 /**
  * The app's window (ManteionShellPlugin.java): its colour shows behind the
  * status and navigation bars where the WebView doesn't reach under them.
- * And the phone's ring for a call the page shows.
+ * The phone's ring for a call the page shows, and where a call's sound
+ * comes out.
  */
 export interface ManteionShellPlugin {
     setWindowColor(options: { color: string }): Promise<void>;
@@ -64,6 +65,17 @@ export interface ManteionShellPlugin {
      */
     startRinging(): Promise<void>;
     stopRinging(): Promise<void>;
+    /**
+     * Sends a call's sound to the loudspeaker, or to the ear — a connected
+     * headset, else the earpiece, with the screen dark near the face. App
+     * 1.6+. Answers with what stands, and whether there was anything to
+     * choose between (a tablet without an earpiece keeps its loudspeaker).
+     */
+    setAudioOutput(options: {
+        loudspeaker: boolean;
+    }): Promise<{ loudspeaker: boolean; choice: boolean }>;
+    /** After a call: back to the app's own routing, and the screen stays on. */
+    resetAudioOutput(): Promise<void>;
 }
 
 export const ManteionShell =

@@ -86,6 +86,12 @@ export type ActiveCall = {
     peerCameraOn: boolean;
     peerMicOn: boolean;
     peerHasCamera: boolean;
+    /**
+     * Where this side's sound comes out, where the page can choose (the
+     * Android app from 1.6): the loudspeaker, or the phone at the ear.
+     * Null where the browser decides.
+     */
+    loudspeaker: boolean | null;
 };
 
 export type IncomingCall = {
@@ -126,6 +132,14 @@ const CALLS_SINCE_ANDROID_VERSION = '1.3';
  */
 const NATIVE_RING_SINCE_ANDROID_VERSION = '1.5';
 
+/**
+ * The first Android app that sends a call's sound where the page says:
+ * the loudspeaker or the ear (ManteionShell.setAudioOutput). The WebView
+ * picks the loudspeaker on its own, and Android's browsers have no
+ * setSinkId, so nowhere else on a phone is there a choice.
+ */
+const AUDIO_OUTPUT_SINCE_ANDROID_VERSION = '1.6';
+
 const tabId = newId();
 
 let me: number | null = null;
@@ -133,6 +147,7 @@ let config: CallsConfig = { enabled: false, iceServers: [] };
 let listenersBound = false;
 let nativeCalls = false;
 let nativeRing = false;
+let nativeAudioOutput = false;
 let nativeProbe: Promise<void> | null = null;
 
 const current = ref<ActiveCall | null>(null);
@@ -214,6 +229,7 @@ function freshCall(
         peerCameraOn: true,
         peerMicOn: true,
         peerHasCamera: true,
+        loudspeaker: nativeAudioOutput ? true : null,
     };
 }
 
@@ -249,6 +265,10 @@ function probeNativeCalls(): void {
                       );
                       nativeRing = !isNewerVersion(
                           NATIVE_RING_SINCE_ANDROID_VERSION,
+                          info.version,
+                      );
+                      nativeAudioOutput = !isNewerVersion(
+                          AUDIO_OUTPUT_SINCE_ANDROID_VERSION,
                           info.version,
                       );
                   })
@@ -634,6 +654,47 @@ export function toggleCamera(): void {
 
     patch({ cameraOn: on });
     sendMediaState();
+}
+
+/**
+ * Switches this side's sound between the loudspeaker and the ear, where
+ * the app can (loudspeaker is null elsewhere). A call starts on the
+ * loudspeaker, as a video call does on a phone.
+ */
+export function toggleLoudspeaker(): void {
+    const call = current.value;
+
+    if (!call || call.loudspeaker === null) {
+        return;
+    }
+
+    patch({ loudspeaker: !call.loudspeaker });
+    applyAudioOutput();
+}
+
+/**
+ * Asks the app to route the sound as `loudspeaker` says, once the call is
+ * connected (before that there is nothing to route). What the app answers
+ * is what stands; a device with nothing to choose between drops the choice.
+ */
+function applyAudioOutput(): void {
+    const call = current.value;
+
+    if (!call || call.loudspeaker === null || call.status !== 'connected') {
+        return;
+    }
+
+    const wanted = call.loudspeaker;
+
+    void ManteionShell.setAudioOutput({ loudspeaker: wanted })
+        .then(({ loudspeaker, choice }) => {
+            const now = current.value;
+
+            if (now?.id === call.id && now.loudspeaker === wanted) {
+                patch({ loudspeaker: choice ? loudspeaker : null });
+            }
+        })
+        .catch(() => undefined);
 }
 
 /** Tells the peer which of this side's camera and microphone are on. */
@@ -1047,6 +1108,8 @@ function createConnection(call: ActiveCall): RTCPeerConnection {
                     sendMediaState();
                 }
 
+                applyAudioOutput();
+
                 return;
             }
             case 'disconnected':
@@ -1244,6 +1307,10 @@ function finish(reason: CallEndReason, show = true, notifyPeer = true): void {
     rtc = null;
     queuedCandidates = [];
     outgoingCandidates = [];
+
+    if (nativeAudioOutput) {
+        void ManteionShell.resetAudioOutput().catch(() => undefined);
+    }
 
     if (localStream.value) {
         stopTracks(localStream.value);

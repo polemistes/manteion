@@ -48,6 +48,7 @@ export {
     retryCall,
     startCall,
     toggleCamera,
+    toggleLoudspeaker,
     toggleMic,
     useCalls,
 } from './calls';

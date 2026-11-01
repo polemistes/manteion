@@ -2,6 +2,7 @@ package no.manteion.app;
 
 import android.graphics.Color;
 import android.net.Uri;
+import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
@@ -9,11 +10,12 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 
 /**
  * The window around the page (resources/js/native/shell.ts), the way back
- * to the site from the app's error page, and the phone's ring for a call
- * the page shows. Where the WebView stays clear of the status and
- * navigation bars (WebView before version 140, see Capacitor's
- * SystemBars), the window shows behind them; it takes the page's canvas
- * colour, so the bars read as part of the page in light and dark mode.
+ * to the site from the app's error page, the phone's ring for a call the
+ * page shows, and where a call's sound comes out. Where the WebView stays
+ * clear of the status and navigation bars (WebView before version 140, see
+ * Capacitor's SystemBars), the window shows behind them; it takes the
+ * page's canvas colour, so the bars read as part of the page in light and
+ * dark mode.
  */
 @CapacitorPlugin(name = "ManteionShell")
 public class ManteionShellPlugin extends Plugin {
@@ -58,10 +60,40 @@ public class ManteionShellPlugin extends Plugin {
         call.resolve();
     }
 
+    /**
+     * Sends a call's sound to the loudspeaker, or to the ear (a connected
+     * headset, else the earpiece, with the screen dark near the face).
+     * Answers with what stands, and whether there was a choice: a tablet
+     * with no earpiece keeps its loudspeaker (AudioOutput).
+     */
+    @PluginMethod
+    public void setAudioOutput(PluginCall call) {
+        boolean loudspeaker = Boolean.TRUE.equals(call.getBoolean("loudspeaker", true));
+
+        AppState.onMain(() -> {
+            AudioOutput.Route route = AudioOutput.set(getContext(), loudspeaker);
+            JSObject result = new JSObject();
+
+            result.put("loudspeaker", route.loudspeaker);
+            result.put("choice", route.choice);
+            call.resolve(result);
+        });
+    }
+
+    /** After a call: the app's own routing again, and the screen stays on. */
+    @PluginMethod
+    public void resetAudioOutput(PluginCall call) {
+        AppState.onMain(() -> {
+            AudioOutput.reset(getContext());
+            call.resolve();
+        });
+    }
+
     @Override
     protected void handleOnDestroy() {
         super.handleOnDestroy();
         Ringer.stop();
+        AudioOutput.reset(getContext());
     }
 
     @PluginMethod
