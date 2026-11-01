@@ -2,6 +2,7 @@
 
 use App\Enums\NotificationCategory;
 use App\Enums\ThemeMode;
+use App\Enums\ThemeStyle;
 use App\Enums\UserRole;
 use App\Models\PushSubscription;
 use App\Models\User;
@@ -156,21 +157,24 @@ test('device names follow the users language, and fall back to whichever half is
             ->where('devices.3.label', 'Firefox på Windows'));
 });
 
-test('the appearance page gets the light or dark mode', function () {
-    $user = User::factory()->create(['theme_mode' => ThemeMode::Dark]);
+test('the appearance page gets the light or dark mode and the look', function () {
+    $user = User::factory()->create(['theme_mode' => ThemeMode::Dark, 'theme_style' => ThemeStyle::Aegean]);
 
     $this->actingAs($user)
         ->get('/settings/appearance')
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('settings/Appearance')
-            ->where('theme_mode', 'dark'));
+            ->where('theme_mode', 'dark')
+            ->where('theme_style', 'aegean'));
 });
 
-test('someone who never chose a mode follows the system', function () {
+test('someone who never chose follows the system in the classic look', function () {
     $this->actingAs(User::factory()->create())
         ->get('/settings/appearance')
-        ->assertInertia(fn ($page) => $page->where('theme_mode', 'system'));
+        ->assertInertia(fn ($page) => $page
+            ->where('theme_mode', 'system')
+            ->where('theme_style', 'classic'));
 });
 
 test('while impersonating, an administrator cannot change the users settings', function (string $method, string $url, array $data) {

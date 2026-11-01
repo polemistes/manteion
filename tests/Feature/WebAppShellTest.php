@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\ThemeMode;
+use App\Enums\ThemeStyle;
 use App\Models\User;
 
 test('every page links the web app manifest and the home screen metadata', function () {
@@ -16,17 +17,20 @@ test('every page links the web app manifest and the home screen metadata', funct
         ->assertSee('<meta name="csrf-token" content="', false);
 });
 
-test('the browser colour follows the system, or the mode the user picked', function (ThemeMode $mode, string $light, string $dark) {
-    $user = User::factory()->create(['theme_mode' => $mode]);
+test('the browser colour follows the system, or the mode the user picked, in the look they picked', function (ThemeMode $mode, ThemeStyle $style, string $light, string $dark) {
+    $user = User::factory()->create(['theme_mode' => $mode, 'theme_style' => $style]);
 
     $this->actingAs($user)->get('/events')
         ->assertSuccessful()
         ->assertSee('<meta name="theme-color" media="(prefers-color-scheme: light)" content="'.$light.'">', false)
         ->assertSee('<meta name="theme-color" media="(prefers-color-scheme: dark)" content="'.$dark.'">', false);
 })->with([
-    'system' => [ThemeMode::System, '#F7F3EC', '#14100D'],
-    'light' => [ThemeMode::Light, '#F7F3EC', '#F7F3EC'],
-    'dark' => [ThemeMode::Dark, '#14100D', '#14100D'],
+    'system' => [ThemeMode::System, ThemeStyle::Classic, '#F7F3EC', '#14100D'],
+    'light' => [ThemeMode::Light, ThemeStyle::Classic, '#F7F3EC', '#F7F3EC'],
+    'dark' => [ThemeMode::Dark, ThemeStyle::Classic, '#14100D', '#14100D'],
+    'aegean, system' => [ThemeMode::System, ThemeStyle::Aegean, '#EFE5D3', '#10171F'],
+    'aegean, light' => [ThemeMode::Light, ThemeStyle::Aegean, '#EFE5D3', '#EFE5D3'],
+    'aegean, dark' => [ThemeMode::Dark, ThemeStyle::Aegean, '#10171F', '#10171F'],
 ]);
 
 test('the manifest makes the app installable, with icons of the sizes it claims', function () {

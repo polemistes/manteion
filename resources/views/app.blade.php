@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 @php($theme = \App\Http\Middleware\HandleInertiaRequests::themeFor(auth()->user()))
 {{-- The browser UI colour (address bar, installed app's title bar) per mode:
-     the canvas token, the same pair as themeColors in resources/js/theme.ts.
-     "system" leaves each meta to its media query; a forced mode paints both. --}}
-@php($themeColors = ['light' => '#F7F3EC', 'dark' => '#14100D'])
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-mode="{{ $theme['mode'] }}">
+     the skin's canvas token, the same pairs as themeColors in
+     resources/js/theme.ts. "system" leaves each meta to its media query; a
+     forced mode paints both. --}}
+@php($themeColors = \App\Enums\ThemeStyle::from($theme['style'])->browserColors())
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-mode="{{ $theme['mode'] }}" data-skin="{{ $theme['style'] }}">
     <head>
         <meta charset="utf-8">
         {{-- Resolve "system" to light/dark before first paint, so a dark-mode

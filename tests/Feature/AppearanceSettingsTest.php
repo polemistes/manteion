@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\ThemeMode;
+use App\Enums\ThemeStyle;
 use App\Models\User;
 
 test('a user can choose light or dark mode, and the choice is shared with every page', function () {
@@ -17,9 +18,45 @@ test('a user can choose light or dark mode, and the choice is shared with every 
     $this->actingAs($user->fresh())->get('/events')
         ->assertInertia(fn ($page) => $page
             ->where('theme.mode', 'dark')
-            ->missing('theme.style'))
+            ->where('theme.style', 'classic'))
         ->assertSee('data-mode="dark"', false)
-        ->assertDontSee('data-style', false);
+        ->assertSee('data-skin="classic"', false);
+});
+
+test('a user can choose the Aegean look, and keep it while changing the mode', function () {
+    $user = User::factory()->create(['theme_mode' => ThemeMode::Light]);
+
+    $this->actingAs($user)
+        ->from('/settings/appearance')
+        ->put('/settings/appearance', ['theme_mode' => 'light', 'theme_style' => 'aegean'])
+        ->assertRedirect('/settings/appearance')
+        ->assertSessionHasNoErrors();
+
+    expect($user->fresh()->theme_style)->toBe(ThemeStyle::Aegean);
+
+    $this->actingAs($user->fresh())->get('/events')
+        ->assertInertia(fn ($page) => $page
+            ->where('theme.mode', 'light')
+            ->where('theme.style', 'aegean'))
+        ->assertSee('data-mode="light" data-skin="aegean"', false);
+
+    // A mode change alone leaves the look as it is.
+    $this->actingAs($user->fresh())
+        ->put('/settings/appearance', ['theme_mode' => 'dark'])
+        ->assertSessionHasNoErrors();
+
+    expect($user->fresh()->theme_style)->toBe(ThemeStyle::Aegean)
+        ->and($user->fresh()->theme_mode)->toBe(ThemeMode::Dark);
+});
+
+test('an unknown look is rejected', function () {
+    $user = User::factory()->create(['theme_style' => ThemeStyle::Aegean]);
+
+    $this->actingAs($user)
+        ->put('/settings/appearance', ['theme_mode' => 'light', 'theme_style' => 'soft'])
+        ->assertInvalid(['theme_style']);
+
+    expect($user->fresh()->theme_style)->toBe(ThemeStyle::Aegean);
 });
 
 test('a user can go back to following the system', function () {
@@ -46,10 +83,9 @@ test('an unknown or missing mode is rejected', function (array $input) {
     'no mode' => [[]],
 ]);
 
-test('guests get the mode following the system', function () {
+test('guests get the classic look in the mode following the system', function () {
     $this->get('/login')
-        ->assertSee('data-mode="system"', false)
-        ->assertDontSee('data-style', false);
+        ->assertSee('data-mode="system" data-skin="classic"', false);
 });
 
 test('guests cannot change the appearance', function () {

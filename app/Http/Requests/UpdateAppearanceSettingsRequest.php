@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\ThemeMode;
+use App\Enums\ThemeStyle;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -22,6 +23,7 @@ class UpdateAppearanceSettingsRequest extends FormRequest
     {
         return [
             'theme_mode' => ['required', Rule::enum(ThemeMode::class)],
+            'theme_style' => ['sometimes', 'required', Rule::enum(ThemeStyle::class)],
         ];
     }
 }

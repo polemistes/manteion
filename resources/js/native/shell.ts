@@ -6,7 +6,7 @@ import { Download } from '@lucide/vue';
 import { toast } from '@/lib/toast';
 import { dispatchPushMessage } from '@/pwa/serviceWorker';
 import { refreshBadges } from '@/realtime';
-import { themeColors } from '@/theme';
+import { currentBrowserColor } from '@/theme';
 import type { NotificationCategory } from '@/types';
 import { ManteionPush, ManteionShell } from './plugin';
 import type { NativeChannel } from './plugin';
@@ -89,7 +89,8 @@ export function setupNativeShell(): void {
     });
 
     // The page draws under the status and navigation bars (its header pads
-    // itself with env(safe-area-inset-top)); their icons follow its mode.
+    // itself with env(safe-area-inset-top)); their icons follow its mode and
+    // the window colour its skin.
     const syncBars = (): void => {
         const dark = document.documentElement.dataset.mode === 'dark';
 
@@ -97,14 +98,14 @@ export function setupNativeShell(): void {
             style: dark ? SystemBarsStyle.Dark : SystemBarsStyle.Light,
         }).catch(() => undefined);
         void ManteionShell.setWindowColor({
-            color: themeColors[dark ? 'dark' : 'light'],
+            color: currentBrowserColor(),
         }).catch(() => undefined);
     };
 
     syncBars();
     new MutationObserver(syncBars).observe(document.documentElement, {
         attributes: true,
-        attributeFilter: ['data-mode'],
+        attributeFilter: ['data-mode', 'data-skin'],
     });
 }
 

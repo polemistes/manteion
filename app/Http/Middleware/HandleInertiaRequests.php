@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Enums\ThemeMode;
+use App\Enums\ThemeStyle;
 use App\Models\User;
 use App\Services\BadgeCounts;
 use App\Services\Fcm;
@@ -102,16 +103,18 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
-     * The light/dark mode to render for a user, following the system for
-     * guests. Used both here (so the client can switch without a reload) and
-     * by the root Blade view (so the first paint is already right).
+     * The light/dark mode and the look (skin) to render for a user: the
+     * system's mode and the classic look for guests. Used both here (so the
+     * client can switch without a reload) and by the root Blade view (so the
+     * first paint is already right).
      *
-     * @return array{mode: string}
+     * @return array{mode: string, style: string}
      */
     public static function themeFor(?User $user): array
     {
         return [
             'mode' => ($user->theme_mode ?? ThemeMode::System)->value,
+            'style' => ($user->theme_style ?? ThemeStyle::default())->value,
         ];
     }
 }

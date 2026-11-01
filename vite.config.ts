@@ -25,6 +25,14 @@ export default defineConfig({
                     optimizedFallbacks: false,
                     preload: [{ weight: 500 }],
                 }),
+                // The Aegean skin's titles; fetched only when that skin is on.
+                bunny('Alegreya', {
+                    weights: [400, 500],
+                    styles: ['normal', 'italic'],
+                    fallbacks: ['Iowan Old Style', 'Georgia', 'serif'],
+                    optimizedFallbacks: false,
+                    preload: false,
+                }),
             ],
         }),
         inertia(),

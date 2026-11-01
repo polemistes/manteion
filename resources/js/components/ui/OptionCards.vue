@@ -7,6 +7,8 @@ export interface OptionCard {
     title: string;
     description?: string;
     icon?: Component;
+    /** Colours shown as overlapping dots instead of an icon (a look to pick). */
+    swatch?: string[];
 }
 
 /**
@@ -40,9 +42,21 @@ const model = defineModel<string>();
             :value="option.value"
             class="group flex min-h-16 w-full items-center gap-3.5 rounded-md bg-surface px-3.5 py-2.5 text-left ring-1 ring-line-strong transition-shadow duration-120 ring-inset hover:bg-surface-2/55 disabled:cursor-not-allowed disabled:opacity-45 data-[state=checked]:ring-2 data-[state=checked]:ring-ink"
         >
+            <span
+                v-if="option.swatch"
+                class="flex shrink-0 -space-x-1.5"
+                aria-hidden="true"
+            >
+                <span
+                    v-for="(color, index) in option.swatch"
+                    :key="index"
+                    class="size-5 rounded-full ring-2 ring-surface"
+                    :style="{ backgroundColor: color }"
+                />
+            </span>
             <component
                 :is="option.icon"
-                v-if="option.icon"
+                v-else-if="option.icon"
                 :size="20"
                 :stroke-width="1.8"
                 class="shrink-0 text-ink-muted"

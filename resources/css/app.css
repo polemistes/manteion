@@ -204,6 +204,162 @@ html[data-mode='dark'] {
     color-scheme: dark;
 }
 
+/* ================================================================
+ * Skin: "Aegean". Clay, olive, ochre and Greek blue on rough plaster.
+ *
+ * Picked in Settings → Appearance (App\Enums\ThemeStyle) and stamped on
+ * <html> as data-skin="aegean", beside data-mode. It reassigns the same
+ * tokens as the Terracotta look above, so every component follows without
+ * a change of its own; the rules after the tokens add what tokens cannot
+ * carry: the grain of the plaster and the frieze along the navigation.
+ * Terracotta keeps its meaning (you, now, needs you); olive is success,
+ * ochre is a warning, and Greek blue marks the tripod, the focus ring,
+ * your own chat bubbles and the toasts.
+ * ================================================================ */
+html[data-skin='aegean'] {
+    /* Alegreya: a warm, calligraphic serif for the titles. */
+    --font-display:
+        'Alegreya', 'Alegreya fallback', 'Iowan Old Style', Georgia, serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji';
+    --text-kicker--letter-spacing: 0.12em;
+
+    /* Tighter corners: cut stone and tile rather than pebbles. */
+    --radius-xs: 0.25rem;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.625rem;
+    --radius-lg: 0.875rem;
+    --radius-xl: 1.25rem;
+
+    /* ---------- Light: "limewash at noon" ---------- */
+    --color-canvas: #efe5d3;
+    --color-surface: #faf5ea;
+    --color-surface-2: #e8dcc4;
+    --color-surface-3: #dccdae;
+    --color-line: #dfd2b9;
+    --color-line-strong: #c9b58f;
+    --color-control: #8a7a62;
+    --color-ink: #1f2a36;
+    --color-ink-muted: #4f5a66;
+    --color-ink-subtle: #5a6470;
+    --color-accent: #b4552e;
+    --color-accent-hover: #9c4826;
+    --color-on-accent: #fff8ef;
+    --color-accent-ink: #a2491f;
+    --color-accent-soft: #f2dccb;
+    --color-accent-line: #e4bea4;
+    --color-success: #5c6b2a;
+    --color-success-soft: #e5e7cc;
+    --color-warning: #7f5410;
+    --color-warning-soft: #f4e4bd;
+    --color-danger: #a5281c;
+    --color-danger-soft: #f6dcd3;
+    --color-bubble-mine: #cfe0ee;
+    --color-on-bubble-mine: #1f2a36;
+    --color-bubble-theirs: #faf5ea;
+    --color-inverse: #17395f;
+    --color-on-inverse: #f3ece0;
+    --color-inverse-accent: #e8b65a;
+    --color-mark: #1d5ea6;
+    --color-focus: #1d5ea6;
+    --color-scrim: rgb(28 24 14 / 0.46);
+    --color-stage: #0f1720;
+    --color-on-stage: #f3ece0;
+    --color-hangup: #c73a2a;
+    --color-on-hangup: #ffffff;
+    --shadow-tint: rgb(70 45 20 / 0.12);
+    --shadow-tint-soft: rgb(70 45 20 / 0.06);
+    --shadow-tint-strong: rgb(55 35 15 / 0.3);
+
+    /* The textures, as layers the rules below paint. */
+    --texture-canvas:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='g' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.3  0 0 0 0 0.2  0 0 0 0 0.1  0 0 0 0.15 0'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23g)'/%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='g' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.022' numOctaves='3' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1.0  0 0 0 0 0.98  0 0 0 0 0.94  0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23g)'/%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='g' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.03' numOctaves='3' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.36  0 0 0 0 0.26  0 0 0 0 0.12  0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23g)'/%3E%3C/svg%3E");
+    --texture-surface: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='g' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.3  0 0 0 0 0.2  0 0 0 0 0.1  0 0 0 0.12 0'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23g)'/%3E%3C/svg%3E");
+    --frieze: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' width='8' height='8' shape-rendering='crispEdges' fill='%23b4552e'%3E%3Crect x='0' y='0' width='8' height='1'/%3E%3Crect x='7' y='1' width='1' height='1'/%3E%3Crect x='1' y='2' width='5' height='1'/%3E%3Crect x='7' y='2' width='1' height='1'/%3E%3Crect x='1' y='3' width='1' height='1'/%3E%3Crect x='5' y='3' width='1' height='1'/%3E%3Crect x='7' y='3' width='1' height='1'/%3E%3Crect x='1' y='4' width='1' height='1'/%3E%3Crect x='3' y='4' width='1' height='1'/%3E%3Crect x='5' y='4' width='1' height='1'/%3E%3Crect x='7' y='4' width='1' height='1'/%3E%3Crect x='1' y='5' width='1' height='1'/%3E%3Crect x='3' y='5' width='3' height='1'/%3E%3Crect x='7' y='5' width='1' height='1'/%3E%3Crect x='1' y='6' width='1' height='1'/%3E%3Crect x='7' y='6' width='1' height='1'/%3E%3Crect x='1' y='7' width='7' height='1'/%3E%3C/svg%3E");
+}
+
+/* ---------- Dark: "night harbour" ---------- */
+html[data-skin='aegean'][data-mode='dark'] {
+    --color-canvas: #10171f;
+    --color-surface: #18222c;
+    --color-surface-2: #22303c;
+    --color-surface-3: #2c3b49;
+    --color-line: #2a3845;
+    --color-line-strong: #3b4c5c;
+    --color-control: #7f8c99;
+    --color-ink: #efe6d6;
+    --color-ink-muted: #b4ab9c;
+    --color-ink-subtle: #948b7d;
+    --color-accent: #bb5a31;
+    --color-accent-hover: #a84f2a;
+    --color-on-accent: #fff8ef;
+    --color-accent-ink: #e88f66;
+    --color-accent-soft: #3a2218;
+    --color-accent-line: #5a3324;
+    --color-success: #a5b86b;
+    --color-success-soft: #22301e;
+    --color-warning: #e0b35c;
+    --color-warning-soft: #332912;
+    --color-danger: #f08b7a;
+    --color-danger-soft: #3d1c18;
+    --color-bubble-mine: #23405e;
+    --color-on-bubble-mine: #f1e9db;
+    --color-bubble-theirs: #18222c;
+    --color-inverse: #ece3d2;
+    --color-on-inverse: #1f2a36;
+    --color-inverse-accent: #a2491f;
+    --color-mark: #6aa5e0;
+    --color-focus: #7fb2e6;
+    --color-scrim: rgb(0 0 0 / 0.6);
+    --shadow-tint: rgb(0 0 0 / 0.4);
+    --shadow-tint-soft: rgb(0 0 0 / 0.3);
+    --shadow-tint-strong: rgb(0 0 0 / 0.7);
+    --texture-canvas:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='g' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.95  0 0 0 0 0.9  0 0 0 0 0.8  0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23g)'/%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='g' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.022' numOctaves='3' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.75  0 0 0 0 0.82  0 0 0 0 0.95  0 0 0 0.04 0'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23g)'/%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='g' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.03' numOctaves='3' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.0  0 0 0 0 0.0  0 0 0 0 0.0  0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23g)'/%3E%3C/svg%3E");
+    --texture-surface: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='g' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.95  0 0 0 0 0.9  0 0 0 0 0.8  0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23g)'/%3E%3C/svg%3E");
+    --frieze: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' width='8' height='8' shape-rendering='crispEdges' fill='%23e08a62'%3E%3Crect x='0' y='0' width='8' height='1'/%3E%3Crect x='7' y='1' width='1' height='1'/%3E%3Crect x='1' y='2' width='5' height='1'/%3E%3Crect x='7' y='2' width='1' height='1'/%3E%3Crect x='1' y='3' width='1' height='1'/%3E%3Crect x='5' y='3' width='1' height='1'/%3E%3Crect x='7' y='3' width='1' height='1'/%3E%3Crect x='1' y='4' width='1' height='1'/%3E%3Crect x='3' y='4' width='1' height='1'/%3E%3Crect x='5' y='4' width='1' height='1'/%3E%3Crect x='7' y='4' width='1' height='1'/%3E%3Crect x='1' y='5' width='1' height='1'/%3E%3Crect x='3' y='5' width='3' height='1'/%3E%3Crect x='7' y='5' width='1' height='1'/%3E%3Crect x='1' y='6' width='1' height='1'/%3E%3Crect x='7' y='6' width='1' height='1'/%3E%3Crect x='1' y='7' width='7' height='1'/%3E%3C/svg%3E");
+}
+
+/* The plaster: a fine grain over soft, uneven clouds on the canvas, and a
+   fainter grain on every surface. Painted on the utilities themselves, so
+   no component needs to know; the images are tiny inline SVG noise. */
+html[data-skin='aegean'] body,
+html[data-skin='aegean'] .bg-canvas {
+    background-image: var(--texture-canvas);
+}
+
+html[data-skin='aegean']
+    :is(
+        .bg-surface,
+        .bg-surface-2,
+        .bg-surface-3,
+        .bg-bubble-mine,
+        .bg-bubble-theirs
+    ) {
+    background-image: var(--texture-surface);
+}
+
+html[data-skin='aegean'] ::selection {
+    background-color: var(--color-bubble-mine);
+    color: var(--color-on-bubble-mine);
+}
+
+/* The frieze: a Greek key along the top edge of the rail and the sidebar
+   (the spans in AppLayout). Skins without one draw nothing. */
+.skin-frieze {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 12px;
+    background-image: var(--frieze, none);
+    background-size: 12px 12px;
+    background-repeat: repeat-x;
+    opacity: 0.8;
+    pointer-events: none;
+}
+
 @keyframes typing {
     0%,
     60%,

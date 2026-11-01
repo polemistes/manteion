@@ -9,6 +9,7 @@ use App\Enums\FriendshipStatus;
 use App\Enums\NotificationCategory;
 use App\Enums\PushKind;
 use App\Enums\ThemeMode;
+use App\Enums\ThemeStyle;
 use App\Enums\UserRole;
 use App\Notifications\PushTest;
 use App\Services\ActivityFeed;
@@ -50,6 +51,7 @@ use NotificationChannels\WebPush\PushSubscription as WebPushSubscription;
  * @property string|null $bio
  * @property string|null $locale
  * @property ThemeMode $theme_mode
+ * @property ThemeStyle $theme_style
  * @property Carbon|null $suspended_at
  * @property string|null $suspended_reason
  * @property int|null $suspended_by
@@ -58,7 +60,7 @@ use NotificationChannels\WebPush\PushSubscription as WebPushSubscription;
  * @property Carbon|null $updated_at
  * @property-read string|null $avatar_url
  */
-#[Fillable(['name', 'username', 'email', 'password', 'role', 'allow_public_follow', 'show_friends_list', 'appear_in_friends_lists', 'searchable', 'share_typing', 'share_read_receipts', 'notification_settings', 'avatar_path', 'bio', 'locale', 'theme_mode', 'suspended_at', 'suspended_reason', 'suspended_by'])]
+#[Fillable(['name', 'username', 'email', 'password', 'role', 'allow_public_follow', 'show_friends_list', 'appear_in_friends_lists', 'searchable', 'share_typing', 'share_read_receipts', 'notification_settings', 'avatar_path', 'bio', 'locale', 'theme_mode', 'theme_style', 'suspended_at', 'suspended_reason', 'suspended_by'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -110,6 +112,7 @@ class User extends Authenticatable
             'notification_settings' => 'array',
             'suspended_at' => 'datetime',
             'theme_mode' => ThemeMode::class,
+            'theme_style' => ThemeStyle::class,
         ];
     }
 

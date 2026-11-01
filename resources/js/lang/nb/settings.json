@@ -20,7 +20,7 @@
             "account": "Bildet, navnet, brukernavnet, e-posten og passordet ditt.",
             "privacy": "Hvem som kan følge deg, finne deg og se vennene dine.",
             "notifications": "Hva som når telefonen din, og hva som bare vises her.",
-            "appearance": "Lyst, mørkt eller det samme som enheten.",
+            "appearance": "Hvordan appen ser ut, og lyst eller mørkt.",
             "language": "Engelsk eller norsk.",
             "organizers": "Steder og grupper du taler for, og arrangementene deres."
         }
@@ -184,6 +184,11 @@
         }
     },
     "appearance": {
+        "look": "Stil",
+        "classic": "Klassisk",
+        "classicHint": "Papir og blekk, slik Manteion har sett ut til nå",
+        "aegean": "Egeisk",
+        "aegeanHint": "Leire, oliven, oker og gresk blått på grov puss",
         "mode": "Lyst eller mørkt",
         "light": "Lyst",
         "lightHint": "Papir og blekk",

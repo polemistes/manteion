@@ -20,7 +20,7 @@
             "account": "Your photo, name, username, email and password.",
             "privacy": "Who can follow you, find you and see your friends.",
             "notifications": "What reaches your phone, and what only shows here.",
-            "appearance": "Light, dark, or the same as your device.",
+            "appearance": "The look of the app, and light or dark.",
             "language": "English or Norwegian.",
             "organizers": "Venues and groups you speak for, and their events."
         }
@@ -184,6 +184,11 @@
         }
     },
     "appearance": {
+        "look": "Look",
+        "classic": "Classic",
+        "classicHint": "Paper and ink, as Manteion has looked so far",
+        "aegean": "Aegean",
+        "aegeanHint": "Clay, olive, ochre and Greek blue on rough plaster",
         "mode": "Light or dark",
         "light": "Light",
         "lightHint": "Paper and ink",
