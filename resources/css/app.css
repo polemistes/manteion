@@ -321,15 +321,192 @@ html[data-skin='aegean'][data-mode='dark'] {
     --texture-surface: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='g' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.95  0 0 0 0 0.9  0 0 0 0 0.8  0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23g)'/%3E%3C/svg%3E");
 }
 
-/* The plaster: a fine grain over soft, uneven clouds on the canvas, and a
-   fainter grain on every surface. Painted on the utilities themselves, so
-   no component needs to know; the images are tiny inline SVG noise. */
-html[data-skin='aegean'] body,
-html[data-skin='aegean'] .bg-canvas {
+/* ================================================================
+ * Skin: "Taverna". A courtyard at noon: an ochre wall, a cobalt door,
+ * white canvas chairs and terracotta pots, as bold as a Miró.
+ *
+ * Same mechanism as Aegean (tokens under data-skin="taverna"), and one
+ * thing more: the navigation is painted. The rail, the sidebar and the
+ * phone's top bar carry the class `skin-nav`, the phone's tab bar
+ * `skin-tabbar` (AppLayout, PageHeader), and this skin re-sets the tokens
+ * inside them, so the same utilities draw cream on cobalt there and ink on
+ * ochre everywhere else. The active item is terracotta on the blue.
+ * ================================================================ */
+html[data-skin='taverna'] {
+    /* Young Serif: sturdy, warm, a little hand-painted. One weight; the
+       500 of the title roles falls back to it without synthesis. */
+    --font-display:
+        'Young Serif', 'Young Serif fallback', 'Iowan Old Style', Georgia,
+        serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji';
+
+    /* ---------- Light: "the wall at noon" ---------- */
+    --color-canvas: #d6933a;
+    --color-surface: #fcf7ee;
+    --color-surface-2: #f0e4cf;
+    --color-surface-3: #e3d0aa;
+    --color-line: #e6d7b9;
+    --color-line-strong: #c9a972;
+    --color-control: #a3763a;
+    --color-ink: #1a1104;
+    --color-ink-muted: #46320e;
+    --color-ink-subtle: #44300d;
+    --color-accent: #b54a22;
+    --color-accent-hover: #9c3e1b;
+    --color-on-accent: #ffffff;
+    --color-accent-ink: #863311;
+    --color-accent-soft: #f7dccb;
+    --color-accent-line: #e8b99d;
+    --color-success: #456d27;
+    --color-success-soft: #e8f0d8;
+    --color-warning: #8a4f0a;
+    --color-warning-soft: #f8e3b8;
+    --color-danger: #8f1c15;
+    --color-danger-soft: #f9d9d1;
+    --color-bubble-mine: #b54a22;
+    --color-on-bubble-mine: #ffffff;
+    --color-bubble-theirs: #fcf7ee;
+    --color-inverse: #1f5fb5;
+    --color-on-inverse: #f7f1e3;
+    --color-inverse-accent: #ffd97a;
+    --color-mark: #1f5fb5;
+    --color-focus: #0f4c96;
+    --color-scrim: rgb(40 22 4 / 0.55);
+    --color-stage: #141a24;
+    --color-on-stage: #f7f1e3;
+    --color-hangup: #c73a2a;
+    --color-on-hangup: #ffffff;
+    --shadow-tint: rgb(80 40 5 / 0.16);
+    --shadow-tint-soft: rgb(80 40 5 / 0.08);
+    --shadow-tint-strong: rgb(60 30 0 / 0.35);
+    --texture-canvas:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='g' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35  0 0 0 0 0.18  0 0 0 0 0.02  0 0 0 0.18 0'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23g)'/%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='g' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.035' numOctaves='3' seed='21' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.32  0 0 0 0 0.16  0 0 0 0 0.02  0 0 0 0.16 0'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23g)'/%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='g' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.045' numOctaves='3' seed='8' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1.0  0 0 0 0 0.95  0 0 0 0 0.75  0 0 0 0.16 0'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23g)'/%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='g' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.3' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.3  0 0 0 0 0.15  0 0 0 0 0.02  0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23g)'/%3E%3C/svg%3E");
+    --texture-surface: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='g' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.3  0 0 0 0 0.18  0 0 0 0 0.05  0 0 0 0.12 0'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23g)'/%3E%3C/svg%3E");
+    --texture-paint:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='g' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1.0  0 0 0 0 1.0  0 0 0 0 1.0  0 0 0 0.1 0'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23g)'/%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='g' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.3' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.0  0 0 0 0 0.05  0 0 0 0 0.15  0 0 0 0.12 0'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23g)'/%3E%3C/svg%3E");
+}
+
+/* ---------- Dark: "the courtyard at night" ---------- */
+html[data-skin='taverna'][data-mode='dark'] {
+    --color-canvas: #0e2748;
+    --color-surface: #15365e;
+    --color-surface-2: #1c447a;
+    --color-surface-3: #27548f;
+    --color-line: #27508a;
+    --color-line-strong: #3c6aa8;
+    --color-control: #8facd2;
+    --color-ink: #f6eedc;
+    --color-ink-muted: #c7d4e8;
+    --color-ink-subtle: #a9bad3;
+    --color-accent: #bd4f26;
+    --color-accent-hover: #a8451f;
+    --color-on-accent: #ffffff;
+    --color-accent-ink: #f2a078;
+    --color-accent-soft: #4d2616;
+    --color-accent-line: #6d3620;
+    --color-success: #a6c46b;
+    --color-success-soft: #243a1b;
+    --color-warning: #f0c25c;
+    --color-warning-soft: #3b2c0e;
+    --color-danger: #f08a78;
+    --color-danger-soft: #4a2119;
+    --color-bubble-mine: #bd4f26;
+    --color-on-bubble-mine: #ffffff;
+    --color-bubble-theirs: #15365e;
+    --color-inverse: #f0c25c;
+    --color-on-inverse: #1a1104;
+    --color-inverse-accent: #8e3812;
+    --color-mark: #f0c25c;
+    --color-focus: #f6c453;
+    --color-scrim: rgb(0 0 0 / 0.6);
+    --shadow-tint: rgb(0 0 0 / 0.4);
+    --shadow-tint-soft: rgb(0 0 0 / 0.3);
+    --shadow-tint-strong: rgb(0 0 0 / 0.7);
+    --texture-canvas:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='g' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.8  0 0 0 0 0.85  0 0 0 0 1.0  0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23g)'/%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='g' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.035' numOctaves='3' seed='21' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.0  0 0 0 0 0.0  0 0 0 0 0.0  0 0 0 0.18 0'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23g)'/%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='g' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.045' numOctaves='3' seed='8' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.6  0 0 0 0 0.7  0 0 0 0 1.0  0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23g)'/%3E%3C/svg%3E");
+    --texture-surface: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='g' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.9  0 0 0 0 0.92  0 0 0 0 1.0  0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23g)'/%3E%3C/svg%3E");
+    --texture-paint:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='g' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.0  0 0 0 0 0.0  0 0 0 0 0.0  0 0 0 0.16 0'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23g)'/%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='g' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.3' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1.0  0 0 0 0 0.9  0 0 0 0 0.7  0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23g)'/%3E%3C/svg%3E");
+}
+
+/* The painted navigation. Light: cobalt, cream text, a terracotta pill for
+   the active item, a saffron tripod. Dark: burnt saffron, the active item
+   a window of night blue. */
+html[data-skin='taverna'] .skin-nav {
+    --color-canvas: #1f5fb5;
+    --color-surface: var(--color-accent);
+    --color-surface-2: #184e99;
+    --color-surface-3: #133f7d;
+    --color-line: #16489a;
+    --color-line-strong: #6e9bd9;
+    --color-ink: #f8f2e4;
+    --color-ink-muted: #dce6f5;
+    --color-ink-subtle: #dce6f5;
+    --color-accent-soft: var(--color-accent);
+    --color-accent-ink: #f8f2e4;
+    --color-mark: #f6c453;
+    --color-focus: #fff1c9;
+    --texture-canvas: var(--texture-paint);
+}
+
+html[data-skin='taverna'] .skin-tabbar {
+    --color-canvas: #1f5fb5;
+    --color-surface: #1f5fb5;
+    --color-surface-2: #184e99;
+    --color-surface-3: #133f7d;
+    --color-line: #16489a;
+    --color-ink: #f8f2e4;
+    --color-ink-muted: #dce6f5;
+    --color-accent-soft: var(--color-accent);
+    --color-accent-ink: #f8f2e4;
+    --color-focus: #fff1c9;
+    --texture-surface: var(--texture-paint);
+}
+
+html[data-skin='taverna'][data-mode='dark'] .skin-nav {
+    --color-canvas: #7f5612;
+    --color-surface: #0e2748;
+    --color-surface-2: #6b470e;
+    --color-surface-3: #5a3c0c;
+    --color-line: #96681a;
+    --color-line-strong: #b8863a;
+    --color-ink: #fbf4e4;
+    --color-ink-muted: #f1e3c4;
+    --color-ink-subtle: #f1e3c4;
+    --color-accent-soft: #0e2748;
+    --color-accent-ink: #fbf4e4;
+    --color-mark: #fbf4e4;
+    --color-focus: #fbf4e4;
+}
+
+html[data-skin='taverna'][data-mode='dark'] .skin-tabbar {
+    --color-canvas: #7f5612;
+    --color-surface: #7f5612;
+    --color-surface-2: #6b470e;
+    --color-surface-3: #5a3c0c;
+    --color-line: #96681a;
+    --color-ink: #fbf4e4;
+    --color-ink-muted: #f1e3c4;
+    --color-accent-soft: #0e2748;
+    --color-accent-ink: #fbf4e4;
+    --color-focus: #fbf4e4;
+}
+
+/* The textures a skin sets: a grain on the canvas (the wall), a fainter one
+   on every surface. Painted on the utilities themselves, so no component
+   needs to know; the images are tiny inline SVG noise. */
+html:is([data-skin='aegean'], [data-skin='taverna']) body,
+html:is([data-skin='aegean'], [data-skin='taverna']) .bg-canvas {
     background-image: var(--texture-canvas);
 }
 
-html[data-skin='aegean']
+html:is([data-skin='aegean'], [data-skin='taverna'])
     :is(
         .bg-surface,
         .bg-surface-2,
@@ -340,7 +517,7 @@ html[data-skin='aegean']
     background-image: var(--texture-surface);
 }
 
-html[data-skin='aegean'] ::selection {
+html:is([data-skin='aegean'], [data-skin='taverna']) ::selection {
     background-color: var(--color-bubble-mine);
     color: var(--color-on-bubble-mine);
 }

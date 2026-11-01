@@ -16,15 +16,19 @@ enum ThemeStyle: string
     /** Clay, olive, ochre and Greek blue on rough plaster. */
     case Aegean = 'aegean';
 
+    /** A courtyard: an ochre wall, a cobalt door, terracotta pots. */
+    case Taverna = 'taverna';
+
     public static function default(): self
     {
         return self::Classic;
     }
 
     /**
-     * The canvas colour of each mode, for the `theme-color` metas and the
-     * Android window. Keep in step with --color-canvas in app.css and
-     * `themeColors` in resources/js/theme.ts.
+     * The colour behind the top of the page in each mode, for the
+     * `theme-color` metas and the Android window: the canvas, or the
+     * navigation's colour where the top bar is painted (Taverna). Keep in
+     * step with app.css and `themeColors` in resources/js/theme.ts.
      *
      * @return array{light: string, dark: string}
      */
@@ -33,6 +37,7 @@ enum ThemeStyle: string
         return match ($this) {
             self::Classic => ['light' => '#F7F3EC', 'dark' => '#14100D'],
             self::Aegean => ['light' => '#EFE5D3', 'dark' => '#10171F'],
+            self::Taverna => ['light' => '#1F5FB5', 'dark' => '#7F5612'],
         };
     }
 }

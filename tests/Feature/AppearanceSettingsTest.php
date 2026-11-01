@@ -23,31 +23,34 @@ test('a user can choose light or dark mode, and the choice is shared with every 
         ->assertSee('data-skin="classic"', false);
 });
 
-test('a user can choose the Aegean look, and keep it while changing the mode', function () {
+test('a user can choose another look, and keep it while changing the mode', function (ThemeStyle $style) {
     $user = User::factory()->create(['theme_mode' => ThemeMode::Light]);
 
     $this->actingAs($user)
         ->from('/settings/appearance')
-        ->put('/settings/appearance', ['theme_mode' => 'light', 'theme_style' => 'aegean'])
+        ->put('/settings/appearance', ['theme_mode' => 'light', 'theme_style' => $style->value])
         ->assertRedirect('/settings/appearance')
         ->assertSessionHasNoErrors();
 
-    expect($user->fresh()->theme_style)->toBe(ThemeStyle::Aegean);
+    expect($user->fresh()->theme_style)->toBe($style);
 
     $this->actingAs($user->fresh())->get('/events')
         ->assertInertia(fn ($page) => $page
             ->where('theme.mode', 'light')
-            ->where('theme.style', 'aegean'))
-        ->assertSee('data-mode="light" data-skin="aegean"', false);
+            ->where('theme.style', $style->value))
+        ->assertSee('data-mode="light" data-skin="'.$style->value.'"', false);
 
     // A mode change alone leaves the look as it is.
     $this->actingAs($user->fresh())
         ->put('/settings/appearance', ['theme_mode' => 'dark'])
         ->assertSessionHasNoErrors();
 
-    expect($user->fresh()->theme_style)->toBe(ThemeStyle::Aegean)
+    expect($user->fresh()->theme_style)->toBe($style)
         ->and($user->fresh()->theme_mode)->toBe(ThemeMode::Dark);
-});
+})->with([
+    'Aegean' => [ThemeStyle::Aegean],
+    'Taverna' => [ThemeStyle::Taverna],
+]);
 
 test('an unknown look is rejected', function () {
     $user = User::factory()->create(['theme_style' => ThemeStyle::Aegean]);

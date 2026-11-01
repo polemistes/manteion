@@ -33,6 +33,13 @@ export default defineConfig({
                     optimizedFallbacks: false,
                     preload: false,
                 }),
+                // The Taverna skin's titles (one weight); likewise on demand.
+                bunny('Young Serif', {
+                    weights: [400],
+                    fallbacks: ['Iowan Old Style', 'Georgia', 'serif'],
+                    optimizedFallbacks: false,
+                    preload: false,
+                }),
             ],
         }),
         inertia(),

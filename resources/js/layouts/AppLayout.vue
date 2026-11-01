@@ -112,10 +112,12 @@ onIncomingMessage((message) => {
         <ImpersonationBanner v-if="page.props.impersonating" />
 
         <div class="sm:flex">
-            <!-- Tablet: a 104px rail of icons with labels under them. -->
+            <!-- Tablet: a 104px rail of icons with labels under them. `skin-nav`
+                 (and `skin-tabbar` below) let a skin paint the navigation in
+                 its own colours, see app.css. -->
             <nav
                 :aria-label="t('ui.mainNavigation')"
-                class="sticky top-0 hidden h-dvh w-rail shrink-0 flex-col items-center border-r border-line bg-canvas px-1 pt-[18px] pb-4 sm:flex lg:hidden"
+                class="skin-nav sticky top-0 hidden h-dvh w-rail shrink-0 flex-col items-center border-r border-line bg-canvas px-1 pt-[18px] pb-4 sm:flex lg:hidden"
             >
                 <Link
                     :href="eventsIndex().url"
@@ -187,7 +189,7 @@ onIncomingMessage((message) => {
             <!-- Desktop: a 256px sidebar with the wordmark and full labels. -->
             <nav
                 :aria-label="t('ui.mainNavigation')"
-                class="sticky top-0 hidden h-dvh w-sidebar shrink-0 flex-col border-r border-line bg-canvas px-4 pt-[22px] pb-4 lg:flex"
+                class="skin-nav sticky top-0 hidden h-dvh w-sidebar shrink-0 flex-col border-r border-line bg-canvas px-4 pt-[22px] pb-4 lg:flex"
             >
                 <Link
                     :href="eventsIndex().url"
@@ -293,7 +295,7 @@ onIncomingMessage((message) => {
         <nav
             v-if="hasTabBar"
             :aria-label="t('ui.mainNavigation')"
-            class="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] [--badge-ring:var(--color-surface)] sm:hidden"
+            class="skin-tabbar fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] [--badge-ring:var(--color-surface)] sm:hidden"
         >
             <div class="flex h-tabbar px-1">
                 <Link

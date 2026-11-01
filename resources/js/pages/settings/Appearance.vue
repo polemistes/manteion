@@ -41,6 +41,12 @@ const styles = computed(() => [
         description: t('settings.appearance.aegeanHint'),
         swatch: ['#EFE5D3', '#B4552E', '#5C6B2A', '#1D5EA6'],
     },
+    {
+        value: 'taverna',
+        title: t('settings.appearance.taverna'),
+        description: t('settings.appearance.tavernaHint'),
+        swatch: ['#D6933A', '#1F5FB5', '#C4542A', '#FCF7EE'],
+    },
 ]);
 
 const modes = computed(() => [

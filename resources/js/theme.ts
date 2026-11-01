@@ -1,7 +1,7 @@
 export type ThemeMode = 'light' | 'dark' | 'system';
 
 /** The look of the whole app (App\Enums\ThemeStyle). */
-export type ThemeStyle = 'classic' | 'aegean';
+export type ThemeStyle = 'classic' | 'aegean' | 'taverna';
 
 export interface Theme {
     mode: ThemeMode;
@@ -12,15 +12,32 @@ export const DEFAULT_STYLE: ThemeStyle = 'classic';
 
 /**
  * The browser UI colour (address bar, an installed app's title bar, the
- * Android task switcher) for each skin and resolved mode: the skin's canvas
- * token. ThemeStyle::browserColors() on the server and the `theme-color`
- * metas in resources/views/app.blade.php use the same values.
+ * Android task switcher) for each skin and resolved mode: what sits behind
+ * the top of the page, the canvas or (Taverna) the painted navigation.
+ * ThemeStyle::browserColors() on the server and the `theme-color` metas in
+ * resources/views/app.blade.php use the same values.
  */
 export const themeColors: Record<ThemeStyle, { light: string; dark: string }> =
     {
         classic: { light: '#F7F3EC', dark: '#14100D' },
         aegean: { light: '#EFE5D3', dark: '#10171F' },
+        taverna: { light: '#1F5FB5', dark: '#7F5612' },
     };
+
+/** Whether dark icons read on a colour (the system bars' style). */
+export function isLightColor(hex: string): boolean {
+    const channel = (offset: number): number => {
+        const value = parseInt(hex.slice(offset, offset + 2), 16) / 255;
+
+        return value <= 0.03928
+            ? value / 12.92
+            : ((value + 0.055) / 1.055) ** 2.4;
+    };
+
+    return (
+        0.2126 * channel(1) + 0.7152 * channel(3) + 0.0722 * channel(5) > 0.4
+    );
+}
 
 const darkQuery = (): MediaQueryList | null =>
     typeof window !== 'undefined' && 'matchMedia' in window

@@ -62,7 +62,7 @@ const { activity } = useNavigation();
 
     <header
         v-if="!props.phoneHidden"
-        class="sticky top-0 z-30 border-b border-line bg-canvas pt-[env(safe-area-inset-top)] sm:hidden"
+        class="skin-nav sticky top-0 z-30 border-b border-line bg-canvas pt-[env(safe-area-inset-top)] sm:hidden"
     >
         <div
             class="flex h-topbar items-center gap-1"

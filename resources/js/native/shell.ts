@@ -6,7 +6,7 @@ import { Download } from '@lucide/vue';
 import { toast } from '@/lib/toast';
 import { dispatchPushMessage } from '@/pwa/serviceWorker';
 import { refreshBadges } from '@/realtime';
-import { currentBrowserColor } from '@/theme';
+import { currentBrowserColor, isLightColor } from '@/theme';
 import type { NotificationCategory } from '@/types';
 import { ManteionPush, ManteionShell } from './plugin';
 import type { NativeChannel } from './plugin';
@@ -89,17 +89,18 @@ export function setupNativeShell(): void {
     });
 
     // The page draws under the status and navigation bars (its header pads
-    // itself with env(safe-area-inset-top)); their icons follow its mode and
-    // the window colour its skin.
+    // itself with env(safe-area-inset-top)); the window takes the colour
+    // behind the top of the page for the skin and mode, and the bars' icons
+    // go dark or light to read on it.
     const syncBars = (): void => {
-        const dark = document.documentElement.dataset.mode === 'dark';
+        const color = currentBrowserColor();
 
         void SystemBars.setStyle({
-            style: dark ? SystemBarsStyle.Dark : SystemBarsStyle.Light,
+            style: isLightColor(color)
+                ? SystemBarsStyle.Light
+                : SystemBarsStyle.Dark,
         }).catch(() => undefined);
-        void ManteionShell.setWindowColor({
-            color: currentBrowserColor(),
-        }).catch(() => undefined);
+        void ManteionShell.setWindowColor({ color }).catch(() => undefined);
     };
 
     syncBars();

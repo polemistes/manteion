@@ -31,6 +31,10 @@ test('the browser colour follows the system, or the mode the user picked, in the
     'aegean, system' => [ThemeMode::System, ThemeStyle::Aegean, '#EFE5D3', '#10171F'],
     'aegean, light' => [ThemeMode::Light, ThemeStyle::Aegean, '#EFE5D3', '#EFE5D3'],
     'aegean, dark' => [ThemeMode::Dark, ThemeStyle::Aegean, '#10171F', '#10171F'],
+    // Taverna paints the top bar in the navigation's colour, so the browser follows that.
+    'taverna, system' => [ThemeMode::System, ThemeStyle::Taverna, '#1F5FB5', '#7F5612'],
+    'taverna, light' => [ThemeMode::Light, ThemeStyle::Taverna, '#1F5FB5', '#1F5FB5'],
+    'taverna, dark' => [ThemeMode::Dark, ThemeStyle::Taverna, '#7F5612', '#7F5612'],
 ]);
 
 test('the manifest makes the app installable, with icons of the sizes it claims', function () {
