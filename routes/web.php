@@ -14,6 +14,7 @@ use App\Http\Controllers\EventAttendanceController;
 use App\Http\Controllers\EventCalendarFileController;
 use App\Http\Controllers\EventCommentController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\EventFacebookImportController;
 use App\Http\Controllers\EventImageController;
 use App\Http\Controllers\EventInvitationController;
 use App\Http\Controllers\EventSearchabilityController;
@@ -94,6 +95,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/events/calendar', [EventController::class, 'calendar'])->name('events.calendar');
     Route::get('/events/create', [EventController::class, 'create'])->name('events.create');
     Route::post('/events', [EventController::class, 'store'])->name('events.store');
+    Route::post('/events/import/facebook', EventFacebookImportController::class)->middleware('throttle:10,1')->name('events.import.facebook');
     Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
     Route::get('/events/{event}/calendar.ics', EventCalendarFileController::class)->name('events.calendar-file');
     Route::get('/events/{event}/edit', [EventController::class, 'edit'])->name('events.edit');

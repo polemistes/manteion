@@ -65,8 +65,10 @@ const props = withDefaults(
         isNew?: boolean;
         /** The organizers the user may host it as (new events only). */
         organizers?: OrganizerSummary[];
+        /** A cover picture to start with (an imported event's). */
+        initialImage?: Blob | null;
     }>(),
-    { note: undefined, isNew: false, organizers: () => [] },
+    { note: undefined, isNew: false, organizers: () => [], initialImage: null },
 );
 
 const emit = defineEmits<{ removeImage: [] }>();
@@ -167,6 +169,7 @@ const visibilityOptions = [
                     :output-width="1200"
                     :output-height="800"
                     :existing-url="props.values.image?.url ?? null"
+                    :initial-file="props.initialImage"
                     :initial-fit="
                         props.values.image?.fit ??
                         (props.values.image?.shape === 'poster'

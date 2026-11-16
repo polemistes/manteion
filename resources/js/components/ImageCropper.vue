@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { Crop, ImagePlus, Maximize2, Trash } from '@lucide/vue';
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import {
+    computed,
+    nextTick,
+    onBeforeUnmount,
+    onMounted,
+    ref,
+    watch,
+} from 'vue';
 import { useI18n } from 'vue-i18n';
 import Button from '@/components/ui/Button.vue';
 import SegmentedControl from '@/components/ui/SegmentedControl.vue';
@@ -13,6 +20,11 @@ import SegmentedControl from '@/components/ui/SegmentedControl.vue';
  * follows the picture's shape, and the choice travels as `image_fit`.
  * The prepared file is put in a hidden file input named `name`. `preview`
  * reports the picture shown and its fit as they change.
+ *
+ * `initialFile` is a picture chosen for the uploader beforehand (an
+ * imported event's cover): it is prepared at once, whole or cropped around
+ * its middle as its shape says, so the form can be sent without touching
+ * it.
  */
 const props = withDefaults(
     defineProps<{
@@ -21,6 +33,7 @@ const props = withDefaults(
         outputWidth: number;
         outputHeight: number;
         existingUrl?: string | null;
+        initialFile?: Blob | null;
         allowWhole?: boolean;
         initialFit?: 'cover' | 'contain' | null;
         round?: boolean;
@@ -28,6 +41,7 @@ const props = withDefaults(
     }>(),
     {
         existingUrl: null,
+        initialFile: null,
         allowWhole: false,
         initialFit: null,
         round: false,
@@ -64,6 +78,9 @@ const removed = ref(false);
 const isCropping = ref(false);
 // Set when a new picture is chosen: its shape picks the fit once.
 let choosingFit = false;
+// Set while `initialFile` is taken in: the fit is then set without opening
+// the crop.
+let adopting = false;
 
 const fit = ref<'cover' | 'contain'>(props.initialFit ?? 'cover');
 
@@ -191,6 +208,78 @@ async function prepareWhole(): Promise<void> {
         setFile(blob);
     }
 }
+
+/** The middle of the picture at `aspectRatio`, no larger than the output. */
+async function prepareCentred(image: HTMLImageElement): Promise<void> {
+    const cropWidth = Math.min(
+        image.naturalWidth,
+        image.naturalHeight * props.aspectRatio,
+    );
+    const cropHeight = cropWidth / props.aspectRatio;
+    const ratio = Math.min(1, props.outputWidth / cropWidth);
+    const canvas = document.createElement('canvas');
+
+    canvas.width = Math.round(cropWidth * ratio);
+    canvas.height = Math.round(cropHeight * ratio);
+    canvas
+        .getContext('2d')
+        ?.drawImage(
+            image,
+            (image.naturalWidth - cropWidth) / 2,
+            (image.naturalHeight - cropHeight) / 2,
+            cropWidth,
+            cropHeight,
+            0,
+            0,
+            canvas.width,
+            canvas.height,
+        );
+
+    const blob = await canvasBlob(canvas);
+
+    if (blob) {
+        setFile(blob);
+    }
+}
+
+/** Takes in `initialFile` as if it had been picked and confirmed. */
+async function adopt(file: Blob): Promise<void> {
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+
+    image.src = url;
+
+    try {
+        await image.decode();
+    } catch {
+        URL.revokeObjectURL(url);
+
+        return;
+    }
+
+    rawObjectUrl.value = url;
+
+    const whole =
+        props.allowWhole &&
+        image.naturalWidth / image.naturalHeight < PHOTO_MIN_ASPECT;
+
+    adopting = true;
+    fit.value = whole ? 'contain' : 'cover';
+    await nextTick();
+    adopting = false;
+
+    if (whole) {
+        await prepareWhole();
+    } else {
+        await prepareCentred(image);
+    }
+}
+
+onMounted(() => {
+    if (props.initialFile) {
+        void adopt(props.initialFile);
+    }
+});
 
 function onFileSelected(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
@@ -329,7 +418,7 @@ async function confirmCrop(): Promise<void> {
 // Switching between "fill" and "whole" after choosing a picture: whole
 // is prepared at once, fill opens the crop.
 watch(fit, (next, previous) => {
-    if (next === previous || !rawObjectUrl.value) {
+    if (next === previous || !rawObjectUrl.value || adopting) {
         return;
     }
 

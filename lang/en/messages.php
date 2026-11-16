@@ -12,6 +12,10 @@ return [
         'already_following' => 'You are already following this user, or have a pending request.',
     ],
 
+    'event_import' => [
+        'not_a_facebook_event' => 'That is not a link to a Facebook event.',
+    ],
+
     'event_invitation' => [
         'friends_only' => 'You can only invite your friends.',
     ],

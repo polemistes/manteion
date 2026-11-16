@@ -256,5 +256,20 @@
         "host": "Arrangør",
         "hostHint": "Deg selv, eller et sted eller en gruppe du taler for.",
         "hostYou": "Deg"
+    },
+    "import": {
+        "open": "Kopier fra et Facebook-arrangement",
+        "linkLabel": "Lenke til Facebook-arrangementet",
+        "linkPlaceholder": "https://www.facebook.com/events/…",
+        "hint": "Bare offentlige arrangementer. Du kan endre alt før du oppretter arrangementet.",
+        "fetch": "Hent detaljer",
+        "fetching": "Henter …",
+        "done": "Kopiert fra Facebook. Se over, og velg så hvem som kan se arrangementet.",
+        "errors": {
+            "notAnEvent": "Det ser ikke ut som en lenke til et Facebook-arrangement.",
+            "unreadable": "Kunne ikke lese arrangementet. Bare offentlige Facebook-arrangementer kan kopieres.",
+            "tooMany": "For mange forsøk. Vent et minutt og prøv igjen.",
+            "failed": "Noe gikk galt. Prøv igjen."
+        }
     }
 }

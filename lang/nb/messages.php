@@ -12,6 +12,10 @@ return [
         'already_following' => 'Du følger allerede denne brukeren, eller har en forespørsel som venter.',
     ],
 
+    'event_import' => [
+        'not_a_facebook_event' => 'Det er ikke en lenke til et Facebook-arrangement.',
+    ],
+
     'event_invitation' => [
         'friends_only' => 'Du kan bare invitere vennene dine.',
     ],

@@ -256,5 +256,20 @@
         "host": "Host",
         "hostHint": "Yourself, or a venue or group you speak for.",
         "hostYou": "You"
+    },
+    "import": {
+        "open": "Copy from a Facebook event",
+        "linkLabel": "Link to the Facebook event",
+        "linkPlaceholder": "https://www.facebook.com/events/…",
+        "hint": "Public events only. You can change everything before you create the event.",
+        "fetch": "Fetch details",
+        "fetching": "Fetching…",
+        "done": "Copied from Facebook. Look it over, then choose who can see it.",
+        "errors": {
+            "notAnEvent": "That doesn’t look like a link to a Facebook event.",
+            "unreadable": "Couldn’t read that event. Only public Facebook events can be copied.",
+            "tooMany": "Too many tries. Wait a minute and try again.",
+            "failed": "Something went wrong. Try again."
+        }
     }
 }
