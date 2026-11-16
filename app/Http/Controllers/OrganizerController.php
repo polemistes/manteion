@@ -110,7 +110,7 @@ class OrganizerController extends Controller
                 'name' => $event->name,
                 'starts_at' => $event->starts_at->toIso8601String(),
                 'ends_at' => $event->ends_at?->toIso8601String(),
-                'timezone' => $event->localTimeZone(),
+                'local_timezone' => $event->shownLocalTimeZone(),
                 'place' => $event->place,
                 'city' => $event->city,
                 'cover' => $event->images->first()?->presentation(),

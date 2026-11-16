@@ -9,6 +9,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | bootstrap/app.php | .ai/rules/bootstrap.md |
 | app/Http/Controllers/EventController.php | .ai/rules/controllers.md |
 | resources/css/app.css | .ai/rules/css.md |
+| app/Enums/EventTimeZoneMode.php | .ai/rules/enums.md |
 | database/factories/UserFactory.php | .ai/rules/factories.md |
 | app/Actions/Fortify/** | .ai/rules/fortify.md |
 | app/Http/Controllers/*ImageController.php, app/Http/Controllers/Concerns/ServesPrivateImages.php, app/Models/EventImage.php, app/Models/Leaflet.php, app/Models/Message.php, app/Services/ImageProcessor.php, app/Services/FacebookEventImporter.php, app/Services/TimeZones.php | .ai/rules/http-controllers.md |

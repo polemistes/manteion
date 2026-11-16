@@ -6,7 +6,7 @@ export const EVENT_FORM_ID = 'event-form';
 <script setup lang="ts">
 import { Form } from '@inertiajs/vue3';
 import { Clock, Earth, Lock, UserPlus } from '@lucide/vue';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import CategoryPicker from '@/components/CategoryPicker.vue';
 import ImageCropper from '@/components/ImageCropper.vue';
@@ -40,6 +40,8 @@ export interface EventFormValues {
     ends_at: string | null;
     /** The time zone of the place; the viewer's own when left out. */
     timezone?: string | null;
+    /** How that zone is decided; from the place when left out. */
+    timezone_mode?: 'auto' | 'chosen' | 'none';
     visibility: 'private' | 'public';
     organizer_id?: number | null;
     is_searchable?: boolean;
@@ -58,7 +60,9 @@ export interface EventFormValues {
  *
  * The times typed are local to the place: the form works in the time zone
  * at the pin (asked of the server when the pin moves), or in the viewer's
- * own while there is no pin, and says so when the two clocks differ.
+ * own while there is no pin. A line under the times says which clock that
+ * is, and "Change" lets the host pick another zone, or none (an online
+ * event), in which case the event shows no local time.
  */
 const props = withDefaults(
     defineProps<{
@@ -129,17 +133,28 @@ const location = ref<LocationValue>({
     country_code: props.values.country_code,
 });
 
-// The time zone the times are typed in, sent as `timezone`.
-const timeZone = ref(props.values.timezone || dates.timeZone.value);
+// How the event's time zone is decided, sent as `timezone_mode`: from the
+// place ('auto'), by the host ('chosen'), or not at all ('none', for an
+// event with no local time, such as an online one).
+type TimeZoneMode = 'auto' | 'chosen' | 'none';
+
+const timeZoneMode = ref<TimeZoneMode>(props.values.timezone_mode ?? 'auto');
+// The zone the place gives: the one at the pin, or the viewer's own.
+const placeTimeZone = ref(
+    timeZoneMode.value === 'auto' && props.values.timezone
+        ? props.values.timezone
+        : dates.timeZone.value,
+);
+const chosenTimeZone = ref(
+    timeZoneMode.value === 'chosen' ? (props.values.timezone ?? '') : '',
+);
 let timeZoneLookups = 0;
 
-async function onLocationChange(next: LocationValue): Promise<void> {
-    location.value = next;
-
+async function findPlaceTimeZone(place: LocationValue): Promise<void> {
     const lookup = ++timeZoneLookups;
 
-    if (next.latitude === null || next.longitude === null) {
-        timeZone.value = dates.timeZone.value;
+    if (place.latitude === null || place.longitude === null) {
+        placeTimeZone.value = dates.timeZone.value;
 
         return;
     }
@@ -148,10 +163,10 @@ async function onLocationChange(next: LocationValue): Promise<void> {
         const found = await requestJson<{ timezone: string | null }>(
             lookUpTimeZone({
                 query: {
-                    latitude: next.latitude,
-                    longitude: next.longitude,
-                    ...(next.country_code
-                        ? { country_code: next.country_code }
+                    latitude: place.latitude,
+                    longitude: place.longitude,
+                    ...(place.country_code
+                        ? { country_code: place.country_code }
                         : {}),
                 },
             }),
@@ -159,22 +174,60 @@ async function onLocationChange(next: LocationValue): Promise<void> {
 
         // Only the answer for where the pin is now counts.
         if (lookup === timeZoneLookups && found?.timezone) {
-            timeZone.value = found.timezone;
+            placeTimeZone.value = found.timezone;
         }
     } catch {
         // No answer: the times stay in the zone they were in.
     }
 }
 
-// Said under the times when the place keeps another clock than the viewer.
-const localTimeNote = computed(() => {
-    const moment = startsAt.value || new Date();
+function onLocationChange(next: LocationValue): void {
+    location.value = next;
+    void findPlaceTimeZone(next);
+}
 
-    if (sameClock(moment, timeZone.value, dates.timeZone.value)) {
-        return null;
+// An event opened with a hand-picked zone, or none, has not asked what
+// its place would give: ask when the host goes back to automatic.
+let placeTimeZoneKnown = timeZoneMode.value === 'auto';
+
+watch(timeZoneMode, (mode) => {
+    if (mode === 'auto' && !placeTimeZoneKnown) {
+        placeTimeZoneKnown = true;
+        void findPlaceTimeZone(location.value);
+    }
+});
+
+// The zone the times are typed in, sent as `timezone`. An event with no
+// local time is typed, and has its days, on the host's own clock.
+const timeZone = computed(() => {
+    if (timeZoneMode.value === 'chosen' && chosenTimeZone.value) {
+        return chosenTimeZone.value;
     }
 
-    const place = location.value.city || cityOfTimeZone(timeZone.value);
+    return timeZoneMode.value === 'auto'
+        ? placeTimeZone.value
+        : dates.timeZone.value;
+});
+
+// The line under the times: which clock they are on.
+const timeZoneNote = computed(() => {
+    if (timeZoneMode.value === 'none') {
+        return t('events.form.noLocalTime');
+    }
+
+    if (
+        sameClock(
+            startsAt.value || new Date(),
+            timeZone.value,
+            dates.timeZone.value,
+        )
+    ) {
+        return t('events.form.yourTimeZone');
+    }
+
+    const place =
+        (timeZoneMode.value === 'auto' && location.value.city) ||
+        cityOfTimeZone(timeZone.value);
 
     return startsAt.value
         ? t('events.form.localTimeStarts', {
@@ -182,6 +235,63 @@ const localTimeNote = computed(() => {
               when: `${dates.shortDate(startsAt.value)}, ${dates.time(startsAt.value)}`,
           })
         : t('events.form.localTime', { place });
+});
+
+// The picker, opened with "Change": automatic, none, or any zone by its
+// city. The zones come from the browser, so the list is built on opening.
+const timeZonePickerOpen = ref(false);
+const timeZoneOptions = ref<{ value: string; label: string }[]>([]);
+
+function timeZoneLabel(zone: string): string {
+    const region = zone.includes('/') ? zone.split('/')[0] : null;
+    const city = cityOfTimeZone(zone);
+
+    return region ? `${city} (${region.replace(/_/g, ' ')})` : city;
+}
+
+function openTimeZonePicker(): void {
+    let zones: string[] = [];
+
+    try {
+        zones = Intl.supportedValuesOf('timeZone');
+    } catch {
+        // An old browser: the choices are the zones already in play.
+    }
+
+    const known = new Set([
+        ...zones,
+        placeTimeZone.value,
+        dates.timeZone.value,
+        ...(chosenTimeZone.value ? [chosenTimeZone.value] : []),
+    ]);
+
+    timeZoneOptions.value = [...known]
+        .map((zone) => ({ value: zone, label: timeZoneLabel(zone) }))
+        .sort((a, b) => a.label.localeCompare(b.label));
+    timeZonePickerOpen.value = true;
+}
+
+const timeZoneChoices = computed(() => [
+    { value: 'auto', label: t('events.form.timeZoneAuto') },
+    { value: 'none', label: t('events.form.timeZoneNone') },
+    ...timeZoneOptions.value,
+]);
+
+const timeZoneChoice = computed({
+    get: () =>
+        timeZoneMode.value === 'chosen'
+            ? chosenTimeZone.value
+            : timeZoneMode.value,
+    set: (choice: string) => {
+        if (choice === 'auto' || choice === 'none') {
+            timeZoneMode.value = choice;
+
+            return;
+        }
+
+        chosenTimeZone.value = choice;
+        timeZoneMode.value = 'chosen';
+    },
 });
 
 const previewPlace = computed(
@@ -311,19 +421,42 @@ const visibilityOptions = [
                     @change="endsAt = $event"
                 />
                 <input type="hidden" name="timezone" :value="timeZone" />
-                <p
-                    v-if="localTimeNote"
-                    class="-mt-2 flex items-start gap-1.5 text-meta text-ink-muted"
-                    role="status"
-                >
-                    <Clock
-                        :size="16"
-                        :stroke-width="2"
-                        class="mt-0.5 shrink-0"
-                        aria-hidden="true"
+                <input
+                    type="hidden"
+                    name="timezone_mode"
+                    :value="timeZoneMode"
+                />
+                <div class="-mt-3 flex flex-col gap-1.5">
+                    <div
+                        class="flex items-center gap-1.5 text-meta text-ink-muted"
+                    >
+                        <Clock
+                            :size="16"
+                            :stroke-width="2"
+                            class="shrink-0"
+                            aria-hidden="true"
+                        />
+                        <p class="min-w-0 flex-1" role="status">
+                            {{ timeZoneNote }}
+                        </p>
+                        <button
+                            v-if="!timeZonePickerOpen"
+                            type="button"
+                            class="min-h-11 shrink-0 font-semibold text-ink underline underline-offset-2"
+                            @click="openTimeZonePicker"
+                        >
+                            {{ t('events.form.changeTimeZone') }}
+                        </button>
+                    </div>
+                    <SelectField
+                        v-if="timeZonePickerOpen"
+                        v-model="timeZoneChoice"
+                        :options="timeZoneChoices"
+                        :label="t('events.form.timeZone')"
+                        :error="errors.timezone ?? errors.timezone_mode"
+                        hide-label
                     />
-                    {{ localTimeNote }}
-                </p>
+                </div>
             </div>
 
             <section class="flex flex-col gap-3">
@@ -446,7 +579,7 @@ const visibilityOptions = [
                 :starts-at="startsAt || null"
                 :ends-at="endsAt || null"
                 :place="previewPlace"
-                :time-zone="timeZone"
+                :time-zone="timeZoneMode === 'none' ? null : timeZone"
                 :cover="cover.url ? { url: cover.url, fit: cover.fit } : null"
                 :visibility="visibility === 'public' ? 'public' : 'private'"
                 :is-new="props.isNew"

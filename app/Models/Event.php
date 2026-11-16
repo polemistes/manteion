@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\EventTimeZoneMode;
 use App\Enums\EventVisibility;
 use Carbon\CarbonImmutable;
 use Database\Factories\EventFactory;
@@ -29,6 +30,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon $starts_at
  * @property Carbon|null $ends_at
  * @property string|null $timezone
+ * @property EventTimeZoneMode $timezone_mode
  * @property EventVisibility $visibility
  * @property bool $allow_invitee_invites
  * @property bool $allow_invitee_comments
@@ -40,7 +42,7 @@ use Illuminate\Support\Carbon;
  * @property-read int $attending_count
  * @property-read int $interested_count
  */
-#[Fillable(['user_id', 'organizer_id', 'name', 'place', 'latitude', 'longitude', 'city', 'country', 'country_code', 'description', 'starts_at', 'ends_at', 'timezone', 'visibility', 'allow_invitee_invites', 'allow_invitee_comments', 'searchable_paid_at', 'followers_notified_at', 'is_deleted'])]
+#[Fillable(['user_id', 'organizer_id', 'name', 'place', 'latitude', 'longitude', 'city', 'country', 'country_code', 'description', 'starts_at', 'ends_at', 'timezone', 'timezone_mode', 'visibility', 'allow_invitee_invites', 'allow_invitee_comments', 'searchable_paid_at', 'followers_notified_at', 'is_deleted'])]
 class Event extends Model
 {
     /** @use HasFactory<EventFactory> */
@@ -54,6 +56,7 @@ class Event extends Model
             'latitude' => 'float',
             'longitude' => 'float',
             'visibility' => EventVisibility::class,
+            'timezone_mode' => EventTimeZoneMode::class,
             'allow_invitee_invites' => 'boolean',
             'allow_invitee_comments' => 'boolean',
             'searchable_paid_at' => 'datetime',
@@ -158,12 +161,22 @@ class Event extends Model
     }
 
     /**
-     * The time zone of the place the event happens in: its pin's, or for
-     * one without a pin, its host's when it was made.
+     * The time zone the event's times were typed in, and whose days are
+     * its days: the one at its pin, one its host chose, or (without a pin,
+     * or for an event with no local time) its host's own.
      */
     public function localTimeZone(): string
     {
         return $this->timezone ?? (string) config('app.display_timezone');
+    }
+
+    /**
+     * The time zone whose clock is shown beside each reader's own, or
+     * null for an event that has no local time (an online one).
+     */
+    public function shownLocalTimeZone(): ?string
+    {
+        return $this->timezone_mode === EventTimeZoneMode::None ? null : $this->localTimeZone();
     }
 
     /**

@@ -27,6 +27,7 @@ const props = defineProps<{
         starts_at: string;
         ends_at: string | null;
         timezone: string;
+        timezone_mode: 'auto' | 'chosen' | 'none';
         visibility: 'private' | 'public' | 'searchable';
         is_searchable: boolean;
         allow_invitee_invites: boolean;

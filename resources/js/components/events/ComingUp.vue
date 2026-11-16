@@ -65,7 +65,7 @@ function role(event: EventSummary): string {
                                 dates.elsewhere(
                                     event.starts_at,
                                     null,
-                                    event.timezone,
+                                    event.local_timezone,
                                 ),
                             ]
                                 .filter(Boolean)

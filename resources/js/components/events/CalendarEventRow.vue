@@ -52,7 +52,7 @@ const meta = computed(() =>
             : dates.elsewhere(
                   props.event.starts_at,
                   part.value === 'single' ? props.event.ends_at : null,
-                  props.event.timezone,
+                  props.event.local_timezone,
               ),
         props.event.place ?? props.event.city,
         props.event.is_host

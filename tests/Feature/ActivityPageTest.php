@@ -128,7 +128,7 @@ test('an invitation brings the event, its cover and the answer so far, to answer
             ->where('notifications.0.context.event', [
                 'starts_at' => $event->starts_at->toIso8601String(),
                 'ends_at' => null,
-                'timezone' => 'Europe/Oslo',
+                'local_timezone' => 'Europe/Oslo',
                 'cover' => $image->fresh()->presentation(),
                 'host_name' => 'Ada',
                 'is_host' => false,

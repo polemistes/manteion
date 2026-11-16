@@ -6,6 +6,7 @@ use App\Enums\AdminAlert;
 use App\Enums\AttendanceStatus;
 use App\Enums\AttendeeSource;
 use App\Enums\ContactGroupType;
+use App\Enums\EventTimeZoneMode;
 use App\Enums\EventVisibility;
 use App\Enums\FollowStatus;
 use App\Enums\ReportStatus;
@@ -181,7 +182,7 @@ class EventController extends Controller
                 'name', 'place', 'latitude', 'longitude', 'city', 'country', 'country_code', 'description', 'starts_at', 'ends_at', 'visibility', 'allow_invitee_invites', 'allow_invitee_comments',
             ]),
             'organizer_id' => $organizerId === null ? null : (int) $organizerId,
-            'timezone' => $this->timeZoneFrom($request) ?? $request->user()->displayTimeZone(),
+            ...$this->timeZoneFrom($request, null),
         ]);
 
         $this->syncTags($event, $request->input('tag_ids', []));
@@ -244,6 +245,7 @@ class EventController extends Controller
                 'starts_at' => $event->starts_at->toIso8601String(),
                 'ends_at' => $event->ends_at?->toIso8601String(),
                 'timezone' => $event->localTimeZone(),
+                'local_timezone' => $event->shownLocalTimeZone(),
                 'visibility' => $event->visibility->value,
                 'allow_invitee_invites' => $event->allow_invitee_invites,
                 'allow_invitee_comments' => $event->allow_invitee_comments,
@@ -337,6 +339,7 @@ class EventController extends Controller
                 'starts_at' => $event->starts_at->toIso8601String(),
                 'ends_at' => $event->ends_at?->toIso8601String(),
                 'timezone' => $event->localTimeZone(),
+                'timezone_mode' => $event->timezone_mode->value,
                 'visibility' => $event->visibility->value,
                 'is_searchable' => $event->visibility === EventVisibility::Searchable,
                 'allow_invitee_invites' => $event->allow_invitee_invites,
@@ -363,7 +366,7 @@ class EventController extends Controller
         $event->update([
             ...$request->safe()->only(['name', 'place', 'latitude', 'longitude', 'city', 'country', 'country_code', 'description', 'starts_at', 'ends_at', 'allow_invitee_invites', 'allow_invitee_comments']),
             'visibility' => $visibility,
-            'timezone' => $this->timeZoneFrom($request) ?? $event->localTimeZone(),
+            ...$this->timeZoneFrom($request, $event),
         ]);
 
         $this->syncTags($event, $request->input('tag_ids', []));
@@ -444,6 +447,7 @@ class EventController extends Controller
                 'starts_at' => $event->starts_at->toIso8601String(),
                 'ends_at' => $event->ends_at?->toIso8601String(),
                 'timezone' => $event->localTimeZone(),
+                'local_timezone' => $event->shownLocalTimeZone(),
                 'visibility' => $event->visibility->value,
                 'owner' => ['id' => $event->owner->id, 'name' => $event->owner->name, 'username' => $event->owner->username, 'avatar_url' => $event->owner->avatar_url],
                 'organizer' => $event->organizer?->summary(),
@@ -755,19 +759,39 @@ class EventController extends Controller
     }
 
     /**
-     * The event's own time zone: the one the form worked in (it types
-     * times as local to the place), else the one at the pin it sent.
+     * The event's own time zone and how it was decided. The form types
+     * times as local to a zone and sends that zone; without one (another
+     * client), an automatic event takes the zone at the pin it sent. A
+     * zone chosen by hand is never replaced by the pin's, and an event
+     * with no local time keeps its host's zone for its days. What the
+     * form leaves out stays as the event had it (`$event`, null for a new
+     * one).
+     *
+     * @return array{timezone: string, timezone_mode: EventTimeZoneMode}
      */
-    private function timeZoneFrom(StoreEventRequest|UpdateEventRequest $request): ?string
+    private function timeZoneFrom(StoreEventRequest|UpdateEventRequest $request, ?Event $event): array
     {
+        $mode = EventTimeZoneMode::tryFrom((string) $request->validated('timezone_mode'))
+            ?? $event->timezone_mode
+            ?? EventTimeZoneMode::Automatic;
+        $sent = $request->validated('timezone');
+        $kept = $event?->localTimeZone() ?? $request->user()->displayTimeZone();
+
+        if ($mode !== EventTimeZoneMode::Automatic) {
+            return ['timezone' => $sent ?? $kept, 'timezone_mode' => $mode];
+        }
+
         $latitude = $request->validated('latitude');
         $longitude = $request->validated('longitude');
 
-        return $request->validated('timezone') ?? TimeZones::forPlace(
-            $latitude === null ? null : (float) $latitude,
-            $longitude === null ? null : (float) $longitude,
-            $request->validated('country_code'),
-        );
+        return [
+            'timezone' => $sent ?? TimeZones::forPlace(
+                $latitude === null ? null : (float) $latitude,
+                $longitude === null ? null : (float) $longitude,
+                $request->validated('country_code'),
+            ) ?? $kept,
+            'timezone_mode' => $mode,
+        ];
     }
 
     /**

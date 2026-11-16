@@ -84,6 +84,7 @@ const props = defineProps<{
         starts_at: string;
         ends_at: string | null;
         timezone: string;
+        local_timezone: string | null;
         visibility: 'private' | 'public' | 'searchable';
         allow_invitee_invites: boolean;
         allow_invitee_comments: boolean;
@@ -226,7 +227,7 @@ const whenThere = computed(() =>
     dates.elsewhere(
         props.event.starts_at,
         props.event.ends_at,
-        props.event.timezone,
+        props.event.local_timezone,
         'full',
     ),
 );
@@ -842,7 +843,7 @@ const showMenu = computed(
                         v-else
                         :date="props.event.starts_at"
                         :end="props.event.ends_at"
-                        :time-zone="props.event.timezone"
+                        :time-zone="props.event.local_timezone"
                     />
                     <div class="rounded-lg border border-line bg-surface p-4">
                         <GuestFaces

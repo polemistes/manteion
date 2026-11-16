@@ -71,8 +71,10 @@ export interface EventSummary {
     longitude: number | null;
     starts_at: string;
     ends_at: string | null;
-    /** The time zone of the place it happens in. */
+    /** The time zone its times were typed in, and whose days are its days. */
     timezone: string;
+    /** The zone whose clock is shown as its local time; null for none. */
+    local_timezone: string | null;
     visibility: string;
     owner: ContactOption;
     /** The organizer hosting it, when a spokesperson made it for one. */

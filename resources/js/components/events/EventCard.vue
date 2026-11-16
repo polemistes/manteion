@@ -190,7 +190,7 @@ const layout = computed(
                     <LocalTime
                         :starts-at="props.event.starts_at"
                         :ends-at="props.event.ends_at"
-                        :time-zone="props.event.timezone"
+                        :time-zone="props.event.local_timezone"
                     />
                 </p>
                 <h3

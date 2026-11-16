@@ -146,7 +146,7 @@ const eventWhen = computed(() =>
               dates.elsewhere(
                   event.value.starts_at,
                   event.value.ends_at,
-                  event.value.timezone,
+                  event.value.local_timezone,
               ),
           ]
               .filter(Boolean)

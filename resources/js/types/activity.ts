@@ -52,7 +52,7 @@ export type ActivitySubjectType = 'event' | 'leaflet' | 'user' | 'organizer';
 export type ActivityEvent = {
     starts_at: string;
     ends_at: string | null;
-    timezone: string;
+    local_timezone: string | null;
     cover: EventCover | null;
     host_name: string;
     is_host: boolean;

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\EventTimeZoneMode;
 use App\Enums\EventVisibility;
 use App\Http\Requests\Concerns\NormalizesEventTimes;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -40,7 +41,8 @@ class StoreEventRequest extends FormRequest
             'description' => ['required', 'string', 'max:5000'],
             'starts_at' => ['required', 'date'],
             'ends_at' => ['nullable', 'date', 'after:starts_at'],
-            'timezone' => ['nullable', 'string', 'max:64', 'timezone:all_with_bc'],
+            'timezone' => ['nullable', 'required_if:timezone_mode,'.EventTimeZoneMode::Chosen->value, 'string', 'max:64', 'timezone:all_with_bc'],
+            'timezone_mode' => ['nullable', Rule::enum(EventTimeZoneMode::class)],
             'visibility' => ['required', Rule::in([EventVisibility::Private->value, EventVisibility::Public->value])],
             'allow_invitee_invites' => ['required', 'boolean'],
             'allow_invitee_comments' => ['required', 'boolean'],

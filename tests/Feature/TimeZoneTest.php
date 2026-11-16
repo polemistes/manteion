@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\EventTimeZoneMode;
 use App\Models\Event;
 use App\Models\User;
 use App\Services\TimeZones;
@@ -170,4 +171,79 @@ test('an event without an end is over when its day ends where it happens', funct
     // 01:00 the next day in Tokyo, though only 18:00 on 1 June in Oslo.
     Carbon::setTestNow('2026-06-01 16:00:00');
     expect($event->isOver())->toBeTrue();
+});
+
+test('a time zone the host chose is kept, whatever the pin says', function () {
+    $user = User::factory()->create(['timezone' => 'Europe/Oslo']);
+
+    // A pin in Oslo, but the host says the clock is Chicago's.
+    $this->actingAs($user)->post('/events', eventFormFields([
+        'latitude' => 59.91, 'longitude' => 10.75, 'country_code' => 'NO',
+        'timezone' => 'America/Chicago', 'timezone_mode' => 'chosen',
+    ]))->assertRedirect();
+
+    $event = Event::query()->sole();
+    expect($event->timezone)->toBe('America/Chicago');
+    expect($event->timezone_mode)->toBe(EventTimeZoneMode::Chosen);
+
+    // Another client moves the pin and says nothing about time zones.
+    $this->actingAs($user)->put("/events/{$event->id}", eventFormFields([
+        'latitude' => 51.5, 'longitude' => -0.12, 'country_code' => 'GB',
+    ]))->assertRedirect();
+
+    expect($event->refresh()->timezone)->toBe('America/Chicago');
+    expect($event->timezone_mode)->toBe(EventTimeZoneMode::Chosen);
+
+    // Back to automatic: the pin decides again.
+    $this->actingAs($user)->put("/events/{$event->id}", eventFormFields([
+        'latitude' => 51.5, 'longitude' => -0.12, 'country_code' => 'GB',
+        'timezone_mode' => 'auto',
+    ]))->assertRedirect();
+
+    expect($event->refresh()->timezone)->toBe('Europe/London');
+    expect($event->timezone_mode)->toBe(EventTimeZoneMode::Automatic);
+});
+
+test('choosing a time zone by hand needs one', function () {
+    $this->actingAs(User::factory()->create())
+        ->post('/events', eventFormFields(['timezone_mode' => 'chosen']))
+        ->assertSessionHasErrors('timezone');
+
+    $this->actingAs(User::factory()->create())
+        ->post('/events', eventFormFields(['timezone_mode' => 'sometimes']))
+        ->assertSessionHasErrors('timezone_mode');
+});
+
+test('an event with no local time shows none, and keeps its host\'s days', function () {
+    $user = User::factory()->create(['timezone' => 'Asia/Tokyo']);
+
+    // An online event: a pin would not make it local to anywhere.
+    $this->actingAs($user)->post('/events', eventFormFields([
+        'latitude' => 51.5, 'longitude' => -0.12, 'country_code' => 'GB',
+        'timezone' => 'Asia/Tokyo', 'timezone_mode' => 'none',
+    ]))->assertRedirect();
+
+    $event = Event::query()->sole();
+    expect($event->timezone_mode)->toBe(EventTimeZoneMode::None);
+    expect($event->localTimeZone())->toBe('Asia/Tokyo');
+    expect($event->shownLocalTimeZone())->toBeNull();
+
+    $this->actingAs($user)->get("/events/{$event->id}")
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('event.local_timezone', null)
+            ->where('event.timezone', 'Asia/Tokyo'));
+    $this->actingAs($user)->get('/events')
+        ->assertInertia(fn (Assert $page) => $page->where('events.0.local_timezone', null));
+    $this->actingAs($user)->get("/events/{$event->id}/edit")
+        ->assertInertia(fn (Assert $page) => $page->where('event.timezone_mode', 'none'));
+});
+
+test('an event with a local time is sent with it for showing', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->create(['user_id' => $user->id, 'timezone' => 'Europe/London']);
+
+    $this->actingAs($user)->get("/events/{$event->id}")
+        ->assertInertia(fn (Assert $page) => $page->where('event.local_timezone', 'Europe/London'));
+    $this->actingAs($user)->get("/events/{$event->id}/edit")
+        ->assertInertia(fn (Assert $page) => $page->where('event.timezone_mode', 'auto'));
 });
