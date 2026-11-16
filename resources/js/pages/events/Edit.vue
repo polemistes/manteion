@@ -26,6 +26,7 @@ const props = defineProps<{
         description: string;
         starts_at: string;
         ends_at: string | null;
+        timezone: string;
         visibility: 'private' | 'public' | 'searchable';
         is_searchable: boolean;
         allow_invitee_invites: boolean;

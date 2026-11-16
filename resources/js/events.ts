@@ -71,6 +71,8 @@ export interface EventSummary {
     longitude: number | null;
     starts_at: string;
     ends_at: string | null;
+    /** The time zone of the place it happens in. */
+    timezone: string;
     visibility: string;
     owner: ContactOption;
     /** The organizer hosting it, when a spokesperson made it for one. */

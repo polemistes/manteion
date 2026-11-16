@@ -102,10 +102,32 @@ export function isoWeekOfDay(dayKey: string): number {
 
 export type DaySection = 'today' | 'thisWeek' | 'nextWeek' | 'later';
 
+/** Whether two time zones show the same clock at an instant. */
+export function sameClock(
+    value: string | Date,
+    timeZone: string,
+    otherTimeZone: string,
+): boolean {
+    const instant = toDate(value).getTime();
+
+    return (
+        timeZone === otherTimeZone ||
+        wallClockOf(instant, timeZone) === wallClockOf(instant, otherTimeZone)
+    );
+}
+
+/** The city a time zone is named after: "New York" for America/New_York. */
+export function cityOfTimeZone(timeZone: string): string {
+    return (timeZone.split('/').pop() ?? timeZone).replace(/_/g, ' ');
+}
+
 /**
- * Date and time formatting in the viewer's language and the app's display
- * time zone. Every formatter passes both explicitly, so the server-rendered
- * page and the browser always produce the same text (see .ai/rules/pages.md).
+ * Date and time formatting in the viewer's language and the viewer's own
+ * time zone (the shared `timezone` prop: their device's, as the server
+ * knows it). Every formatter passes both explicitly, so the server-rendered
+ * page and the browser always produce the same text (see .ai/rules/js.md).
+ * An event in a place on another clock also gets its local time, through
+ * `elsewhere`.
  */
 export function useDates() {
     const { t, locale } = useI18n();
@@ -218,6 +240,89 @@ export function useDates() {
         return `${from} – ${shortDate(end)}`;
     };
 
+    /**
+     * An event's time where it happens, for one on another clock than the
+     * viewer's: "20:00–22:00 local time", written beside the viewer's own
+     * time. Null when both clocks agree, so most events get nothing.
+     *
+     * The day is named only where it is another day than the viewer's
+     * ("Fri 20:00 local time" beside Saturday 02:00). `span` follows
+     * `span()` above, which gives several-day events without times: those
+     * get their local days, and only if they differ. `full` always gives
+     * the times (the event page).
+     */
+    const elsewhere = (
+        start: string | Date,
+        end: string | Date | null,
+        eventTimeZone: string | null | undefined,
+        style: 'span' | 'full' = 'span',
+    ): string | null => {
+        const zone = eventTimeZone;
+
+        if (
+            !zone ||
+            (sameClock(start, zone, timeZone.value) &&
+                (!end || sameClock(end, zone, timeZone.value)))
+        ) {
+            return null;
+        }
+
+        const formatThere = (
+            value: string | Date,
+            options: Intl.DateTimeFormatOptions,
+        ) =>
+            plainSpaces(
+                formatter(intlLocale.value, zone, options).format(
+                    toDate(value),
+                ),
+            );
+        const timeThere = (value: string | Date) =>
+            formatThere(value, { hour: '2-digit', minute: '2-digit' });
+        const weekdayThere = (value: string | Date) =>
+            formatThere(value, { weekday: 'short' }).replace('.', '');
+        const dayThere = (value: string | Date) => dayKeyIn(value, zone);
+        const phrase = (text: string) => t('dates.localTime', { time: text });
+
+        const startShifted = dayThere(start) !== dayKey(start);
+        const startText = startShifted
+            ? `${weekdayThere(start)} ${timeThere(start)}`
+            : timeThere(start);
+
+        if (!end) {
+            return phrase(startText);
+        }
+
+        const endShifted = dayThere(end) !== dayKey(end);
+        const severalDays = dayKey(start) !== dayKey(end);
+        const severalDaysThere = dayThere(start) !== dayThere(end);
+
+        // A festival: days, as the viewer's own line gives it.
+        if (style === 'span' && severalDays && severalDaysThere) {
+            if (!startShifted && !endShifted) {
+                return null;
+            }
+
+            const date: Intl.DateTimeFormatOptions = {
+                weekday: 'short',
+                day: 'numeric',
+                month: 'short',
+            };
+
+            return phrase(
+                `${formatThere(start, date)} – ${formatThere(end, date)}`,
+            );
+        }
+
+        // The end's day is named when it is not the one a reader expects:
+        // another than the viewer's, and not simply the start's again.
+        const endText =
+            endShifted && severalDaysThere
+                ? `${weekdayThere(end)} ${timeThere(end)}`
+                : timeThere(end);
+
+        return phrase(`${startText}–${endText}`);
+    };
+
     /** The parts of a date tile: weekday and month in caps, the day number. */
     const tile = (value: string | Date) => ({
         weekday: format(value, { weekday: 'short' })
@@ -319,16 +424,22 @@ export function useDates() {
 
     /**
      * Whether an event is over: past its end, or for one without an end
-     * time, past the end of the day it starts on (as Event::isOver).
+     * time, past the end of the day it starts on where it happens (as
+     * Event::isOver).
      */
-    const isOver = (startsAt: string, endsAt: string | null) => {
+    const isOver = (
+        startsAt: string,
+        endsAt: string | null,
+        eventTimeZone?: string | null,
+    ) => {
         if (endsAt) {
             return Date.parse(endsAt) < now();
         }
 
-        const nextDay = addDays(dayKey(startsAt), 1);
+        const zone = eventTimeZone || timeZone.value;
+        const nextDay = addDays(dayKeyIn(startsAt, zone), 1);
 
-        return zonedToUtc(nextDay, '00:00', timeZone.value).getTime() <= now();
+        return zonedToUtc(nextDay, '00:00', zone).getTime() <= now();
     };
 
     /** "Week 40" / "Uke 40" */
@@ -352,6 +463,7 @@ export function useDates() {
         weekday,
         when,
         span,
+        elsewhere,
         tile,
         ago,
         listTime,

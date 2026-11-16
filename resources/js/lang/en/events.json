@@ -216,6 +216,8 @@
         "starts": "Starts",
         "ends": "Ends",
         "time": "time",
+        "localTime": "Local time in {place}.",
+        "localTimeStarts": "Local time in {place}. For you it starts {when}.",
         "place": "Place",
         "placeName": "Place name",
         "placeNamePlaceholder": "For example Kafé Hærverk",

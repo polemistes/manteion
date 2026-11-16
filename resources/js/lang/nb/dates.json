@@ -3,5 +3,6 @@
     "tomorrow": "I morgen",
     "yesterday": "I går",
     "justNow": "akkurat nå",
-    "week": "Uke {week}"
+    "week": "Uke {week}",
+    "localTime": "{time} lokal tid"
 }

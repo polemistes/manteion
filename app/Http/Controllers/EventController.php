@@ -26,6 +26,7 @@ use App\Services\ActivityFeed;
 use App\Services\AdminAlerts;
 use App\Services\EventFeedQuery;
 use App\Services\ImageProcessor;
+use App\Services\TimeZones;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
@@ -67,7 +68,7 @@ class EventController extends Controller
                 ->orWhere('place', 'like', "%{$term}%"));
         }
 
-        $startDateFilter = $request->has('start_date') ? $this->dateFrom($request, 'start_date') : $this->today();
+        $startDateFilter = $request->has('start_date') ? $this->dateFrom($request, 'start_date') : $this->today($user);
         $endDateFilter = $this->dateFrom($request, 'end_date');
         $feed->happeningBetween($query, $startDateFilter ?: null, $endDateFilter ?: null);
 
@@ -102,7 +103,7 @@ class EventController extends Controller
         $view = in_array($request->string('view')->toString(), self::CALENDAR_VIEWS, true)
             ? $request->string('view')->toString()
             : 'month';
-        $today = $this->today();
+        $today = $this->today($user);
         $anchor = CarbonImmutable::parse($this->dateFrom($request, 'date') ?: $today);
 
         [$firstDay, $lastDay] = match ($view) {
@@ -145,7 +146,7 @@ class EventController extends Controller
             ->when($term !== '', fn ($query) => $query->where(
                 fn ($query) => $query->where('name', 'like', "%{$term}%")->orWhere('place', 'like', "%{$term}%")
             ));
-        $feed->happeningBetween($query, $this->today(), null);
+        $feed->happeningBetween($query, $this->today($request->user()), null);
 
         $events = $feed->ordered($query, $nearPoint)->paginate(self::PER_PAGE)->withQueryString();
 
@@ -180,6 +181,7 @@ class EventController extends Controller
                 'name', 'place', 'latitude', 'longitude', 'city', 'country', 'country_code', 'description', 'starts_at', 'ends_at', 'visibility', 'allow_invitee_invites', 'allow_invitee_comments',
             ]),
             'organizer_id' => $organizerId === null ? null : (int) $organizerId,
+            'timezone' => $this->timeZoneFrom($request) ?? $request->user()->displayTimeZone(),
         ]);
 
         $this->syncTags($event, $request->input('tag_ids', []));
@@ -241,6 +243,7 @@ class EventController extends Controller
                 'description' => $event->description,
                 'starts_at' => $event->starts_at->toIso8601String(),
                 'ends_at' => $event->ends_at?->toIso8601String(),
+                'timezone' => $event->localTimeZone(),
                 'visibility' => $event->visibility->value,
                 'allow_invitee_invites' => $event->allow_invitee_invites,
                 'allow_invitee_comments' => $event->allow_invitee_comments,
@@ -333,6 +336,7 @@ class EventController extends Controller
                 'description' => $event->description,
                 'starts_at' => $event->starts_at->toIso8601String(),
                 'ends_at' => $event->ends_at?->toIso8601String(),
+                'timezone' => $event->localTimeZone(),
                 'visibility' => $event->visibility->value,
                 'is_searchable' => $event->visibility === EventVisibility::Searchable,
                 'allow_invitee_invites' => $event->allow_invitee_invites,
@@ -359,6 +363,7 @@ class EventController extends Controller
         $event->update([
             ...$request->safe()->only(['name', 'place', 'latitude', 'longitude', 'city', 'country', 'country_code', 'description', 'starts_at', 'ends_at', 'allow_invitee_invites', 'allow_invitee_comments']),
             'visibility' => $visibility,
+            'timezone' => $this->timeZoneFrom($request) ?? $event->localTimeZone(),
         ]);
 
         $this->syncTags($event, $request->input('tag_ids', []));
@@ -438,6 +443,7 @@ class EventController extends Controller
                 'longitude' => $event->longitude,
                 'starts_at' => $event->starts_at->toIso8601String(),
                 'ends_at' => $event->ends_at?->toIso8601String(),
+                'timezone' => $event->localTimeZone(),
                 'visibility' => $event->visibility->value,
                 'owner' => ['id' => $event->owner->id, 'name' => $event->owner->name, 'username' => $event->owner->username, 'avatar_url' => $event->owner->avatar_url],
                 'organizer' => $event->organizer?->summary(),
@@ -527,7 +533,7 @@ class EventController extends Controller
                 ->where('user_id', $user->id)
                 ->where('source', AttendeeSource::Invited)
                 ->where('status', AttendanceStatus::NoResponse))
-            ->where('starts_at', '>=', CarbonImmutable::parse($this->today(), (string) config('app.display_timezone'))->utc())
+            ->where('starts_at', '>=', CarbonImmutable::parse($this->today($user), $user->displayTimeZone())->utc())
             ->orderBy('starts_at')
             ->limit(10)
             ->get();
@@ -554,7 +560,7 @@ class EventController extends Controller
                 ->orWhere('ends_at', '>=', now())
                 ->orWhere(fn (Builder $query) => $query
                     ->whereNull('ends_at')
-                    ->where('starts_at', '>=', CarbonImmutable::parse($this->today(), (string) config('app.display_timezone'))->utc())))
+                    ->where('starts_at', '>=', CarbonImmutable::parse($this->today($user), $user->displayTimeZone())->utc())))
             ->orderBy('starts_at')
             ->limit(3)
             ->get();
@@ -569,7 +575,7 @@ class EventController extends Controller
      */
     private function eventDaysThisMonth(EventFeedQuery $feed): array
     {
-        $timezone = (string) config('app.display_timezone');
+        $timezone = $feed->timeZone();
         $first = CarbonImmutable::now($timezone)->startOfMonth();
         $last = $first->endOfMonth()->startOfDay();
         $days = [];
@@ -714,10 +720,10 @@ class EventController extends Controller
         return checkdate((int) $parts[2], (int) $parts[3], (int) $parts[1]) ? $value : '';
     }
 
-    /** Today's date (YYYY-MM-DD) in the display time zone. */
-    private function today(): string
+    /** Today's date (YYYY-MM-DD) where the viewer is. */
+    private function today(User $viewer): string
     {
-        return CarbonImmutable::now((string) config('app.display_timezone'))->toDateString();
+        return CarbonImmutable::now($viewer->displayTimeZone())->toDateString();
     }
 
     /**
@@ -746,6 +752,22 @@ class EventController extends Controller
             + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($lngDelta / 2) ** 2;
 
         return $earthRadiusKm * 2 * atan2(sqrt($a), sqrt(1 - $a));
+    }
+
+    /**
+     * The event's own time zone: the one the form worked in (it types
+     * times as local to the place), else the one at the pin it sent.
+     */
+    private function timeZoneFrom(StoreEventRequest|UpdateEventRequest $request): ?string
+    {
+        $latitude = $request->validated('latitude');
+        $longitude = $request->validated('longitude');
+
+        return $request->validated('timezone') ?? TimeZones::forPlace(
+            $latitude === null ? null : (float) $latitude,
+            $longitude === null ? null : (float) $longitude,
+            $request->validated('country_code'),
+        );
     }
 
     /**

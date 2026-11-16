@@ -3,14 +3,22 @@ import { Clock } from '@lucide/vue';
 import { computed } from 'vue';
 import { useDates } from '@/lib/dates';
 
-/** The cover of an event without an image: its date, set large. */
+/**
+ * The cover of an event without an image: its date, set large. With the
+ * event's `timeZone`, its local time follows the viewer's when the two
+ * clocks differ.
+ */
 const props = defineProps<{
     date: string;
     end?: string | null;
+    timeZone?: string | null;
 }>();
 
-const { tile, monthYear, time, longDate } = useDates();
+const { tile, monthYear, time, longDate, elsewhere } = useDates();
 const parts = computed(() => tile(props.date));
+const there = computed(() =>
+    elsewhere(props.date, props.end ?? null, props.timeZone, 'full'),
+);
 </script>
 
 <template>
@@ -36,7 +44,7 @@ const parts = computed(() => tile(props.date));
             {{ monthYear(props.date) }}
         </p>
         <div
-            class="mt-4 flex items-center gap-2 border-t border-line pt-3.5 font-semibold"
+            class="mt-4 flex flex-wrap items-center gap-x-2 border-t border-line pt-3.5 font-semibold"
         >
             <Clock
                 :size="16"
@@ -50,6 +58,9 @@ const parts = computed(() => tile(props.date));
                     >–{{ time(props.end) }}</template
                 ></span
             >
+            <span v-if="there" class="text-meta font-normal text-ink-muted">{{
+                there
+            }}</span>
         </div>
     </div>
 </template>

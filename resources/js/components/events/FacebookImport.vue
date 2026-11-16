@@ -12,6 +12,7 @@ import {
 } from '@/composables/useNominatimSearch';
 import { requestJson, RequestError } from '@/realtime';
 import { facebook as importFromFacebook } from '@/routes/events/import';
+import { lookup as lookUpTimeZone } from '@/routes/time-zone';
 
 /** What the server read from the Facebook event. */
 interface FacebookEventDetails {
@@ -39,6 +40,8 @@ export interface ImportedEvent {
     city: string | null;
     country: string | null;
     country_code: string | null;
+    /** The time zone at the pin, when there is one. */
+    timezone: string | null;
 }
 
 /**
@@ -85,6 +88,28 @@ function blobFromDataUrl(dataUrl: string): Blob | null {
     }
 }
 
+async function timeZoneAt(
+    latitude: number,
+    longitude: number,
+    countryCode: string | null,
+): Promise<string | null> {
+    try {
+        const found = await requestJson<{ timezone: string | null }>(
+            lookUpTimeZone({
+                query: {
+                    latitude,
+                    longitude,
+                    ...(countryCode ? { country_code: countryCode } : {}),
+                },
+            }),
+        );
+
+        return found?.timezone ?? null;
+    } catch {
+        return null;
+    }
+}
+
 function messageFor(reason: unknown): string {
     const status = reason instanceof RequestError ? reason.status : 0;
 
@@ -126,6 +151,7 @@ async function fetchDetails(): Promise<void> {
             ...fields,
             country: null,
             country_code: null,
+            timezone: null,
         };
 
         // The pin's city and country as the map names them elsewhere in
@@ -142,6 +168,13 @@ async function fetchDetails(): Promise<void> {
                 event.country = countryFromAddress(found.address);
                 event.country_code = countryCodeFromAddress(found.address);
             }
+
+            // The form shows the times as local to the place.
+            event.timezone = await timeZoneAt(
+                event.latitude,
+                event.longitude,
+                event.country_code,
+            );
         }
 
         emit('imported', event, image ? blobFromDataUrl(image) : null);

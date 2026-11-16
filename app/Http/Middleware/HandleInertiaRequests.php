@@ -52,7 +52,8 @@ class HandleInertiaRequests extends Middleware
             // (a filter change, loading more) doesn't run their queries.
             'badges' => fn () => $user === null ? BadgeCounts::none() : BadgeCounts::for($user),
             'locale' => app()->getLocale(),
-            'timezone' => config('app.display_timezone'),
+            // The viewer's own time zone, as their device reported it.
+            'timezone' => $user?->displayTimeZone() ?? config('app.display_timezone'),
             'theme' => self::themeFor($user),
             'availableLocales' => config('app.supported_locales'),
             'vapidPublicKey' => config('webpush.vapid.public_key'),

@@ -133,6 +133,7 @@ class ActivityFeed
                 'event' => $event === null ? null : [
                     'starts_at' => $event->starts_at->toIso8601String(),
                     'ends_at' => $event->ends_at?->toIso8601String(),
+                    'timezone' => $event->localTimeZone(),
                     'cover' => $event->images->first()?->presentation(),
                     'host_name' => $event->hostName(),
                     'is_host' => $event->isHostedBy($user),

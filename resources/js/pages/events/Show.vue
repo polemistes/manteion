@@ -83,6 +83,7 @@ const props = defineProps<{
         description: string;
         starts_at: string;
         ends_at: string | null;
+        timezone: string;
         visibility: 'private' | 'public' | 'searchable';
         allow_invitee_invites: boolean;
         allow_invitee_comments: boolean;
@@ -127,7 +128,11 @@ const shape = computed<'photo' | 'poster' | 'none'>(
 );
 
 const isPast = computed(() =>
-    dates.isOver(props.event.starts_at, props.event.ends_at),
+    dates.isOver(
+        props.event.starts_at,
+        props.event.ends_at,
+        props.event.timezone,
+    ),
 );
 
 const canAnswer = computed(
@@ -215,6 +220,16 @@ const whenLine = computed(() => {
         ? `${startText}–${dates.time(end)}`
         : `${startText} – ${dates.shortDate(end)}, ${dates.time(end)}`;
 });
+
+// The time where it happens, when that is another clock than the viewer's.
+const whenThere = computed(() =>
+    dates.elsewhere(
+        props.event.starts_at,
+        props.event.ends_at,
+        props.event.timezone,
+        'full',
+    ),
+);
 
 const nights = computed(() => {
     if (!props.event.ends_at) {
@@ -587,6 +602,12 @@ const showMenu = computed(
                         </span>
                         <div class="min-w-0">
                             <p class="font-semibold text-ink">{{ whenLine }}</p>
+                            <p
+                                v-if="whenThere"
+                                class="text-meta text-ink-muted"
+                            >
+                                {{ whenThere }}
+                            </p>
                             <p class="text-meta text-ink-muted">
                                 <template v-if="nights > 0"
                                     >{{ t('events.show.nights', nights) }} ·
@@ -821,6 +842,7 @@ const showMenu = computed(
                         v-else
                         :date="props.event.starts_at"
                         :end="props.event.ends_at"
+                        :time-zone="props.event.timezone"
                     />
                     <div class="rounded-lg border border-line bg-surface p-4">
                         <GuestFaces

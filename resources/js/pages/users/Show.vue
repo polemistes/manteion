@@ -76,6 +76,7 @@ const props = defineProps<{
         name: string;
         starts_at: string;
         ends_at: string | null;
+        timezone: string;
         place: string | null;
         city: string | null;
         cover: EventCover | null;
@@ -402,6 +403,11 @@ function eventStatus(status: AttendanceStatus | null): string | null {
                                         dates.span(
                                             event.starts_at,
                                             event.ends_at,
+                                        ),
+                                        dates.elsewhere(
+                                            event.starts_at,
+                                            event.ends_at,
+                                            event.timezone,
                                         ),
                                         event.place ?? event.city,
                                     ]

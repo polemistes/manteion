@@ -7,8 +7,10 @@ import { utcToZoned, zonedToUtc } from '@/lib/dates';
 
 /**
  * A date and a time, as the phone's own pickers, read as wall-clock time
- * in the app's display time zone and submitted as a UTC instant in a
- * hidden input named `name`. `change` reports the instant ('' for none).
+ * in `timeZone` (the event's own; the viewer's when not given) and
+ * submitted as a UTC instant in a hidden input named `name`. `change`
+ * reports the instant ('' for none). When the time zone changes (the pin
+ * moved to another one), the clock time typed stays and the instant moves.
  */
 const props = withDefaults(
     defineProps<{
@@ -16,6 +18,7 @@ const props = withDefaults(
         label: string;
         defaultValue?: string | null;
         defaultTime?: string;
+        timeZone?: string | null;
         required?: boolean;
         optional?: boolean;
         error?: string;
@@ -23,6 +26,7 @@ const props = withDefaults(
     {
         defaultValue: null,
         defaultTime: '18:00',
+        timeZone: null,
         required: false,
         optional: false,
         error: undefined,
@@ -36,7 +40,10 @@ const page = usePage();
 const id = useId();
 
 const timeZone = computed(
-    () => (page.props.timezone as string | undefined) || 'Europe/Oslo',
+    () =>
+        props.timeZone ||
+        (page.props.timezone as string | undefined) ||
+        'Europe/Oslo',
 );
 
 const initial = props.defaultValue

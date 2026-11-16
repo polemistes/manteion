@@ -46,6 +46,14 @@ const endLabel = computed(() =>
 
 const meta = computed(() =>
     [
+        // The time where it happens, when that is another clock.
+        part.value === 'middle'
+            ? null
+            : dates.elsewhere(
+                  props.event.starts_at,
+                  part.value === 'single' ? props.event.ends_at : null,
+                  props.event.timezone,
+              ),
         props.event.place ?? props.event.city,
         props.event.is_host
             ? null

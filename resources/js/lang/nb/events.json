@@ -216,6 +216,8 @@
         "starts": "Starter",
         "ends": "Slutter",
         "time": "klokkeslett",
+        "localTime": "Lokal tid i {place}.",
+        "localTimeStarts": "Lokal tid i {place}. For deg starter det {when}.",
         "place": "Sted",
         "placeName": "Navn på stedet",
         "placeNamePlaceholder": "For eksempel Kafé Hærverk",

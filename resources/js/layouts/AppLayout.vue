@@ -16,6 +16,7 @@ import CountBadge from '@/components/ui/CountBadge.vue';
 import Mark from '@/components/ui/Mark.vue';
 import Toaster from '@/components/ui/Toaster.vue';
 import { startClock } from '@/lib/dates';
+import { reportTimeZone } from '@/lib/timeZone';
 import { showMessageBanner } from '@/lib/toast';
 import {
     onIncomingMessage,
@@ -32,8 +33,12 @@ const { items, tabItems } = useNavigation();
 
 watch(() => page.url, rememberTab, { immediate: true });
 
-// Relative times follow the browser's clock from here on (see lib/dates).
-onMounted(startClock);
+// Relative times follow the browser's clock from here on (see lib/dates),
+// and every time the device's own time zone.
+onMounted(() => {
+    startClock();
+    void reportTimeZone(page);
+});
 
 const user = computed(() => page.props.auth.user);
 

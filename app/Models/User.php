@@ -50,6 +50,7 @@ use NotificationChannels\WebPush\PushSubscription as WebPushSubscription;
  * @property string|null $avatar_path
  * @property string|null $bio
  * @property string|null $locale
+ * @property string|null $timezone
  * @property ThemeMode $theme_mode
  * @property ThemeStyle $theme_style
  * @property Carbon|null $suspended_at
@@ -60,7 +61,7 @@ use NotificationChannels\WebPush\PushSubscription as WebPushSubscription;
  * @property Carbon|null $updated_at
  * @property-read string|null $avatar_url
  */
-#[Fillable(['name', 'username', 'email', 'password', 'role', 'allow_public_follow', 'show_friends_list', 'appear_in_friends_lists', 'searchable', 'share_typing', 'share_read_receipts', 'notification_settings', 'avatar_path', 'bio', 'locale', 'theme_mode', 'theme_style', 'suspended_at', 'suspended_reason', 'suspended_by'])]
+#[Fillable(['name', 'username', 'email', 'password', 'role', 'allow_public_follow', 'show_friends_list', 'appear_in_friends_lists', 'searchable', 'share_typing', 'share_read_receipts', 'notification_settings', 'avatar_path', 'bio', 'locale', 'timezone', 'theme_mode', 'theme_style', 'suspended_at', 'suspended_reason', 'suspended_by'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -124,6 +125,15 @@ class User extends Authenticatable
     public function isAdministrator(): bool
     {
         return $this->role === UserRole::Administrator;
+    }
+
+    /**
+     * The time zone the person reads times in: their device's, once it
+     * has reported one (TimeZoneController), else the app's.
+     */
+    public function displayTimeZone(): string
+    {
+        return $this->timezone ?? (string) config('app.display_timezone');
     }
 
     public function isStaff(): bool

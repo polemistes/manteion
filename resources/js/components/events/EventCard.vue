@@ -12,6 +12,7 @@ import { useDates } from '@/lib/dates';
 import { usePlaces } from '@/lib/places';
 import { show as eventsShow } from '@/routes/events';
 import AttendanceVisibilityDialog from './AttendanceVisibilityDialog.vue';
+import LocalTime from './LocalTime.vue';
 import RsvpControl from './RsvpControl.vue';
 import RsvpStatusPill from './RsvpStatusPill.vue';
 import { useRsvp } from './useRsvp';
@@ -42,7 +43,11 @@ const host = computed(() => props.event.organizer ?? props.event.owner);
 const href = computed(() => eventsShow(props.event.id).url);
 
 const isPast = computed(() =>
-    dates.isOver(props.event.starts_at, props.event.ends_at),
+    dates.isOver(
+        props.event.starts_at,
+        props.event.ends_at,
+        props.event.timezone,
+    ),
 );
 
 const rsvp = useRsvp({
@@ -178,10 +183,15 @@ const layout = computed(
                 "
             >
                 <p
-                    class="text-meta font-semibold"
+                    class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-meta font-semibold"
                     :class="isToday ? 'text-accent-ink' : 'text-ink-muted'"
                 >
-                    {{ when }}
+                    <span>{{ when }}</span>
+                    <LocalTime
+                        :starts-at="props.event.starts_at"
+                        :ends-at="props.event.ends_at"
+                        :time-zone="props.event.timezone"
+                    />
                 </p>
                 <h3
                     class="mt-1 mb-2 line-clamp-3 font-display text-title-3 text-pretty text-ink"

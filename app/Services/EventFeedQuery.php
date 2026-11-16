@@ -25,6 +25,14 @@ class EventFeedQuery
     public function __construct(private User $viewer) {}
 
     /**
+     * The viewer's time zone: "today" and every day filter are days there.
+     */
+    public function timeZone(): string
+    {
+        return $this->viewer->displayTimeZone();
+    }
+
+    /**
      * Every event the viewer may see in their list: their own, those they
      * have an attendee row for (invited, or responded to), and public ones
      * from people they follow — minus followed contacts they muted fully,
@@ -129,7 +137,7 @@ class EventFeedQuery
 
     /**
      * Narrows to events happening on any day from $from to $until (YYYY-MM-DD
-     * in the display time zone, either left open with null). An event counts
+     * in the viewer's time zone, either left open with null). An event counts
      * on every day it runs, so a weekend away that started on Friday still
      * shows on Saturday.
      *
@@ -138,7 +146,7 @@ class EventFeedQuery
      */
     public function happeningBetween(Builder $query, ?string $from, ?string $until): Builder
     {
-        $timezone = (string) config('app.display_timezone');
+        $timezone = $this->timeZone();
 
         if ($from !== null) {
             $start = CarbonImmutable::parse($from, $timezone)->startOfDay()->utc();

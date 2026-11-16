@@ -50,7 +50,7 @@ class UserProfileController extends Controller
 
         // What they have coming up that the viewer may see.
         $feed = new EventFeedQuery($viewer);
-        $today = CarbonImmutable::now((string) config('app.display_timezone'))->toDateString();
+        $today = CarbonImmutable::now($viewer->displayTimeZone())->toDateString();
         $events = $feed->happeningBetween($feed->ofOwner($user), $today, null)
             ->orderBy('starts_at')
             ->limit(self::UPCOMING_EVENTS)
@@ -90,6 +90,7 @@ class UserProfileController extends Controller
                 'name' => $event->name,
                 'starts_at' => $event->starts_at->toIso8601String(),
                 'ends_at' => $event->ends_at?->toIso8601String(),
+                'timezone' => $event->localTimeZone(),
                 'place' => $event->place,
                 'city' => $event->city,
                 'cover' => $event->images->first()?->presentation(),

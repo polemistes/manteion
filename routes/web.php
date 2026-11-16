@@ -34,6 +34,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\ReactionController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\TimeZoneController;
 use App\Http\Controllers\UserProfileController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -89,6 +90,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('contact-groups', ContactGroupController::class)->only(['store', 'update', 'destroy']);
     Route::post('/contact-groups/{contact_group}/members', [ContactGroupMemberController::class, 'store'])->name('contact-groups.members.store');
     Route::delete('/contact-groups/{contact_group}/members/{member}', [ContactGroupMemberController::class, 'destroy'])->name('contact-groups.members.destroy');
+
+    Route::put('/time-zone', [TimeZoneController::class, 'update'])->name('time-zone.update');
+    Route::get('/time-zone/lookup', [TimeZoneController::class, 'lookup'])->middleware('throttle:120,1')->name('time-zone.lookup');
 
     Route::get('/events', [EventController::class, 'index'])->name('events.index');
     Route::get('/events/search', [EventController::class, 'search'])->name('events.search');

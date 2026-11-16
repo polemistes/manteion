@@ -3,5 +3,6 @@
     "tomorrow": "Tomorrow",
     "yesterday": "Yesterday",
     "justNow": "just now",
-    "week": "Week {week}"
+    "week": "Week {week}",
+    "localTime": "{time} local time"
 }

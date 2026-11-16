@@ -5,7 +5,7 @@ export const EVENT_FORM_ID = 'event-form';
 
 <script setup lang="ts">
 import { Form } from '@inertiajs/vue3';
-import { Earth, Lock, UserPlus } from '@lucide/vue';
+import { Clock, Earth, Lock, UserPlus } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import CategoryPicker from '@/components/CategoryPicker.vue';
@@ -20,7 +20,10 @@ import SwitchRow from '@/components/ui/SwitchRow.vue';
 import TextArea from '@/components/ui/TextArea.vue';
 import TextField from '@/components/ui/TextField.vue';
 import type { CategoryOption, EventCover, OrganizerSummary } from '@/events';
+import { cityOfTimeZone, sameClock, useDates } from '@/lib/dates';
 import { usePlaces } from '@/lib/places';
+import { requestJson } from '@/realtime';
+import { lookup as lookUpTimeZone } from '@/routes/time-zone';
 import DateTimeInputs from './DateTimeInputs.vue';
 import EventPreviewCard from './EventPreviewCard.vue';
 
@@ -35,6 +38,8 @@ export interface EventFormValues {
     description: string;
     starts_at: string | null;
     ends_at: string | null;
+    /** The time zone of the place; the viewer's own when left out. */
+    timezone?: string | null;
     visibility: 'private' | 'public';
     organizer_id?: number | null;
     is_searchable?: boolean;
@@ -50,6 +55,10 @@ export interface EventFormValues {
  * it, what guests may do. On phones the submit button sits in a bar
  * pinned to the bottom; from xl a preview of the event's card sits beside
  * the form. `processing` is true while it is being sent.
+ *
+ * The times typed are local to the place: the form works in the time zone
+ * at the pin (asked of the server when the pin moves), or in the viewer's
+ * own while there is no pin, and says so when the two clocks differ.
  */
 const props = withDefaults(
     defineProps<{
@@ -77,6 +86,7 @@ const processing = defineModel<boolean>('processing', { default: false });
 
 const { t } = useI18n();
 const { cityAndCountry } = usePlaces();
+const dates = useDates();
 
 // Text fields keep their own state (see .ai/rules/js.md).
 const name = ref(props.values.name);
@@ -117,6 +127,61 @@ const location = ref<LocationValue>({
     city: props.values.city,
     country: props.values.country,
     country_code: props.values.country_code,
+});
+
+// The time zone the times are typed in, sent as `timezone`.
+const timeZone = ref(props.values.timezone || dates.timeZone.value);
+let timeZoneLookups = 0;
+
+async function onLocationChange(next: LocationValue): Promise<void> {
+    location.value = next;
+
+    const lookup = ++timeZoneLookups;
+
+    if (next.latitude === null || next.longitude === null) {
+        timeZone.value = dates.timeZone.value;
+
+        return;
+    }
+
+    try {
+        const found = await requestJson<{ timezone: string | null }>(
+            lookUpTimeZone({
+                query: {
+                    latitude: next.latitude,
+                    longitude: next.longitude,
+                    ...(next.country_code
+                        ? { country_code: next.country_code }
+                        : {}),
+                },
+            }),
+        );
+
+        // Only the answer for where the pin is now counts.
+        if (lookup === timeZoneLookups && found?.timezone) {
+            timeZone.value = found.timezone;
+        }
+    } catch {
+        // No answer: the times stay in the zone they were in.
+    }
+}
+
+// Said under the times when the place keeps another clock than the viewer.
+const localTimeNote = computed(() => {
+    const moment = startsAt.value || new Date();
+
+    if (sameClock(moment, timeZone.value, dates.timeZone.value)) {
+        return null;
+    }
+
+    const place = location.value.city || cityOfTimeZone(timeZone.value);
+
+    return startsAt.value
+        ? t('events.form.localTimeStarts', {
+              place,
+              when: `${dates.shortDate(startsAt.value)}, ${dates.time(startsAt.value)}`,
+          })
+        : t('events.form.localTime', { place });
 });
 
 const previewPlace = computed(
@@ -230,6 +295,7 @@ const visibilityOptions = [
                     name="starts_at"
                     :label="t('events.form.starts')"
                     :default-value="props.values.starts_at"
+                    :time-zone="timeZone"
                     :error="errors.starts_at"
                     required
                     @change="startsAt = $event"
@@ -238,11 +304,26 @@ const visibilityOptions = [
                     name="ends_at"
                     :label="t('events.form.ends')"
                     :default-value="props.values.ends_at"
+                    :time-zone="timeZone"
                     :error="errors.ends_at"
                     default-time="22:00"
                     optional
                     @change="endsAt = $event"
                 />
+                <input type="hidden" name="timezone" :value="timeZone" />
+                <p
+                    v-if="localTimeNote"
+                    class="-mt-2 flex items-start gap-1.5 text-meta text-ink-muted"
+                    role="status"
+                >
+                    <Clock
+                        :size="16"
+                        :stroke-width="2"
+                        class="mt-0.5 shrink-0"
+                        aria-hidden="true"
+                    />
+                    {{ localTimeNote }}
+                </p>
             </div>
 
             <section class="flex flex-col gap-3">
@@ -263,7 +344,7 @@ const visibilityOptions = [
                         country: props.values.country,
                         country_code: props.values.country_code,
                     }"
-                    @change="location = $event"
+                    @change="onLocationChange"
                 />
             </section>
 
@@ -365,6 +446,7 @@ const visibilityOptions = [
                 :starts-at="startsAt || null"
                 :ends-at="endsAt || null"
                 :place="previewPlace"
+                :time-zone="timeZone"
                 :cover="cover.url ? { url: cover.url, fit: cover.fit } : null"
                 :visibility="visibility === 'public' ? 'public' : 'private'"
                 :is-new="props.isNew"

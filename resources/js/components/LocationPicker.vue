@@ -114,6 +114,11 @@ function placeMarker(lat: number, lng: number): void {
 async function applyCoordinates(lat: number, lng: number): Promise<void> {
     latitude.value = lat;
     longitude.value = lng;
+    // The old pin's place is not this one's: without an answer below, the
+    // pin has no city rather than the wrong one.
+    city.value = null;
+    country.value = null;
+    countryCode.value = null;
     placeMarker(lat, lng);
 
     const result = await reverseGeocode(lat, lng, locale.value);

@@ -58,10 +58,19 @@ function role(event: EventSummary): string {
                         <span class="line-clamp-2 text-label font-semibold">{{
                             event.name
                         }}</span>
-                        <span class="block truncate text-meta text-ink-muted"
-                            >{{ dates.when(event.starts_at) }} ·
-                            {{ role(event) }}</span
-                        >
+                        <span class="block truncate text-meta text-ink-muted">{{
+                            [
+                                dates.when(event.starts_at),
+                                role(event),
+                                dates.elsewhere(
+                                    event.starts_at,
+                                    null,
+                                    event.timezone,
+                                ),
+                            ]
+                                .filter(Boolean)
+                                .join(' · ')
+                        }}</span>
                     </span>
                     <ChevronRight
                         :size="18"

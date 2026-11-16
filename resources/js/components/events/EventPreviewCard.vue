@@ -7,6 +7,7 @@ import Avatar from '@/components/ui/Avatar.vue';
 import Tag from '@/components/ui/Tag.vue';
 import type { OrganizerSummary } from '@/events';
 import { useDates } from '@/lib/dates';
+import LocalTime from './LocalTime.vue';
 
 /**
  * The event as it will show up in guests' feeds, drawn from the form while
@@ -17,6 +18,8 @@ const props = defineProps<{
     startsAt: string | null;
     endsAt: string | null;
     place: string | null;
+    /** The time zone of the place, for the local time. */
+    timeZone?: string | null;
     cover: { url: string; fit: 'cover' | 'contain' } | null;
     visibility: 'private' | 'public';
     isNew: boolean;
@@ -59,7 +62,16 @@ const when = computed(() =>
         </div>
 
         <div class="px-4 pt-3.5">
-            <p class="text-meta font-semibold text-ink-muted">{{ when }}</p>
+            <p
+                class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-meta font-semibold text-ink-muted"
+            >
+                <span>{{ when }}</span>
+                <LocalTime
+                    :starts-at="props.startsAt"
+                    :ends-at="props.endsAt"
+                    :time-zone="props.timeZone"
+                />
+            </p>
             <h3
                 class="mt-1 mb-2 line-clamp-3 font-display text-title-3 text-pretty [overflow-wrap:anywhere]"
                 :class="props.name.trim() ? 'text-ink' : 'text-ink-subtle'"

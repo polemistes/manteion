@@ -141,7 +141,16 @@ const eventWhen = computed(() =>
     event.value &&
     (props.item.type === 'InvitedToEvent' ||
         props.item.type === 'FollowedUserPublishedEvent')
-        ? dates.span(event.value.starts_at, event.value.ends_at)
+        ? [
+              dates.span(event.value.starts_at, event.value.ends_at),
+              dates.elsewhere(
+                  event.value.starts_at,
+                  event.value.ends_at,
+                  event.value.timezone,
+              ),
+          ]
+              .filter(Boolean)
+              .join(' · ')
         : null,
 );
 

@@ -39,6 +39,7 @@ class UpdateEventRequest extends FormRequest
             'description' => ['required', 'string', 'max:5000'],
             'starts_at' => ['required', 'date'],
             'ends_at' => ['nullable', 'date', 'after:starts_at'],
+            'timezone' => ['nullable', 'string', 'max:64', 'timezone:all_with_bc'],
             'visibility' => ['required', Rule::in([EventVisibility::Private->value, EventVisibility::Public->value])],
             'allow_invitee_invites' => ['required', 'boolean'],
             'allow_invitee_comments' => ['required', 'boolean'],

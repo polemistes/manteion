@@ -33,6 +33,7 @@ const blank: EventFormValues = {
     description: '',
     starts_at: null,
     ends_at: null,
+    timezone: null,
     visibility: 'private',
     allow_invitee_invites: false,
     allow_invitee_comments: true,
