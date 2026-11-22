@@ -26,6 +26,12 @@ jobs:
           tools: composer:v2
           coverage: none
 
+      # Ubuntu keeps the older names of time zones (Asia/Calcutta, which
+      # browsers still report) in a package of their own; PHP here reads
+      # the system's zones, and the app accepts those names.
+      - name: Install the older time zone names
+        run: sudo apt-get update && sudo apt-get install -y tzdata-legacy
+
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
