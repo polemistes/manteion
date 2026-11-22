@@ -59,7 +59,7 @@ return [
     'organizer' => [
         'friends_only' => 'You can only invite your friends to speak for an organizer.',
         'already_in' => 'They already speak for this organizer, or have been invited.',
-        'hand_over_first' => 'Hand the main spokesperson role to someone else first, or delete the organizer.',
+        'hand_over_first' => 'Choose who takes over as main spokesperson, or delete the organizer.',
         'hand_over_to_member' => 'Only a spokesperson who has accepted can take over.',
     ],
 

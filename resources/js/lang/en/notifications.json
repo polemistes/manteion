@@ -28,7 +28,9 @@
         "NewFollowerRequest": "{name} asked to follow you",
         "FollowRequestApproved": "{name} approved your follow request",
         "NewLeafletResponse": "{name} responded to your leaflet {subject}",
-        "SpokespersonInvited": "{name} invited you to speak for {subject}"
+        "SpokespersonInvited": "{name} invited you to speak for {subject}",
+        "OrganizerHandedOver": "{name} stepped down from {subject}",
+        "OrganizerHandedOverUnnamed": "A spokesperson has left {subject}"
     },
     "someone": "Someone",
     "accept": "Accept",
@@ -67,5 +69,7 @@
     },
     "spokespersonTerms": "As a spokesperson, what you do for {organizer} is shown with your name to everyone who can see it.",
     "savedSpokesperson": "You now speak for {organizer}.",
-    "spokespersonNow": "You speak for them now"
+    "spokespersonNow": "You speak for them now",
+    "handoverMain": "You are now its main spokesperson.",
+    "handoverYours": "Now in your name: {what}."
 }

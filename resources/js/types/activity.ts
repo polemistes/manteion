@@ -37,7 +37,8 @@ export type ActivityType =
     | 'NewFollower'
     | 'FollowRequestApproved'
     | 'NewLeafletResponse'
-    | 'SpokespersonInvited';
+    | 'SpokespersonInvited'
+    | 'OrganizerHandedOver';
 
 export type ActivityActor = {
     id: number;
@@ -93,6 +94,13 @@ export type ActivityItem = {
     excerpt: string | null;
     /** NewFollower only: true for a follow request, false for a follow. */
     pending: boolean | null;
+    /** OrganizerHandedOver only: what the user was given when a spokesperson left. */
+    handover: {
+        made_main: boolean;
+        events: number;
+        leaflets: number;
+        templates: number;
+    } | null;
     url: string;
     /** Whether it was unread when the page loaded (or arrived live). */
     unread: boolean;

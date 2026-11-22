@@ -66,10 +66,41 @@ const request = computed(() =>
         : null,
 );
 
-const sentenceKey = computed(
-    () =>
-        `notifications.sentence.${isFollowRequest.value ? 'NewFollowerRequest' : props.item.type}`,
-);
+const sentenceKey = computed(() => {
+    if (isFollowRequest.value) {
+        return 'notifications.sentence.NewFollowerRequest';
+    }
+
+    // A spokesperson whose account is gone is not named.
+    if (props.item.type === 'OrganizerHandedOver' && !props.item.actor) {
+        return 'notifications.sentence.OrganizerHandedOverUnnamed';
+    }
+
+    return `notifications.sentence.${props.item.type}`;
+});
+
+/** What a leaving spokesperson handed the user, spelled out. */
+const handover = computed(() => {
+    const given = props.item.handover;
+
+    if (!given) {
+        return null;
+    }
+
+    const what = (['events', 'leaflets', 'templates'] as const)
+        .filter((kind) => given[kind] > 0)
+        .map((kind) => t(`organizers.departure.${kind}`, given[kind]))
+        .join(', ');
+
+    return (
+        [
+            given.made_main ? t('notifications.handoverMain') : null,
+            what ? t('notifications.handoverYours', { what }) : null,
+        ]
+            .filter(Boolean)
+            .join(' ') || null
+    );
+});
 
 const icon = computed<Component>(() => {
     switch (props.item.type) {
@@ -90,6 +121,7 @@ const icon = computed<Component>(() => {
         case 'NewLeafletResponse':
             return Newspaper;
         case 'SpokespersonInvited':
+        case 'OrganizerHandedOver':
             return Building2;
         default:
             return Check;
@@ -298,6 +330,7 @@ const hasExtra = computed(
         canAnswer.value ||
         eventGone.value ||
         Boolean(props.item.excerpt) ||
+        handover.value !== null ||
         request.value !== null ||
         showFollowBack.value ||
         followRequested.value,
@@ -404,6 +437,10 @@ const hasExtra = computed(
             >
                 “{{ props.item.excerpt }}”
             </blockquote>
+
+            <p v-if="handover" class="text-meta text-ink-muted">
+                {{ handover }}
+            </p>
 
             <p
                 v-if="isSpokespersonInvitation && request?.status === 'pending'"

@@ -52,7 +52,9 @@
         "delete": "Slett konto…",
         "deleteTitle": "Slette kontoen din?",
         "deleteConfirm": "Dette kan ikke angres. Skriv inn passordet ditt for å bekrefte.",
-        "deleteForGood": "Slett kontoen min"
+        "deleteForGood": "Slett kontoen min",
+        "organizersTitle": "Arrangører du taler for",
+        "organizersHint": "Bestem hva som skjer med det du har laget for hver av dem."
     },
     "privacy": {
         "lede": "Hvem som kan følge deg, finne deg og se hvem du kjenner, og hva samtalene viser om deg.",

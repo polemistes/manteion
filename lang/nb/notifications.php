@@ -21,6 +21,12 @@ return [
             'title' => 'Ny kommentar på «:event»',
             'body' => ':name: :excerpt',
         ],
+        'organizer_handed_over' => [
+            'title' => 'Overlevert: :organizer',
+            'body' => ':name har trukket seg og overlevert arbeidet sitt for :organizer',
+            'body_unnamed' => 'Det en tidligere talsperson laget for :organizer, står nå i ditt navn',
+            'made_main' => 'Du er nå hovedtalsperson for :organizer',
+        ],
         'spokesperson_invited' => [
             'title' => 'Invitasjon til å tale for en arrangør',
             'body' => ':name inviterte deg til å tale for :organizer',

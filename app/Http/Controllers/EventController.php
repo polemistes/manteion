@@ -21,7 +21,6 @@ use App\Models\EventComment;
 use App\Models\EventImage;
 use App\Models\EventTemplate;
 use App\Models\Organizer;
-use App\Models\Picture;
 use App\Models\Reaction;
 use App\Models\Tag;
 use App\Models\User;
@@ -453,24 +452,7 @@ class EventController extends Controller
             return redirect()->route('events.index');
         }
 
-        foreach ($event->images as $image) {
-            $image->deleteFile();
-        }
-
-        // Its comments go with it in the database; their pictures' files
-        // would stay behind.
-        Picture::forgetFiles(Picture::query()->whereIn('event_comment_id', $event->comments()->select('id')));
-
-        $event->reports()->where('status', ReportStatus::Pending)->update([
-            'status' => ReportStatus::Resolved,
-            'resolved_by' => $request->user()->id,
-            'resolved_at' => now(),
-        ]);
-
-        $event->delete();
-
-        ActivityFeed::withdrawAbout('event', $event->id);
-        broadcast(new EventActivity($event->id, 'deleted'))->toOthers();
+        $event->deleteForGood($request->user());
 
         return redirect()->route('events.index');
     }

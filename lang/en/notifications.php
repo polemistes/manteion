@@ -21,6 +21,12 @@ return [
             'title' => 'New comment on “:event”',
             'body' => ':name: :excerpt',
         ],
+        'organizer_handed_over' => [
+            'title' => 'Handed over: :organizer',
+            'body' => ':name stepped down and handed over what they made for :organizer',
+            'body_unnamed' => 'What a former spokesperson made for :organizer is now in your name',
+            'made_main' => 'You are now the main spokesperson of :organizer',
+        ],
         'spokesperson_invited' => [
             'title' => 'Invitation to speak for an organizer',
             'body' => ':name invited you to speak for :organizer',

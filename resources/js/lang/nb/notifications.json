@@ -28,7 +28,9 @@
         "NewFollowerRequest": "{name} vil følge deg",
         "FollowRequestApproved": "{name} godkjente forespørselen din om å følge",
         "NewLeafletResponse": "{name} svarte på flyvebladet ditt {subject}",
-        "SpokespersonInvited": "{name} inviterte deg til å tale for {subject}"
+        "SpokespersonInvited": "{name} inviterte deg til å tale for {subject}",
+        "OrganizerHandedOver": "{name} har trukket seg fra {subject}",
+        "OrganizerHandedOverUnnamed": "En talsperson har forlatt {subject}"
     },
     "someone": "Noen",
     "accept": "Godta",
@@ -67,5 +69,7 @@
     },
     "spokespersonTerms": "Som talsperson vises det du gjør for {organizer}, med navnet ditt til alle som kan se det.",
     "savedSpokesperson": "Du taler nå for {organizer}.",
-    "spokespersonNow": "Du taler for dem nå"
+    "spokespersonNow": "Du taler for dem nå",
+    "handoverMain": "Du er nå hovedtalsperson.",
+    "handoverYours": "Står nå i ditt navn: {what}."
 }

@@ -9,6 +9,7 @@ use App\Models\OrganizerSpokesperson;
 use App\Models\User;
 use App\Notifications\SpokespersonInvited;
 use App\Services\ActivityFeed;
+use App\Services\OrganizerDepartures;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -90,11 +91,14 @@ class OrganizerSpokespersonController extends Controller
     }
 
     /**
-     * The main spokesperson removes someone; anyone but the main
-     * spokesperson leaves. The main spokesperson hands over first (or
-     * deletes the organizer if alone).
+     * The main spokesperson removes someone, or a spokesperson steps down.
+     * Someone stepping down chooses what becomes of what they made for the
+     * organizer: handed to the main spokesperson (`hand_over`, the default)
+     * or deleted. A main spokesperson stepping down names who takes over
+     * (`successor_id`), and that person receives it; alone, they delete the
+     * organizer instead. What a removed person made is always handed over.
      */
-    public function destroy(Request $request, Organizer $organizer, User $user): RedirectResponse
+    public function destroy(Request $request, Organizer $organizer, User $user, OrganizerDepartures $departures): RedirectResponse
     {
         $membership = $organizer->membershipOf($user);
         abort_if($membership === null, 404);
@@ -103,26 +107,30 @@ class OrganizerSpokespersonController extends Controller
         $leaving = $actor->is($user);
         abort_unless($leaving || $organizer->isMainSpokesperson($actor), 403);
 
+        $validated = $request->validate([
+            'hand_over' => ['sometimes', 'boolean'],
+            'successor_id' => ['sometimes', 'nullable', 'integer'],
+        ]);
+
+        $successor = null;
+
         if ($membership->role === SpokespersonRole::Main && ! $membership->isPending()) {
-            throw ValidationException::withMessages(['role' => __('messages.organizer.hand_over_first')]);
+            $successorId = $validated['successor_id'] ?? null;
+
+            if ($successorId === null || ! $departures->canSucceed($organizer, $user, (int) $successorId)) {
+                throw ValidationException::withMessages(['role' => __('messages.organizer.hand_over_first')]);
+            }
+
+            $successor = User::query()->find((int) $successorId);
         }
 
-        // The events, leaflets and templates they made for the organizer stay its own,
-        // in the main spokesperson's name.
-        $main = $organizer->mainSpokesperson();
-        if ($main !== null) {
-            $organizer->events()->where('user_id', $user->id)->update(['user_id' => $main->id]);
-            $organizer->leaflets()->where('user_id', $user->id)->update(['user_id' => $main->id]);
-            $organizer->eventTemplates()->where('user_id', $user->id)->update(['user_id' => $main->id]);
-        }
-
-        if ($membership->isPending()) {
-            ActivityFeed::withdraw($user, SpokespersonInvited::class, 'spokesperson_id', $membership->id);
-        }
-
-        $membership->delete();
-        $user->forgetOrganizerIds();
-        BadgesUpdated::dispatch($user->id);
+        $departures->leave(
+            $organizer,
+            $user,
+            handOver: ! $leaving || $request->boolean('hand_over', true),
+            successor: $successor,
+            tellReceiver: $leaving,
+        );
 
         return back();
     }

@@ -5,6 +5,13 @@ import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import FieldError from '@/components/FieldError.vue';
 import ImageCropper from '@/components/ImageCropper.vue';
+import OrganizerDepartureChoice, {
+    defaultDecision,
+} from '@/components/organizers/OrganizerDepartureChoice.vue';
+import type {
+    DepartureDecision,
+    OrganizerDeparture,
+} from '@/components/organizers/OrganizerDepartureChoice.vue';
 import PasswordField from '@/components/PasswordField.vue';
 import SettingsGroup from '@/components/settings/SettingsGroup.vue';
 import SettingsLayout from '@/components/settings/SettingsLayout.vue';
@@ -29,6 +36,8 @@ const props = defineProps<{
         bio: string | null;
         avatar_url: string | null;
     };
+    /** The organizers the user speaks for, each with what leaving it needs decided. */
+    organizers: OrganizerDeparture[];
 }>();
 
 const { t } = useI18n();
@@ -55,13 +64,29 @@ const deletePassword = ref('');
 const deleteError = ref<string | undefined>(undefined);
 const deleting = ref(false);
 
+// What becomes of what they made for each organizer they speak for, by
+// the organizer's id.
+const departures = ref<Record<number, DepartureDecision>>({});
+
+function openDelete(): void {
+    deleteError.value = undefined;
+    deletePassword.value = '';
+    departures.value = Object.fromEntries(
+        props.organizers.map((organizer) => [
+            organizer.id,
+            defaultDecision(organizer),
+        ]),
+    );
+    deleteOpen.value = true;
+}
+
 function deleteAccount(): void {
     deleting.value = true;
     router.delete(destroyAccount().url, {
-        data: { password: deletePassword.value },
+        data: { password: deletePassword.value, organizers: departures.value },
         preserveScroll: true,
         onError: (errors) => {
-            deleteError.value = errors.password;
+            deleteError.value = errors.password ?? errors.organizers;
         },
         onFinish: () => {
             deleting.value = false;
@@ -215,15 +240,7 @@ function deleteAccount(): void {
             <p class="text-body text-ink">
                 {{ t('settings.account.deleteBody') }}
             </p>
-            <Button
-                variant="danger"
-                class="mt-4"
-                @click="
-                    deleteError = undefined;
-                    deletePassword = '';
-                    deleteOpen = true;
-                "
-            >
+            <Button variant="danger" class="mt-4" @click="openDelete">
                 {{ t('settings.account.delete') }}
             </Button>
         </SettingsGroup>
@@ -233,6 +250,39 @@ function deleteAccount(): void {
             :title="t('settings.account.deleteTitle')"
             :description="t('settings.account.deleteConfirm')"
         >
+            <section
+                v-if="props.organizers.length"
+                class="mb-5 flex flex-col gap-4"
+            >
+                <div>
+                    <h3 class="text-label font-semibold text-ink">
+                        {{ t('settings.account.organizersTitle') }}
+                    </h3>
+                    <p class="mt-0.5 text-meta text-ink-muted">
+                        {{ t('settings.account.organizersHint') }}
+                    </p>
+                </div>
+                <div
+                    v-for="organizer in props.organizers"
+                    :key="organizer.id"
+                    class="flex flex-col gap-3 rounded-md bg-recess p-3.5"
+                >
+                    <h4 class="font-display text-title-3">
+                        {{ organizer.name }}
+                    </h4>
+                    <OrganizerDepartureChoice
+                        v-if="departures[organizer.id]"
+                        v-model="departures[organizer.id]"
+                        :organizer="organizer"
+                    >
+                        <template #alone>
+                            <p class="text-meta text-ink">
+                                {{ t('organizers.departure.aloneAccount') }}
+                            </p>
+                        </template>
+                    </OrganizerDepartureChoice>
+                </div>
+            </section>
             <form
                 id="delete-account"
                 class="flex flex-col gap-1.5"

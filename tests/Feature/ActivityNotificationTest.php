@@ -9,6 +9,7 @@ use App\Models\Follow;
 use App\Models\Friendship;
 use App\Models\Leaflet;
 use App\Models\LeafletResponse;
+use App\Models\Organizer;
 use App\Models\User;
 use App\Notifications\Channels\FcmChannel;
 use App\Notifications\FollowedUserPublishedEvent;
@@ -19,6 +20,7 @@ use App\Notifications\InvitedToEvent;
 use App\Notifications\NewEventComment;
 use App\Notifications\NewFollower;
 use App\Notifications\NewLeafletResponse;
+use App\Notifications\OrganizerHandedOver;
 use Illuminate\Contracts\Broadcasting\Broadcaster;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\AnonymousNotifiable;
@@ -151,6 +153,19 @@ function activityNotificationKinds(): array
                 'push' => ['title' => 'New reply to your leaflet', 'body' => 'Ada: Count me in!'],
             ];
         }],
+        'a hand-over from a spokesperson who stepped down' => [function () {
+            $leaver = User::factory()->create(['name' => 'Ada']);
+            $organizer = Organizer::factory()->create(['name' => 'Kafé Hærverk']);
+
+            return [
+                'notification' => new OrganizerHandedOver($organizer, $leaver, false, ['events' => 2, 'leaflets' => 0, 'templates' => 1]),
+                'category' => NotificationCategory::OrganizerInvites,
+                'actor' => $leaver,
+                'data' => ['actor_id' => $leaver->id, 'subject_type' => 'organizer', 'subject_id' => $organizer->id, 'subject_title' => 'Kafé Hærverk', 'url' => "/organizers/{$organizer->id}", 'excerpt' => null, 'pending' => null, 'made_main' => 0, 'handed_events' => 2, 'handed_leaflets' => 0, 'handed_templates' => 1],
+                'handover' => ['made_main' => false, 'events' => 2, 'leaflets' => 0, 'templates' => 1],
+                'push' => ['title' => 'Handed over: Kafé Hærverk', 'body' => 'Ada stepped down and handed over what they made for Kafé Hærverk'],
+            ];
+        }],
     ];
 }
 
@@ -255,6 +270,7 @@ test('each kind broadcasts the item as the activity page lists it, right away', 
         'subject_title' => $kind['data']['subject_title'],
         'excerpt' => $kind['data']['excerpt'],
         'pending' => $kind['data']['pending'],
+        'handover' => $kind['handover'] ?? null,
         'url' => $kind['data']['url'],
         'unread' => true,
         'created_at' => now()->toIso8601String(),

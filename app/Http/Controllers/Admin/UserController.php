@@ -11,6 +11,7 @@ use App\Http\Requests\UpdateUserRoleRequest;
 use App\Mail\AdminNotice;
 use App\Models\User;
 use App\Services\AdminAlerts;
+use App\Services\OrganizerDepartures;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -131,7 +132,7 @@ class UserController extends Controller
         return redirect()->route('admin.users.index');
     }
 
-    public function destroy(Request $request, User $user): RedirectResponse
+    public function destroy(Request $request, User $user, OrganizerDepartures $departures): RedirectResponse
     {
         abort_if($request->user()->is($user), 422);
 
@@ -139,6 +140,10 @@ class UserController extends Controller
             'password' => ['required', 'current_password'],
         ]);
 
+        // What they made for an organizer stays with it, in its main
+        // spokesperson's name (its longest-serving other one, if they
+        // were it); an organizer they alone spoke for goes with them.
+        $departures->leaveAll($user);
         $user->deleteUploadedFiles();
         $user->delete();
 

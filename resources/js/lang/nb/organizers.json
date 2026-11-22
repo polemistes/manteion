@@ -37,8 +37,6 @@
         "removeConfirm": "De kan ikke lenger handle for {organizer}. Det de laget for den, blir værende.",
         "leave": "Forlat",
         "leaveConfirmTitle": "Slutte å tale for {organizer}?",
-        "leaveConfirm": "Det du laget for den, blir hos arrangøren.",
-        "handOverFirst": "Gi rollen som hovedtalsperson til noen andre først.",
         "listed": "Vis meg på denne siden",
         "listedHint": "Av, handler du fortsatt for arrangøren; bare listen her utelater deg.",
         "invitation": "{name} inviterte deg til å tale for {organizer}.",
@@ -48,7 +46,11 @@
         "deleteConfirmTitle": "Slette {name}?",
         "deleteConfirm": "Arrangementene og flyvebladene går med. Dette kan ikke angres.",
         "deleted": "{name} er slettet.",
-        "you": "deg"
+        "you": "deg",
+        "leaveDescription": "Du slutter å handle på vegne av den. Bestem hva som skjer med det du har laget.",
+        "leaveDescriptionPlain": "Du slutter å handle på vegne av den.",
+        "leaveAlone": "Du er den eneste talspersonen. Inviter noen som kan ta over, eller slett arrangøren.",
+        "left": "Du taler ikke lenger for {organizer}"
     },
     "form": {
         "createTitle": "Ny arrangør",
@@ -65,5 +67,19 @@
         "saving": "Lagrer …",
         "cancel": "Avbryt",
         "youBecomeMain": "Du blir hovedtalsperson, og kan invitere venner til å tale for den også."
+    },
+    "departure": {
+        "events": "{n} arrangement | {n} arrangementer",
+        "leaflets": "{n} flyveblad | {n} flyveblad",
+        "templates": "{n} mal | {n} maler",
+        "successor": "Hvem tar over som hovedtalsperson",
+        "successorHint": "Hovedtalspersonen inviterer og fjerner talspersoner, og kan slette arrangøren.",
+        "whatYouMade": "Det du har laget for den",
+        "handOver": "Overlever det",
+        "handOverHint": "{name} tar over: {what}.",
+        "delete": "Slett det",
+        "deleteHint": "Slettes for godt: {what}.",
+        "nothingMade": "Du har ikke laget arrangementer, flyveblad eller maler for den.",
+        "aloneAccount": "Du er den eneste talspersonen, så den slettes sammen med kontoen din, med alle arrangementer og flyveblad. Inviter en annen talsperson først hvis den skal leve videre."
     }
 }

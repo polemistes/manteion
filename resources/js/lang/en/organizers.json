@@ -37,8 +37,6 @@
         "removeConfirm": "They can no longer act for {organizer}. What they made for it stays.",
         "leave": "Leave",
         "leaveConfirmTitle": "Stop speaking for {organizer}?",
-        "leaveConfirm": "What you made for it stays with the organizer.",
-        "handOverFirst": "Hand the main spokesperson role to someone else first.",
         "listed": "Show me on this page",
         "listedHint": "Off, you still act for the organizer; only the list here leaves you out.",
         "invitation": "{name} invited you to speak for {organizer}.",
@@ -48,7 +46,11 @@
         "deleteConfirmTitle": "Delete {name}?",
         "deleteConfirm": "Its events and leaflets go with it. This cannot be undone.",
         "deleted": "{name} is deleted.",
-        "you": "you"
+        "you": "you",
+        "leaveDescription": "You stop acting for it. Decide what becomes of what you made.",
+        "leaveDescriptionPlain": "You stop acting for it.",
+        "leaveAlone": "You are its only spokesperson. Invite someone who can take over, or delete the organizer.",
+        "left": "You no longer speak for {organizer}"
     },
     "form": {
         "createTitle": "New organizer",
@@ -65,5 +67,19 @@
         "saving": "Saving…",
         "cancel": "Cancel",
         "youBecomeMain": "You become its main spokesperson, and can invite friends to speak for it too."
+    },
+    "departure": {
+        "events": "{n} event | {n} events",
+        "leaflets": "{n} leaflet | {n} leaflets",
+        "templates": "{n} template | {n} templates",
+        "successor": "Who takes over as main spokesperson",
+        "successorHint": "The main spokesperson invites and removes spokespersons, and can delete the organizer.",
+        "whatYouMade": "What you made for it",
+        "handOver": "Hand it over",
+        "handOverHint": "{name} takes over: {what}.",
+        "delete": "Delete it",
+        "deleteHint": "Deleted for good: {what}.",
+        "nothingMade": "You have made no events, leaflets or templates for it.",
+        "aloneAccount": "You are its only spokesperson, so it is deleted with your account, with all its events and leaflets. To keep it going, invite another spokesperson first."
     }
 }

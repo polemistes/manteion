@@ -155,7 +155,7 @@ class ActivityFeed
      * One activity item, from a stored notification or one being sent.
      *
      * @param  array<string, mixed>  $data
-     * @return array{id: string, type: string, category: string|null, actor: array{id: int, name: string, username: string, avatar_url: string|null}|null, subject_type: string|null, subject_id: int|null, subject_title: string|null, excerpt: string|null, pending: bool|null, url: string|null, unread: bool, created_at: string}
+     * @return array{id: string, type: string, category: string|null, actor: array{id: int, name: string, username: string, avatar_url: string|null}|null, subject_type: string|null, subject_id: int|null, subject_title: string|null, excerpt: string|null, pending: bool|null, handover: array{made_main: bool, events: int, leaflets: int, templates: int}|null, url: string|null, unread: bool, created_at: string}
      */
     public static function item(string $id, string $type, array $data, ?User $actor, bool $unread, CarbonInterface $createdAt): array
     {
@@ -174,6 +174,13 @@ class ActivityFeed
             'subject_title' => $data['subject_title'] ?? null,
             'excerpt' => $data['excerpt'] ?? null,
             'pending' => $data['pending'] ?? null,
+            // OrganizerHandedOver only: what the recipient was given.
+            'handover' => ! isset($data['handed_events']) ? null : [
+                'made_main' => (bool) ($data['made_main'] ?? false),
+                'events' => (int) $data['handed_events'],
+                'leaflets' => (int) ($data['handed_leaflets'] ?? 0),
+                'templates' => (int) ($data['handed_templates'] ?? 0),
+            ],
             'url' => $data['url'] ?? null,
             'unread' => $unread,
             'created_at' => $createdAt->toIso8601String(),

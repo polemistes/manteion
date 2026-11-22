@@ -4,6 +4,9 @@ namespace App\Models;
 
 use App\Enums\EventTimeZoneMode;
 use App\Enums\EventVisibility;
+use App\Enums\ReportStatus;
+use App\Events\EventActivity;
+use App\Services\ActivityFeed;
 use Carbon\CarbonImmutable;
 use Database\Factories\EventFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -143,6 +146,33 @@ class Event extends Model
     public function attendees(): HasMany
     {
         return $this->hasMany(EventAttendee::class);
+    }
+
+    /**
+     * Deletes the event for good, with what the database does not take
+     * along: its cover's file, the files of the pictures on its comments,
+     * its open reports (settled, by `$by` when someone is doing this by
+     * hand) and everyone's Activity about it. Whoever has its page open is
+     * told.
+     */
+    public function deleteForGood(?User $by = null): void
+    {
+        foreach ($this->images as $image) {
+            $image->deleteFile();
+        }
+
+        Picture::forgetFiles(Picture::query()->whereIn('event_comment_id', $this->comments()->select('id')));
+
+        $this->reports()->where('status', ReportStatus::Pending)->update([
+            'status' => ReportStatus::Resolved,
+            'resolved_by' => $by?->id,
+            'resolved_at' => now(),
+        ]);
+
+        $this->delete();
+
+        ActivityFeed::withdrawAbout('event', $this->id);
+        broadcast(new EventActivity($this->id, 'deleted'))->toOthers();
     }
 
     /**

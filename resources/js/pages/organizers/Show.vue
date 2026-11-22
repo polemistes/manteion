@@ -14,6 +14,14 @@ import {
 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import FieldError from '@/components/FieldError.vue';
+import OrganizerDepartureChoice, {
+    defaultDecision,
+} from '@/components/organizers/OrganizerDepartureChoice.vue';
+import type {
+    DepartureDecision,
+    OrganizerDeparture,
+} from '@/components/organizers/OrganizerDepartureChoice.vue';
 import PageContainer from '@/components/shell/PageContainer.vue';
 import PageHeader from '@/components/shell/PageHeader.vue';
 import AppDialog from '@/components/ui/AppDialog.vue';
@@ -70,6 +78,8 @@ const props = defineProps<{
     my_listed: boolean | null;
     can_update: boolean;
     can_delete: boolean;
+    /** What stepping down would need decided; null for someone who does not speak for it. */
+    departure: OrganizerDeparture | null;
     spokespersons: {
         id: number;
         user: Person;
@@ -225,30 +235,60 @@ async function remove(person: Person): Promise<void> {
     }
 }
 
-async function leave(): Promise<void> {
-    if (isMain.value) {
-        toastError(t('organizers.page.handOverFirst'));
+// Stepping down: a dialog with what has to be decided first (who takes
+// over from a main spokesperson, and what becomes of what one made).
+const leaveOpen = ref(false);
+const leaveDecision = ref<DepartureDecision>({
+    hand_over: true,
+    successor_id: null,
+});
+const leaveError = ref<string | undefined>(undefined);
+const hasChoices = computed(
+    () =>
+        props.departure !== null &&
+        (props.departure.is_main ||
+            props.departure.made.events +
+                props.departure.made.leaflets +
+                props.departure.made.templates >
+                0),
+);
+
+function leave(): void {
+    if (!props.departure) {
+        return;
+    }
+
+    // Its only spokesperson cannot step down: someone takes over first,
+    // or the organizer is deleted.
+    if (!props.departure.others.length) {
+        toastError(t('organizers.page.leaveAlone'));
 
         return;
     }
 
-    const confirmed = await confirmAction({
-        title: t('organizers.page.leaveConfirmTitle', {
-            organizer: props.organizer.name,
-        }),
-        message: t('organizers.page.leaveConfirm'),
-        confirmLabel: t('organizers.page.leave'),
-    });
+    leaveDecision.value = defaultDecision(props.departure);
+    leaveError.value = undefined;
+    leaveOpen.value = true;
+}
 
-    if (confirmed) {
-        router.delete(
-            removeSpokesperson([props.organizer.id, me.value.id]).url,
-            {
-                ...options,
-                onSuccess: () => router.visit(eventsIndex().url),
-            },
-        );
-    }
+function confirmLeave(): void {
+    const name = props.organizer.name;
+
+    router.delete(removeSpokesperson([props.organizer.id, me.value.id]).url, {
+        ...options,
+        data: { ...leaveDecision.value },
+        onError: (errors) => {
+            leaveError.value = errors.role ?? errors.successor_id;
+        },
+        onSuccess: () => {
+            leaveOpen.value = false;
+            toast({
+                title: t('organizers.page.left', { organizer: name }),
+                icon: LogOut,
+            });
+            router.visit(eventsIndex().url);
+        },
+    });
 }
 
 const eventStatus = (
@@ -609,6 +649,35 @@ const eventStatus = (
             <p v-else class="mt-4 text-meta text-ink-muted">
                 {{ t('organizers.page.noCandidates') }}
             </p>
+        </AppDialog>
+
+        <AppDialog
+            v-if="props.departure"
+            v-model:open="leaveOpen"
+            :title="
+                t('organizers.page.leaveConfirmTitle', {
+                    organizer: props.organizer.name,
+                })
+            "
+            :description="
+                hasChoices
+                    ? t('organizers.page.leaveDescription')
+                    : t('organizers.page.leaveDescriptionPlain')
+            "
+        >
+            <OrganizerDepartureChoice
+                v-model="leaveDecision"
+                :organizer="props.departure"
+            />
+            <FieldError :message="leaveError" />
+            <template #actions>
+                <Button variant="danger" :disabled="busy" @click="confirmLeave">
+                    {{ t('organizers.page.leave') }}
+                </Button>
+                <Button variant="ghost" @click="leaveOpen = false">
+                    {{ t('ui.cancel') }}
+                </Button>
+            </template>
         </AppDialog>
     </PageContainer>
 </template>

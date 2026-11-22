@@ -10,6 +10,7 @@ use App\Models\OrganizerSpokesperson;
 use App\Models\User;
 use App\Services\ActivityFeed;
 use App\Services\EventFeedQuery;
+use App\Services\OrganizerDepartures;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -56,7 +57,7 @@ class OrganizerController extends Controller
      * The organizer's page: who it is, what it has coming up, who speaks
      * for it, and the viewer's standing with it.
      */
-    public function show(Request $request, Organizer $organizer): Response
+    public function show(Request $request, Organizer $organizer, OrganizerDepartures $departures): Response
     {
         $viewer = $request->user();
         $membership = $organizer->membershipOf($viewer);
@@ -92,6 +93,8 @@ class OrganizerController extends Controller
             'my_listed' => $membership?->listed,
             'can_update' => Gate::allows('update', $organizer),
             'can_delete' => Gate::allows('delete', $organizer),
+            // What stepping down would need decided (OrganizerDepartures).
+            'departure' => $isSpokesperson ? $departures->choiceFor($organizer, $viewer) : null,
             'spokespersons' => $memberships->map(fn (OrganizerSpokesperson $member) => [
                 'id' => $member->id,
                 'user' => ['id' => $member->user->id, 'name' => $member->user->name, 'username' => $member->user->username, 'avatar_url' => $member->user->avatar_url],
@@ -146,16 +149,11 @@ class OrganizerController extends Controller
      * database cascades), their pictures and its own, and everyone's
      * Activity about them.
      */
-    public function destroy(Request $request, Organizer $organizer): RedirectResponse
+    public function destroy(Request $request, Organizer $organizer, OrganizerDepartures $departures): RedirectResponse
     {
         Gate::authorize('delete', $organizer);
 
-        $organizer->events()->pluck('id')->each(fn (int $id) => ActivityFeed::withdrawAbout('event', $id));
-        $organizer->leaflets()->pluck('id')->each(fn (int $id) => ActivityFeed::withdrawAbout('leaflet', $id));
-        ActivityFeed::withdrawAbout('organizer', $organizer->id);
-
-        $organizer->deleteUploadedFiles();
-        $organizer->delete();
+        $departures->deleteOrganizer($organizer);
         $request->user()->forgetOrganizerIds();
 
         return redirect()->route('settings.organizers');

@@ -52,7 +52,9 @@
         "delete": "Delete account…",
         "deleteTitle": "Delete your account?",
         "deleteConfirm": "This can’t be undone. Enter your password to confirm.",
-        "deleteForGood": "Delete my account"
+        "deleteForGood": "Delete my account",
+        "organizersTitle": "Organizers you speak for",
+        "organizersHint": "Decide what becomes of what you made for each."
     },
     "privacy": {
         "lede": "Who can follow you, find you and see who you know, and what chats show of you.",

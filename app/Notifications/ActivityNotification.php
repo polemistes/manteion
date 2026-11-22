@@ -54,9 +54,10 @@ abstract class ActivityNotification extends Notification implements ShouldQueue
     abstract public static function category(): NotificationCategory;
 
     /**
-     * The person whose action the notification is about.
+     * The person whose action the notification is about; null when there
+     * is no one to name (their account is being deleted).
      */
-    abstract public function actor(): User;
+    abstract public function actor(): ?User;
 
     /**
      * The event, leaflet, user or organizer the notification is about.
@@ -120,7 +121,7 @@ abstract class ActivityNotification extends Notification implements ShouldQueue
         $subject = $this->describeSubject();
 
         return [
-            'actor_id' => $this->actor()->id,
+            'actor_id' => $this->actor()?->id,
             'subject_type' => $subject['type'],
             'subject_id' => $subject['id'],
             'subject_title' => $subject['title'],
@@ -165,7 +166,7 @@ abstract class ActivityNotification extends Notification implements ShouldQueue
         return (new WebPushMessage)
             ->title($this->pushTitle())
             ->body($this->pushBody())
-            ->icon($this->actor()->avatar_url ?? '/icons/icon-192.png')
+            ->icon($this->actor()?->avatar_url ?? '/icons/icon-192.png')
             ->badge('/icons/badge-96.png')
             ->tag("{$type}-{$subject['id']}")
             ->renotify()
