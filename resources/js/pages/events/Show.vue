@@ -128,9 +128,8 @@ const isPast = computed(() =>
     ),
 );
 
-const canAnswer = computed(
-    () => !props.event.is_owner && !isPast.value && !props.event.is_deleted,
-);
+// The host answers like everyone else: nobody is going until they say so.
+const canAnswer = computed(() => !isPast.value && !props.event.is_deleted);
 
 // Live: answers, comments and edits by others refresh the page's data.
 useEventChannel(
@@ -150,6 +149,7 @@ useEventChannel(
 const rsvp = useRsvp({
     eventId: () => props.event.id,
     host: () => props.event.owner.name,
+    isHost: () => props.event.is_owner,
     initial: () => ({
         status: props.myAttendance?.status ?? null,
         visibility: props.myAttendance?.attendance_visibility ?? null,
@@ -175,16 +175,21 @@ const answerState = computed(() => {
     }
 });
 
+// Beside the answer: who sees it ("Seen by guests"), which opens the choice.
 const visibilityLabels = computed(() => ({
     short: {
-        everyone: t('events.rsvp.everyoneShort'),
-        friends: t('events.rsvp.friendsShort'),
-        none: t('events.rsvp.noneShort'),
+        everyone: t('events.rsvp.seenByEveryoneShort'),
+        friends: t('events.rsvp.seenByFriendsShort'),
+        none: props.event.is_owner
+            ? t('events.rsvp.seenByNoneHostShort')
+            : t('events.rsvp.seenByNoneShort'),
     }[rsvp.visibility.value],
     long: {
-        everyone: t('events.rsvp.everyone'),
-        friends: t('events.rsvp.friends'),
-        none: t('events.rsvp.none'),
+        everyone: t('events.rsvp.seenByEveryone'),
+        friends: t('events.rsvp.seenByFriends'),
+        none: props.event.is_owner
+            ? t('events.rsvp.seenByNoneHost')
+            : t('events.rsvp.seenByNone'),
     }[rsvp.visibility.value],
 }));
 
@@ -823,6 +828,7 @@ function searchable(): void {
     <AttendanceVisibilityDialog
         v-model:open="visibilityOpen"
         :host="props.event.owner.name"
+        :as-host="props.event.is_owner"
         :visibility="rsvp.visibility.value"
         @save="(visibility) => rsvp.save({ visibility })"
     />

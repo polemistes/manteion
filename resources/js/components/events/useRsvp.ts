@@ -20,6 +20,8 @@ export interface RsvpState {
 export function useRsvp(options: {
     eventId: () => number;
     host: () => string;
+    /** The viewer hosts the event: the words about who sees it differ. */
+    isHost?: () => boolean;
     initial: () => RsvpState;
     reload: string[];
 }) {
@@ -51,12 +53,19 @@ export function useRsvp(options: {
                   : next === 'not_attending'
                     ? t('events.rsvp.savedCantGo')
                     : t('events.rsvp.savedNoAnswer');
+        const hosting = options.isHost?.() ?? false;
         const audience =
             visibility.value === 'friends'
                 ? t('events.rsvp.audienceFriends')
                 : visibility.value === 'none'
-                  ? t('events.rsvp.audienceNone', { host: options.host() })
-                  : t('events.rsvp.audienceEveryone', { host: options.host() });
+                  ? hosting
+                      ? t('events.rsvp.audienceNoneHost')
+                      : t('events.rsvp.audienceNone', { host: options.host() })
+                  : hosting
+                    ? t('events.rsvp.audienceEveryoneHost')
+                    : t('events.rsvp.audienceEveryone', {
+                          host: options.host(),
+                      });
 
         return { title, description: audience };
     }

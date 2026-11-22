@@ -22,7 +22,8 @@ import { useRsvp } from './useRsvp';
  * (put `@container` on the list): stacked under 32rem, image beside the
  * text from there. A photo may be cropped; a poster is always shown whole;
  * without an image the date stands in. The action follows the viewer's
- * relationship to it: answer pills, their answer, Invite for the host.
+ * answer: the three pills until they have given one, their answer after;
+ * the host answers like anyone, and has Invite beside it.
  */
 const props = withDefaults(
     defineProps<{
@@ -53,6 +54,7 @@ const isPast = computed(() =>
 const rsvp = useRsvp({
     eventId: () => props.event.id,
     host: () => props.event.owner.name,
+    isHost: () => props.event.is_host,
     initial: () => ({
         status: props.event.my_status,
         visibility: props.event.my_attendance_visibility,
@@ -65,9 +67,7 @@ const answered = computed(
 );
 
 // Once answered, an invitation stays on screen and shows the answer.
-const showPills = computed(
-    () => !props.event.is_host && !isPast.value && !answered.value,
-);
+const showPills = computed(() => !isPast.value && !answered.value);
 
 const status = computed({
     get: () => rsvp.status.value,
@@ -311,9 +311,10 @@ const layout = computed(
                     {{ t('events.card.invite') }}
                 </Button>
                 <RsvpStatusPill
-                    v-else-if="answered && !isPast"
+                    v-if="answered && !isPast"
                     v-model="status"
-                    class="relative z-10 ml-auto"
+                    class="relative z-10"
+                    :class="props.event.is_host ? '' : 'ml-auto'"
                     @visibility="visibilityOpen = true"
                 />
                 <div
@@ -328,6 +329,7 @@ const layout = computed(
         <AttendanceVisibilityDialog
             v-model:open="visibilityOpen"
             :host="props.event.owner.name"
+            :as-host="props.event.is_host"
             :visibility="rsvp.visibility.value"
             @save="(visibility) => rsvp.save({ visibility })"
         />

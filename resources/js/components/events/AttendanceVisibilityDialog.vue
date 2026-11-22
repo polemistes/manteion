@@ -7,11 +7,19 @@ import Button from '@/components/ui/Button.vue';
 import OptionCards from '@/components/ui/OptionCards.vue';
 import type { AttendanceVisibility } from '@/events';
 
-/** "Who can see your answer?" — three option cards; Done saves. */
-const props = defineProps<{
-    host: string;
-    visibility: AttendanceVisibility;
-}>();
+/**
+ * "Who can see your answer?" — three option cards; Done saves. For the
+ * host answering their own event (`asHost`) the cards speak of their
+ * guests, and the last one is "No one but me".
+ */
+const props = withDefaults(
+    defineProps<{
+        host: string;
+        visibility: AttendanceVisibility;
+        asHost?: boolean;
+    }>(),
+    { asHost: false },
+);
 
 const emit = defineEmits<{ save: [visibility: AttendanceVisibility] }>();
 
@@ -31,7 +39,9 @@ const options = computed(() => [
     {
         value: 'everyone',
         title: t('events.rsvp.everyone'),
-        description: t('events.rsvp.everyoneHint', { host: props.host }),
+        description: props.asHost
+            ? t('events.rsvp.everyoneHintHost')
+            : t('events.rsvp.everyoneHint', { host: props.host }),
         icon: Eye,
     },
     {
@@ -42,8 +52,10 @@ const options = computed(() => [
     },
     {
         value: 'none',
-        title: t('events.rsvp.none'),
-        description: t('events.rsvp.noneHint', { host: props.host }),
+        title: props.asHost ? t('events.rsvp.noneHost') : t('events.rsvp.none'),
+        description: props.asHost
+            ? t('events.rsvp.noneHintHost')
+            : t('events.rsvp.noneHint', { host: props.host }),
         icon: EyeOff,
     },
 ]);
@@ -61,7 +73,11 @@ function done(): void {
     <AppDialog
         v-model:open="open"
         :title="t('events.rsvp.visibilityTitle')"
-        :description="t('events.rsvp.hostAlways', { host: props.host })"
+        :description="
+            props.asHost
+                ? t('events.rsvp.hostAlwaysYou')
+                : t('events.rsvp.hostAlways', { host: props.host })
+        "
     >
         <OptionCards
             v-model="choice"

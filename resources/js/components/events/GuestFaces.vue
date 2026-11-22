@@ -26,7 +26,8 @@ type Tab = 'attending' | 'interested' | 'no_response' | 'not_attending';
 
 /**
  * "Who's coming": Going / Maybe / Invited, as a row of faces with first
- * names (the host first, tagged). "See all" opens the full guest list,
+ * names. The host is there only if they have answered like anyone else
+ * (first in their group, tagged). "See all" opens the full guest list,
  * where the host also sees who can't go.
  */
 const props = defineProps<{
@@ -46,10 +47,14 @@ const groups = computed<Record<Tab, Person[]>>(() => {
         props.attendees
             .filter((attendee) => attendee.status === status)
             .map((attendee) => attendee.user)
-            .filter((person) => person.id !== props.host.id);
+            .sort(
+                (a, b) =>
+                    Number(b.id === props.host.id) -
+                    Number(a.id === props.host.id),
+            );
 
     return {
-        attending: [props.host, ...byStatus('attending')],
+        attending: byStatus('attending'),
         interested: byStatus('interested'),
         no_response: byStatus('no_response'),
         not_attending: byStatus('not_attending'),

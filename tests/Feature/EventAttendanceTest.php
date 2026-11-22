@@ -96,3 +96,45 @@ test('an attendee with visibility set to none is listed only for the owner and t
     $this->actingAs($owner)->get("/events/{$event->id}")
         ->assertInertia(fn ($page) => $page->where('attendees.0.status', AttendanceStatus::Attending->value));
 });
+
+test('the host is not going until they say so, and then answers like anyone else', function () {
+    $host = User::factory()->create();
+    $follower = User::factory()->create();
+    Follow::factory()->create(['follower_id' => $follower->id, 'followed_id' => $host->id]);
+    $event = Event::factory()->public()->create(['user_id' => $host->id, 'starts_at' => now()->addWeek()]);
+
+    // Nobody is listed, and the host has no answer of their own.
+    $this->actingAs($host)->get("/events/{$event->id}")
+        ->assertInertia(fn ($page) => $page->where('attendees', [])->where('myAttendance', null));
+    $this->actingAs($host)->get('/events')
+        ->assertInertia(fn ($page) => $page
+            ->where('events.0.attending_count', 0)
+            ->where('events.0.my_status', null)
+            ->where('events.0.is_host', true));
+
+    $this->actingAs($host)->put("/events/{$event->id}/attendance", [
+        'status' => 'attending',
+        'attendance_visibility' => 'everyone',
+    ])->assertRedirect();
+
+    // Now the host is one of those going, on the page and in the count.
+    $this->actingAs($follower)->get("/events/{$event->id}")
+        ->assertInertia(fn ($page) => $page
+            ->where('attendees.0.user.id', $host->id)
+            ->where('attendees.0.status', AttendanceStatus::Attending->value));
+    $this->actingAs($host)->get('/events')
+        ->assertInertia(fn ($page) => $page
+            ->where('events.0.attending_count', 1)
+            ->where('events.0.my_status', AttendanceStatus::Attending->value));
+
+    // And can change their mind, or keep it to themself.
+    $this->actingAs($host)->put("/events/{$event->id}/attendance", [
+        'status' => 'interested',
+        'attendance_visibility' => 'none',
+    ])->assertRedirect();
+
+    $this->actingAs($follower)->get("/events/{$event->id}")
+        ->assertInertia(fn ($page) => $page->where('attendees', []));
+    $this->actingAs($host)->get("/events/{$event->id}")
+        ->assertInertia(fn ($page) => $page->where('myAttendance.status', AttendanceStatus::Interested->value));
+});
