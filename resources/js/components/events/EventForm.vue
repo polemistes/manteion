@@ -28,6 +28,7 @@ import { requestJson } from '@/realtime';
 import { lookup as lookUpTimeZone } from '@/routes/time-zone';
 import DateTimeInputs from './DateTimeInputs.vue';
 import EventPreviewCard from './EventPreviewCard.vue';
+import TemplateTimeInputs from './TemplateTimeInputs.vue';
 
 export interface EventFormValues {
     name: string;
@@ -53,6 +54,13 @@ export interface EventFormValues {
     image: EventCover | null;
 }
 
+/** Clock times without a day: a template's, or those a new event starts from. */
+export interface EventClockTimes {
+    starts_time: string | null;
+    ends_time: string | null;
+    ends_days_later: number;
+}
+
 /**
  * The event form shared by Create and Edit, in the order a host knows
  * things: what it is called, when, where; then what is optional (a
@@ -66,6 +74,11 @@ export interface EventFormValues {
  * own while there is no pin. A line under the times says which clock that
  * is, and "Change" lets the host pick another zone, or none (an online
  * event), in which case the event shows no local time.
+ *
+ * With `template` the form edits an event template instead: the same
+ * fields, with clock times and no day in place of the start and end
+ * (`times`). On a new event, `times` are the clock times it starts from
+ * (a template's, or an earlier event's): filled in, waiting for a day.
  *
  * A form with changes in it asks before it is left (see useLeaveGuard), and
  * when the server refuses it, the first field at fault is brought into
@@ -85,17 +98,29 @@ const props = withDefaults(
         isNew?: boolean;
         /** The organizers the user may host it as (new events only). */
         organizers?: OrganizerSummary[];
+        /** The organizer that already hosts it (a template being edited). */
+        organizer?: OrganizerSummary | null;
         /** A cover picture to start with (an imported event's). */
         initialImage?: Blob | null;
         /** The form opens with work in it already (an imported event). */
         startsChanged?: boolean;
+        /** The form edits a template, not an event. */
+        template?: boolean;
+        /** Clock times to open with (see above). */
+        times?: EventClockTimes | null;
+        /** More to send with the form, as hidden fields. */
+        extraFields?: Record<string, string>;
     }>(),
     {
         note: undefined,
         isNew: false,
         organizers: () => [],
+        organizer: null,
         initialImage: null,
         startsChanged: false,
+        template: false,
+        times: null,
+        extraFields: () => ({}),
     },
 );
 
@@ -410,6 +435,14 @@ const visibilityOptions = [
         @error="showFirstError"
     >
         <div class="flex min-w-0 flex-col gap-7">
+            <input
+                v-for="(value, field) in props.extraFields"
+                :key="field"
+                type="hidden"
+                :name="field"
+                :value="value"
+            />
+
             <template v-if="props.isNew && props.organizers.length">
                 <input
                     type="hidden"
@@ -420,7 +453,11 @@ const visibilityOptions = [
                     v-model="hostId"
                     :options="hostOptions"
                     :label="t('events.form.host')"
-                    :hint="t('events.form.hostHint')"
+                    :hint="
+                        props.template
+                            ? t('events.templates.form.hostHint')
+                            : t('events.form.hostHint')
+                    "
                     :error="errors.organizer_id"
                 />
             </template>
@@ -437,26 +474,38 @@ const visibilityOptions = [
             />
 
             <div class="flex flex-col gap-5">
-                <DateTimeInputs
-                    name="starts_at"
-                    :label="t('events.form.starts')"
-                    :default-value="props.values.starts_at"
-                    :time-zone="timeZone"
-                    :error="errors.starts_at"
-                    required
-                    @change="startsAt = $event"
+                <TemplateTimeInputs
+                    v-if="props.template"
+                    :starts-time="props.times?.starts_time"
+                    :ends-time="props.times?.ends_time"
+                    :ends-days-later="props.times?.ends_days_later"
+                    :error="errors.starts_time ?? errors.ends_time"
                 />
-                <DateTimeInputs
-                    name="ends_at"
-                    :label="t('events.form.ends')"
-                    :default-value="props.values.ends_at"
-                    :time-zone="timeZone"
-                    :error="errors.ends_at"
-                    :after="startsAt"
-                    default-time="22:00"
-                    optional
-                    @change="endsAt = $event"
-                />
+                <template v-else>
+                    <DateTimeInputs
+                        name="starts_at"
+                        :label="t('events.form.starts')"
+                        :default-value="props.values.starts_at"
+                        :preset-time="props.times?.starts_time"
+                        :time-zone="timeZone"
+                        :error="errors.starts_at"
+                        required
+                        @change="startsAt = $event"
+                    />
+                    <DateTimeInputs
+                        name="ends_at"
+                        :label="t('events.form.ends')"
+                        :default-value="props.values.ends_at"
+                        :preset-time="props.times?.ends_time"
+                        :preset-days-later="props.times?.ends_days_later"
+                        :time-zone="timeZone"
+                        :error="errors.ends_at"
+                        :after="startsAt"
+                        default-time="22:00"
+                        optional
+                        @change="endsAt = $event"
+                    />
+                </template>
                 <input type="hidden" name="timezone" :value="timeZone" />
                 <input
                     type="hidden"
@@ -645,7 +694,11 @@ const visibilityOptions = [
                     {{ t('events.form.preview.title') }}
                 </h2>
                 <p class="mt-1 text-meta text-ink-muted">
-                    {{ t('events.form.preview.lede') }}
+                    {{
+                        props.template
+                            ? t('events.templates.form.previewLede')
+                            : t('events.form.preview.lede')
+                    }}
                 </p>
             </div>
             <EventPreviewCard
@@ -656,11 +709,16 @@ const visibilityOptions = [
                 :time-zone="timeZoneMode === 'none' ? null : timeZone"
                 :cover="cover.url ? { url: cover.url, fit: cover.fit } : null"
                 :visibility="visibility === 'public' ? 'public' : 'private'"
-                :is-new="props.isNew"
-                :organizer="chosenOrganizer"
+                :is-new="props.isNew && !props.template"
+                :organizer="chosenOrganizer ?? props.organizer"
+                :no-date-label="
+                    props.template
+                        ? t('events.templates.form.previewWhen')
+                        : undefined
+                "
             />
             <section
-                v-if="props.isNew"
+                v-if="props.isNew && !props.template"
                 class="flex gap-3 rounded-lg border border-line bg-surface p-4"
             >
                 <span

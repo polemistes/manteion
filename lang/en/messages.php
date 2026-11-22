@@ -19,6 +19,11 @@ return [
         'image_too_large' => 'That picture is too large. Try one under 5 MB.',
     ],
 
+    'event_template' => [
+        'name_required' => 'Give the template a name.',
+        'end_needs_start' => 'An end time needs a start time.',
+    ],
+
     'pictures' => [
         'too_many' => 'You can add one picture at most.|You can add up to :count pictures at a time.',
         'not_a_picture' => 'One of the files is not a picture we can read (JPEG, PNG or WebP).',

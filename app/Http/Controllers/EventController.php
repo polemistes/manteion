@@ -6,11 +6,11 @@ use App\Enums\AdminAlert;
 use App\Enums\AttendanceStatus;
 use App\Enums\AttendeeSource;
 use App\Enums\ContactGroupType;
-use App\Enums\EventTimeZoneMode;
 use App\Enums\EventVisibility;
 use App\Enums\FollowStatus;
 use App\Enums\ReportStatus;
 use App\Events\EventActivity;
+use App\Http\Controllers\Concerns\DecidesEventTimeZone;
 use App\Http\Requests\StoreEventRequest;
 use App\Http\Requests\UpdateEventRequest;
 use App\Jobs\NotifyFollowersOfEvent;
@@ -19,6 +19,7 @@ use App\Models\Event;
 use App\Models\EventAttendee;
 use App\Models\EventComment;
 use App\Models\EventImage;
+use App\Models\EventTemplate;
 use App\Models\Organizer;
 use App\Models\Picture;
 use App\Models\Reaction;
@@ -27,8 +28,8 @@ use App\Models\User;
 use App\Services\ActivityFeed;
 use App\Services\AdminAlerts;
 use App\Services\EventFeedQuery;
+use App\Services\EventStartingPoints;
 use App\Services\ImageProcessor;
-use App\Services\TimeZones;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
@@ -45,7 +46,9 @@ use Inertia\Response;
 
 class EventController extends Controller
 {
-    public function __construct(private ImageProcessor $imageProcessor) {}
+    use DecidesEventTimeZone;
+
+    public function __construct(private ImageProcessor $imageProcessor, private EventStartingPoints $startingPoints) {}
 
     public const PER_PAGE = 30;
 
@@ -165,11 +168,48 @@ class EventController extends Controller
     {
         Gate::authorize('create', Event::class);
 
+        $user = $request->user();
+
         return Inertia::render('events/Create', [
             'categories' => Tag::categoriesTree(),
             // The organizers the user may host it as.
-            'organizers' => $request->user()->organizers()->get()->map(fn (Organizer $organizer) => $organizer->summary())->values()->all(),
+            'organizers' => $user->organizers()->get()->map(fn (Organizer $organizer) => $organizer->summary())->values()->all(),
+            'templates' => EventTemplate::query()->usableBy($user)->with('organizer')->orderBy('name')->get()
+                ->map(fn (EventTemplate $template) => $template->summary())->values()->all(),
+            'startFrom' => $this->startingPointFrom($request),
         ]);
+    }
+
+    /**
+     * What the new event starts from, when the address names one: a
+     * template (`?template=`) the user may use, or an event (`?from=`)
+     * they host.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function startingPointFrom(Request $request): ?array
+    {
+        $start = null;
+
+        if ($request->filled('template')) {
+            $template = EventTemplate::query()->findOrFail($request->integer('template'));
+            Gate::authorize('view', $template);
+
+            $start = $this->startingPoints->fromTemplate($template);
+        } elseif ($request->filled('from')) {
+            $event = Event::query()->findOrFail($request->integer('from'));
+            Gate::authorize('update', $event);
+
+            $start = $this->startingPoints->fromEvent($event);
+        }
+
+        // Someone who made an event for an organizer they have since left
+        // hosts the new one themself.
+        if ($start !== null && ! $request->user()->organizerIds()->contains($start['values']['organizer_id'])) {
+            $start['values']['organizer_id'] = null;
+        }
+
+        return $start;
     }
 
     public function store(StoreEventRequest $request): RedirectResponse
@@ -184,11 +224,12 @@ class EventController extends Controller
             ]),
             'description' => $request->validated('description') ?? '',
             'organizer_id' => $organizerId === null ? null : (int) $organizerId,
-            ...$this->timeZoneFrom($request, null),
+            ...$this->timeZoneFrom($request, null, null),
         ]);
 
         $this->syncTags($event, $request->input('tag_ids', []));
-        $this->storeImage($event, $request->file('image'), $request->input('image_fit'));
+        $this->copyCoverTo($event, $request);
+        $this->storeImage($event, $request->file('image'), $request->input('image_fit'), $request->exists('image_fit'));
 
         if ($event->visibility !== EventVisibility::Private) {
             NotifyFollowersOfEvent::dispatch($event);
@@ -371,7 +412,7 @@ class EventController extends Controller
             ...$request->safe()->only(['name', 'place', 'latitude', 'longitude', 'city', 'country', 'country_code', 'description', 'starts_at', 'ends_at', 'allow_invitee_invites', 'allow_invitee_comments']),
             'description' => $request->validated('description') ?? '',
             'visibility' => $visibility,
-            ...$this->timeZoneFrom($request, $event),
+            ...$this->timeZoneFrom($request, $event->timezone_mode, $event->localTimeZone()),
         ]);
 
         $this->syncTags($event, $request->input('tag_ids', []));
@@ -768,51 +809,39 @@ class EventController extends Controller
     }
 
     /**
-     * The event's own time zone and how it was decided. The form types
-     * times as local to a zone and sends that zone; without one (another
-     * client), an automatic event takes the zone at the pin it sent. A
-     * zone chosen by hand is never replaced by the pin's, and an event
-     * with no local time keeps its host's zone for its days. What the
-     * form leaves out stays as the event had it (`$event`, null for a new
-     * one).
-     *
-     * @return array{timezone: string, timezone_mode: EventTimeZoneMode}
-     */
-    private function timeZoneFrom(StoreEventRequest|UpdateEventRequest $request, ?Event $event): array
-    {
-        $mode = EventTimeZoneMode::tryFrom((string) $request->validated('timezone_mode'))
-            ?? $event->timezone_mode
-            ?? EventTimeZoneMode::Automatic;
-        $sent = $request->validated('timezone');
-        $kept = $event?->localTimeZone() ?? $request->user()->displayTimeZone();
-
-        if ($mode !== EventTimeZoneMode::Automatic) {
-            return ['timezone' => $sent ?? $kept, 'timezone_mode' => $mode];
-        }
-
-        $latitude = $request->validated('latitude');
-        $longitude = $request->validated('longitude');
-
-        return [
-            'timezone' => $sent ?? TimeZones::forPlace(
-                $latitude === null ? null : (float) $latitude,
-                $longitude === null ? null : (float) $longitude,
-                $request->validated('country_code'),
-            ) ?? $kept,
-            'timezone_mode' => $mode,
-        ];
-    }
-
-    /**
      * @param  array<int>  $tagIds
      */
     private function syncTags(Event $event, array $tagIds): void
     {
-        $tagIds = collect($tagIds)->unique();
+        $event->tags()->sync(EventStartingPoints::tagIdsWithParents($tagIds));
+    }
 
-        $parentIds = Tag::query()->whereIn('id', $tagIds)->whereNotNull('parent_id')->pluck('parent_id');
+    /**
+     * Gives a new event a copy of the cover of what it was started from
+     * (`cover_from`: a template or an earlier event), unless the host
+     * uploaded another. The "fill the frame / show it whole" choice is the
+     * source's until storeImage() applies the form's.
+     */
+    private function copyCoverTo(Event $event, StoreEventRequest $request): void
+    {
+        $coverFrom = $request->validated('cover_from');
 
-        $event->tags()->sync($tagIds->merge($parentIds)->unique());
+        if ($coverFrom === null || $request->file('image') !== null) {
+            return;
+        }
+
+        $cover = $this->startingPoints->coverNamed($coverFrom, $request->user());
+        $path = $cover === null ? null : $this->startingPoints->copyCover($cover['path'], "events/{$event->id}");
+
+        if ($path !== null) {
+            $event->images()->create([
+                'path' => $path,
+                'position' => 0,
+                'width' => $cover['width'],
+                'height' => $cover['height'],
+                'fit' => $cover['fit'],
+            ]);
+        }
     }
 
     /**

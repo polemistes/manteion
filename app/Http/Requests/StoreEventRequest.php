@@ -53,6 +53,8 @@ class StoreEventRequest extends FormRequest
             'tag_ids.*' => ['integer', 'exists:tags,id'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', Rule::dimensions()->maxWidth(self::MAX_UPLOAD_EDGE)->maxHeight(self::MAX_UPLOAD_EDGE)],
             'image_fit' => ['nullable', 'string', 'in:cover,contain'],
+            // The template or earlier event whose cover the new event copies.
+            'cover_from' => ['nullable', 'string', 'regex:/^(template|event):[1-9][0-9]{0,17}$/'],
         ];
     }
 }

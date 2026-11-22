@@ -18,6 +18,8 @@ use App\Http\Controllers\EventFacebookImportController;
 use App\Http\Controllers\EventImageController;
 use App\Http\Controllers\EventInvitationController;
 use App\Http\Controllers\EventSearchabilityController;
+use App\Http\Controllers\EventTemplateController;
+use App\Http\Controllers\EventTemplateFromEventController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\FriendshipController;
 use App\Http\Controllers\LeafletController;
@@ -100,7 +102,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/events/create', [EventController::class, 'create'])->name('events.create');
     Route::post('/events', [EventController::class, 'store'])->name('events.store');
     Route::post('/events/import/facebook', EventFacebookImportController::class)->middleware('throttle:10,1')->name('events.import.facebook');
+    // Before /events/{event}, which would take "templates" for an event.
+    Route::get('/events/templates', [EventTemplateController::class, 'index'])->name('event-templates.index');
+    Route::get('/events/templates/create', [EventTemplateController::class, 'create'])->name('event-templates.create');
+    Route::post('/events/templates', [EventTemplateController::class, 'store'])->name('event-templates.store');
+    Route::get('/events/templates/{event_template}/edit', [EventTemplateController::class, 'edit'])->name('event-templates.edit');
+    Route::put('/events/templates/{event_template}', [EventTemplateController::class, 'update'])->name('event-templates.update');
+    Route::delete('/events/templates/{event_template}', [EventTemplateController::class, 'destroy'])->name('event-templates.destroy');
+    Route::get('/events/templates/{event_template}/cover/{file}', [EventTemplateController::class, 'cover'])->name('event-templates.cover');
     Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
+    Route::post('/events/{event}/template', EventTemplateFromEventController::class)->name('events.template.store');
     Route::get('/events/{event}/calendar.ics', EventCalendarFileController::class)->name('events.calendar-file');
     Route::get('/events/{event}/edit', [EventController::class, 'edit'])->name('events.edit');
     Route::put('/events/{event}', [EventController::class, 'update'])->name('events.update');

@@ -88,10 +88,20 @@ class Organizer extends Model
     }
 
     /**
-     * Removes the organizer's picture, the covers of its events, and the
-     * pictures on its leaflets and on the comments on its events, all of
-     * which the database deletes along with it without touching their
-     * files.
+     * The event templates its spokespersons share.
+     *
+     * @return HasMany<EventTemplate, $this>
+     */
+    public function eventTemplates(): HasMany
+    {
+        return $this->hasMany(EventTemplate::class);
+    }
+
+    /**
+     * Removes the organizer's picture, the covers of its events and
+     * templates, and the pictures on its leaflets and on the comments on
+     * its events, all of which the database deletes along with it without
+     * touching their files.
      */
     public function deleteUploadedFiles(): void
     {
@@ -101,6 +111,7 @@ class Organizer extends Model
 
         Storage::disk(ImageProcessor::PRIVATE_DISK)->delete([
             ...EventImage::query()->whereIn('event_id', $this->events()->select('id'))->pluck('path')->all(),
+            ...$this->eventTemplates()->whereNotNull('image_path')->pluck('image_path')->all(),
         ]);
 
         Picture::forgetFiles(

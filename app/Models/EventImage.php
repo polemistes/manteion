@@ -59,15 +59,26 @@ class EventImage extends Model
      */
     public function shape(): string
     {
-        if ($this->fit !== null) {
-            return $this->fit === 'contain' ? 'poster' : 'photo';
+        return self::shapeOf($this->width, $this->height, $this->fit);
+    }
+
+    /**
+     * The shape of any cover, from its size and the uploader's choice (a
+     * template's cover is not an EventImage).
+     *
+     * @return 'photo'|'poster'
+     */
+    public static function shapeOf(?int $width, ?int $height, ?string $fit): string
+    {
+        if ($fit !== null) {
+            return $fit === 'contain' ? 'poster' : 'photo';
         }
 
-        if ($this->width === null || $this->height === null || $this->height === 0) {
+        if ($width === null || $height === null || $height === 0) {
             return 'photo';
         }
 
-        return $this->width / $this->height >= self::PHOTO_MIN_ASPECT ? 'photo' : 'poster';
+        return $width / $height >= self::PHOTO_MIN_ASPECT ? 'photo' : 'poster';
     }
 
     /**

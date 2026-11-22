@@ -19,6 +19,11 @@ return [
         'image_too_large' => 'Bildet er for stort. Prøv et under 5 MB.',
     ],
 
+    'event_template' => [
+        'name_required' => 'Gi malen et navn.',
+        'end_needs_start' => 'Et sluttidspunkt trenger et starttidspunkt.',
+    ],
+
     'pictures' => [
         'too_many' => 'Du kan legge til høyst ett bilde.|Du kan legge til opptil :count bilder om gangen.',
         'not_a_picture' => 'En av filene er ikke et bilde vi kan lese (JPEG, PNG eller WebP).',

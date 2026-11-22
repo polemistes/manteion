@@ -102,3 +102,19 @@ export interface EventFilterValues {
     start_date?: string;
     end_date?: string;
 }
+
+/** An event template as a list shows it (App\Models\EventTemplate::summary). */
+export interface EventTemplateSummary {
+    id: number;
+    name: string;
+    place: string | null;
+    city: string | null;
+    country: string | null;
+    country_code: string | null;
+    /** Clock times ("19:00"), or null for a template without. */
+    starts_time: string | null;
+    ends_time: string | null;
+    /** The organizer whose spokespersons share it, or null for one's own. */
+    organizer: OrganizerSummary | null;
+    cover: EventCover | null;
+}

@@ -62,6 +62,8 @@
         "linkCopied": "Link copied",
         "more": "More",
         "edit": "Edit",
+        "newFromThis": "New event from this one",
+        "saveAsTemplate": "Save as template",
         "delete": "Delete event",
         "report": "Report",
         "invite": "Invite people",
@@ -301,5 +303,47 @@
             "tooMany": "Too many tries. Wait a minute and try again.",
             "failed": "Something went wrong. Try again."
         }
+    },
+    "templates": {
+        "title": "Templates",
+        "lede": "Keep what stays the same from one event to the next. A new event from a template only needs a day.",
+        "new": "New template",
+        "use": "New event",
+        "useLabel": "New event from {name}",
+        "edit": "Edit",
+        "editLabel": "Edit {name}",
+        "delete": "Delete",
+        "deleteLabel": "Delete {name}",
+        "confirmDeleteTitle": "Delete this template?",
+        "confirmDelete": "Events already made from it stay as they are.",
+        "deleted": "Template deleted",
+        "emptyTitle": "No templates yet",
+        "emptyBody": "Make one from an event below, or start a new one.",
+        "eventsTitle": "Your events",
+        "eventsHint": "Make a template of an event, or start a new event straight from it.",
+        "eventsEmpty": "You have not hosted any events yet.",
+        "makeTemplate": "Make template",
+        "newFromEvent": "New event from this",
+        "createTitle": "New template",
+        "editTitle": "Edit template",
+        "sharedWith": "Shared by the spokespersons of {name}.",
+        "form": {
+            "times": "Usual times",
+            "timesHint": "Leave them empty if the times differ from event to event. The day is picked for each event.",
+            "endsDaysLater": "Ends the next day. | Ends {n} days after it starts.",
+            "hostHint": "A template for a venue or group is shared with its other spokespersons.",
+            "previewLede": "How an event from this template shows up in guests’ feeds.",
+            "previewWhen": "The day you pick",
+            "create": "Create template",
+            "creating": "Creating…",
+            "save": "Save template",
+            "saving": "Saving…"
+        }
+    },
+    "startFrom": {
+        "open": "Start from a template",
+        "manage": "Templates and earlier events",
+        "fromTemplate": "Started from the template “{name}”. Pick a day, and change what differs this time.",
+        "fromEvent": "Started from “{name}”. Pick a day, and change what differs this time."
     }
 }

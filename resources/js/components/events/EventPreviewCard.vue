@@ -25,6 +25,8 @@ const props = defineProps<{
     isNew: boolean;
     /** The organizer chosen as host, or null for the person themself. */
     organizer?: OrganizerSummary | null;
+    /** What stands where the date goes while there is none. */
+    noDateLabel?: string;
 }>();
 
 const { t } = useI18n();
@@ -36,7 +38,7 @@ const host = computed(() => props.organizer ?? page.props.auth.user);
 const when = computed(() =>
     props.startsAt
         ? dates.span(props.startsAt, props.endsAt)
-        : t('events.form.preview.noDate'),
+        : (props.noDateLabel ?? t('events.form.preview.noDate')),
 );
 </script>
 

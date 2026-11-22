@@ -62,6 +62,8 @@
         "linkCopied": "Lenken er kopiert",
         "more": "Mer",
         "edit": "Rediger",
+        "newFromThis": "Nytt arrangement fra dette",
+        "saveAsTemplate": "Lagre som mal",
         "delete": "Slett arrangementet",
         "report": "Rapporter",
         "invite": "Inviter folk",
@@ -301,5 +303,47 @@
             "tooMany": "For mange forsøk. Vent et minutt og prøv igjen.",
             "failed": "Noe gikk galt. Prøv igjen."
         }
+    },
+    "templates": {
+        "title": "Maler",
+        "lede": "Ta vare på det som er likt fra gang til gang. Et nytt arrangement fra en mal trenger bare en dag.",
+        "new": "Ny mal",
+        "use": "Nytt arrangement",
+        "useLabel": "Nytt arrangement fra {name}",
+        "edit": "Rediger",
+        "editLabel": "Rediger {name}",
+        "delete": "Slett",
+        "deleteLabel": "Slett {name}",
+        "confirmDeleteTitle": "Slette denne malen?",
+        "confirmDelete": "Arrangementer som alt er laget fra den, blir som de er.",
+        "deleted": "Malen er slettet",
+        "emptyTitle": "Ingen maler ennå",
+        "emptyBody": "Lag en av et arrangement nedenfor, eller begynn på en ny.",
+        "eventsTitle": "Arrangementene dine",
+        "eventsHint": "Lag en mal av et arrangement, eller begynn et nytt arrangement rett fra det.",
+        "eventsEmpty": "Du har ikke arrangert noe ennå.",
+        "makeTemplate": "Lag mal",
+        "newFromEvent": "Nytt arrangement fra dette",
+        "createTitle": "Ny mal",
+        "editTitle": "Rediger mal",
+        "sharedWith": "Deles av talspersonene for {name}.",
+        "form": {
+            "times": "Vanlige tidspunkter",
+            "timesHint": "La dem stå tomme hvis tidspunktene varierer fra gang til gang. Dagen velges for hvert arrangement.",
+            "endsDaysLater": "Slutter dagen etter. | Slutter {n} dager etter start.",
+            "hostHint": "En mal for et sted eller en gruppe deles med de andre talspersonene.",
+            "previewLede": "Slik ser gjestene et arrangement fra denne malen i feeden sin.",
+            "previewWhen": "Dagen du velger",
+            "create": "Opprett mal",
+            "creating": "Oppretter …",
+            "save": "Lagre malen",
+            "saving": "Lagrer …"
+        }
+    },
+    "startFrom": {
+        "open": "Start fra en mal",
+        "manage": "Maler og tidligere arrangementer",
+        "fromTemplate": "Startet fra malen «{name}». Velg en dag, og endre det som er annerledes denne gangen.",
+        "fromEvent": "Startet fra «{name}». Velg en dag, og endre det som er annerledes denne gangen."
     }
 }

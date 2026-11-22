@@ -3,7 +3,7 @@ import { usePage } from '@inertiajs/vue3';
 import { CircleAlert } from '@lucide/vue';
 import { computed, ref, useId, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { utcToZoned, zonedToUtc } from '@/lib/dates';
+import { addDays, utcToZoned, zonedToUtc } from '@/lib/dates';
 
 /**
  * A date and a time, as the phone's own pickers, read as wall-clock time
@@ -17,6 +17,11 @@ import { utcToZoned, zonedToUtc } from '@/lib/dates';
  * day, or the next when the time is not after the start's) and follows the
  * start until the host sets one; a day picked without a time gets the
  * default time. Nothing typed is dropped unseen, and "Clear" empties both.
+ *
+ * `presetTime` opens the pair with a clock time and no day yet (an event
+ * started from a template, whose times are known and whose day is not).
+ * For an end, `presetDaysLater` says how many days after the start that
+ * time falls, until the host types a time or a day of their own.
  */
 const props = withDefaults(
     defineProps<{
@@ -24,6 +29,10 @@ const props = withDefaults(
         label: string;
         defaultValue?: string | null;
         defaultTime?: string;
+        /** A clock time to open with while there is no day. */
+        presetTime?: string | null;
+        /** How many days after the start the preset time falls (an end). */
+        presetDaysLater?: number;
         timeZone?: string | null;
         /** The instant this one follows (an end's start), '' or null for none. */
         after?: string | null;
@@ -34,6 +43,8 @@ const props = withDefaults(
     {
         defaultValue: null,
         defaultTime: '18:00',
+        presetTime: null,
+        presetDaysLater: 0,
         timeZone: null,
         after: null,
         required: false,
@@ -60,32 +71,39 @@ const initial = props.defaultValue
     : null;
 
 const day = ref(initial?.day ?? '');
-const time = ref(initial?.time ?? (props.required ? props.defaultTime : ''));
+const time = ref(
+    initial?.time ??
+        props.presetTime ??
+        (props.required ? props.defaultTime : ''),
+);
 // True while the day was filled in from the start, not set by the host.
 const dayDerived = ref(false);
+// True while the time is the preset one, untouched: its day is then the
+// preset number of days after the start.
+let presetHolds = !initial && Boolean(props.presetTime);
 
-function dayAfter(key: string): string {
-    const [year, month, date] = key.split('-').map(Number);
-
-    return new Date(Date.UTC(year, month - 1, date + 1))
-        .toISOString()
-        .slice(0, 10);
-}
-
-/** The day a time alone means: the start's, or the next one. */
+/**
+ * The day a time alone means: the start's, or the next one when the time
+ * is not after the start's; a preset time, the day it was preset for.
+ */
 function derivedDay(): string {
     if (!props.after || !time.value) {
         return '';
     }
 
     const start = utcToZoned(props.after, timeZone.value);
+    const atLeast = time.value > start.time ? 0 : 1;
 
-    return time.value > start.time ? start.day : dayAfter(start.day);
+    return addDays(
+        start.day,
+        presetHolds ? Math.max(props.presetDaysLater, atLeast) : atLeast,
+    );
 }
 
 function onDayInput(event: Event): void {
     day.value = (event.target as HTMLInputElement).value;
     dayDerived.value = false;
+    presetHolds = false;
 
     if (day.value && !time.value) {
         time.value = props.defaultTime;
@@ -94,6 +112,7 @@ function onDayInput(event: Event): void {
 
 function onTimeInput(event: Event): void {
     time.value = (event.target as HTMLInputElement).value;
+    presetHolds = false;
 
     if (time.value && (!day.value || dayDerived.value) && props.after) {
         day.value = derivedDay();
@@ -109,6 +128,7 @@ function clear(): void {
     day.value = '';
     time.value = '';
     dayDerived.value = false;
+    presetHolds = false;
 }
 
 // A day filled in from the start moves with it, and a time typed before

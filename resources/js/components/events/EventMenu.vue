@@ -1,17 +1,28 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { Ellipsis, Flag, Pencil, Search, Trash, UserPlus } from '@lucide/vue';
+import {
+    CalendarPlus,
+    Ellipsis,
+    Flag,
+    LayoutTemplate,
+    Pencil,
+    Search,
+    Trash,
+    UserPlus,
+} from '@lucide/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import IconButton from '@/components/ui/IconButton.vue';
 import Menu from '@/components/ui/Menu.vue';
 import MenuItem from '@/components/ui/MenuItem.vue';
 import MenuSeparator from '@/components/ui/MenuSeparator.vue';
-import { edit as editEvent } from '@/routes/events';
+import { create as createEvent, edit as editEvent } from '@/routes/events';
+import eventTemplate from '@/routes/events/template';
 
 /**
- * The "⋯" menu of an event's page: edit, invite, make searchable, report
- * and delete, each only for those who may. The page shows it in three
+ * The "⋯" menu of an event's page: edit, invite, start a new event from
+ * it or save it as a template (its hosts), make searchable, report and
+ * delete, each only for those who may. The page shows it in three
  * places (the phone's top bar, over the cover on a phone, and beside Share
  * from 640), so the items live here once; `floating` draws the button for
  * sitting on a picture. Renders nothing when there is nothing to offer.
@@ -78,6 +89,22 @@ const hasItems = computed(
             @select="emit('invite')"
             >{{ t('events.show.invite') }}</MenuItem
         >
+        <template v-if="props.event.is_owner">
+            <MenuItem
+                :icon="CalendarPlus"
+                @select="
+                    router.visit(
+                        createEvent({ query: { from: props.event.id } }).url,
+                    )
+                "
+                >{{ t('events.show.newFromThis') }}</MenuItem
+            >
+            <MenuItem
+                :icon="LayoutTemplate"
+                @select="router.post(eventTemplate.store(props.event.id).url)"
+                >{{ t('events.show.saveAsTemplate') }}</MenuItem
+            >
+        </template>
         <MenuItem
             v-if="canMakeSearchable"
             :icon="Search"

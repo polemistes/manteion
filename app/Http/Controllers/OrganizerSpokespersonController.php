@@ -107,12 +107,13 @@ class OrganizerSpokespersonController extends Controller
             throw ValidationException::withMessages(['role' => __('messages.organizer.hand_over_first')]);
         }
 
-        // The events and leaflets they made for the organizer stay its own,
+        // The events, leaflets and templates they made for the organizer stay its own,
         // in the main spokesperson's name.
         $main = $organizer->mainSpokesperson();
         if ($main !== null) {
             $organizer->events()->where('user_id', $user->id)->update(['user_id' => $main->id]);
             $organizer->leaflets()->where('user_id', $user->id)->update(['user_id' => $main->id]);
+            $organizer->eventTemplates()->where('user_id', $user->id)->update(['user_id' => $main->id]);
         }
 
         if ($membership->isPending()) {

@@ -12,6 +12,7 @@ paths:
   - app/Services/ImageProcessor.php
   - app/Services/FacebookEventImporter.php
   - app/Services/TimeZones.php
+  - app/Services/EventStartingPoints.php
 ---
 
 # Http Controllers
@@ -30,3 +31,6 @@ Foreign keys cascade rows, not files. Deleting a Picture through its model delet
 
 ## Two time zones: the viewer's for reading, the event's for typing and "local time"
 Instants are stored in UTC. A person reads them in their own zone: users.timezone, reported by the device itself (lib/timeZone.ts → time-zone.update on app start when it differs from the shared `timezone` prop, then a reload), so the server render, "today" and day filters agree with the browser; never convert with the browser's zone directly. An event has its own zone (events.timezone, Event::localTimeZone()): the one at its pin (TimeZones::forPlace: the country's zone, or in a country with several the nearest reference city, no border map), else its host's when made. The event form types times as local to the place (DateTimeInputs takes the zone; moving the pin keeps the clock time and moves the instant) and sends `timezone`. Display is the viewer's time first, plus dates.elsewhere() ("20:00 local time", the LocalTime chip) only when the two clocks differ at that moment; compare clocks with sameClock(), never zone names (Oslo and Amsterdam are the same time). An event without an end is over at the end of its day in the event's zone, on both server and client.
+
+## Event templates are copies with clock times; a new event starts from one, or from an earlier event
+An event template (App\Models\EventTemplate, /events/templates, owner asked for it 2026-11-22) is its own row, never a pointer to an event: all the event form's fields except the day, with `starts_time`/`ends_time` ("19:00") and `ends_days_later` in the template's zone, both optional. One with an `organizer_id` is shared by that organizer's spokespersons (EventTemplate::isUsableBy mirrors Event::isHostedBy; a spokesperson who leaves hands theirs to the main one). The new-event page takes `?template=` or `?from=` (an event the user hosts) and gets `startFrom` (EventStartingPoints): the form opens with the times filled in and the day empty (DateTimeInputs `presetTime`/`presetDaysLater`), so the host must pick a day. Covers are copied as files on the server, never re-uploaded through the cropper (a weekly event would be re-encoded every week): the form sends `cover_from` ("template:5", "event:12"), EventController::copyCoverTo authorises and copies it unless a file was uploaded. A template's cover is columns on the template (image_path…), served by event-templates.cover; extend User/Organizer::deleteUploadedFiles when that changes. Templates are edited with EventForm in `template` mode (TemplateTimeInputs instead of the date pickers). The zone is only carried over when the pin or the host's choice decided it (EventStartingPoints::formValues).

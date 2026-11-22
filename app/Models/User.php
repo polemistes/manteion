@@ -448,8 +448,19 @@ class User extends Authenticatable
     }
 
     /**
+     * The event templates this person made (those made for an organizer
+     * are shared by its spokespersons; see EventTemplate::usableBy()).
+     *
+     * @return HasMany<EventTemplate, $this>
+     */
+    public function eventTemplates(): HasMany
+    {
+        return $this->hasMany(EventTemplate::class);
+    }
+
+    /**
      * Removes every file that goes with the account: its picture, the
-     * covers of its events, the pictures on its leaflets, messages and
+     * covers of its events and templates, the pictures on its leaflets, messages and
      * comments, and those on other people's comments on its events (they
      * are deleted with the events). The rows go with the account (the
      * foreign keys cascade) but files do not, so each way of deleting an
@@ -463,6 +474,7 @@ class User extends Authenticatable
 
         Storage::disk(ImageProcessor::PRIVATE_DISK)->delete([
             ...EventImage::query()->whereIn('event_id', $this->events()->select('id'))->pluck('path')->all(),
+            ...$this->eventTemplates()->whereNotNull('image_path')->pluck('image_path')->all(),
         ]);
 
         Picture::forgetFiles(
