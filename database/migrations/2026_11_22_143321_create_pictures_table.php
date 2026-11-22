@@ -31,7 +31,7 @@ return new class extends Migration
             $table->string('thumb_path')->nullable();
             $table->unsignedSmallInteger('width')->nullable();
             $table->unsignedSmallInteger('height')->nullable();
-            $table->unsignedTinyInteger('position')->default(0);
+            $table->unsignedSmallInteger('position')->default(0);
             $table->timestamps();
         });
 

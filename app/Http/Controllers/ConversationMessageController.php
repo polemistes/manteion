@@ -21,6 +21,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 class ConversationMessageController extends Controller
@@ -93,11 +94,17 @@ class ConversationMessageController extends Controller
         $sender = $request->user();
         $conversation->loadMissing('participants.user');
 
-        $message = $conversation->messages()->create([
-            'user_id' => $sender->id,
-            'body' => $request->validated('body') ?? '',
-        ]);
-        $message->addPictures($request->pictures(), "messages/{$conversation->id}");
+        // Together or not at all: a message whose pictures could not be
+        // stored must not stay behind without them.
+        $message = DB::transaction(function () use ($request, $conversation, $sender): Message {
+            $message = $conversation->messages()->create([
+                'user_id' => $sender->id,
+                'body' => $request->validated('body') ?? '',
+            ]);
+            $message->addPictures($request->pictures(), "messages/{$conversation->id}");
+
+            return $message;
+        });
         $message->load('pictures')
             ->setRelation('conversation', $conversation)
             ->setRelation('sender', $sender)

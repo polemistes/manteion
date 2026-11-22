@@ -281,6 +281,7 @@ sudo -u manteion php /home/manteion/app/artisan down
 systemctl stop manteion-queue manteion-reverb
 sudo -u manteion sqlite3 /home/manteion/database/manteion.sqlite ".restore '/home/manteion/backups/<date>/manteion.sqlite'"
 sudo -u manteion rsync -a --delete /home/manteion/backups/<date>/uploads/ /home/manteion/storage/app/public/
+sudo -u manteion rsync -a --delete /home/manteion/backups/<date>/private/ /home/manteion/storage/app/private/
 systemctl start manteion-queue manteion-reverb
 sudo -u manteion php /home/manteion/app/artisan up
 ```

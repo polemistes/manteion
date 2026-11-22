@@ -81,12 +81,18 @@ const hidden = computed(() => Math.max(0, props.pictures.length - SHOWN));
     <!-- Several, as tiles. -->
     <ul
         v-else-if="tiles.length"
-        class="grid aspect-[4/3] w-full grid-cols-2 gap-0.5 overflow-hidden"
+        class="grid aspect-[4/3] grid-cols-2 gap-0.5 overflow-hidden"
         :class="[
             tiles.length > 2 ? 'grid-rows-2' : 'grid-rows-1',
-            props.frame ? '' : 'rounded-md',
+            // In a frame the grid has its width from the start (a bubble
+            // shrinks to what is in it, and would grow as tiles load).
+            props.frame ? '' : 'w-full rounded-md',
         ]"
-        :style="props.frame ? { maxWidth: `${props.frame}px` } : undefined"
+        :style="
+            props.frame
+                ? { width: `${props.frame}px`, maxWidth: '100%' }
+                : undefined
+        "
     >
         <li
             v-for="(picture, index) in tiles"

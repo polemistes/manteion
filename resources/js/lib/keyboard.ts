@@ -55,6 +55,7 @@ export function setupKeyboard(): void {
     let width = window.innerWidth;
     let tallest = 0;
     let open = false;
+    let settle: ReturnType<typeof setTimeout> | undefined;
 
     /** Scrolls the field in focus into the part of the screen still free. */
     function reveal(): void {
@@ -96,9 +97,22 @@ export function setupKeyboard(): void {
 
         tallest = Math.max(tallest, height);
 
-        const isOpen =
-            isTyping(document.activeElement) &&
-            tallest - height > OPEN_THRESHOLD;
+        const typing = isTyping(document.activeElement);
+
+        // With no field in focus for a moment there is no keyboard, so
+        // the height now is the full one: a window made lower (split
+        // screen, a tiled window) must not pass for a keyboard later.
+        clearTimeout(settle);
+
+        if (!typing) {
+            settle = setTimeout(() => {
+                if (!isTyping(document.activeElement)) {
+                    tallest = viewport.height * viewport.scale;
+                }
+            }, 600);
+        }
+
+        const isOpen = typing && tallest - height > OPEN_THRESHOLD;
         const covered = isOpen
             ? Math.max(
                   0,

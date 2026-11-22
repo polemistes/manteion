@@ -18,6 +18,7 @@ use App\Services\AdminAlerts;
 use App\Services\LeafletFeedQuery;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -64,13 +65,17 @@ class LeafletController extends Controller
             abort(403);
         }
 
-        $leaflet = $request->user()->leaflets()->create([
-            ...$request->safe()->only(['body', 'visibility']),
-            'organizer_id' => $organizerId,
-            'link_url' => $request->validated('link_url') ?: null,
-        ]);
+        // Together or not at all, should a picture fail to be stored.
+        $leaflet = DB::transaction(function () use ($request, $organizerId): Leaflet {
+            $leaflet = $request->user()->leaflets()->create([
+                ...$request->safe()->only(['body', 'visibility']),
+                'organizer_id' => $organizerId,
+                'link_url' => $request->validated('link_url') ?: null,
+            ]);
+            $leaflet->addPictures($request->pictures(), "leaflets/{$leaflet->id}");
 
-        $leaflet->addPictures($request->pictures(), "leaflets/{$leaflet->id}");
+            return $leaflet;
+        });
         $this->refreshLinkPreview($leaflet);
 
         AdminAlerts::send(AdminAlert::LeafletPublished, $request->user(), [
@@ -119,19 +124,23 @@ class LeafletController extends Controller
         $linkUrl = $request->validated('link_url') ?: null;
         $linkChanged = $linkUrl !== $leaflet->link_url;
 
-        $leaflet->update([
-            ...$request->safe()->only(['body', 'visibility']),
-            'link_url' => $linkUrl,
-        ]);
+        // The new pictures first, with the text: if one cannot be stored,
+        // nothing has changed. Only then do those taken off go, since a
+        // deleted file does not come back with a transaction.
+        DB::transaction(function () use ($request, $leaflet, $linkUrl): void {
+            $leaflet->update([
+                ...$request->safe()->only(['body', 'visibility']),
+                'link_url' => $linkUrl,
+            ]);
 
-        // The pictures the writer took off, or all of them for a link.
-        $leaflet->pictures()
-            ->when($linkUrl === null, fn ($pictures) => $pictures->whereIn('id', array_map(intval(...), (array) $request->validated('remove_pictures', []))))
-            ->get()
-            ->each
-            ->delete();
+            $taken = $leaflet->pictures()
+                ->when($linkUrl === null, fn ($pictures) => $pictures->whereIn('id', array_map(intval(...), (array) $request->validated('remove_pictures', []))))
+                ->get();
 
-        $leaflet->addPictures($request->pictures(), "leaflets/{$leaflet->id}");
+            $leaflet->addPictures($request->pictures(), "leaflets/{$leaflet->id}");
+
+            $taken->each->delete();
+        });
 
         if ($linkChanged) {
             $this->refreshLinkPreview($leaflet);

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Copy the database and the uploaded files into /home/manteion/backups/<date>,
-# keeping two weeks. Run as the manteion user (the manteion-backup timer does
+# keeping two weeks: the public ones (avatars) and the private ones (event
+# covers and the pictures on leaflets, messages and comments). Run as the manteion user (the manteion-backup timer does
 # it nightly).
 set -euo pipefail
 
@@ -14,6 +15,7 @@ mkdir -p "$DEST"
 # .backup takes a consistent copy even while the app is writing to it.
 sqlite3 "$DB_FILE" ".backup '$DEST/manteion.sqlite'"
 rsync -a --delete "$BASE/storage/app/public/" "$DEST/uploads/"
+rsync -a --delete "$BASE/storage/app/private/" "$DEST/private/"
 
 # Keep the last 14 days (the copies taken before deploys are kept apart).
 find "$BASE/backups" -maxdepth 1 -mindepth 1 -type d -name '20*' -mtime +14 -exec rm -rf {} +

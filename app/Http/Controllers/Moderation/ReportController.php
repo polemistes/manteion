@@ -26,6 +26,13 @@ class ReportController extends Controller
             ->paginate(25)
             ->withQueryString();
 
+        // The pictures of what was reported, in one query for each kind.
+        $reports->loadMorph('reportable', [
+            Message::class => ['pictures'],
+            EventComment::class => ['pictures'],
+            Leaflet::class => ['pictures'],
+        ]);
+
         $summaries = $reports->getCollection()
             ->filter(fn (Report $report) => $report->reportable !== null)
             ->map(fn (Report $report) => [

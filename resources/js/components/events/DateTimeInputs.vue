@@ -98,6 +98,10 @@ function onTimeInput(event: Event): void {
     if (time.value && (!day.value || dayDerived.value) && props.after) {
         day.value = derivedDay();
         dayDerived.value = true;
+    } else if (!time.value && dayDerived.value) {
+        // The time was what the day stood on: without it there is no end.
+        day.value = '';
+        dayDerived.value = false;
     }
 }
 
@@ -107,12 +111,14 @@ function clear(): void {
     dayDerived.value = false;
 }
 
-// A day filled in from the start moves with it.
+// A day filled in from the start moves with it, and a time typed before
+// there was a start gets its day once there is one.
 watch(
     () => props.after,
     () => {
-        if (dayDerived.value && time.value) {
+        if (time.value && (dayDerived.value || !day.value)) {
             day.value = derivedDay();
+            dayDerived.value = day.value !== '';
         }
     },
 );

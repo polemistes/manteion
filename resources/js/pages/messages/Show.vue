@@ -521,6 +521,15 @@ async function send(draft: MessageDraft, retryOf?: ChatMessage): Promise<void> {
             setExtra(response.message);
         }
 
+        // Someone looking at the pictures while they were being sent goes
+        // on looking at the server's.
+        if (viewing.value.pictures === pictures) {
+            viewing.value = {
+                pictures: sent,
+                index: sent.length > 0 ? viewing.value.index : null,
+            };
+        }
+
         for (const picture of pictures) {
             URL.revokeObjectURL(picture.url);
         }

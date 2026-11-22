@@ -12,6 +12,7 @@ use App\Notifications\NewEventComment;
 use App\Services\ActivityFeed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 class EventCommentController extends Controller
@@ -24,12 +25,17 @@ class EventCommentController extends Controller
             && $event->organizer_id !== null
             && $request->user()->organizerIds()->contains($event->organizer_id);
 
-        $comment = $event->comments()->create([
-            'user_id' => $request->user()->id,
-            'organizer_id' => $asOrganizer ? $event->organizer_id : null,
-            'body' => $request->validated('body') ?? '',
-        ]);
-        $comment->addPictures($request->pictures(), "comments/{$event->id}");
+        // Together or not at all, should a picture fail to be stored.
+        $comment = DB::transaction(function () use ($request, $event, $asOrganizer): EventComment {
+            $comment = $event->comments()->create([
+                'user_id' => $request->user()->id,
+                'organizer_id' => $asOrganizer ? $event->organizer_id : null,
+                'body' => $request->validated('body') ?? '',
+            ]);
+            $comment->addPictures($request->pictures(), "comments/{$event->id}");
+
+            return $comment;
+        });
 
         // The hosts hear about everyone's comments but their own: the person
         // who made the event, or every spokesperson of the organizer.

@@ -63,6 +63,7 @@ function onKeydown(event: KeyboardEvent): void {
 let swipeFrom: { x: number; y: number } | null = null;
 
 function onPointerDown(event: PointerEvent): void {
+    swiped = false;
     swipeFrom =
         event.pointerType === 'touch'
             ? { x: event.clientX, y: event.clientY }

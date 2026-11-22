@@ -259,7 +259,6 @@ onBeforeUnmount(cancelPress);
                             v-if="pictures.length"
                             :pictures="pictures"
                             :frame="IMAGE_FRAME"
-                            :class="pictures.length > 1 ? 'w-[320px]' : ''"
                             @open="emit('viewImage', $event)"
                         />
                         <p

@@ -7,6 +7,8 @@ use App\Services\ImageProcessor;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 /**
  * For what can carry pictures: a chat message, a leaflet, an event comment.
@@ -34,7 +36,10 @@ trait HasPictures
 
     /**
      * Stores uploads as this owner's next pictures, each with a smaller
-     * copy for grids, under `$directory` on the private disk.
+     * copy for grids, under `$directory` on the private disk. All or
+     * none: when one cannot be stored (a file that turns out not to
+     * decode, a full disk), the files already written are removed and the
+     * error goes on to the caller, whose transaction takes the rows back.
      *
      * @param  array<int, UploadedFile>  $files
      */
@@ -48,8 +53,19 @@ trait HasPictures
         $last = $this->pictures()->max('position');
         $position = $last === null ? 0 : (int) $last + 1;
 
-        foreach (array_values($files) as $file) {
-            $this->pictures()->create([...$processor->storePicture($file, $directory), 'position' => $position++]);
+        $written = [];
+
+        try {
+            foreach (array_values($files) as $file) {
+                $stored = $processor->storePicture($file, $directory);
+                $written = [...$written, $stored['path'], ...array_filter([$stored['thumb_path']])];
+
+                $this->pictures()->create([...$stored, 'position' => $position++]);
+            }
+        } catch (Throwable $exception) {
+            Storage::disk(ImageProcessor::PRIVATE_DISK)->delete($written);
+
+            throw $exception;
         }
 
         $this->unsetRelation('pictures');
