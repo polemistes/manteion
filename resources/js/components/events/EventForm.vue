@@ -6,7 +6,7 @@ export const EVENT_FORM_ID = 'event-form';
 <script setup lang="ts">
 import { Form } from '@inertiajs/vue3';
 import { Clock, Earth, Lock, UserPlus } from '@lucide/vue';
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import CategoryPicker from '@/components/CategoryPicker.vue';
 import ImageCropper from '@/components/ImageCropper.vue';
@@ -19,6 +19,8 @@ import SelectField from '@/components/ui/SelectField.vue';
 import SwitchRow from '@/components/ui/SwitchRow.vue';
 import TextArea from '@/components/ui/TextArea.vue';
 import TextField from '@/components/ui/TextField.vue';
+import { confirmAction } from '@/composables/useConfirm';
+import { useLeaveGuard } from '@/composables/useLeaveGuard';
 import type { CategoryOption, EventCover, OrganizerSummary } from '@/events';
 import { cityOfTimeZone, sameClock, useDates } from '@/lib/dates';
 import { usePlaces } from '@/lib/places';
@@ -63,6 +65,10 @@ export interface EventFormValues {
  * own while there is no pin. A line under the times says which clock that
  * is, and "Change" lets the host pick another zone, or none (an online
  * event), in which case the event shows no local time.
+ *
+ * A form with changes in it asks before it is left (see useLeaveGuard), and
+ * when the server refuses it, the first field at fault is brought into
+ * view instead of the page jumping to its top.
  */
 const props = withDefaults(
     defineProps<{
@@ -80,8 +86,16 @@ const props = withDefaults(
         organizers?: OrganizerSummary[];
         /** A cover picture to start with (an imported event's). */
         initialImage?: Blob | null;
+        /** The form opens with work in it already (an imported event). */
+        startsChanged?: boolean;
     }>(),
-    { note: undefined, isNew: false, organizers: () => [], initialImage: null },
+    {
+        note: undefined,
+        isNew: false,
+        organizers: () => [],
+        initialImage: null,
+        startsChanged: false,
+    },
 );
 
 const emit = defineEmits<{ removeImage: [] }>();
@@ -184,6 +198,75 @@ async function findPlaceTimeZone(place: LocationValue): Promise<void> {
 function onLocationChange(next: LocationValue): void {
     location.value = next;
     void findPlaceTimeZone(next);
+}
+
+// A place found by searching names itself, unless the host already has.
+function onPlacePicked(found: string): void {
+    if (place.value.trim() === '') {
+        place.value = found.slice(0, 255);
+    }
+}
+
+// What the form holds, as it would be sent (a picture as its name and
+// size), to tell whether anything has changed since it opened.
+function contents(): string {
+    const form = document.getElementById(EVENT_FORM_ID);
+
+    if (!(form instanceof HTMLFormElement)) {
+        return '';
+    }
+
+    return JSON.stringify(
+        [...new FormData(form).entries()].map(([key, value]) => [
+            key,
+            typeof value === 'string' ? value : `${value.name}:${value.size}`,
+        ]),
+    );
+}
+
+let opened = '';
+
+onMounted(async () => {
+    await nextTick();
+    opened = contents();
+});
+
+useLeaveGuard({
+    when: () =>
+        !processing.value &&
+        opened !== '' &&
+        (props.startsChanged || contents() !== opened),
+    ask: () =>
+        confirmAction({
+            title: t('events.form.leaveTitle'),
+            message: t('events.form.leaveMessage'),
+            confirmLabel: t('events.form.leaveConfirm'),
+            cancelLabel: t('events.form.leaveStay'),
+        }),
+});
+
+/** Brings the first field the server refused into view. */
+async function showFirstError(): Promise<void> {
+    await nextTick();
+
+    const first = document
+        .getElementById(EVENT_FORM_ID)
+        ?.querySelector<HTMLElement>('[aria-invalid="true"], .text-danger');
+
+    if (!first) {
+        return;
+    }
+
+    first.scrollIntoView({ block: 'center', behavior: 'smooth' });
+
+    // With a keyboard at hand, put the cursor there too; on a touch screen
+    // that would only throw the on-screen keyboard over the message.
+    if (
+        first.matches('input, textarea, select') &&
+        window.matchMedia('(pointer: fine)').matches
+    ) {
+        first.focus({ preventScroll: true });
+    }
 }
 
 // An event opened with a hand-picked zone, or none, has not asked what
@@ -327,8 +410,10 @@ const visibilityOptions = [
         v-bind="props.form"
         #default="{ errors }"
         class="pb-[calc(116px+env(safe-area-inset-bottom))] sm:pb-0 xl:grid xl:grid-cols-[minmax(0,1fr)_var(--spacing-aside)] xl:items-start xl:gap-12"
+        :options="{ preserveScroll: 'errors' }"
         @start="processing = true"
         @finish="processing = false"
+        @error="showFirstError"
     >
         <div class="flex min-w-0 flex-col gap-7">
             <section class="flex flex-col gap-1.5">
@@ -416,6 +501,7 @@ const visibilityOptions = [
                     :default-value="props.values.ends_at"
                     :time-zone="timeZone"
                     :error="errors.ends_at"
+                    :after="startsAt"
                     default-time="22:00"
                     optional
                     @change="endsAt = $event"
@@ -478,6 +564,7 @@ const visibilityOptions = [
                         country_code: props.values.country_code,
                     }"
                     @change="onLocationChange"
+                    @picked="onPlacePicked"
                 />
             </section>
 

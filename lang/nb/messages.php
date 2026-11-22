@@ -12,6 +12,14 @@ return [
         'already_following' => 'Du følger allerede denne brukeren, eller har en forespørsel som venter.',
     ],
 
+    'event' => [
+        'ends_after_start' => 'Arrangementet må slutte etter at det starter.',
+        'starts_required' => 'Si når arrangementet starter.',
+        'name_required' => 'Gi arrangementet et navn.',
+        'description_required' => 'Fortell gjestene litt om det.',
+        'image_too_large' => 'Bildet er for stort. Prøv et under 5 MB.',
+    ],
+
     'event_import' => [
         'not_a_facebook_event' => 'Det er ikke en lenke til et Facebook-arrangement.',
     ],

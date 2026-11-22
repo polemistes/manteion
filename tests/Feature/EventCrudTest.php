@@ -256,3 +256,27 @@ test('a time sent with another offset is stored as UTC', function () {
     expect($event->starts_at->toDateTimeString())->toBe('2026-11-10 17:00:00')
         ->and($event->ends_at->toDateTimeString())->toBe('2026-11-10 21:30:00');
 });
+
+test('what is wrong with an event is said in plain words, in the host\'s language', function (string $locale, string $endsMessage, string $nameMessage) {
+    $user = User::factory()->create(['locale' => $locale]);
+    $event = Event::factory()->for($user, 'owner')->create();
+    $starts = now()->addWeek();
+    $payload = [
+        'name' => '',
+        'description' => 'Bring snacks.',
+        'starts_at' => $starts->toDateTimeString(),
+        'ends_at' => $starts->copy()->subHour()->toDateTimeString(),
+        'visibility' => 'private',
+        'allow_invitee_invites' => false,
+        'allow_invitee_comments' => true,
+    ];
+
+    $this->actingAs($user)->post('/events', $payload)
+        ->assertSessionHasErrors(['ends_at' => $endsMessage, 'name' => $nameMessage]);
+
+    $this->actingAs($user)->put("/events/{$event->id}", $payload)
+        ->assertSessionHasErrors(['ends_at' => $endsMessage, 'name' => $nameMessage]);
+})->with([
+    'English' => ['en', 'The event has to end after it starts.', 'Give the event a name.'],
+    'Norwegian' => ['nb', 'Arrangementet må slutte etter at det starter.', 'Gi arrangementet et navn.'],
+]);

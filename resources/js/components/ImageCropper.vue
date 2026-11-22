@@ -21,6 +21,11 @@ import SegmentedControl from '@/components/ui/SegmentedControl.vue';
  * The prepared file is put in a hidden file input named `name`. `preview`
  * reports the picture shown and its fit as they change.
  *
+ * What the crop frame shows is what is sent: the picture is prepared as
+ * soon as it is chosen and again after every drag or zoom, so a form sent
+ * while the crop is still open carries it. "Use this photo" only closes the
+ * crop; Cancel puts back whatever was there before it opened.
+ *
  * `initialFile` is a picture chosen for the uploader beforehand (an
  * imported event's cover): it is prepared at once, whole or cropped around
  * its middle as its shape says, so the form can be sent without touching
@@ -78,9 +83,18 @@ const removed = ref(false);
 const isCropping = ref(false);
 // Set when a new picture is chosen: its shape picks the fit once.
 let choosingFit = false;
-// Set while `initialFile` is taken in: the fit is then set without opening
-// the crop.
-let adopting = false;
+// Set while the fit is changed by the component itself (a picture taken in,
+// a crop cancelled), so the switch below does not answer it.
+let settingFit = false;
+// The prepared picture, kept so a cancelled crop can put it back.
+let preparedBlob: Blob | null = null;
+// What was there when the crop opened.
+let before: {
+    rawUrl: string | null;
+    blob: Blob | null;
+    fit: 'cover' | 'contain';
+    removed: boolean;
+} | null = null;
 
 const fit = ref<'cover' | 'contain'>(props.initialFit ?? 'cover');
 
@@ -166,8 +180,51 @@ function setFile(blob: Blob): void {
         URL.revokeObjectURL(preparedPreviewUrl.value);
     }
 
+    preparedBlob = blob;
     preparedPreviewUrl.value = URL.createObjectURL(blob);
     removed.value = false;
+}
+
+function clearFile(): void {
+    if (fileInput.value) {
+        fileInput.value.value = '';
+    }
+
+    if (preparedPreviewUrl.value) {
+        URL.revokeObjectURL(preparedPreviewUrl.value);
+    }
+
+    preparedBlob = null;
+    preparedPreviewUrl.value = null;
+}
+
+/** Sets the fit without the switch below reacting to it. */
+async function setFitQuietly(next: 'cover' | 'contain'): Promise<void> {
+    settingFit = true;
+    fit.value = next;
+    await nextTick();
+    settingFit = false;
+}
+
+/** Remembers what is there now, for Cancel, as a crop opens. */
+function rememberBefore(
+    rawUrl: string | null,
+    fitBefore: 'cover' | 'contain' = fit.value,
+): void {
+    before = {
+        rawUrl,
+        blob: preparedBlob,
+        fit: fitBefore,
+        removed: removed.value,
+    };
+}
+
+function forgetBefore(): void {
+    if (before?.rawUrl && before.rawUrl !== rawObjectUrl.value) {
+        URL.revokeObjectURL(before.rawUrl);
+    }
+
+    before = null;
 }
 
 function canvasBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
@@ -263,10 +320,7 @@ async function adopt(file: Blob): Promise<void> {
         props.allowWhole &&
         image.naturalWidth / image.naturalHeight < PHOTO_MIN_ASPECT;
 
-    adopting = true;
-    fit.value = whole ? 'contain' : 'cover';
-    await nextTick();
-    adopting = false;
+    await setFitQuietly(whole ? 'contain' : 'cover');
 
     if (whole) {
         await prepareWhole();
@@ -288,16 +342,22 @@ function onFileSelected(event: Event): void {
         return;
     }
 
-    if (rawObjectUrl.value) {
-        URL.revokeObjectURL(rawObjectUrl.value);
+    // A second pick while the crop is open replaces the first: Cancel
+    // still goes back to what was there before either.
+    if (before) {
+        if (rawObjectUrl.value && rawObjectUrl.value !== before.rawUrl) {
+            URL.revokeObjectURL(rawObjectUrl.value);
+        }
+    } else {
+        rememberBefore(rawObjectUrl.value);
     }
 
     rawObjectUrl.value = URL.createObjectURL(file);
-    choosingFit = props.allowWhole;
+    choosingFit = true;
     isCropping.value = true;
 }
 
-function onImageLoad(): void {
+async function onImageLoad(): Promise<void> {
     if (!imageEl.value) {
         return;
     }
@@ -308,23 +368,43 @@ function onImageLoad(): void {
     offsetX.value = 0;
     offsetY.value = 0;
 
-    if (!choosingFit) {
-        return;
+    if (choosingFit) {
+        choosingFit = false;
+
+        // A poster-shaped picture is shown whole unless the uploader says
+        // not: it is prepared at once, with no crop to confirm.
+        if (
+            props.allowWhole &&
+            naturalWidth.value / naturalHeight.value < PHOTO_MIN_ASPECT
+        ) {
+            await setFitQuietly('contain');
+            isCropping.value = false;
+            forgetBefore();
+            resetPicker();
+            await prepareWhole();
+
+            return;
+        }
+
+        await setFitQuietly('cover');
     }
 
-    choosingFit = false;
+    // The frame as it opens is already a choice: prepare it.
+    await commitCrop();
+}
 
-    // A poster-shaped picture is shown whole unless the uploader says not.
-    if (naturalWidth.value / naturalHeight.value < PHOTO_MIN_ASPECT) {
-        fit.value = 'contain';
-    } else {
-        fit.value = 'cover';
-    }
+let commitTimer: ReturnType<typeof setTimeout> | undefined;
+
+/** Prepares the frame again shortly after it stops moving. */
+function commitSoon(): void {
+    clearTimeout(commitTimer);
+    commitTimer = setTimeout(() => void commitCrop(), 150);
 }
 
 function onZoomInput(event: Event): void {
     scale.value = Number((event.target as HTMLInputElement).value);
     applyOffset(offsetX.value, offsetY.value);
+    commitSoon();
 }
 
 let dragStart: {
@@ -354,21 +434,66 @@ function onPointerMove(event: PointerEvent): void {
 }
 
 function onPointerUp(): void {
-    dragStart = null;
+    if (dragStart) {
+        dragStart = null;
+        commitSoon();
+    }
 }
 
-function cancelCropping(): void {
-    isCropping.value = false;
-
+/** So the same file can be picked again. */
+function resetPicker(): void {
     if (pickerInput.value) {
         pickerInput.value.value = '';
     }
 }
 
-async function confirmCrop(): Promise<void> {
-    if (!imageEl.value) {
+async function cancelCropping(): Promise<void> {
+    clearTimeout(commitTimer);
+    commitTicket += 1;
+    isCropping.value = false;
+    resetPicker();
+
+    if (!before) {
         return;
     }
+
+    const previous = before;
+
+    before = null;
+
+    if (rawObjectUrl.value && rawObjectUrl.value !== previous.rawUrl) {
+        URL.revokeObjectURL(rawObjectUrl.value);
+    }
+
+    rawObjectUrl.value = previous.rawUrl;
+    await setFitQuietly(previous.fit);
+
+    if (previous.blob) {
+        setFile(previous.blob);
+    } else {
+        clearFile();
+    }
+
+    removed.value = previous.removed;
+}
+
+async function confirmCrop(): Promise<void> {
+    clearTimeout(commitTimer);
+    await commitCrop();
+    isCropping.value = false;
+    forgetBefore();
+    resetPicker();
+}
+
+let commitTicket = 0;
+
+/** Prepares what the frame shows now; only the newest run counts. */
+async function commitCrop(): Promise<void> {
+    if (!imageEl.value || !isCropping.value || !naturalWidth.value) {
+        return;
+    }
+
+    const ticket = ++commitTicket;
 
     const cropWidth = VIEWPORT_WIDTH / scale.value;
     const cropHeight = viewportHeight.value / scale.value;
@@ -404,45 +529,49 @@ async function confirmCrop(): Promise<void> {
 
     const blob = await canvasBlob(canvas);
 
-    if (blob) {
+    if (blob && ticket === commitTicket && isCropping.value) {
         setFile(blob);
-    }
-
-    isCropping.value = false;
-
-    if (pickerInput.value) {
-        pickerInput.value.value = '';
     }
 }
 
 // Switching between "fill" and "whole" after choosing a picture: whole
 // is prepared at once, fill opens the crop.
 watch(fit, (next, previous) => {
-    if (next === previous || !rawObjectUrl.value || adopting) {
+    if (next === previous || !rawObjectUrl.value || settingFit) {
         return;
     }
 
     if (next === 'contain') {
+        clearTimeout(commitTimer);
+        commitTicket += 1;
         isCropping.value = false;
+        forgetBefore();
         void prepareWhole();
     } else {
+        rememberBefore(rawObjectUrl.value, previous);
         isCropping.value = true;
     }
 });
 
 function remove(): void {
+    clearTimeout(commitTimer);
+    commitTicket += 1;
     removed.value = true;
     isCropping.value = false;
-
-    if (fileInput.value) {
-        fileInput.value.value = '';
-    }
+    forgetBefore();
+    clearFile();
 
     emit('remove');
 }
 
 onBeforeUnmount(() => {
-    for (const url of [rawObjectUrl.value, preparedPreviewUrl.value]) {
+    clearTimeout(commitTimer);
+
+    for (const url of new Set([
+        rawObjectUrl.value,
+        preparedPreviewUrl.value,
+        before?.rawUrl ?? null,
+    ])) {
         if (url) {
             URL.revokeObjectURL(url);
         }

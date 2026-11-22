@@ -8,5 +8,7 @@
     "pinPlaced": "Nålen står på kartet",
     "tapToPlace": "Trykk på kartet for å plassere nålen, eller søk over.",
     "zoomIn": "Zoom inn",
-    "zoomOut": "Zoom ut"
+    "zoomOut": "Zoom ut",
+    "wheelHint": "Hold {key} og rull for å zoome kartet",
+    "twoFingers": "Flytt kartet med to fingre."
 }

@@ -11,6 +11,8 @@ export interface NominatimAddress {
 
 export interface NominatimResult {
     display_name: string;
+    /** What the place itself is called ("Kafé Hærverk"); empty for an address. */
+    name?: string;
     lat: string;
     lon: string;
     address?: NominatimAddress;

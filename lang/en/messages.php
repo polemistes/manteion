@@ -12,6 +12,14 @@ return [
         'already_following' => 'You are already following this user, or have a pending request.',
     ],
 
+    'event' => [
+        'ends_after_start' => 'The event has to end after it starts.',
+        'starts_required' => 'Say when the event starts.',
+        'name_required' => 'Give the event a name.',
+        'description_required' => 'Tell your guests a little about it.',
+        'image_too_large' => 'That picture is too large. Try one under 5 MB.',
+    ],
+
     'event_import' => [
         'not_a_facebook_event' => 'That is not a link to a Facebook event.',
     ],

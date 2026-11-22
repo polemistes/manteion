@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\EventTimeZoneMode;
 use App\Enums\EventVisibility;
+use App\Http\Requests\Concerns\ExplainsEventErrors;
 use App\Http\Requests\Concerns\NormalizesEventTimes;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -11,6 +12,7 @@ use Illuminate\Validation\Rule;
 
 class StoreEventRequest extends FormRequest
 {
+    use ExplainsEventErrors;
     use NormalizesEventTimes;
 
     /**

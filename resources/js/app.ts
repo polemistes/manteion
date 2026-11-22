@@ -1,6 +1,7 @@
 import { createInertiaApp, router } from '@inertiajs/vue3';
 import { createAppI18n } from './i18n';
 import AppLayout from './layouts/AppLayout.vue';
+import { installLeaveGuard } from './lib/leaveGuard';
 import { setupNativeShell, startNativePush } from './native/shell';
 import { setupInstallPrompt } from './pwa/install';
 import { registerServiceWorker } from './pwa/serviceWorker';
@@ -10,6 +11,8 @@ import { applyTheme } from './theme';
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 setupNativeShell();
+// Before Inertia starts: it must hear of back and forward first.
+installLeaveGuard();
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),

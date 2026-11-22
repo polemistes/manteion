@@ -92,6 +92,7 @@ function startFrom(event: ImportedEvent, cover: Blob | null): void {
             :organizers="props.organizers"
             :values="values"
             :initial-image="importedCover"
+            :starts-changed="formKey > 0"
             :submit-label="t('events.form.create')"
             :processing-label="t('events.form.creating')"
             :note="t('events.form.inviteNext')"

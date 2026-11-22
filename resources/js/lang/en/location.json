@@ -8,5 +8,7 @@
     "pinPlaced": "Pin placed on the map",
     "tapToPlace": "Tap the map to place the pin, or search above.",
     "zoomIn": "Zoom in",
-    "zoomOut": "Zoom out"
+    "zoomOut": "Zoom out",
+    "wheelHint": "Hold {key} and scroll to zoom the map",
+    "twoFingers": "Move the map with two fingers."
 }

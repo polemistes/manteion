@@ -46,8 +46,15 @@ const props = withDefaults(
     { initialValue: null },
 );
 
-/** The pin and the place found for it, whenever either changes. */
-const emit = defineEmits<{ change: [value: LocationValue] }>();
+/**
+ * `change`: the pin and the place found for it, whenever either changes.
+ * `picked`: what a chosen search result is called, for a form that wants
+ * to name the place after it.
+ */
+const emit = defineEmits<{
+    change: [value: LocationValue];
+    picked: [name: string];
+}>();
 
 const { t, locale } = useI18n();
 const { cityAndCountry } = usePlaces();
@@ -81,6 +88,30 @@ const { results, searching, error, search, clearResults } = useNominatimSearch(
 const mapContainer = ref<HTMLDivElement | null>(null);
 let map: L.Map | null = null;
 let marker: L.Marker | null = null;
+
+// The map sits in a page that scrolls, so it must not take the scrolling
+// for itself. With a mouse the wheel scrolls the page unless Ctrl (⌘ on a
+// Mac) is held, which is also what a trackpad pinch sends; a hint says so.
+// On a touch screen one finger scrolls the page and two move the map.
+// The wheel is caught on the box around the map, on its way down to it:
+// Leaflet's own listener stays on (so it can stop the browser from zooming
+// the whole page on Ctrl + wheel) and simply never hears the plain wheel.
+const wheelHint = ref(false);
+const zoomKey = ref('Ctrl');
+let wheelHintTimer: ReturnType<typeof setTimeout> | undefined;
+
+function onWheel(event: WheelEvent): void {
+    if (event.ctrlKey || event.metaKey) {
+        wheelHint.value = false;
+
+        return;
+    }
+
+    event.stopPropagation();
+    wheelHint.value = true;
+    clearTimeout(wheelHintTimer);
+    wheelHintTimer = setTimeout(() => (wheelHint.value = false), 1600);
+}
 
 function placeMarker(lat: number, lng: number): void {
     if (!map) {
@@ -142,6 +173,7 @@ function selectResult(result: NominatimResult): void {
     searchQuery.value = result.display_name;
     picked.value = true;
     clearResults();
+    emit('picked', result.name?.trim() || result.display_name.split(',')[0]);
 
     placeMarker(lat, lng);
     map?.setView([lat, lng], PIN_ZOOM);
@@ -179,7 +211,15 @@ onMounted(() => {
 
     // Zoom buttons and the credit in the user's language: Leaflet's own are
     // English ("Zoom in", "A JavaScript library for interactive maps").
-    map = L.map(mapContainer.value, { zoomControl: false }).setView(
+    const touchScreen = window.matchMedia('(pointer: coarse)').matches;
+
+    zoomKey.value = /Mac|iPhone|iPad/.test(navigator.userAgent) ? '⌘' : 'Ctrl';
+
+    map = L.map(mapContainer.value, {
+        zoomControl: false,
+        // One finger is for the page; two fingers pinch and move the map.
+        dragging: !touchScreen,
+    }).setView(
         hasInitialPin ? [latitude.value!, longitude.value!] : DEFAULT_CENTER,
         hasInitialPin ? PIN_ZOOM : DEFAULT_ZOOM,
     );
@@ -208,6 +248,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+    clearTimeout(wheelHintTimer);
     map?.remove();
     map = null;
     marker = null;
@@ -278,10 +319,19 @@ onUnmounted(() => {
         <div
             class="isolate overflow-hidden rounded-lg border border-line bg-surface"
         >
-            <div
-                ref="mapContainer"
-                class="map-tiles h-[180px] w-full bg-surface-2"
-            ></div>
+            <div class="relative" @wheel.capture="onWheel">
+                <div
+                    ref="mapContainer"
+                    class="map-tiles h-[180px] w-full bg-surface-2"
+                ></div>
+                <p
+                    v-if="wheelHint"
+                    class="pointer-events-none absolute inset-x-0 bottom-3 z-[1000] mx-auto w-fit rounded-full bg-ink px-3 py-1 text-meta font-medium text-on-ink shadow-sm"
+                    aria-hidden="true"
+                >
+                    {{ t('location.wheelHint', { key: zoomKey }) }}
+                </p>
+            </div>
             <div
                 class="flex min-h-12 items-center gap-3 px-3.5 py-2 text-meta text-ink-muted"
             >
@@ -297,6 +347,9 @@ onUnmounted(() => {
                         t('location.pinPlaced')
                     }}</template>
                     <template v-else>{{ t('location.tapToPlace') }}</template>
+                    <span class="hidden pointer-coarse:inline">
+                        {{ t('location.twoFingers') }}
+                    </span>
                 </span>
                 <button
                     v-if="latitude !== null || longitude !== null"
