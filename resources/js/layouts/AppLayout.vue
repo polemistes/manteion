@@ -300,7 +300,7 @@ onIncomingMessage((message) => {
         <nav
             v-if="hasTabBar"
             :aria-label="t('ui.mainNavigation')"
-            class="skin-tabbar fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] [--badge-ring:var(--color-surface)] sm:hidden"
+            class="skin-tabbar fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] [--badge-ring:var(--color-surface)] sm:hidden keyboard:hidden"
         >
             <div class="flex h-tabbar px-1">
                 <Link

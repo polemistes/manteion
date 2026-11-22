@@ -803,7 +803,7 @@ function searchable(): void {
     <!-- Phone: the answer bar. -->
     <div
         v-if="canAnswer"
-        class="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface px-4 pt-2.5 pb-[calc(10px+env(safe-area-inset-bottom))] shadow-[0_-8px_24px_-16px_var(--shadow-tint-strong)] sm:hidden"
+        class="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface px-4 pt-2.5 pb-[calc(10px+env(safe-area-inset-bottom))] shadow-[0_-8px_24px_-16px_var(--shadow-tint-strong)] sm:hidden keyboard:hidden"
     >
         <div class="mb-2 flex items-center justify-between gap-2">
             <p class="font-semibold text-ink">{{ answerState }}</p>

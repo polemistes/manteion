@@ -695,7 +695,7 @@ const visibilityOptions = [
 
         <!-- Phone: the submit bar. -->
         <div
-            class="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface px-4 pt-3 pb-[calc(12px+env(safe-area-inset-bottom))] sm:hidden"
+            class="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface px-4 pt-3 pb-[calc(12px+env(safe-area-inset-bottom))] sm:hidden keyboard:hidden"
         >
             <Button
                 type="submit"

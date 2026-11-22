@@ -1,6 +1,7 @@
 import { createInertiaApp, router } from '@inertiajs/vue3';
 import { createAppI18n } from './i18n';
 import AppLayout from './layouts/AppLayout.vue';
+import { setupKeyboard } from './lib/keyboard';
 import { installLeaveGuard } from './lib/leaveGuard';
 import { setupNativeShell, startNativePush } from './native/shell';
 import { setupInstallPrompt } from './pwa/install';
@@ -37,6 +38,7 @@ createInertiaApp({
         // the page's counts when hydration compares against the server.
         if (!ssr) {
             setupRealtime(page);
+            setupKeyboard();
             registerServiceWorker();
             setupInstallPrompt();
             startNativePush(page, (key, named) =>
