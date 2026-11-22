@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection as SupportCollection;
 
 /**
  * @property int $id
@@ -142,6 +143,21 @@ class Event extends Model
     public function attendees(): HasMany
     {
         return $this->hasMany(EventAttendee::class);
+    }
+
+    /**
+     * The guests (everyone on the guest list, whatever they answered) who
+     * are this person's friends: the ones a host can keep as a group and
+     * invite again.
+     *
+     * @return SupportCollection<int, int>
+     */
+    public function friendGuestIdsOf(User $user): SupportCollection
+    {
+        return $this->attendees->pluck('user_id')
+            ->intersect($user->friendIds())
+            ->reject(fn (int $id) => $id === $user->id)
+            ->values();
     }
 
     /**

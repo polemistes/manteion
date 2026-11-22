@@ -34,6 +34,10 @@ return [
         'not_a_facebook_event' => 'Det er ikke en lenke til et Facebook-arrangement.',
     ],
 
+    'event_guest_group' => [
+        'no_friends' => 'Ingen av gjestene er vennene dine, så det er ingen å legge i gruppen.',
+    ],
+
     'event_invitation' => [
         'friends_only' => 'Du kan bare invitere vennene dine.',
     ],

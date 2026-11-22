@@ -9,6 +9,7 @@ import {
     Search,
     Trash,
     UserPlus,
+    Users,
 } from '@lucide/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -20,8 +21,8 @@ import { create as createEvent, edit as editEvent } from '@/routes/events';
 import eventTemplate from '@/routes/events/template';
 
 /**
- * The "⋯" menu of an event's page: edit, invite, start a new event from
- * it or save it as a template (its hosts), make searchable, report and
+ * The "⋯" menu of an event's page: edit, invite, keep the guests as a
+ * group, start a new event from it or save it as a template (its hosts), make searchable, report and
  * delete, each only for those who may. The page shows it in three
  * places (the phone's top bar, over the cover on a phone, and beside Share
  * from 640), so the items live here once; `floating` draws the button for
@@ -37,6 +38,8 @@ const props = withDefaults(
             can_invite: boolean;
             can_delete: boolean;
             can_report: boolean;
+            /** How many guests a host could keep as a group of friends. */
+            friend_guest_count: number;
         };
         floating?: boolean;
     }>(),
@@ -45,6 +48,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
     invite: [];
+    saveGuests: [];
     searchable: [];
     report: [];
     delete: [];
@@ -88,6 +92,12 @@ const hasItems = computed(
             :icon="UserPlus"
             @select="emit('invite')"
             >{{ t('events.show.invite') }}</MenuItem
+        >
+        <MenuItem
+            v-if="props.event.is_owner && props.event.friend_guest_count > 0"
+            :icon="Users"
+            @select="emit('saveGuests')"
+            >{{ t('events.show.saveGuests') }}</MenuItem
         >
         <template v-if="props.event.is_owner">
             <MenuItem

@@ -119,7 +119,15 @@
         "spokesperson": "Talsperson: {name}",
         "commentAs": "Kommenter som {name}",
         "commentAsHint": "Navnet ditt vises ved siden av.",
-        "inviteHintOrganizer": "Vennene dine og de som følger {name}. De får en invitasjon og kan svare med en gang."
+        "inviteHintOrganizer": "Vennene dine og de som følger {name}. De får en invitasjon og kan svare med en gang.",
+        "inviteGroups": "Hele grupper",
+        "saveGuests": "Lagre gjestene som gruppe",
+        "guestGroupTitle": "Lagre gjestene som en gruppe",
+        "guestGroupCount": "{n} av gjestene er vennen din og blir med i gruppen. | {n} av gjestene er vennene dine og blir med i gruppen.",
+        "guestGroupHint": "Neste gang kan du invitere hele gruppen på én gang. Endre den under Kontakter.",
+        "guestGroupName": "Gruppenavn",
+        "guestGroupSave": "Lagre gruppen",
+        "guestGroupSaved": "Gruppen er lagret"
     },
     "search": {
         "title": "Offentlige arrangementer",

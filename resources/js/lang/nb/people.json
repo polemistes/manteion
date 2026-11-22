@@ -60,7 +60,7 @@
         "onlySome": "{category}: bare noe av det?"
     },
     "groups": {
-        "hint": "Grupper filtrerer arrangementsfeeden din. Bare du ser dem.",
+        "hint": "Grupper filtrerer arrangementsfeeden din, og en vennegruppe kan inviteres til et arrangement på én gang. Bare du ser dem.",
         "new": "Ny gruppe",
         "newTitle": "Ny gruppe",
         "name": "Navn",

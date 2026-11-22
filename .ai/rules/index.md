@@ -16,7 +16,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | resources/js/lang/** | .ai/rules/js-lang.md |
 | resources/js/** | .ai/rules/js.md |
 | lang/** | .ai/rules/lang.md |
-| resources/js/components/events/EventMapCard.vue, resources/js/components/LocationPicker.vue, resources/js/pages/events/Show.vue, resources/js/components/events/** | .ai/rules/maps.md |
+| resources/js/components/events/EventMapCard.vue, resources/js/components/LocationPicker.vue, resources/js/pages/events/Show.vue, resources/js/components/events/**, resources/js/components/events/InviteDialog.vue | .ai/rules/maps.md |
 | app/Notifications/** | .ai/rules/notifications.md |
 | app/Providers/AppServiceProvider.php | .ai/rules/providers.md |
 | resources/js/realtime/**, resources/js/realtime/calls.ts | .ai/rules/realtime.md |

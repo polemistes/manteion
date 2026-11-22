@@ -15,6 +15,7 @@ use App\Http\Controllers\EventCalendarFileController;
 use App\Http\Controllers\EventCommentController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventFacebookImportController;
+use App\Http\Controllers\EventGuestGroupController;
 use App\Http\Controllers\EventImageController;
 use App\Http\Controllers\EventInvitationController;
 use App\Http\Controllers\EventSearchabilityController;
@@ -119,6 +120,7 @@ Route::middleware('auth')->group(function () {
 
     Route::put('/events/{event}/attendance', [EventAttendanceController::class, 'update'])->name('events.attendance.update');
     Route::post('/events/{event}/invitations', [EventInvitationController::class, 'store'])->name('events.invitations.store');
+    Route::post('/events/{event}/guest-group', EventGuestGroupController::class)->name('events.guest-group.store');
     Route::post('/events/{event}/comments', [EventCommentController::class, 'store'])->name('events.comments.store');
     Route::delete('/events/{event}/comments/{comment}', [EventCommentController::class, 'destroy'])
         ->name('events.comments.destroy')

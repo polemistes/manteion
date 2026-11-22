@@ -23,6 +23,7 @@ import type { EventCommentItem } from '@/components/events/CommentThread.vue';
 import EventMapCard from '@/components/events/EventMapCard.vue';
 import EventMenu from '@/components/events/EventMenu.vue';
 import GuestFaces from '@/components/events/GuestFaces.vue';
+import GuestGroupDialog from '@/components/events/GuestGroupDialog.vue';
 import InviteDialog from '@/components/events/InviteDialog.vue';
 import RsvpControl from '@/components/events/RsvpControl.vue';
 import { useRsvp } from '@/components/events/useRsvp';
@@ -96,6 +97,7 @@ const props = defineProps<{
         can_comment_as_organizer: boolean;
         can_delete: boolean;
         can_report: boolean;
+        friend_guest_count: number;
     };
     myAttendance: {
         status: AttendanceStatus;
@@ -105,6 +107,7 @@ const props = defineProps<{
     attendees: { id: number; user: Person; status: string }[];
     comments: EventCommentItem[];
     inviteCandidates: Person[];
+    inviteGroups: { id: number; name: string; member_ids: number[] }[];
 }>();
 
 const { t, te } = useI18n();
@@ -199,6 +202,7 @@ const visibilityLabels = computed(() => ({
 
 const visibilityOpen = ref(false);
 const inviteOpen = ref(false);
+const guestGroupOpen = ref(false);
 const posterOpen = ref(false);
 
 // "Invite" on a feed card lands here with #invite, and so does the host
@@ -384,6 +388,7 @@ function searchable(): void {
             <EventMenu
                 :event="props.event"
                 @invite="inviteOpen = true"
+                @save-guests="guestGroupOpen = true"
                 @searchable="searchable"
                 @report="report('event', props.event.id)"
                 @delete="deleteEvent"
@@ -422,6 +427,7 @@ function searchable(): void {
                         <EventMenu
                             :event="props.event"
                             @invite="inviteOpen = true"
+                            @save-guests="guestGroupOpen = true"
                             @searchable="searchable"
                             @report="report('event', props.event.id)"
                             @delete="deleteEvent"
@@ -494,6 +500,7 @@ function searchable(): void {
                                 :event="props.event"
                                 floating
                                 @invite="inviteOpen = true"
+                                @save-guests="guestGroupOpen = true"
                                 @searchable="searchable"
                                 @report="report('event', props.event.id)"
                                 @delete="deleteEvent"
@@ -894,6 +901,14 @@ function searchable(): void {
             props.event.is_owner ? props.event.organizer?.name : undefined
         "
         :candidates="props.inviteCandidates"
+        :groups="props.inviteGroups"
+    />
+    <GuestGroupDialog
+        v-if="props.event.is_owner"
+        v-model:open="guestGroupOpen"
+        :event-id="props.event.id"
+        :event-name="props.event.name"
+        :count="props.event.friend_guest_count"
     />
     <AppDialog
         v-if="cover && shape === 'poster'"

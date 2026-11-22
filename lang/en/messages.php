@@ -34,6 +34,10 @@ return [
         'not_a_facebook_event' => 'That is not a link to a Facebook event.',
     ],
 
+    'event_guest_group' => [
+        'no_friends' => 'None of the guests are your friends, so there is no one to put in the group.',
+    ],
+
     'event_invitation' => [
         'friends_only' => 'You can only invite your friends.',
     ],

@@ -305,6 +305,9 @@ class EventController extends Controller
                 'can_comment_as_organizer' => $event->organizer_id !== null && $viewer->organizerIds()->contains($event->organizer_id),
                 'can_delete' => Gate::allows('delete', $event),
                 'can_report' => ! $event->is_deleted && Gate::allows('view', $event) && ! $isOwner,
+                // How many of the guests a host could keep as a group of
+                // friends (EventGuestGroupController).
+                'friend_guest_count' => $isOwner ? $event->friendGuestIdsOf($viewer)->count() : 0,
             ],
             'myAttendance' => $attendee === null ? null : [
                 'status' => $attendee->status->value,
@@ -338,6 +341,10 @@ class EventController extends Controller
             'inviteCandidates' => ! $canInvite ? [] : $this->inviteCandidates($event, $viewer)
                 ->reject(fn (User $person) => $visibleAttendees->contains('user_id', $person->id))
                 ->map(fn (User $person) => ['id' => $person->id, 'name' => $person->name, 'username' => $person->username, 'avatar_url' => $person->avatar_url])
+                ->values(),
+            // The inviter's groups of friends, each invited all at once.
+            'inviteGroups' => ! $canInvite ? [] : $viewer->contactGroups()->ofType(ContactGroupType::Friend)->with('members:id')->orderBy('name')->get()
+                ->map(fn (ContactGroup $group) => ['id' => $group->id, 'name' => $group->name, 'member_ids' => $group->members->pluck('id')->values()])
                 ->values(),
         ]);
     }

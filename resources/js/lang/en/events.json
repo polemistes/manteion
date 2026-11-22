@@ -119,7 +119,15 @@
         "spokesperson": "Spokesperson: {name}",
         "commentAs": "Comment as {name}",
         "commentAsHint": "Your name is shown beside it.",
-        "inviteHintOrganizer": "Your friends and the people who follow {name}. They get an invitation and can answer straight away."
+        "inviteHintOrganizer": "Your friends and the people who follow {name}. They get an invitation and can answer straight away.",
+        "inviteGroups": "Whole groups",
+        "saveGuests": "Save guests as a group",
+        "guestGroupTitle": "Save the guests as a group",
+        "guestGroupCount": "{n} of the guests is your friend and goes in the group. | {n} of the guests are your friends and go in the group.",
+        "guestGroupHint": "Next time you can invite the whole group at once. Change it under People.",
+        "guestGroupName": "Group name",
+        "guestGroupSave": "Save group",
+        "guestGroupSaved": "Group saved"
     },
     "search": {
         "title": "Public events",

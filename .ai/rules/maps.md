@@ -4,6 +4,7 @@ paths:
   - resources/js/components/LocationPicker.vue
   - resources/js/pages/events/Show.vue
   - 'resources/js/components/events/**'
+  - resources/js/components/events/InviteDialog.vue
 ---
 
 # Maps
@@ -19,3 +20,6 @@ Since 2026-11-22 LocationPicker owns the whole "Where" block of the event form (
 
 ## A host is not going until they say so
 Owner's decision 2026-11-22: the host of an event answers like everyone else (also when it is hosted as an organizer). Never add the host to "Going" for display or count: the only truth is their event_attendees row, made by EventAttendanceController like anyone's. GuestFaces lists them (first, with the HOST tag) only if they answered; EventCard and the event page show the host the same answer control, beside Invite. Hosts of events made before that date have no answer and were left that way on purpose. The event form is in the order a host knows things (name, when, where, then description, cover, categories, visibility); the description is optional and stored as '' (the column is NOT NULL), and a new event redirects to events.show#invite, which opens the invite dialog and then drops the fragment.
+
+## An invite list is a group of friends, not a new kind of list
+The owner asked for invite lists "based on an event's guests or made from scratch" (2026-11-22). They are the friend groups People already has (ContactGroup of type friend): the event page sends the inviter's groups as `inviteGroups` and InviteDialog offers each as a chip that ticks every member who can still be invited; a host makes one from an event with "Save guests as a group" (EventGuestGroupController, POST events/{event}/guest-group, Event::friendGuestIdsOf). A friend group holds friends only, so guests who are not the host's friends are left out, and an organizer's followers cannot be listed this way. Do not add a second list type beside groups. StoreEventInvitationRequest lets a spokesperson invite the hosting organizer's followers as well as their own friends, matching the candidates the dialog shows.

@@ -60,7 +60,7 @@
         "onlySome": "{category}: only some of it?"
     },
     "groups": {
-        "hint": "Groups filter your events feed. Only you can see them.",
+        "hint": "Groups filter your events feed, and a group of friends can be invited to an event all at once. Only you can see them.",
         "new": "New group",
         "newTitle": "New group",
         "name": "Name",

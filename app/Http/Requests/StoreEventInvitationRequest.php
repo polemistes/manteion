@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Event;
 use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -36,10 +37,18 @@ class StoreEventInvitationRequest extends FormRequest
                     return;
                 }
 
+                // A spokesperson may also invite the people who follow the
+                // organizer hosting the event: they asked to hear from it.
+                /** @var Event $event */
+                $event = $this->route('event');
+                $followerIds = $event->organizer_id !== null && $this->user()->organizerIds()->contains($event->organizer_id)
+                    ? $event->organizer->followers()->pluck('users.id')
+                    : collect();
+
                 $nonFriendIds = User::query()
                     ->whereIn('id', $this->input('user_ids', []))
                     ->get()
-                    ->reject(fn (User $candidate) => $this->user()->isFriendsWith($candidate));
+                    ->reject(fn (User $candidate) => $this->user()->isFriendsWith($candidate) || $followerIds->contains($candidate->id));
 
                 if ($nonFriendIds->isNotEmpty()) {
                     $validator->errors()->add('user_ids', __('messages.event_invitation.friends_only'));

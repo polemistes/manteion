@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { UserPlus } from '@lucide/vue';
+import { UserPlus, Users } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppDialog from '@/components/ui/AppDialog.vue';
 import Avatar from '@/components/ui/Avatar.vue';
 import Button from '@/components/ui/Button.vue';
 import Checkbox from '@/components/ui/Checkbox.vue';
+import FilterChip from '@/components/ui/FilterChip.vue';
 import SearchField from '@/components/ui/SearchField.vue';
 import { toast } from '@/lib/toast';
 import { store as storeInvitations } from '@/routes/events/invitations';
@@ -18,17 +19,26 @@ interface Person {
     avatar_url: string | null;
 }
 
+interface Group {
+    id: number;
+    name: string;
+    member_ids: number[];
+}
+
 /**
  * Pick friends to invite; they can answer straight away. For a spokesperson
- * of the hosting organizer the organizer's followers are offered too.
+ * of the hosting organizer the organizer's followers are offered too. The
+ * inviter's groups of friends are offered as chips: one tap ticks everyone
+ * in the group who can still be invited, another unticks them.
  */
 const props = withDefaults(
     defineProps<{
         eventId: number;
         candidates: Person[];
+        groups?: Group[];
         organizerName?: string | null;
     }>(),
-    { organizerName: null },
+    { groups: () => [], organizerName: null },
 );
 
 const open = defineModel<boolean>('open', { default: false });
@@ -56,6 +66,31 @@ const shown = computed(() => {
             person.username.toLocaleLowerCase().includes(term),
     );
 });
+
+// Each group with the members who can still be invited; a group with
+// none left (all invited already) is not offered.
+const groupChips = computed(() => {
+    const invitable = new Set(props.candidates.map((person) => person.id));
+
+    return props.groups
+        .map((group) => {
+            const ids = group.member_ids.filter((id) => invitable.has(id));
+
+            return {
+                id: group.id,
+                name: group.name,
+                ids,
+                allSelected: ids.every((id) => selected.value.includes(id)),
+            };
+        })
+        .filter((group) => group.ids.length > 0);
+});
+
+function toggleGroup(ids: number[], on: boolean): void {
+    const others = selected.value.filter((id) => !ids.includes(id));
+
+    selected.value = on ? [...others, ...ids] : others;
+}
 
 function toggle(id: number, on: boolean): void {
     selected.value = on
@@ -102,6 +137,27 @@ function send(): void {
             {{ t('events.show.inviteNone') }}
         </p>
         <template v-else>
+            <div
+                v-if="groupChips.length"
+                role="group"
+                :aria-label="t('events.show.inviteGroups')"
+                class="mb-4 flex flex-wrap items-center gap-2"
+            >
+                <span class="text-meta text-ink-muted">{{
+                    t('events.show.inviteGroups')
+                }}</span>
+                <FilterChip
+                    v-for="group in groupChips"
+                    :key="group.id"
+                    :pressed="group.allSelected"
+                    :icon="Users"
+                    :count="group.ids.length"
+                    small
+                    @update:pressed="toggleGroup(group.ids, $event)"
+                >
+                    {{ group.name }}
+                </FilterChip>
+            </div>
             <SearchField
                 v-model="query"
                 :label="t('events.show.searchFriends')"
@@ -110,7 +166,7 @@ function send(): void {
             <ul class="max-h-[50dvh] overflow-y-auto">
                 <li v-for="person in shown" :key="person.id">
                     <label
-                        class="flex min-h-14 cursor-pointer items-center gap-3 rounded-md px-1 hover:bg-surface-2/55"
+                        class="flex min-h-14 cursor-pointer items-center gap-3 rounded-md pr-3 pl-1 hover:bg-surface-2/55"
                     >
                         <Avatar
                             :name="person.name"
