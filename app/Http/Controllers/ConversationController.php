@@ -98,7 +98,7 @@ class ConversationController extends Controller
                 'last_read_at' => $user->share_read_receipts && $member->user->share_read_receipts ? $member->last_read_at?->toIso8601String() : null,
             ]),
             'messages' => fn () => $conversation->messages()
-                ->with(['sender', 'reactions', 'seenBy'])
+                ->with(['sender', 'reactions', 'seenBy', 'pictures'])
                 ->latest('id')
                 ->limit(ConversationMessageController::PAGE_SIZE)
                 ->get()

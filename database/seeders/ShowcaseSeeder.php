@@ -695,8 +695,13 @@ class ShowcaseSeeder extends Seeder
             ['visibility' => $visibility, ...$link],
         );
 
-        if ($picsumId !== null && ($leaflet->image_path === null || ! Storage::disk(ImageProcessor::PRIVATE_DISK)->exists($leaflet->image_path))) {
-            $leaflet->image_path = $this->storePicture($picsumId, self::LEAFLET_PICTURE, "leaflets/{$leaflet->id}")['path'];
+        if ($picsumId !== null) {
+            $picture = $leaflet->pictures()->first();
+
+            if ($picture === null || ! Storage::disk(ImageProcessor::PRIVATE_DISK)->exists($picture->path)) {
+                $picture?->delete();
+                $leaflet->pictures()->create($this->storePicture($picsumId, self::LEAFLET_PICTURE, "leaflets/{$leaflet->id}"));
+            }
         }
 
         $this->stamp($leaflet, $at);

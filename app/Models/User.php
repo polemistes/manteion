@@ -448,10 +448,12 @@ class User extends Authenticatable
     }
 
     /**
-     * Removes every file the account uploaded: its picture, and the
-     * pictures on its events, leaflets and messages. The rows go with the
-     * account (the foreign keys cascade) but files do not, so each way of
-     * deleting an account calls this first.
+     * Removes every file that goes with the account: its picture, the
+     * covers of its events, the pictures on its leaflets, messages and
+     * comments, and those on other people's comments on its events (they
+     * are deleted with the events). The rows go with the account (the
+     * foreign keys cascade) but files do not, so each way of deleting an
+     * account calls this first.
      */
     public function deleteUploadedFiles(): void
     {
@@ -461,9 +463,17 @@ class User extends Authenticatable
 
         Storage::disk(ImageProcessor::PRIVATE_DISK)->delete([
             ...EventImage::query()->whereIn('event_id', $this->events()->select('id'))->pluck('path')->all(),
-            ...$this->leaflets()->whereNotNull('image_path')->pluck('image_path')->all(),
-            ...Message::query()->whereBelongsTo($this, 'sender')->whereNotNull('image_path')->pluck('image_path')->all(),
         ]);
+
+        Picture::forgetFiles(
+            Picture::query()
+                ->whereIn('leaflet_id', $this->leaflets()->select('id'))
+                ->orWhereIn('message_id', Message::query()->whereBelongsTo($this, 'sender')->select('id'))
+                ->orWhereIn('event_comment_id', EventComment::query()
+                    ->where('user_id', $this->id)
+                    ->orWhereIn('event_id', $this->events()->select('id'))
+                    ->select('id')),
+        );
     }
 
     /**

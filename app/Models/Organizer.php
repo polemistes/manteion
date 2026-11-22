@@ -88,9 +88,10 @@ class Organizer extends Model
     }
 
     /**
-     * Removes the organizer's picture and the pictures on its events and
-     * leaflets, which the database deletes along with it without touching
-     * their files.
+     * Removes the organizer's picture, the covers of its events, and the
+     * pictures on its leaflets and on the comments on its events, all of
+     * which the database deletes along with it without touching their
+     * files.
      */
     public function deleteUploadedFiles(): void
     {
@@ -100,8 +101,13 @@ class Organizer extends Model
 
         Storage::disk(ImageProcessor::PRIVATE_DISK)->delete([
             ...EventImage::query()->whereIn('event_id', $this->events()->select('id'))->pluck('path')->all(),
-            ...$this->leaflets()->whereNotNull('image_path')->pluck('image_path')->all(),
         ]);
+
+        Picture::forgetFiles(
+            Picture::query()
+                ->whereIn('leaflet_id', $this->leaflets()->select('id'))
+                ->orWhereIn('event_comment_id', EventComment::query()->whereIn('event_id', $this->events()->select('id'))->select('id')),
+        );
     }
 
     public function membershipOf(User $user): ?OrganizerSpokesperson

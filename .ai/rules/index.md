@@ -12,7 +12,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/Enums/EventTimeZoneMode.php | .ai/rules/enums.md |
 | database/factories/UserFactory.php | .ai/rules/factories.md |
 | app/Actions/Fortify/** | .ai/rules/fortify.md |
-| app/Http/Controllers/*ImageController.php, app/Http/Controllers/Concerns/ServesPrivateImages.php, app/Models/EventImage.php, app/Models/Leaflet.php, app/Models/Message.php, app/Services/ImageProcessor.php, app/Services/FacebookEventImporter.php, app/Services/TimeZones.php | .ai/rules/http-controllers.md |
+| app/Http/Controllers/*ImageController.php, app/Http/Controllers/PictureController.php, app/Http/Controllers/Concerns/ServesPrivateImages.php, app/Models/EventImage.php, app/Models/Leaflet.php, app/Models/Message.php, app/Models/Picture.php, app/Models/Concerns/HasPictures.php, app/Http/Requests/Concerns/ValidatesPictures.php, app/Services/ImageProcessor.php, app/Services/FacebookEventImporter.php, app/Services/TimeZones.php | .ai/rules/http-controllers.md |
 | resources/js/lang/** | .ai/rules/js-lang.md |
 | resources/js/** | .ai/rules/js.md |
 | lang/** | .ai/rules/lang.md |

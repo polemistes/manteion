@@ -3,7 +3,9 @@
 namespace App\Http\Requests;
 
 use App\Enums\LeafletVisibility;
+use App\Http\Requests\Concerns\ValidatesPictures;
 use App\Models\Leaflet;
+use App\Models\Picture;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -11,6 +13,8 @@ use Illuminate\Validation\Validator;
 
 class UpdateLeafletRequest extends FormRequest
 {
+    use ValidatesPictures;
+
     public function authorize(): bool
     {
         return $this->user()->can('update', $this->route('leaflet'));
@@ -24,8 +28,10 @@ class UpdateLeafletRequest extends FormRequest
         return [
             'body' => ['required', 'string', 'max:2000'],
             'visibility' => ['required', Rule::enum(LeafletVisibility::class)],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', Rule::dimensions()->maxWidth(StoreEventRequest::MAX_UPLOAD_EDGE)->maxHeight(StoreEventRequest::MAX_UPLOAD_EDGE), 'prohibits:link_url'],
-            'remove_image' => ['sometimes', 'boolean'],
+            ...$this->pictureRules(['prohibits:link_url']),
+            // The pictures already on it that go.
+            'remove_pictures' => ['sometimes', 'array'],
+            'remove_pictures.*' => ['integer'],
             'link_url' => ['nullable', 'url:http,https', 'max:2048'],
         ];
     }
@@ -36,13 +42,16 @@ class UpdateLeafletRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'image.prohibits' => __('messages.leaflet.one_attachment'),
+            ...$this->pictureMessages(),
+            'pictures.prohibits' => __('messages.leaflet.one_attachment'),
         ];
     }
 
     /**
-     * A link may only be added when the existing image is being removed
-     * (or was never there), so a leaflet never ends up with both.
+     * A link may only be added when the pictures already there are all
+     * being removed (or there were none), so a leaflet never ends up with
+     * both; and the pictures kept and added together stay within the most
+     * a leaflet may carry.
      *
      * @return array<int, callable>
      */
@@ -51,10 +60,16 @@ class UpdateLeafletRequest extends FormRequest
         return [
             function (Validator $validator) {
                 $leaflet = $this->route('leaflet');
-                $keepsImage = $leaflet instanceof Leaflet && $leaflet->image_path !== null && ! $this->boolean('remove_image');
+                $kept = $leaflet instanceof Leaflet
+                    ? $leaflet->pictures()->whereNotIn('id', array_map(intval(...), (array) $this->input('remove_pictures', [])))->count()
+                    : 0;
 
-                if ($keepsImage && $this->filled('link_url')) {
+                if ($kept > 0 && $this->filled('link_url')) {
                     $validator->errors()->add('link_url', __('messages.leaflet.one_attachment'));
+                }
+
+                if ($kept + count($this->pictures()) > Picture::MAX_PER_POST) {
+                    $validator->errors()->add('pictures', trans_choice('messages.pictures.too_many', Picture::MAX_PER_POST));
                 }
 
                 // An organizer has followers, not friends.

@@ -10,12 +10,12 @@ import {
 } from '@lucide/vue';
 import { computed, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
+import PictureGrid from '@/components/PictureGrid.vue';
 import Avatar from '@/components/ui/Avatar.vue';
 import Menu from '@/components/ui/Menu.vue';
 import MenuItem from '@/components/ui/MenuItem.vue';
 import MenuSeparator from '@/components/ui/MenuSeparator.vue';
 import { useDates } from '@/lib/dates';
-import { fitInFrame } from '@/lib/image';
 import { isEmojiOnly, linkify } from '@/lib/text';
 import { BUBBLE_CORNERS, IMAGE_FRAME, QUICK_REACTIONS } from './chat';
 import type { BubblePosition, ChatMessage } from './chat';
@@ -24,9 +24,10 @@ import type { BubblePosition, ChatMessage } from './chat';
  * One message in a thread. Consecutive messages from the same person form
  * a group: corners on the sender's side tighten inside it, the name sits
  * above the first bubble (others, in groups), the face and the time beside
- * and under the last. A picture sits at the top of its bubble, framed to
- * fit IMAGE_FRAME from its known size so the thread never jumps, with the
- * words (if any) under it; a tap asks for it full size.
+ * and under the last. Pictures sit at the top of the bubble (one framed to
+ * fit IMAGE_FRAME from its known size, so the thread never jumps; several
+ * as a grid of tiles), with the words (if any) under them; a tap asks for
+ * that picture full size.
  */
 const props = withDefaults(
     defineProps<{
@@ -53,7 +54,7 @@ const emit = defineEmits<{
     report: [];
     retry: [];
     markSeen: [];
-    viewImage: [];
+    viewImage: [index: number];
 }>();
 
 const { t, locale } = useI18n();
@@ -133,12 +134,7 @@ const deleted = computed(() => props.message.is_deleted);
 const body = computed(() => props.message.body ?? '');
 const emojiOnly = computed(() => !deleted.value && isEmojiOnly(body.value));
 const segments = computed(() => linkify(body.value));
-const image = computed(() => (deleted.value ? null : props.message.image));
-const frame = computed(() =>
-    image.value
-        ? fitInFrame(image.value.width, image.value.height, IMAGE_FRAME)
-        : null,
-);
+const pictures = computed(() => (deleted.value ? [] : props.message.pictures));
 
 const corners = computed(
     () => BUBBLE_CORNERS[mine.value ? 'mine' : 'theirs'][props.position],
@@ -236,7 +232,7 @@ onBeforeUnmount(cancelPress);
                         {{ props.message.body || t('messages.show.deleted') }}
                     </p>
                     <p
-                        v-else-if="emojiOnly && !image"
+                        v-else-if="emojiOnly && !pictures.length"
                         class="px-0.5 text-[40px] leading-[48px]"
                     >
                         {{ body }}
@@ -254,28 +250,18 @@ onBeforeUnmount(cancelPress);
                                 : '',
                         ]"
                         :style="
-                            image ? { maxWidth: `${IMAGE_FRAME}px` } : undefined
+                            pictures.length
+                                ? { maxWidth: `${IMAGE_FRAME}px` }
+                                : undefined
                         "
                     >
-                        <button
-                            v-if="image && frame"
-                            type="button"
-                            :aria-label="t('messages.show.viewPhoto')"
-                            class="block max-w-full"
-                            :style="{ width: `${frame.width}px` }"
-                            @click="emit('viewImage')"
-                        >
-                            <img
-                                :src="image.url"
-                                :width="frame.width"
-                                :height="frame.height"
-                                alt=""
-                                class="block h-auto w-full"
-                                :style="{
-                                    aspectRatio: `${frame.width} / ${frame.height}`,
-                                }"
-                            />
-                        </button>
+                        <PictureGrid
+                            v-if="pictures.length"
+                            :pictures="pictures"
+                            :frame="IMAGE_FRAME"
+                            :class="pictures.length > 1 ? 'w-[320px]' : ''"
+                            @open="emit('viewImage', $event)"
+                        />
                         <p
                             v-if="body"
                             class="px-3.5 py-2 [overflow-wrap:anywhere] whitespace-pre-wrap"

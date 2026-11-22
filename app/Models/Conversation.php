@@ -99,7 +99,7 @@ class Conversation extends Model
                 ->orderByDesc('messages.created_at')
                 ->orderByDesc('messages.id')
                 ->limit(1)])
-            ->with('latestMessage.sender');
+            ->with(['latestMessage.sender', 'latestMessage.pictures']);
     }
 
     /**

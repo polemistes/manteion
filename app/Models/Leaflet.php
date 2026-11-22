@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Enums\LeafletVisibility;
-use App\Services\ImageProcessor;
+use App\Models\Concerns\HasPictures;
 use Database\Factories\LeafletFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,17 +13,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Storage;
 
 /**
- * A short message with one optional image or one optional link.
+ * A short message with pictures or one link, or neither.
  *
  * @property int $id
  * @property int $user_id
  * @property int|null $organizer_id
  * @property string $body
  * @property LeafletVisibility $visibility
- * @property string|null $image_path
  * @property string|null $link_url
  * @property string|null $link_title
  * @property string|null $link_description
@@ -32,11 +30,13 @@ use Illuminate\Support\Facades\Storage;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['user_id', 'organizer_id', 'body', 'visibility', 'image_path', 'link_url', 'link_title', 'link_description', 'link_image_url', 'link_fetched_at'])]
+#[Fillable(['user_id', 'organizer_id', 'body', 'visibility', 'link_url', 'link_title', 'link_description', 'link_image_url', 'link_fetched_at'])]
 class Leaflet extends Model
 {
     /** @use HasFactory<LeafletFactory> */
     use HasFactory;
+
+    use HasPictures;
 
     /**
      * Reactions hang off a polymorphic relation, which no foreign key
@@ -127,28 +127,6 @@ class Leaflet extends Model
         return $this->organizer === null
             ? $this->owner->newCollection([$this->owner])
             : $this->organizer->activeSpokespersons()->get();
-    }
-
-    /**
-     * The picture's address, which only opens for someone who may read the
-     * leaflet (see LeafletImageController). It names the file, so a new
-     * picture gets a new address. Null without a picture.
-     */
-    public function imageUrl(): ?string
-    {
-        return $this->image_path === null
-            ? null
-            : route('leaflets.image', [$this->id, basename($this->image_path)]);
-    }
-
-    /**
-     * Removes the picture's file; clearing image_path is the caller's.
-     */
-    public function deleteImageFile(): void
-    {
-        if ($this->image_path !== null) {
-            Storage::disk(ImageProcessor::PRIVATE_DISK)->delete($this->image_path);
-        }
     }
 
     public function isVisibleTo(User $user): bool

@@ -20,8 +20,8 @@
             "friends": "Only your friends",
             "private": "Only you, as a note to yourself"
         },
-        "addImage": "Add a picture",
-        "removeImage": "Remove the picture",
+        "addImage": "Add pictures",
+        "removeImage": "Remove the pictures",
         "addLink": "Add a link",
         "removeLink": "Remove the link",
         "link": "Link",

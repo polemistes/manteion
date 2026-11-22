@@ -1,23 +1,22 @@
 <script setup lang="ts">
-import { ArrowUp, Camera, ImagePlus, Smile, X } from '@lucide/vue';
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { ArrowUp, Camera, ImagePlus, Smile } from '@lucide/vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import EmojiPicker from '@/components/EmojiPicker.vue';
+import PictureStrip from '@/components/PictureStrip.vue';
 import TextArea from '@/components/ui/TextArea.vue';
-import { prepareImageUpload } from '@/lib/image';
-import type { PreparedImage } from '@/lib/image';
-import { toastError } from '@/lib/toast';
+import { usePictures } from '@/composables/usePictures';
 import { canTakePhotos } from '@/native/shell';
-import { IMAGE_MAX_EDGE } from './chat';
 import type { MessageDraft } from './chat';
 
 /**
  * The message field pinned under a thread. It grows to six lines, then
  * scrolls. With a hardware keyboard Enter sends and Shift+Enter breaks the
- * line; on touch screens Enter is a line break and the arrow sends. A
- * picture can be attached: it is shown above the field until sent or
- * removed, and goes out as one message with the words, if any. On touch
- * screens a second button takes the picture with the camera instead: the
+ * line; on touch screens Enter is a line break and the arrow sends.
+ * Pictures can be attached, several at once: they are shown above the
+ * field until sent or taken off, and go out as one message with the
+ * words, if any. On touch screens a second button adds one from the
+ * camera instead: the
  * browser, or the Android app (Capacitor opens the camera app for a
  * capture request), goes straight to the back camera. Desktop browsers
  * ignore capture, so the button is not offered there, nor in apps that
@@ -39,12 +38,11 @@ const cameraInput = ref<HTMLInputElement | null>(null);
 // Shown until the app says otherwise, so the server and the browser draw
 // the same field.
 const cameraAvailable = ref(true);
-const image = ref<PreparedImage | null>(null);
-const preparing = ref(false);
+const { pictures, preparing, add, remove, take } = usePictures();
 
 const canSend = computed(
     () =>
-        (text.value.trim() !== '' || image.value !== null) &&
+        (text.value.trim() !== '' || pictures.value.length > 0) &&
         !props.disabled &&
         !preparing.value,
 );
@@ -58,10 +56,9 @@ function submit(): void {
         return;
     }
 
-    // The thread takes the picture (and its preview URL) over from here.
-    emit('send', { body: text.value.trim(), image: image.value });
+    // The thread takes the pictures (and their previews) over from here.
+    emit('send', { body: text.value.trim(), pictures: take() });
     text.value = '';
-    image.value = null;
     nextTick(() => field.value?.focus());
 }
 
@@ -110,46 +107,22 @@ function takePhoto(): void {
     cameraInput.value?.click();
 }
 
-// The picked file is scaled down and stripped of its metadata here, so a
-// phone photo goes out small and the picture replaces any earlier one.
-async function onImageChosen(event: Event): Promise<void> {
+// The picked files are scaled down and stripped of their metadata (see
+// usePictures), so phone photos go out small; they join any already there.
+async function onImagesChosen(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
+    const files = [...(input.files ?? [])];
 
     // So the same file can be picked again later.
     input.value = '';
 
-    if (!file) {
-        return;
-    }
-
-    preparing.value = true;
-
-    try {
-        const prepared = await prepareImageUpload(file, IMAGE_MAX_EDGE);
-
-        removeImage();
-        image.value = prepared;
-        nextTick(() => field.value?.focus());
-    } catch {
-        toastError(t('messages.show.photoUnreadable'));
-    } finally {
-        preparing.value = false;
-    }
-}
-
-function removeImage(): void {
-    if (image.value) {
-        URL.revokeObjectURL(image.value.previewUrl);
-        image.value = null;
-    }
+    await add(files);
+    nextTick(() => field.value?.focus());
 }
 
 onMounted(async () => {
     cameraAvailable.value = await canTakePhotos();
 });
-
-onBeforeUnmount(removeImage);
 
 defineExpose({ focus: () => field.value?.focus() });
 </script>
@@ -158,24 +131,16 @@ defineExpose({ focus: () => field.value?.focus() });
     <div
         class="flex-none border-t border-line bg-canvas p-2 pb-[calc(8px+env(safe-area-inset-bottom))] md:px-4 md:pt-3"
     >
-        <div v-if="image" class="mx-auto mb-2.5 flex max-w-thread px-1 pt-1">
-            <div class="relative">
-                <img
-                    :src="image.previewUrl"
-                    :width="image.width"
-                    :height="image.height"
-                    alt=""
-                    class="block h-24 w-auto max-w-[200px] rounded-md object-cover ring-1 ring-line"
-                />
-                <button
-                    type="button"
-                    :aria-label="t('messages.show.removePhoto')"
-                    class="absolute -top-2 -right-2 grid size-7 place-items-center rounded-full bg-ink text-on-ink shadow-sm transition-transform duration-120 after:absolute after:-inset-1.5 active:scale-[.98]"
-                    @click="removeImage"
-                >
-                    <X :size="14" :stroke-width="2.25" aria-hidden="true" />
-                </button>
-            </div>
+        <div v-if="pictures.length" class="mx-auto mb-1.5 max-w-thread px-1">
+            <PictureStrip
+                :pictures="
+                    pictures.map((picture) => ({
+                        key: picture.previewUrl,
+                        url: picture.previewUrl,
+                    }))
+                "
+                @remove="remove"
+            />
         </div>
         <form
             class="mx-auto flex max-w-thread items-end gap-2"
@@ -246,9 +211,10 @@ defineExpose({ focus: () => field.value?.focus() });
             ref="fileInput"
             type="file"
             accept="image/*"
+            multiple
             class="hidden"
             tabindex="-1"
-            @change="onImageChosen"
+            @change="onImagesChosen"
         />
         <input
             ref="cameraInput"
@@ -257,7 +223,7 @@ defineExpose({ focus: () => field.value?.focus() });
             capture="environment"
             class="hidden"
             tabindex="-1"
-            @change="onImageChosen"
+            @change="onImagesChosen"
         />
         <p
             class="mx-auto mt-1.5 hidden max-w-thread px-4 text-caption text-ink-subtle pointer-fine:md:block"

@@ -38,6 +38,7 @@ import { report } from '@/composables/useReport';
 import { staffDelete } from '@/composables/useStaffDelete';
 import { useDates } from '@/lib/dates';
 import { toast, toastError } from '@/lib/toast';
+import type { Picture } from '@/pictures';
 import {
     callsAvailableSoon,
     onIncomingMessage,
@@ -65,7 +66,6 @@ import { store as reactionsStore } from '@/routes/reactions';
 import type {
     ConversationListItem,
     ConversationParticipantSummary,
-    MessageImage,
     MessageSummary,
     ReactionSummary,
 } from '@/types';
@@ -449,20 +449,22 @@ let pendingSeq = 0;
 async function send(draft: MessageDraft, retryOf?: ChatMessage): Promise<void> {
     const me = page.props.auth.user;
     const tempId = retryOf?.tempId ?? `pending-${++pendingSeq}`;
-    const image: MessageImage | null =
-        retryOf?.image ??
-        (draft.image
-            ? {
-                  url: draft.image.previewUrl,
-                  width: draft.image.width,
-                  height: draft.image.height,
-              }
-            : null);
-    const imageFile = retryOf?.imageFile ?? draft.image?.file;
+    // Shown from the composer's own previews until the server's are in.
+    const pictures: Picture[] =
+        retryOf?.pictures ??
+        draft.pictures.map((picture, index) => ({
+            id: -(index + 1),
+            url: picture.previewUrl,
+            thumb_url: picture.previewUrl,
+            width: picture.width,
+            height: picture.height,
+        }));
+    const pictureFiles =
+        retryOf?.pictureFiles ?? draft.pictures.map((picture) => picture.file);
     const message: ChatMessage = {
         id: -pendingSeq,
         body: draft.body,
-        image,
+        pictures,
         is_deleted: false,
         created_at: new Date().toISOString(),
         sender: {
@@ -478,7 +480,7 @@ async function send(draft: MessageDraft, retryOf?: ChatMessage): Promise<void> {
         seen_by: [],
         pending: 'sending',
         tempId,
-        imageFile,
+        pictureFiles,
     };
 
     pending.value = retryOf
@@ -489,10 +491,13 @@ async function send(draft: MessageDraft, retryOf?: ChatMessage): Promise<void> {
     try {
         let payload: FormData | { body: string } = { body: draft.body };
 
-        if (imageFile) {
+        if (pictureFiles.length > 0) {
             payload = new FormData();
             payload.append('body', draft.body);
-            payload.append('image', imageFile);
+
+            for (const file of pictureFiles) {
+                payload.append('pictures[]', file);
+            }
         }
 
         const response = await requestJson<{ message: MessageSummary }>(
@@ -500,11 +505,15 @@ async function send(draft: MessageDraft, retryOf?: ChatMessage): Promise<void> {
             payload,
         );
 
-        // The server's copy of the picture is fetched before the swap, so
-        // the bubble does not go blank in between.
-        if (response?.message.image) {
-            await warm(response.message.image.url);
-        }
+        // The server's copies of the pictures are fetched before the swap,
+        // so the bubble does not go blank in between.
+        const sent = response?.message.pictures ?? [];
+
+        await Promise.all(
+            sent.map((picture) =>
+                warm(sent.length > 1 ? picture.thumb_url : picture.url),
+            ),
+        );
 
         pending.value = pending.value.filter((item) => item.tempId !== tempId);
 
@@ -512,8 +521,8 @@ async function send(draft: MessageDraft, retryOf?: ChatMessage): Promise<void> {
             setExtra(response.message);
         }
 
-        if (image) {
-            URL.revokeObjectURL(image.url);
+        for (const picture of pictures) {
+            URL.revokeObjectURL(picture.url);
         }
 
         reloadList();
@@ -538,11 +547,14 @@ function warm(url: string): Promise<void> {
 }
 
 function retry(message: ChatMessage): void {
-    void send({ body: message.body ?? '', image: null }, message);
+    void send({ body: message.body ?? '', pictures: [] }, message);
 }
 
-// A picture full size, over the thread.
-const viewing = ref<MessageImage | null>(null);
+// A message's pictures full size, over the thread, at the one tapped.
+const viewing = ref<{ pictures: Picture[]; index: number | null }>({
+    pictures: [],
+    index: null,
+});
 
 // One reaction per person: the same emoji again takes it back.
 function toggled(
@@ -679,7 +691,7 @@ async function remove(message: ChatMessage): Promise<void> {
     setExtra({
         ...message,
         body: null,
-        image: null,
+        pictures: [],
         is_deleted: true,
         can_delete: false,
         can_report: false,
@@ -952,7 +964,12 @@ async function leave(): Promise<void> {
                                 @report="report('message', message.id)"
                                 @retry="retry(message)"
                                 @mark-seen="markSeen(message)"
-                                @view-image="viewing = message.image"
+                                @view-image="
+                                    viewing = {
+                                        pictures: message.pictures,
+                                        index: $event,
+                                    }
+                                "
                             />
                         </div>
                     </section>
@@ -1089,5 +1106,5 @@ async function leave(): Promise<void> {
     </AppDialog>
 
     <EmojiPicker v-model:open="pickerOpen" @select="onPicked" />
-    <ImageLightbox v-model:image="viewing" />
+    <ImageLightbox v-model:index="viewing.index" :pictures="viewing.pictures" />
 </template>

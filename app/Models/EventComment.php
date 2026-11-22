@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPictures;
 use Database\Factories\EventCommentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -25,6 +26,8 @@ class EventComment extends Model
 {
     /** @use HasFactory<EventCommentFactory> */
     use HasFactory;
+
+    use HasPictures;
 
     /**
      * @return array<string, string>

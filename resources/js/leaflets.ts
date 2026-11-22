@@ -1,4 +1,5 @@
 import type { OrganizerSummary } from '@/events';
+import type { Picture } from '@/pictures';
 import type { ReactionSummary } from '@/reactions';
 
 export type LeafletVisibility =
@@ -25,7 +26,8 @@ export interface LeafletSummary {
     };
     /** The organizer it is from, when a spokesperson wrote it as one. */
     organizer: OrganizerSummary | null;
-    image_url: string | null;
+    /** Its pictures, in order; a leaflet has pictures or a link, not both. */
+    pictures: Picture[];
     link: {
         url: string;
         host: string | null;

@@ -15,11 +15,9 @@ use App\Models\Reaction;
 use App\Models\User;
 use App\Services\ActivityFeed;
 use App\Services\AdminAlerts;
-use App\Services\ImageProcessor;
 use App\Services\LeafletFeedQuery;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -27,8 +25,6 @@ use Inertia\Response;
 class LeafletController extends Controller
 {
     public const PER_PAGE = 20;
-
-    public function __construct(private ImageProcessor $imageProcessor) {}
 
     public function index(Request $request): Response
     {
@@ -74,7 +70,7 @@ class LeafletController extends Controller
             'link_url' => $request->validated('link_url') ?: null,
         ]);
 
-        $this->storeImage($leaflet, $request->file('image'));
+        $leaflet->addPictures($request->pictures(), "leaflets/{$leaflet->id}");
         $this->refreshLinkPreview($leaflet);
 
         AdminAlerts::send(AdminAlert::LeafletPublished, $request->user(), [
@@ -89,7 +85,7 @@ class LeafletController extends Controller
     {
         Gate::authorize('view', $leaflet);
 
-        $leaflet->load(['owner', 'organizer', 'reactions', 'responses.user', 'responses.reactions'])->loadCount('responses');
+        $leaflet->load(['owner', 'organizer', 'reactions', 'pictures', 'responses.user', 'responses.reactions'])->loadCount('responses');
         $this->retryMissingLinkPreview($leaflet);
 
         // Opening the leaflet means the replies to it have been seen.
@@ -112,7 +108,7 @@ class LeafletController extends Controller
                 'body' => $leaflet->body,
                 'visibility' => $leaflet->visibility->value,
                 'link_url' => $leaflet->link_url,
-                'image_url' => $leaflet->imageUrl(),
+                'pictures' => $leaflet->picturesPresentation(),
                 'organizer' => $leaflet->organizer?->summary(),
             ],
         ]);
@@ -128,11 +124,14 @@ class LeafletController extends Controller
             'link_url' => $linkUrl,
         ]);
 
-        if ($request->boolean('remove_image') || $request->file('image') !== null || $linkUrl !== null) {
-            $this->removeImage($leaflet);
-        }
+        // The pictures the writer took off, or all of them for a link.
+        $leaflet->pictures()
+            ->when($linkUrl === null, fn ($pictures) => $pictures->whereIn('id', array_map(intval(...), (array) $request->validated('remove_pictures', []))))
+            ->get()
+            ->each
+            ->delete();
 
-        $this->storeImage($leaflet, $request->file('image'));
+        $leaflet->addPictures($request->pictures(), "leaflets/{$leaflet->id}");
 
         if ($linkChanged) {
             $this->refreshLinkPreview($leaflet);
@@ -144,8 +143,6 @@ class LeafletController extends Controller
     public function destroy(Request $request, Leaflet $leaflet): RedirectResponse
     {
         Gate::authorize('delete', $leaflet);
-
-        $this->removeImage($leaflet);
 
         $leaflet->reports()->where('status', ReportStatus::Pending)->update([
             'status' => ReportStatus::Resolved,
@@ -173,7 +170,7 @@ class LeafletController extends Controller
             'is_edited' => $leaflet->updated_at->gt($leaflet->created_at->addMinute()),
             'owner' => ['id' => $leaflet->owner->id, 'name' => $leaflet->owner->name, 'username' => $leaflet->owner->username, 'avatar_url' => $leaflet->owner->avatar_url],
             'organizer' => $leaflet->organizer?->summary(),
-            'image_url' => $leaflet->imageUrl(),
+            'pictures' => $leaflet->picturesPresentation(),
             'link' => $leaflet->link_url === null ? null : [
                 'url' => $leaflet->link_url,
                 'host' => parse_url($leaflet->link_url, PHP_URL_HOST),
@@ -198,29 +195,6 @@ class LeafletController extends Controller
                 'reactions' => Reaction::summarize($response->reactions, $viewer),
             ])->values()->all(),
         ];
-    }
-
-    private function storeImage(Leaflet $leaflet, ?UploadedFile $file): void
-    {
-        if ($file === null) {
-            return;
-        }
-
-        $this->removeImage($leaflet);
-
-        $leaflet->update([
-            'image_path' => $this->imageProcessor->store($file, "leaflets/{$leaflet->id}", ImageProcessor::EVENT_MAX_EDGE, ImageProcessor::PRIVATE_DISK),
-        ]);
-    }
-
-    private function removeImage(Leaflet $leaflet): void
-    {
-        if ($leaflet->image_path === null) {
-            return;
-        }
-
-        $leaflet->deleteImageFile();
-        $leaflet->update(['image_path' => null]);
     }
 
     /**

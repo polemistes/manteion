@@ -16,7 +16,6 @@ use App\Models\Reaction;
 use App\Models\User;
 use App\Notifications\NewMessageReceived;
 use App\Services\AdminAlerts;
-use App\Services\ImageProcessor;
 use App\Services\MessageSummary;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -38,8 +37,6 @@ class ConversationMessageController extends Controller
      */
     public const CATCH_UP_LIMIT = 200;
 
-    public function __construct(private ImageProcessor $imageProcessor) {}
-
     /**
      * A page of messages as plain JSON, for the open thread: `before` an id
      * for older history to prepend, or `after` an id for whatever arrived
@@ -55,7 +52,7 @@ class ConversationMessageController extends Controller
             'after' => ['required_without:before', 'integer'],
         ]);
 
-        $query = $conversation->messages()->with(['sender', 'reactions', 'seenBy']);
+        $query = $conversation->messages()->with(['sender', 'reactions', 'seenBy', 'pictures']);
 
         if ($request->filled('after')) {
             $messages = $query
@@ -84,7 +81,7 @@ class ConversationMessageController extends Controller
     }
 
     /**
-     * Save the message (and its picture, on the private disk) and tell
+     * Save the message (and its pictures, on the private disk) and tell
      * everyone: the open thread over the
      * conversation channel, every recipient who has not muted it wherever
      * they are in the app (and their badges), and each recipient's devices
@@ -96,19 +93,13 @@ class ConversationMessageController extends Controller
         $sender = $request->user();
         $conversation->loadMissing('participants.user');
 
-        $image = $request->file('image');
-        $stored = $image === null
-            ? null
-            : $this->imageProcessor->storeWithSize($image, "messages/{$conversation->id}", ImageProcessor::MESSAGE_MAX_EDGE, ImageProcessor::PRIVATE_DISK);
-
         $message = $conversation->messages()->create([
             'user_id' => $sender->id,
             'body' => $request->validated('body') ?? '',
-            'image_path' => $stored['path'] ?? null,
-            'image_width' => $stored['width'] ?? null,
-            'image_height' => $stored['height'] ?? null,
         ]);
-        $message->setRelation('conversation', $conversation)
+        $message->addPictures($request->pictures(), "messages/{$conversation->id}");
+        $message->load('pictures')
+            ->setRelation('conversation', $conversation)
             ->setRelation('sender', $sender)
             ->setRelation('reactions', (new Reaction)->newCollection())
             ->setRelation('seenBy', (new User)->newCollection());
@@ -151,8 +142,8 @@ class ConversationMessageController extends Controller
             ? __('messages.moderation.deleted_placeholder')
             : '';
 
-        $message->deleteImageFile();
-        $message->update(['body' => $body, 'is_deleted' => true, 'image_path' => null, 'image_width' => null, 'image_height' => null]);
+        $message->deletePictures();
+        $message->update(['body' => $body, 'is_deleted' => true]);
 
         $message->reports()->where('status', ReportStatus::Pending)->update([
             'status' => ReportStatus::Resolved,

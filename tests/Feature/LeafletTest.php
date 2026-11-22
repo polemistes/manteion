@@ -145,60 +145,66 @@ test('link previews are never fetched from private or local addresses', function
     Http::assertNothingSent();
 });
 
-test('a leaflet may carry an image or a link but not both', function () {
+test('a leaflet may carry pictures or a link but not both', function () {
     Storage::fake(ImageProcessor::PRIVATE_DISK);
     $user = User::factory()->create();
 
     $this->actingAs($user)->post('/leaflets', [
         'body' => 'Both',
         'visibility' => 'private',
-        'image' => UploadedFile::fake()->image('photo.jpg', 600, 400),
+        'pictures' => [UploadedFile::fake()->image('photo.jpg', 600, 400)],
         'link_url' => 'https://example.com',
-    ])->assertInvalid(['image']);
+    ])->assertInvalid(['pictures' => 'A leaflet can carry either pictures or a link, not both.']);
 
     $this->actingAs($user)->post('/leaflets', [
-        'body' => 'Just a picture',
+        'body' => 'Just pictures',
         'visibility' => 'private',
-        'image' => UploadedFile::fake()->image('photo.jpg', 600, 400),
+        'pictures' => [UploadedFile::fake()->image('photo.jpg', 600, 400), UploadedFile::fake()->image('other.jpg', 400, 600)],
     ])->assertRedirect()->assertValid();
 
     $leaflet = Leaflet::query()->firstOrFail();
-    expect($leaflet->image_path)->not->toBeNull();
-    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertExists($leaflet->image_path);
+    expect($leaflet->pictures()->count())->toBe(2);
+    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertExists($leaflet->pictures()->first()->path);
 });
 
-test('the author can edit everything about a leaflet, including swapping the image for a link', function () {
+test('the author can edit everything about a leaflet, including swapping the pictures for a link', function () {
     Storage::fake(ImageProcessor::PRIVATE_DISK);
     Bus::fake();
     $user = User::factory()->create();
     Storage::disk(ImageProcessor::PRIVATE_DISK)->put('leaflets/1/old.jpg', 'x');
-    $leaflet = Leaflet::factory()->create(['user_id' => $user->id, 'image_path' => 'leaflets/1/old.jpg']);
+    $leaflet = Leaflet::factory()->create(['user_id' => $user->id]);
+    $picture = $leaflet->pictures()->create(['path' => 'leaflets/1/old.jpg']);
 
     $this->actingAs($user)->put("/leaflets/{$leaflet->id}", [
         'body' => 'Changed text',
         'visibility' => 'official',
-        'remove_image' => '1',
+        'remove_pictures' => [$picture->id],
         'link_url' => 'https://example.com/new',
     ])->assertRedirect()->assertValid();
 
     $leaflet->refresh();
     expect($leaflet->body)->toBe('Changed text')
         ->and($leaflet->visibility)->toBe(LeafletVisibility::Official)
-        ->and($leaflet->image_path)->toBeNull()
+        ->and($leaflet->pictures()->count())->toBe(0)
         ->and($leaflet->link_url)->toBe('https://example.com/new');
     Storage::disk(ImageProcessor::PRIVATE_DISK)->assertMissing('leaflets/1/old.jpg');
     Bus::assertDispatchedAfterResponse(FetchLeafletLinkPreview::class);
 });
 
-test('a link cannot be added while an image is kept', function () {
+test('a link cannot be added while a picture is kept', function () {
     $user = User::factory()->create();
-    $leaflet = Leaflet::factory()->create(['user_id' => $user->id, 'image_path' => 'leaflets/1/old.jpg']);
+    $leaflet = Leaflet::factory()->create(['user_id' => $user->id]);
+    $leaflet->pictures()->create(['path' => 'leaflets/1/old.jpg']);
+    $gone = $leaflet->pictures()->create(['path' => 'leaflets/1/other.jpg', 'position' => 1]);
 
     $this->actingAs($user)->put("/leaflets/{$leaflet->id}", [
         'body' => $leaflet->body,
         'visibility' => 'private',
+        'remove_pictures' => [$gone->id],
         'link_url' => 'https://example.com/new',
     ])->assertInvalid(['link_url']);
+
+    expect($leaflet->pictures()->count())->toBe(2);
 });
 
 test('only the author can edit, and only the author or staff can delete', function () {

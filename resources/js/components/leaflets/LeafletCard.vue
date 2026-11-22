@@ -8,8 +8,10 @@ import {
     Pencil,
     Trash,
 } from '@lucide/vue';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import ImageLightbox from '@/components/ImageLightbox.vue';
+import PictureGrid from '@/components/PictureGrid.vue';
 import ReactionBar from '@/components/ReactionBar.vue';
 import Avatar from '@/components/ui/Avatar.vue';
 import Menu from '@/components/ui/Menu.vue';
@@ -30,7 +32,8 @@ import { show as usersShow } from '@/routes/users';
 
 /**
  * A leaflet: who wrote it and for whom, the note itself (in the reading
- * serif once it runs long), a picture or a link preview, one reaction pill
+ * serif once it runs long), its pictures (a tap shows one full size) or a
+ * link preview, one reaction pill
  * and the way to the responses. In the feed a long note is cut short, and
  * the card opens the leaflet.
  */
@@ -65,6 +68,9 @@ const long = computed(() => props.leaflet.body.length > 280);
 const cut = computed(() => !props.full && props.leaflet.body.length > 700);
 
 const showUrl = computed(() => showLeaflet(props.leaflet.id).url);
+
+// Which of its pictures is shown full size, if any.
+const viewing = ref<number | null>(null);
 
 async function remove(): Promise<void> {
     const confirmed = await confirmAction({
@@ -207,15 +213,14 @@ async function remove(): Promise<void> {
             </Link>
         </div>
 
-        <div
-            v-if="props.leaflet.image_url"
-            class="mx-4 mt-3 overflow-hidden rounded-md bg-surface-2 sm:mx-5"
-        >
-            <img
-                :src="props.leaflet.image_url"
-                alt=""
-                class="mx-auto block max-h-[30rem] w-auto max-w-full"
-                loading="lazy"
+        <div v-if="props.leaflet.pictures.length" class="mx-4 mt-3 sm:mx-5">
+            <PictureGrid
+                :pictures="props.leaflet.pictures"
+                @open="viewing = $event"
+            />
+            <ImageLightbox
+                v-model:index="viewing"
+                :pictures="props.leaflet.pictures"
             />
         </div>
 

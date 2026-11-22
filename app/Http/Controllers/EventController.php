@@ -20,6 +20,7 @@ use App\Models\EventAttendee;
 use App\Models\EventComment;
 use App\Models\EventImage;
 use App\Models\Organizer;
+use App\Models\Picture;
 use App\Models\Reaction;
 use App\Models\Tag;
 use App\Models\User;
@@ -207,7 +208,7 @@ class EventController extends Controller
         Gate::authorize('view', $event);
 
         $viewer = $request->user();
-        $event->load(['owner', 'organizer', 'tags', 'images', 'comments.user', 'comments.organizer', 'comments.reactions', 'attendees.user', 'attendees.invitedBy']);
+        $event->load(['owner', 'organizer', 'tags', 'images', 'comments.user', 'comments.organizer', 'comments.reactions', 'comments.pictures', 'attendees.user', 'attendees.invitedBy']);
 
         // Opening the event means its invitation, comments and so on have
         // been seen.
@@ -276,6 +277,7 @@ class EventController extends Controller
             'comments' => $event->comments->map(fn (EventComment $comment) => [
                 'id' => $comment->id,
                 'body' => $comment->body,
+                'pictures' => $comment->picturesPresentation(),
                 'is_deleted' => $comment->is_deleted,
                 'created_at' => $comment->created_at->toIso8601String(),
                 'user' => ['id' => $comment->user->id, 'name' => $comment->user->name, 'username' => $comment->user->username, 'avatar_url' => $comment->user->avatar_url],
@@ -403,6 +405,10 @@ class EventController extends Controller
         foreach ($event->images as $image) {
             $image->deleteFile();
         }
+
+        // Its comments go with it in the database; their pictures' files
+        // would stay behind.
+        Picture::forgetFiles(Picture::query()->whereIn('event_comment_id', $event->comments()->select('id')));
 
         $event->reports()->where('status', ReportStatus::Pending)->update([
             'status' => ReportStatus::Resolved,

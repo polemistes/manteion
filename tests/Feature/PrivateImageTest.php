@@ -8,12 +8,14 @@ use App\Models\Conversation;
 use App\Models\ConversationParticipant;
 use App\Models\Event;
 use App\Models\EventAttendee;
+use App\Models\EventComment;
 use App\Models\EventImage;
 use App\Models\Follow;
 use App\Models\Friendship;
 use App\Models\Leaflet;
 use App\Models\Message;
 use App\Models\Organizer;
+use App\Models\Picture;
 use App\Models\User;
 use App\Services\ImageProcessor;
 use Illuminate\Http\UploadedFile;
@@ -38,14 +40,31 @@ function eventWithPicture(User $host, EventVisibility $visibility = EventVisibil
 }
 
 /**
+ * A picture on a message, leaflet or comment, with its two files on the
+ * private disk.
+ */
+function storedPicture(Message|Leaflet|EventComment $owner): Picture
+{
+    $picture = $owner->pictures()->create([
+        'path' => 'pictures/'.fake()->uuid().'.jpg',
+        'thumb_path' => 'pictures/'.fake()->uuid().'.jpg',
+        'width' => 1200,
+        'height' => 900,
+        'position' => $owner->pictures()->count(),
+    ]);
+    Storage::disk(ImageProcessor::PRIVATE_DISK)->put($picture->path, 'picture');
+    Storage::disk(ImageProcessor::PRIVATE_DISK)->put($picture->thumb_path, 'small picture');
+
+    return $picture;
+}
+
+/**
  * A leaflet with a picture on the private disk.
  */
 function leafletWithPicture(User $author, string $visibility = 'friends'): Leaflet
 {
     $leaflet = Leaflet::factory()->{$visibility}()->create(['user_id' => $author->id]);
-    $path = "leaflets/{$leaflet->id}/".str_repeat('b', 40).'.jpg';
-    Storage::disk(ImageProcessor::PRIVATE_DISK)->put($path, 'picture');
-    $leaflet->update(['image_path' => $path]);
+    storedPicture($leaflet);
 
     return $leaflet;
 }
@@ -125,11 +144,14 @@ test('older pictures stored in another format still open', function () {
     $event = Event::factory()->create(['user_id' => $host->id]);
     $image = EventImage::factory()->for($event)->create(['path' => "events/{$event->id}/Old_Upload-1.png"]);
     Storage::disk(ImageProcessor::PRIVATE_DISK)->put($image->path, 'picture');
-    $leaflet = Leaflet::factory()->create(['user_id' => $host->id, 'image_path' => 'leaflets/9/legacy.webp']);
-    Storage::disk(ImageProcessor::PRIVATE_DISK)->put($leaflet->image_path, 'picture');
+    // A leaflet's picture from before pictures had smaller copies.
+    $leaflet = Leaflet::factory()->create(['user_id' => $host->id]);
+    $picture = $leaflet->pictures()->create(['path' => 'leaflets/9/legacy.webp']);
+    Storage::disk(ImageProcessor::PRIVATE_DISK)->put($picture->path, 'picture');
 
     $this->actingAs($host)->get($image->presentation()['url'])->assertOk();
-    $this->actingAs($host)->get($leaflet->imageUrl())->assertOk();
+    $this->actingAs($host)->get($picture->presentation()['url'])->assertOk();
+    expect($picture->presentation()['thumb_url'])->toBe($picture->presentation()['url']);
 });
 
 test('removing or replacing an event picture deletes its file', function () {
@@ -156,7 +178,7 @@ test('removing or replacing an event picture deletes its file', function () {
     Storage::disk(ImageProcessor::PRIVATE_DISK)->assertExists($event->images()->sole()->path);
 });
 
-test('an uploaded leaflet picture is kept on the private disk and opens only for its readers', function () {
+test('uploaded leaflet pictures are kept on the private disk and open only for its readers', function () {
     $author = User::factory()->create();
     $friend = User::factory()->create();
     $stranger = User::factory()->create();
@@ -165,70 +187,130 @@ test('an uploaded leaflet picture is kept on the private disk and opens only for
     $this->actingAs($author)->post('/leaflets', [
         'body' => 'Look what I found',
         'visibility' => 'friends',
-        'image' => UploadedFile::fake()->image('find.jpg', 600, 400),
-    ])->assertRedirect();
+        'pictures' => [UploadedFile::fake()->image('find.jpg', 600, 400), UploadedFile::fake()->image('close-up.jpg', 1200, 800)],
+    ])->assertRedirect()->assertValid();
 
     $leaflet = Leaflet::query()->sole();
-    $url = route('leaflets.image', [$leaflet, basename($leaflet->image_path)]);
+    $pictures = $leaflet->pictures()->get();
 
-    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertExists($leaflet->image_path);
-    Storage::disk('public')->assertMissing($leaflet->image_path);
-    expect($leaflet->imageUrl())->toBe($url);
+    expect($pictures)->toHaveCount(2)
+        ->and($pictures[0]->path)->toStartWith("leaflets/{$leaflet->id}/")
+        ->and([$pictures[0]->width, $pictures[0]->height])->toBe([600, 400]);
+
+    foreach ($pictures as $picture) {
+        Storage::disk(ImageProcessor::PRIVATE_DISK)->assertExists($picture->path);
+        Storage::disk('public')->assertMissing($picture->path);
+    }
 
     $this->actingAs($friend)->get("/leaflets/{$leaflet->id}")
-        ->assertInertia(fn (Assert $page) => $page->where('leaflet.image_url', $url));
+        ->assertInertia(fn (Assert $page) => $page->where('leaflet.pictures', $leaflet->picturesPresentation()));
+    $this->actingAs($friend)->get('/leaflets')
+        ->assertInertia(fn (Assert $page) => $page->where('leaflets.0.pictures', $leaflet->picturesPresentation()));
 
+    $url = $pictures[1]->presentation()['url'];
+    $thumbUrl = $pictures[1]->presentation()['thumb_url'];
+
+    expect($thumbUrl)->not->toBe($url);
     $this->actingAs($friend)->get($url)->assertOk()->assertHeader('Content-Type', 'image/jpeg');
+    $this->actingAs($friend)->get($thumbUrl)->assertOk();
     $this->actingAs($author)->get($url)->assertOk();
     $this->actingAs($stranger)->get($url)->assertForbidden();
+    $this->actingAs($stranger)->get($thumbUrl)->assertForbidden();
 });
 
-test('a replaced leaflet picture gets a new address and the old one closes', function () {
+test('a leaflet picture taken off is deleted, the others stay, and new ones follow them', function () {
     $author = User::factory()->create();
-    $leaflet = leafletWithPicture($author);
-    $oldUrl = $leaflet->imageUrl();
-    $oldPath = $leaflet->image_path;
+    $leaflet = Leaflet::factory()->friends()->create(['user_id' => $author->id]);
+    $gone = storedPicture($leaflet);
+    $kept = storedPicture($leaflet);
+    $oldUrl = $gone->presentation()['url'];
 
     $this->actingAs($author)->put("/leaflets/{$leaflet->id}", [
         'body' => $leaflet->body,
         'visibility' => 'friends',
-        'image' => UploadedFile::fake()->image('new.jpg', 600, 400),
+        'remove_pictures' => [$gone->id],
+        'pictures' => [UploadedFile::fake()->image('new.jpg', 600, 400)],
     ])->assertRedirect()->assertValid();
 
-    $leaflet->refresh();
-    expect($leaflet->imageUrl())->not->toBe($oldUrl);
-    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertMissing($oldPath);
+    $pictures = $leaflet->pictures()->get();
+
+    expect($pictures)->toHaveCount(2)
+        ->and($pictures[0]->id)->toBe($kept->id)
+        ->and($pictures[1]->position)->toBeGreaterThan($pictures[0]->position);
+    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertMissing($gone->path);
+    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertMissing($gone->thumb_path);
+    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertExists($kept->path);
 
     $this->actingAs($author)->get($oldUrl)->assertNotFound();
-    $this->actingAs($author)->get($leaflet->imageUrl())->assertOk();
+    $this->actingAs($author)->get($pictures[1]->presentation()['url'])->assertOk();
 });
 
-test('deleting a leaflet deletes its picture', function () {
+test('a picture of another leaflet cannot be taken off through this one', function () {
     $author = User::factory()->create();
     $leaflet = leafletWithPicture($author);
-    $path = $leaflet->image_path;
+    $other = leafletWithPicture(User::factory()->create());
+    $theirs = $other->pictures()->sole();
+
+    $this->actingAs($author)->put("/leaflets/{$leaflet->id}", [
+        'body' => $leaflet->body,
+        'visibility' => 'friends',
+        'remove_pictures' => [$theirs->id],
+    ])->assertRedirect()->assertValid();
+
+    expect($other->pictures()->count())->toBe(1)
+        ->and($leaflet->pictures()->count())->toBe(1);
+    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertExists($theirs->path);
+});
+
+test('a leaflet never carries more pictures than a post may, kept and new together', function () {
+    $author = User::factory()->create();
+    $leaflet = Leaflet::factory()->friends()->create(['user_id' => $author->id]);
+    Picture::factory()->count(Picture::MAX_PER_POST - 1)->onLeaflet($leaflet)->create();
+
+    $this->actingAs($author)->put("/leaflets/{$leaflet->id}", [
+        'body' => $leaflet->body,
+        'visibility' => 'friends',
+        'pictures' => [UploadedFile::fake()->image('a.jpg', 40, 40), UploadedFile::fake()->image('b.jpg', 40, 40)],
+    ])->assertSessionHasErrors(['pictures' => 'You can add up to 10 pictures at a time.']);
+
+    expect($leaflet->pictures()->count())->toBe(Picture::MAX_PER_POST - 1);
+});
+
+test('deleting a leaflet deletes its pictures', function () {
+    $author = User::factory()->create();
+    $leaflet = leafletWithPicture($author);
+    $second = storedPicture($leaflet);
+    $first = $leaflet->pictures()->first();
 
     $this->actingAs($author)->delete("/leaflets/{$leaflet->id}")->assertRedirect();
 
-    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertMissing($path);
+    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertMissing($first->path);
+    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertMissing($first->thumb_path);
+    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertMissing($second->path);
+    $this->assertDatabaseCount('pictures', 0);
 });
 
-test('deleting an account removes the pictures on its events, leaflets and messages, and nobody elses', function (bool $byAdmin) {
+test('deleting an account removes the pictures on its events, leaflets, messages and comments, and nobody elses', function (bool $byAdmin) {
     $user = User::factory()->create(['avatar_path' => 'avatars/mine.jpg']);
     Storage::disk('public')->put('avatars/mine.jpg', 'picture');
     $friend = User::factory()->create();
     $eventImage = eventWithPicture($user);
-    $leaflet = leafletWithPicture($user);
-    $keptLeaflet = leafletWithPicture($friend);
+    $leafletPicture = leafletWithPicture($user)->pictures()->sole();
+    $keptLeafletPicture = leafletWithPicture($friend)->pictures()->sole();
 
     $conversation = Conversation::factory()->create(['type' => ConversationType::Direct, 'creator_id' => $user->id]);
     ConversationParticipant::factory()->create(['conversation_id' => $conversation->id, 'user_id' => $user->id]);
     ConversationParticipant::factory()->create(['conversation_id' => $conversation->id, 'user_id' => $friend->id]);
-    $message = Message::factory()->withImage()->create(['conversation_id' => $conversation->id, 'user_id' => $user->id, 'body' => '']);
-    $keptMessage = Message::factory()->withImage()->create(['conversation_id' => $conversation->id, 'user_id' => $friend->id, 'body' => '']);
+    $messagePicture = storedPicture(Message::factory()->create(['conversation_id' => $conversation->id, 'user_id' => $user->id, 'body' => '']));
+    $keptMessagePicture = storedPicture(Message::factory()->create(['conversation_id' => $conversation->id, 'user_id' => $friend->id, 'body' => '']));
+
+    // Their comment on a friend's event goes with them; so does a
+    // friend's comment on their event, which is deleted with the event.
+    $friendsEvent = Event::factory()->create(['user_id' => $friend->id]);
+    $ownComment = storedPicture(EventComment::factory()->create(['event_id' => $friendsEvent->id, 'user_id' => $user->id]));
+    $commentOnTheirEvent = storedPicture(EventComment::factory()->create(['event_id' => $eventImage->event_id, 'user_id' => $friend->id]));
+    $keptComment = storedPicture(EventComment::factory()->create(['event_id' => $friendsEvent->id, 'user_id' => $friend->id]));
     $private = Storage::disk(ImageProcessor::PRIVATE_DISK);
-    $private->put($message->image_path, 'picture');
-    $private->put($keptMessage->image_path, 'picture');
 
     if ($byAdmin) {
         $admin = User::factory()->create(['role' => UserRole::Administrator]);
@@ -240,28 +322,39 @@ test('deleting an account removes the pictures on its events, leaflets and messa
     expect(User::find($user->id))->toBeNull();
     Storage::disk('public')->assertMissing('avatars/mine.jpg');
     $private->assertMissing($eventImage->path);
-    $private->assertMissing($leaflet->image_path);
-    $private->assertMissing($message->image_path);
-    $private->assertExists($keptLeaflet->image_path);
-    $private->assertExists($keptMessage->image_path);
+
+    foreach ([$leafletPicture, $messagePicture, $ownComment, $commentOnTheirEvent] as $gone) {
+        $private->assertMissing($gone->path);
+        $private->assertMissing($gone->thumb_path);
+        expect(Picture::find($gone->id))->toBeNull();
+    }
+
+    foreach ([$keptLeafletPicture, $keptMessagePicture, $keptComment] as $kept) {
+        $private->assertExists($kept->path);
+        $private->assertExists($kept->thumb_path);
+    }
 })->with(['by themselves' => false, 'by an administrator' => true]);
 
-test('deleting an organizer removes its picture and those on its events and leaflets', function () {
+test('deleting an organizer removes its picture and those on its events, their comments and its leaflets', function () {
     $spokesperson = User::factory()->create();
     $organizer = Organizer::factory()->runBy($spokesperson)->create(['avatar_path' => 'organizers/logo.jpg']);
     Storage::disk('public')->put('organizers/logo.jpg', 'picture');
     $eventImage = eventWithPicture($spokesperson);
     $eventImage->event->update(['organizer_id' => $organizer->id]);
+    $comment = storedPicture(EventComment::factory()->create(['event_id' => $eventImage->event_id]));
     $leaflet = leafletWithPicture($spokesperson, 'official');
     $leaflet->update(['organizer_id' => $organizer->id]);
-    $ownLeaflet = leafletWithPicture($spokesperson);
+    $leafletPicture = $leaflet->pictures()->sole();
+    $ownLeafletPicture = leafletWithPicture($spokesperson)->pictures()->sole();
 
     $this->actingAs($spokesperson)->delete(route('organizers.destroy', $organizer))->assertRedirect();
 
     Storage::disk('public')->assertMissing('organizers/logo.jpg');
     Storage::disk(ImageProcessor::PRIVATE_DISK)->assertMissing($eventImage->path);
-    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertMissing($leaflet->image_path);
-    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertExists($ownLeaflet->image_path);
+    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertMissing($comment->path);
+    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertMissing($leafletPicture->path);
+    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertMissing($leafletPicture->thumb_path);
+    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertExists($ownLeafletPicture->path);
 });
 
 test('the migration moves every event and leaflet picture to the private disk, and back', function () {

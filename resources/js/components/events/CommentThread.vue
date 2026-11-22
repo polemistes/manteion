@@ -1,8 +1,18 @@
 <script setup lang="ts">
 import { Form, Link, router, usePage } from '@inertiajs/vue3';
-import { Ellipsis, Flag, Heart, SendHorizontal, Trash } from '@lucide/vue';
-import { ref } from 'vue';
+import {
+    Ellipsis,
+    Flag,
+    Heart,
+    ImagePlus,
+    SendHorizontal,
+    Trash,
+} from '@lucide/vue';
+import { ref, useTemplateRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import ImageLightbox from '@/components/ImageLightbox.vue';
+import PictureGrid from '@/components/PictureGrid.vue';
+import PictureStrip from '@/components/PictureStrip.vue';
 import Avatar from '@/components/ui/Avatar.vue';
 import Checkbox from '@/components/ui/Checkbox.vue';
 import Menu from '@/components/ui/Menu.vue';
@@ -10,12 +20,14 @@ import MenuItem from '@/components/ui/MenuItem.vue';
 import Tag from '@/components/ui/Tag.vue';
 import TextArea from '@/components/ui/TextArea.vue';
 import { confirmAction } from '@/composables/useConfirm';
+import { fillFileInput, usePictures } from '@/composables/usePictures';
 import { report } from '@/composables/useReport';
 import { staffDelete } from '@/composables/useStaffDelete';
 import type { OrganizerSummary } from '@/events';
 import { useDates } from '@/lib/dates';
 import { linkify } from '@/lib/text';
 import { toastError } from '@/lib/toast';
+import type { Picture } from '@/pictures';
 import type { ReactionSummary } from '@/reactions';
 import { requestJson } from '@/realtime';
 import * as eventComments from '@/routes/events/comments';
@@ -33,6 +45,7 @@ interface Person {
 export interface EventCommentItem {
     id: number;
     body: string;
+    pictures: Picture[];
     is_deleted: boolean;
     created_at: string;
     user: Person;
@@ -45,8 +58,10 @@ export interface EventCommentItem {
 }
 
 /**
- * The event's comments: who, when, what, a like (heart) and Reply, which
- * starts an answer with their @name. The composer posts in place. A
+ * The event's comments: who, when, what (words, pictures or both; a tap
+ * shows a picture full size), a like (heart) and Reply, which starts an
+ * answer with their @name. The composer posts in place, with any pictures
+ * picked beside the field shown above it until sent. A
  * spokesperson of the hosting organizer can speak as it; their own name
  * is shown beside the organizer's either way.
  */
@@ -64,6 +79,43 @@ const dates = useDates();
 
 const text = ref('');
 const asOrganizer = ref(props.canCommentAsOrganizer);
+
+// The pictures going with the next comment: the form is sent the ordinary
+// way, so they ride in a file input.
+const {
+    pictures,
+    preparing,
+    add,
+    remove: removePicture,
+    clear,
+} = usePictures();
+const picker = useTemplateRef<HTMLInputElement>('picker');
+const filesInput = useTemplateRef<HTMLInputElement>('filesInput');
+
+watch(pictures, (next) => fillFileInput(filesInput.value, next), {
+    flush: 'post',
+});
+
+async function onPicked(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const files = [...(input.files ?? [])];
+
+    // So the same file can be picked again later.
+    input.value = '';
+
+    await add(files);
+}
+
+function onSent(): void {
+    text.value = '';
+    clear();
+}
+
+// A comment's pictures full size, at the one tapped.
+const viewing = ref<{ pictures: Picture[]; index: number | null }>({
+    pictures: [],
+    index: null,
+});
 
 /** Whose face a comment wears: the organizer's, or the writer's. */
 function faceOf(comment: EventCommentItem): {
@@ -238,6 +290,7 @@ async function remove(comment: EventCommentItem): Promise<void> {
                         }}</span>
                     </p>
                     <p
+                        v-if="comment.body || comment.is_deleted"
                         class="mt-0.5 whitespace-pre-line text-ink"
                         :class="
                             comment.is_deleted ? 'text-ink-subtle italic' : ''
@@ -262,6 +315,18 @@ async function remove(comment: EventCommentItem): Promise<void> {
                             <template v-else>{{ segment.value }}</template>
                         </template>
                     </p>
+                    <PictureGrid
+                        v-if="comment.pictures.length"
+                        :pictures="comment.pictures"
+                        :frame="320"
+                        class="mt-2 overflow-hidden rounded-md"
+                        @open="
+                            viewing = {
+                                pictures: comment.pictures,
+                                index: $event,
+                            }
+                        "
+                    />
                     <div
                         v-if="!comment.is_deleted"
                         class="mt-1 -ml-2 flex items-center gap-1"
@@ -349,7 +414,7 @@ async function remove(comment: EventCommentItem): Promise<void> {
             :options="{ preserveScroll: true }"
             #default="{ errors, processing }"
             class="flex items-start gap-3"
-            @success="text = ''"
+            @success="onSent"
         >
             <Avatar
                 :name="
@@ -367,10 +432,52 @@ async function remove(comment: EventCommentItem): Promise<void> {
                 class="mt-1"
             />
             <div class="min-w-0 flex-1">
+                <input
+                    ref="picker"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    class="hidden"
+                    tabindex="-1"
+                    @change="onPicked"
+                />
+                <input
+                    ref="filesInput"
+                    type="file"
+                    name="pictures[]"
+                    multiple
+                    class="hidden"
+                    tabindex="-1"
+                />
+                <PictureStrip
+                    v-if="pictures.length"
+                    class="mb-1.5"
+                    :pictures="
+                        pictures.map((picture) => ({
+                            key: picture.previewUrl,
+                            url: picture.previewUrl,
+                        }))
+                    "
+                    :disabled="processing"
+                    @remove="removePicture"
+                />
                 <div
-                    class="flex min-h-11 items-end rounded-xl bg-surface pr-1 pl-4 ring-1 ring-line-strong ring-inset focus-within:ring-2 focus-within:ring-ink"
+                    class="flex min-h-11 items-end rounded-xl bg-surface pr-1 pl-1 ring-1 ring-line-strong ring-inset focus-within:ring-2 focus-within:ring-ink"
                 >
-                    <div class="min-w-0 flex-1">
+                    <button
+                        type="button"
+                        :aria-label="t('pictures.add')"
+                        :disabled="processing || preparing"
+                        class="relative mb-0.5 grid size-10 shrink-0 place-items-center rounded-full text-ink-muted after:absolute after:-inset-0.5 hover:text-ink disabled:opacity-45"
+                        @click="picker?.click()"
+                    >
+                        <ImagePlus
+                            :size="20"
+                            :stroke-width="1.8"
+                            aria-hidden="true"
+                        />
+                    </button>
+                    <div class="min-w-0 flex-1 pl-1">
                         <TextArea
                             ref="field"
                             v-model="text"
@@ -380,7 +487,7 @@ async function remove(comment: EventCommentItem): Promise<void> {
                             bare
                             :max-rows="8"
                             rows="1"
-                            required
+                            :required="pictures.length === 0"
                             maxlength="2000"
                             :placeholder="t('events.show.commentPlaceholder')"
                             class="py-2.5"
@@ -388,7 +495,11 @@ async function remove(comment: EventCommentItem): Promise<void> {
                     </div>
                     <button
                         type="submit"
-                        :disabled="processing || !text.trim()"
+                        :disabled="
+                            processing ||
+                            preparing ||
+                            (!text.trim() && pictures.length === 0)
+                        "
                         :aria-label="t('events.show.send')"
                         class="relative mb-0.5 grid size-10 shrink-0 place-items-center rounded-full text-ink after:absolute after:-inset-0.5 hover:bg-surface-2 disabled:text-ink-subtle"
                     >
@@ -400,10 +511,22 @@ async function remove(comment: EventCommentItem): Promise<void> {
                     </button>
                 </div>
                 <p
-                    v-if="errors.body"
+                    v-if="
+                        errors.body ??
+                        errors.pictures ??
+                        Object.keys(errors).some((key) =>
+                            key.startsWith('pictures.'),
+                        )
+                    "
                     class="mt-1.5 text-meta font-medium text-danger"
                 >
-                    {{ errors.body }}
+                    {{
+                        errors.body ??
+                        errors.pictures ??
+                        Object.entries(errors).find(([key]) =>
+                            key.startsWith('pictures.'),
+                        )?.[1]
+                    }}
                 </p>
                 <div
                     v-if="props.canCommentAsOrganizer && props.organizer"
@@ -433,5 +556,10 @@ async function remove(comment: EventCommentItem): Promise<void> {
         <p v-else class="text-meta text-ink-muted">
             {{ t('events.show.commentsDisabled') }}
         </p>
+
+        <ImageLightbox
+            v-model:index="viewing.index"
+            :pictures="viewing.pictures"
+        />
     </section>
 </template>

@@ -20,6 +20,12 @@ return [
         'image_too_large' => 'Bildet er for stort. Prøv et under 5 MB.',
     ],
 
+    'pictures' => [
+        'too_many' => 'Du kan legge til høyst ett bilde.|Du kan legge til opptil :count bilder om gangen.',
+        'not_a_picture' => 'En av filene er ikke et bilde vi kan lese (JPEG, PNG eller WebP).',
+        'too_large' => 'Et av bildene er for stort. Prøv et under 5 MB.',
+    ],
+
     'event_import' => [
         'not_a_facebook_event' => 'Det er ikke en lenke til et Facebook-arrangement.',
     ],
@@ -51,7 +57,7 @@ return [
 
     'leaflet' => [
         'organizer_visibility' => 'En arrangør har følgere, ikke venner. Velg et annet publikum.',
-        'one_attachment' => 'Et flyveblad kan ha enten et bilde eller en lenke, ikke begge.',
+        'one_attachment' => 'Et flyveblad kan ha enten bilder eller en lenke, ikke begge.',
     ],
 
     'reaction' => [

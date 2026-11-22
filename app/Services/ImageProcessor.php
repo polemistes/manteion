@@ -20,8 +20,13 @@ class ImageProcessor
 
     public const AVATAR_MAX_EDGE = 512;
 
-    /** A picture in a chat message is kept at an event photo's size. */
-    public const MESSAGE_MAX_EDGE = 1600;
+    /**
+     * A picture on a message, leaflet or comment is kept at an event
+     * photo's size, with a smaller copy for showing several in a grid.
+     */
+    public const PICTURE_MAX_EDGE = 1600;
+
+    public const PICTURE_THUMB_EDGE = 640;
 
     /**
      * Where pictures that only some people may see are kept: events,
@@ -55,7 +60,33 @@ class ImageProcessor
      */
     public function storeWithSize(UploadedFile $file, string $directory, int $maxEdge = self::EVENT_MAX_EDGE, string $disk = 'public'): array
     {
+        return $this->encode($this->orient($this->decode($file), $file), $directory, $maxEdge, $disk);
+    }
+
+    /**
+     * Stores a picture for a message, leaflet or comment on the private
+     * disk: the picture itself and, when it is larger than that, a copy
+     * scaled to PICTURE_THUMB_EDGE (a grid of several then costs a
+     * fraction of the data, which counts on the home server's line).
+     *
+     * @return array{path: string, thumb_path: string|null, width: int, height: int}
+     */
+    public function storePicture(UploadedFile $file, string $directory): array
+    {
         $image = $this->orient($this->decode($file), $file);
+        $stored = $this->encode($image, $directory, self::PICTURE_MAX_EDGE, self::PRIVATE_DISK);
+        $thumb = max($stored['width'], $stored['height']) > self::PICTURE_THUMB_EDGE
+            ? $this->encode($image, $directory, self::PICTURE_THUMB_EDGE, self::PRIVATE_DISK, 80)['path']
+            : null;
+
+        return [...$stored, 'thumb_path' => $thumb];
+    }
+
+    /**
+     * @return array{path: string, width: int, height: int}
+     */
+    private function encode(GdImage $image, string $directory, int $maxEdge, string $disk, int $quality = 85): array
+    {
         $image = $this->fit($image, $maxEdge);
 
         $width = imagesx($image);
@@ -74,7 +105,7 @@ class ImageProcessor
         imagecopy($flattened, $image, 0, 0, 0, 0, $width, $height);
 
         ob_start();
-        imagejpeg($flattened, null, 85);
+        imagejpeg($flattened, null, $quality);
         $contents = ob_get_clean();
 
         $path = trim($directory, '/').'/'.Str::random(40).'.jpg';

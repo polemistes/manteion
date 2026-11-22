@@ -27,8 +27,9 @@ class EventCommentController extends Controller
         $comment = $event->comments()->create([
             'user_id' => $request->user()->id,
             'organizer_id' => $asOrganizer ? $event->organizer_id : null,
-            'body' => $request->validated('body'),
+            'body' => $request->validated('body') ?? '',
         ]);
+        $comment->addPictures($request->pictures(), "comments/{$event->id}");
 
         // The hosts hear about everyone's comments but their own: the person
         // who made the event, or every spokesperson of the organizer.
@@ -46,6 +47,7 @@ class EventCommentController extends Controller
         Gate::authorize('delete', $comment);
 
         if ($request->user()->isStaff() && $request->boolean('leave_placeholder')) {
+            $comment->deletePictures();
             $comment->update(['body' => __('messages.moderation.deleted_placeholder'), 'is_deleted' => true]);
         } else {
             $comment->delete();

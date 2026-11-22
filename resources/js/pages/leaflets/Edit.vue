@@ -7,6 +7,7 @@ import PageHeader from '@/components/shell/PageHeader.vue';
 import Button from '@/components/ui/Button.vue';
 import type { OrganizerSummary } from '@/events';
 import type { LeafletVisibility } from '@/leaflets';
+import type { Picture } from '@/pictures';
 import { index as leafletsIndex, update } from '@/routes/leaflets';
 
 const props = defineProps<{
@@ -15,7 +16,7 @@ const props = defineProps<{
         body: string;
         visibility: LeafletVisibility;
         link_url: string | null;
-        image_url: string | null;
+        pictures: Picture[];
         organizer: OrganizerSummary | null;
     };
 }>();
@@ -38,7 +39,7 @@ const { t } = useI18n();
             :body="props.leaflet.body"
             :visibility="props.leaflet.visibility"
             :link-url="props.leaflet.link_url"
-            :image-url="props.leaflet.image_url"
+            :existing-pictures="props.leaflet.pictures"
             :organizer="props.leaflet.organizer"
             :submit-label="t('leaflets.edit.save')"
             :submitting-label="t('leaflets.edit.saving')"

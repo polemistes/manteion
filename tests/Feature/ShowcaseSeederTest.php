@@ -6,7 +6,7 @@ use App\Models\Conversation;
 use App\Models\Event;
 use App\Models\EventImage;
 use App\Models\Friendship;
-use App\Models\Leaflet;
+use App\Models\Picture;
 use App\Models\User;
 use App\Services\BadgeCounts;
 use App\Services\ImageProcessor;
@@ -96,7 +96,7 @@ test('it seeds a current showcase around alice and the owner', function () {
     // The rows remember their size, so pages frame posters whole.
     expect(EventImage::query()->get()->map(fn (EventImage $image) => $image->shape())->countBy()->sortKeys()->all())
         ->toBe(['photo' => 3, 'poster' => 2]);
-    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertExists(Leaflet::query()->whereNotNull('image_path')->sole()->image_path);
+    Storage::disk(ImageProcessor::PRIVATE_DISK)->assertExists(Picture::query()->whereNotNull('leaflet_id')->sole()->path);
     Http::assertSentCount(6);
     Queue::assertNothingPushed();
 });

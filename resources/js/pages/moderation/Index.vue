@@ -10,8 +10,10 @@ import {
 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import ImageLightbox from '@/components/ImageLightbox.vue';
 import Pagination from '@/components/Pagination.vue';
 import type { PaginationSummary } from '@/components/Pagination.vue';
+import PictureGrid from '@/components/PictureGrid.vue';
 import PageContainer from '@/components/shell/PageContainer.vue';
 import PageHeader from '@/components/shell/PageHeader.vue';
 import AppDialog from '@/components/ui/AppDialog.vue';
@@ -25,6 +27,7 @@ import { confirmAction } from '@/composables/useConfirm';
 import { staffDelete } from '@/composables/useStaffDelete';
 import { useDates } from '@/lib/dates';
 import { toast, toastError } from '@/lib/toast';
+import type { Picture } from '@/pictures';
 import { suspend as suspendUser } from '@/routes/admin/users';
 import { update as dismissReport } from '@/routes/moderation/reports';
 import { message as messageUser } from '@/routes/moderation/users';
@@ -45,7 +48,7 @@ interface Reportable {
     type: 'message' | 'event' | 'comment' | 'leaflet' | 'leaflet_response';
     excerpt: string | null;
     /** The picture on a reported message, while it is there. */
-    image_url?: string | null;
+    pictures?: Picture[];
     is_deleted: boolean;
     author: ReportedUser;
     url: string;
@@ -124,6 +127,12 @@ function write(user: ReportedUser): void {
 }
 
 // Suspending asks for a reason, which other staff see.
+// A reported item's pictures full size, at the one tapped.
+const viewing = ref<{ pictures: Picture[]; index: number | null }>({
+    pictures: [],
+    index: null,
+});
+
 const suspendFor = ref<ReportedUser | null>(null);
 const reason = ref('');
 const suspending = ref(false);
@@ -254,21 +263,22 @@ function suspend(): void {
                     </Menu>
                 </div>
 
-                <div
-                    v-if="report.reportable.image_url"
-                    class="mt-3 overflow-hidden rounded-md bg-recess"
-                >
-                    <img
-                        :src="report.reportable.image_url"
-                        alt=""
-                        class="mx-auto block max-h-80 w-auto max-w-full"
-                        loading="lazy"
-                    />
-                </div>
+                <PictureGrid
+                    v-if="report.reportable.pictures?.length"
+                    :pictures="report.reportable.pictures"
+                    :frame="320"
+                    class="mt-3 overflow-hidden rounded-md"
+                    @open="
+                        viewing = {
+                            pictures: report.reportable?.pictures ?? [],
+                            index: $event,
+                        }
+                    "
+                />
                 <blockquote
                     v-if="
                         report.reportable.excerpt ||
-                        !report.reportable.image_url
+                        !report.reportable.pictures?.length
                     "
                     class="mt-3 rounded-r-sm border-l-2 border-line-strong bg-recess px-3.5 py-2.5 whitespace-pre-line text-ink"
                     :class="
@@ -359,4 +369,6 @@ function suspend(): void {
             </Button>
         </template>
     </AppDialog>
+
+    <ImageLightbox v-model:index="viewing.index" :pictures="viewing.pictures" />
 </template>

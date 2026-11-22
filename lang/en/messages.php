@@ -20,6 +20,12 @@ return [
         'image_too_large' => 'That picture is too large. Try one under 5 MB.',
     ],
 
+    'pictures' => [
+        'too_many' => 'You can add one picture at most.|You can add up to :count pictures at a time.',
+        'not_a_picture' => 'One of the files is not a picture we can read (JPEG, PNG or WebP).',
+        'too_large' => 'One of the pictures is too large. Try one under 5 MB.',
+    ],
+
     'event_import' => [
         'not_a_facebook_event' => 'That is not a link to a Facebook event.',
     ],
@@ -51,7 +57,7 @@ return [
 
     'leaflet' => [
         'organizer_visibility' => 'An organizer has followers, not friends. Choose another audience.',
-        'one_attachment' => 'A leaflet can carry either an image or a link, not both.',
+        'one_attachment' => 'A leaflet can carry either pictures or a link, not both.',
     ],
 
     'reaction' => [

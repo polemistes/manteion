@@ -4,8 +4,10 @@ namespace Database\Factories;
 
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Models\Picture;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Factories\Sequence;
 
 /**
  * @extends Factory<Message>
@@ -27,16 +29,15 @@ class MessageFactory extends Factory
     }
 
     /**
-     * With a picture on record but no file behind it: enough for shapes
-     * and previews. A test that reads the file sends one through the
+     * With pictures on record but no files behind them: enough for shapes
+     * and previews. A test that reads the files sends them through the
      * controller instead.
      */
-    public function withImage(int $width = 1200, int $height = 900): static
+    public function withPictures(int $count = 1, int $width = 1200, int $height = 900): static
     {
-        return $this->state(fn () => [
-            'image_path' => 'messages/'.fake()->uuid().'.jpg',
-            'image_width' => $width,
-            'image_height' => $height,
-        ]);
+        return $this->has(
+            Picture::factory()->count($count)->sequence(fn (Sequence $sequence) => ['position' => $sequence->index])->state(['width' => $width, 'height' => $height]),
+            'pictures',
+        );
     }
 }

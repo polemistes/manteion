@@ -2,20 +2,27 @@
 import { Form } from '@inertiajs/vue3';
 import { ImagePlus, Link2, X } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
+import { useTemplateRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 import FieldError from '@/components/FieldError.vue';
-import ImageCropper from '@/components/ImageCropper.vue';
+import PictureStrip from '@/components/PictureStrip.vue';
 import Button from '@/components/ui/Button.vue';
 import SelectField from '@/components/ui/SelectField.vue';
 import TextArea from '@/components/ui/TextArea.vue';
 import TextField from '@/components/ui/TextField.vue';
+import { fillFileInput, usePictures } from '@/composables/usePictures';
 import type { OrganizerSummary } from '@/events';
 import { leafletVisibilities } from '@/leaflets';
 import type { LeafletVisibility } from '@/leaflets';
+import { MAX_PICTURES } from '@/pictures';
+import type { Picture } from '@/pictures';
 
 /**
- * Writing or editing a leaflet: the text, who can read it, and either a
- * picture or a link (its preview is fetched once it is saved).
+ * Writing or editing a leaflet: the text, who can read it, and either
+ * pictures or a link (its preview is fetched once it is saved). Pictures
+ * are picked several at a time and shown as a row of tiles; each can be
+ * taken off again, those already on a leaflet being edited too (they go
+ * when it is saved). Turning to a link takes them all off.
  */
 const props = withDefaults(
     defineProps<{
@@ -28,7 +35,8 @@ const props = withDefaults(
         body?: string;
         visibility?: LeafletVisibility;
         linkUrl?: string | null;
-        imageUrl?: string | null;
+        /** The pictures already on a leaflet being edited. */
+        existingPictures?: Picture[];
         resetOnSuccess?: boolean;
         /** The organizers the writer may post as (new leaflets only). */
         organizers?: OrganizerSummary[];
@@ -39,7 +47,7 @@ const props = withDefaults(
         body: '',
         visibility: 'friends',
         linkUrl: null,
-        imageUrl: null,
+        existingPictures: () => [],
         resetOnSuccess: false,
         organizers: () => [],
         organizer: null,
@@ -55,8 +63,59 @@ const body = ref(props.body);
 const visibility = ref<string>(props.visibility);
 const linkUrl = ref(props.linkUrl ?? '');
 const attachment = ref<'none' | 'image' | 'link'>(
-    props.imageUrl ? 'image' : props.linkUrl ? 'link' : 'none',
+    props.existingPictures.length ? 'image' : props.linkUrl ? 'link' : 'none',
 );
+
+// Pictures: those already there and not taken off, then the new ones.
+const removedIds = ref<number[]>([]);
+const kept = computed(() =>
+    props.existingPictures.filter(
+        (picture) => !removedIds.value.includes(picture.id),
+    ),
+);
+const { pictures, preparing, add, remove, clear } = usePictures({
+    room: () => MAX_PICTURES - kept.value.length,
+});
+const picker = useTemplateRef<HTMLInputElement>('picker');
+const filesInput = useTemplateRef<HTMLInputElement>('filesInput');
+
+// The form is sent the ordinary way: the new pictures ride in a file input.
+watch(pictures, (next) => fillFileInput(filesInput.value, next), {
+    flush: 'post',
+});
+
+const tiles = computed(() => [
+    ...kept.value.map((picture) => ({
+        key: `kept-${picture.id}`,
+        url: picture.thumb_url,
+    })),
+    ...pictures.value.map((picture) => ({
+        key: picture.previewUrl,
+        url: picture.previewUrl,
+    })),
+]);
+
+function removeTile(index: number): void {
+    if (index < kept.value.length) {
+        removedIds.value = [...removedIds.value, kept.value[index].id];
+    } else {
+        remove(index - kept.value.length);
+    }
+}
+
+async function onPicked(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const files = [...(input.files ?? [])];
+
+    // So the same file can be picked again later.
+    input.value = '';
+
+    if (files.length > 0) {
+        attachment.value = 'image';
+    }
+
+    await add(files);
+}
 
 // From whom: the writer ('me') or an organizer they speak for.
 const fromId = ref<string>(props.organizer ? String(props.organizer.id) : 'me');
@@ -110,6 +169,15 @@ const remaining = computed(() => MAX - body.value.length);
 
 function attach(kind: 'image' | 'link'): void {
     attachment.value = attachment.value === kind ? 'none' : kind;
+
+    // Pictures only count while they are what is attached.
+    if (attachment.value !== 'image') {
+        clear();
+        removedIds.value = props.existingPictures.map((picture) => picture.id);
+    } else {
+        removedIds.value = [];
+        picker.value?.click();
+    }
 }
 
 function onSuccess(): void {
@@ -124,6 +192,8 @@ function onSuccess(): void {
     visibility.value = props.visibility;
     linkUrl.value = '';
     attachment.value = 'none';
+    clear();
+    removedIds.value = [];
 }
 </script>
 
@@ -209,25 +279,49 @@ function onSuccess(): void {
                 </Button>
             </div>
 
-            <div v-if="attachment === 'image'">
-                <ImageCropper
-                    name="image"
-                    :aspect-ratio="1.5"
-                    :output-width="1200"
-                    :output-height="800"
-                    :existing-url="props.imageUrl"
-                    allow-whole
-                />
-                <FieldError :message="errors.image" />
-            </div>
-
-            <!-- Switching away from an existing picture removes it on save. -->
             <input
-                v-if="props.imageUrl && attachment !== 'image'"
-                type="hidden"
-                name="remove_image"
-                value="1"
+                ref="picker"
+                type="file"
+                accept="image/*"
+                multiple
+                class="hidden"
+                tabindex="-1"
+                @change="onPicked"
             />
+            <input
+                ref="filesInput"
+                type="file"
+                name="pictures[]"
+                multiple
+                class="hidden"
+                tabindex="-1"
+            />
+            <!-- The pictures taken off go when the leaflet is saved. -->
+            <input
+                v-for="id in removedIds"
+                :key="id"
+                type="hidden"
+                name="remove_pictures[]"
+                :value="id"
+            />
+
+            <div v-if="attachment === 'image'">
+                <PictureStrip
+                    :pictures="tiles"
+                    :addable="tiles.length < MAX_PICTURES"
+                    :disabled="preparing"
+                    @remove="removeTile"
+                    @add="picker?.click()"
+                />
+                <FieldError
+                    :message="
+                        errors.pictures ??
+                        Object.entries(errors).find(([key]) =>
+                            key.startsWith('pictures.'),
+                        )?.[1]
+                    "
+                />
+            </div>
 
             <TextField
                 v-if="attachment === 'link'"
@@ -244,7 +338,11 @@ function onSuccess(): void {
 
         <div class="flex justify-end gap-2">
             <slot name="cancel" />
-            <Button type="submit" variant="primary" :disabled="processing">
+            <Button
+                type="submit"
+                variant="primary"
+                :disabled="processing || preparing"
+            >
                 {{ processing ? props.submittingLabel : props.submitLabel }}
             </Button>
         </div>

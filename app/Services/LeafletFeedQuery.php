@@ -31,7 +31,7 @@ class LeafletFeedQuery
         $followedOrganizerIds = $this->viewer->followedOrganizerIds()->all();
 
         return Leaflet::query()
-            ->with(['owner', 'organizer', 'reactions'])
+            ->with(['owner', 'organizer', 'reactions', 'pictures'])
             ->withCount('responses')
             ->where(function (Builder $query) use ($viewerId, $friendIds, $organizerIds, $followedOrganizerIds) {
                 $query->where('user_id', $viewerId)

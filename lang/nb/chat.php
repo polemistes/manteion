@@ -9,6 +9,7 @@ return [
 
     'preview' => [
         'photo' => 'Bilde',
+        'photos' => 'Bilde|:count bilder',
     ],
 
     'push' => [

@@ -32,9 +32,16 @@ class NewEventComment extends ActivityNotification
         return $this->comment->event;
     }
 
+    /**
+     * What was written, or "📷 Photo" ("📷 3 photos") for pictures alone.
+     */
     public function excerpt(): string
     {
-        return self::snippet($this->comment->body);
+        if ($this->comment->body !== '') {
+            return self::snippet($this->comment->body);
+        }
+
+        return '📷 '.trans_choice('chat.preview.photos', max(1, $this->comment->pictures()->count()));
     }
 
     /**

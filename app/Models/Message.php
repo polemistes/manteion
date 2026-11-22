@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Services\ImageProcessor;
+use App\Models\Concerns\HasPictures;
 use Database\Factories\MessageFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,25 +11,23 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * @property int $id
  * @property int $conversation_id
  * @property int $user_id
  * @property string $body
- * @property string|null $image_path
- * @property int|null $image_width
- * @property int|null $image_height
  * @property bool $is_deleted
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['conversation_id', 'user_id', 'body', 'image_path', 'image_width', 'image_height', 'is_deleted'])]
+#[Fillable(['conversation_id', 'user_id', 'body', 'is_deleted'])]
 class Message extends Model
 {
     /** @use HasFactory<MessageFactory> */
     use HasFactory;
+
+    use HasPictures;
 
     /**
      * As the column defaults, so a message just created (and broadcast
@@ -47,8 +45,6 @@ class Message extends Model
     protected function casts(): array
     {
         return [
-            'image_width' => 'integer',
-            'image_height' => 'integer',
             'is_deleted' => 'boolean',
         ];
     }
@@ -56,44 +52,12 @@ class Message extends Model
     /**
      * The text anyone may still see: null once wiped by a delete (the
      * original text is never sent again), while a moderator's placeholder
-     * is meant to be shown and passes through. A picture without words has
+     * is meant to be shown and passes through. Pictures without words have
      * an empty string.
      */
     public function visibleBody(): ?string
     {
         return $this->is_deleted && $this->body === '' ? null : $this->body;
-    }
-
-    /**
-     * The attached picture as the chat frames it: its address (which only
-     * the conversation may open, see MessageImageController) and its size,
-     * so a thread can leave room for it before it loads. Null without a
-     * picture, and once deleted.
-     *
-     * @return array{url: string, width: int|null, height: int|null}|null
-     */
-    public function imagePresentation(): ?array
-    {
-        if ($this->image_path === null) {
-            return null;
-        }
-
-        return [
-            'url' => route('messages.messages.image', [$this->conversation_id, $this->id]),
-            'width' => $this->image_width,
-            'height' => $this->image_height,
-        ];
-    }
-
-    /**
-     * Removes the picture's file. The columns are cleared by whoever
-     * deletes the message, together with the rest of it.
-     */
-    public function deleteImageFile(): void
-    {
-        if ($this->image_path !== null) {
-            Storage::disk(ImageProcessor::PRIVATE_DISK)->delete($this->image_path);
-        }
     }
 
     /**

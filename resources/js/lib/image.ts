@@ -10,14 +10,16 @@ export type PreparedImage = {
 /**
  * Prepares a picture the user picked for upload: decoded, scaled to fit
  * `maxEdge` on its longer side (never up), flattened on white and
- * re-encoded as a JPEG. Drawing it through a canvas drops the camera's
- * metadata (place, device), and the browser applies the stored orientation
- * while drawing, so it comes out the right way up. Rejects when the file
- * is not a picture the browser can read.
+ * re-encoded as a JPEG, more tightly if it would weigh more than
+ * `maxBytes`. Drawing it through a canvas drops the camera's metadata
+ * (place, device), and the browser applies the stored orientation while
+ * drawing, so it comes out the right way up. Rejects when the file is not
+ * a picture the browser can read.
  */
 export async function prepareImageUpload(
     file: File,
     maxEdge: number,
+    maxBytes = Infinity,
 ): Promise<PreparedImage> {
     const source = URL.createObjectURL(file);
     const image = new Image();
@@ -46,9 +48,19 @@ export async function prepareImageUpload(
         context.fillRect(0, 0, canvas.width, canvas.height);
         context.drawImage(image, 0, 0, canvas.width, canvas.height);
 
-        const blob = await new Promise<Blob | null>((resolve) =>
-            canvas.toBlob(resolve, 'image/jpeg', 0.85),
-        );
+        let blob: Blob | null = null;
+
+        // A busy photo can be heavy at the usual quality: step down until
+        // it fits (the last step is taken whatever it weighs).
+        for (const quality of [0.85, 0.72, 0.6, 0.45]) {
+            blob = await new Promise<Blob | null>((resolve) =>
+                canvas.toBlob(resolve, 'image/jpeg', quality),
+            );
+
+            if (!blob || blob.size <= maxBytes) {
+                break;
+            }
+        }
 
         if (!blob) {
             throw new Error('Could not encode the picture.');

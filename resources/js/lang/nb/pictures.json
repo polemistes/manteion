@@ -1,0 +1,16 @@
+{
+    "add": "Legg til bilder",
+    "addMore": "Legg til flere bilder",
+    "take": "Ta et bilde",
+    "remove": "Fjern bilde {n}",
+    "view": "Vis bilde {n} av {total}",
+    "viewOne": "Vis bildet",
+    "more": "+{n}",
+    "viewer": "Bilder",
+    "close": "Lukk",
+    "previous": "Forrige bilde",
+    "next": "Neste bilde",
+    "position": "{n} av {total}",
+    "unreadable": "Et bilde kunne ikke leses. | {n} bilder kunne ikke leses.",
+    "tooMany": "Du kan legge til opptil {max} bilder om gangen."
+}

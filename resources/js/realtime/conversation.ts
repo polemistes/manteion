@@ -84,7 +84,7 @@ export function toMessageSummary(
     return {
         id: message.id,
         body: message.body,
-        image: message.image ?? null,
+        pictures: message.pictures ?? [],
         is_deleted: message.is_deleted,
         created_at: message.created_at,
         sender: message.sender,

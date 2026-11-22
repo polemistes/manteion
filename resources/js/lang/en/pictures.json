@@ -1,0 +1,16 @@
+{
+    "add": "Add pictures",
+    "addMore": "Add more pictures",
+    "take": "Take a photo",
+    "remove": "Remove picture {n}",
+    "view": "View picture {n} of {total}",
+    "viewOne": "View the picture",
+    "more": "+{n}",
+    "viewer": "Pictures",
+    "close": "Close",
+    "previous": "Previous picture",
+    "next": "Next picture",
+    "position": "{n} of {total}",
+    "unreadable": "A picture couldn’t be read. | {n} pictures couldn’t be read.",
+    "tooMany": "You can add up to {max} pictures at a time."
+}

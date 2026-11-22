@@ -75,7 +75,7 @@ class ReportController extends Controller
             $reportable instanceof Message => [
                 'type' => 'message',
                 'excerpt' => $reportable->is_deleted ? null : $reportable->body,
-                'image_url' => $reportable->imagePresentation()['url'] ?? null,
+                'pictures' => $reportable->picturesPresentation(),
                 'is_deleted' => $reportable->is_deleted,
                 'author' => $this->summarizeUser($reportable->sender),
                 'url' => route('messages.show', $reportable->conversation_id),
@@ -92,6 +92,7 @@ class ReportController extends Controller
             $reportable instanceof EventComment => [
                 'type' => 'comment',
                 'excerpt' => $reportable->is_deleted ? null : $reportable->body,
+                'pictures' => $reportable->picturesPresentation(),
                 'is_deleted' => $reportable->is_deleted,
                 'author' => $this->summarizeUser($reportable->user),
                 'url' => route('events.show', $reportable->event_id),
@@ -100,6 +101,7 @@ class ReportController extends Controller
             $reportable instanceof Leaflet => [
                 'type' => 'leaflet',
                 'excerpt' => $reportable->body,
+                'pictures' => $reportable->picturesPresentation(),
                 'is_deleted' => false,
                 'author' => $this->summarizeUser($reportable->owner),
                 'url' => route('leaflets.show', $reportable->id),

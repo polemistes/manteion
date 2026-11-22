@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\LeafletVisibility;
+use App\Http\Requests\Concerns\ValidatesPictures;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -10,13 +11,15 @@ use Illuminate\Validation\Validator;
 
 class StoreLeafletRequest extends FormRequest
 {
+    use ValidatesPictures;
+
     public function authorize(): bool
     {
         return true;
     }
 
     /**
-     * A leaflet carries at most one attachment: an image or a link.
+     * A leaflet carries pictures or a link, not both.
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
@@ -25,7 +28,7 @@ class StoreLeafletRequest extends FormRequest
         return [
             'body' => ['required', 'string', 'max:2000'],
             'visibility' => ['required', Rule::enum(LeafletVisibility::class)],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', Rule::dimensions()->maxWidth(StoreEventRequest::MAX_UPLOAD_EDGE)->maxHeight(StoreEventRequest::MAX_UPLOAD_EDGE), 'prohibits:link_url'],
+            ...$this->pictureRules(['prohibits:link_url']),
             'link_url' => ['nullable', 'url:http,https', 'max:2048'],
             'organizer_id' => ['nullable', 'integer', Rule::exists('organizers', 'id')],
         ];
@@ -54,7 +57,8 @@ class StoreLeafletRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'image.prohibits' => __('messages.leaflet.one_attachment'),
+            ...$this->pictureMessages(),
+            'pictures.prohibits' => __('messages.leaflet.one_attachment'),
         ];
     }
 }

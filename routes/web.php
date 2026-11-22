@@ -21,7 +21,6 @@ use App\Http\Controllers\EventSearchabilityController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\FriendshipController;
 use App\Http\Controllers\LeafletController;
-use App\Http\Controllers\LeafletImageController;
 use App\Http\Controllers\LeafletResponseController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Moderation\ReportController as ModerationReportController;
@@ -30,6 +29,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrganizerController;
 use App\Http\Controllers\OrganizerFollowController;
 use App\Http\Controllers\OrganizerSpokespersonController;
+use App\Http\Controllers\PictureController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\ReactionController;
@@ -120,6 +120,9 @@ Route::middleware('auth')->group(function () {
         ->scopeBindings();
     Route::post('/events/{event}/searchable', [EventSearchabilityController::class, 'store'])->name('events.searchable.store');
 
+    // The pictures on messages, leaflets and event comments.
+    Route::get('/pictures/{picture}/{file}', [PictureController::class, 'show'])->name('pictures.show');
+
     Route::get('/organizers/create', [OrganizerController::class, 'create'])->name('organizers.create');
     Route::post('/organizers', [OrganizerController::class, 'store'])->name('organizers.store');
     Route::get('/organizers/{organizer}', [OrganizerController::class, 'show'])->name('organizers.show');
@@ -136,8 +139,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/leaflets', [LeafletController::class, 'store'])->name('leaflets.store');
     Route::get('/leaflets/{leaflet}', [LeafletController::class, 'show'])->name('leaflets.show');
     Route::get('/leaflets/{leaflet}/edit', [LeafletController::class, 'edit'])->name('leaflets.edit');
-    Route::get('/leaflets/{leaflet}/image/{file}', [LeafletImageController::class, 'show'])
-        ->name('leaflets.image');
     Route::put('/leaflets/{leaflet}', [LeafletController::class, 'update'])->name('leaflets.update');
     Route::delete('/leaflets/{leaflet}', [LeafletController::class, 'destroy'])->name('leaflets.destroy');
     Route::post('/leaflets/{leaflet}/responses', [LeafletResponseController::class, 'store'])->name('leaflets.responses.store');

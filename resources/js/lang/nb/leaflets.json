@@ -20,8 +20,8 @@
             "friends": "Bare vennene dine",
             "private": "Bare deg, som et notat til deg selv"
         },
-        "addImage": "Legg til et bilde",
-        "removeImage": "Fjern bildet",
+        "addImage": "Legg til bilder",
+        "removeImage": "Fjern bildene",
         "addLink": "Legg til en lenke",
         "removeLink": "Fjern lenken",
         "link": "Lenke",
