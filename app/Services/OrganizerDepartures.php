@@ -35,10 +35,11 @@ class OrganizerDepartures
      */
     public function choicesFor(User $user): array
     {
-        return $user->organizers()->orderBy('name')->get()
-            ->map(fn (Organizer $organizer) => $this->choiceFor($organizer, $user))
-            ->values()
-            ->all();
+        return array_values(
+            $user->organizers()->orderBy('name')->get()
+                ->map(fn (Organizer $organizer) => $this->choiceFor($organizer, $user))
+                ->all()
+        );
     }
 
     /**
@@ -48,13 +49,13 @@ class OrganizerDepartures
     {
         $others = $this->othersThan($organizer, $user);
         $isMain = $organizer->isMainSpokesperson($user);
-        $receiver = $isMain ? null : $this->receiverAmong($others);
+        $receiver = $isMain ? null : $this->receiverAmong($organizer, $others);
 
         return [
             'id' => $organizer->id,
             'name' => $organizer->name,
             'is_main' => $isMain,
-            'others' => $others->map(fn (User $other) => ['id' => $other->id, 'name' => $other->name])->values()->all(),
+            'others' => array_values($others->map(fn (User $other) => ['id' => $other->id, 'name' => $other->name])->all()),
             'receiver' => $receiver === null ? null : ['id' => $receiver->id, 'name' => $receiver->name],
             'made' => $this->madeBy($organizer, $user),
         ];
@@ -159,7 +160,7 @@ class OrganizerDepartures
         // one) the longest-serving, who becomes it.
         $receiver = $wasMain
             ? ($others->firstWhere('id', $successor?->id) ?? $others->first())
-            : $this->receiverAmong($others);
+            : $this->receiverAmong($organizer, $others);
         $becomesMain = ! $organizer->isMainSpokesperson($receiver);
 
         if ($becomesMain) {
@@ -261,9 +262,10 @@ class OrganizerDepartures
      *
      * @param  Collection<int, User>  $others
      */
-    private function receiverAmong(Collection $others): ?User
+    private function receiverAmong(Organizer $organizer, Collection $others): ?User
     {
-        return $others->first(fn (User $other) => $other->pivot->role === SpokespersonRole::Main)
-            ?? $others->first();
+        $main = $organizer->mainSpokesperson();
+
+        return ($main === null ? null : $others->firstWhere('id', $main->id)) ?? $others->first();
     }
 }

@@ -166,7 +166,7 @@ abstract class ActivityNotification extends Notification implements ShouldQueue
         return (new WebPushMessage)
             ->title($this->pushTitle())
             ->body($this->pushBody())
-            ->icon($this->actor()?->avatar_url ?? '/icons/icon-192.png')
+            ->icon($this->actor()->avatar_url ?? '/icons/icon-192.png')
             ->badge('/icons/badge-96.png')
             ->tag("{$type}-{$subject['id']}")
             ->renotify()

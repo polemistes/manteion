@@ -226,10 +226,12 @@ class EventStartingPoints
      */
     public static function tagIdsWithParents(array $tagIds): array
     {
-        $tagIds = collect($tagIds)->map(fn (int|string $id) => (int) $id)->unique();
+        $chosen = array_map(fn (int|string $id): int => (int) $id, $tagIds);
 
-        $parentIds = Tag::query()->whereIn('id', $tagIds)->whereNotNull('parent_id')->pluck('parent_id');
+        $parents = Tag::query()->whereIn('id', $chosen)->whereNotNull('parent_id')->get(['id', 'parent_id'])
+            ->map(fn (Tag $tag): int => (int) $tag->parent_id)
+            ->all();
 
-        return $tagIds->merge($parentIds)->unique()->values()->all();
+        return array_values(array_unique([...$chosen, ...$parents]));
     }
 }
