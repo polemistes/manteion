@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Trash } from '@lucide/vue';
 import {
-    AlertDialogAction,
     AlertDialogCancel,
     AlertDialogContent,
     AlertDialogDescription,
@@ -14,7 +13,15 @@ import { useI18n } from 'vue-i18n';
 import Button from '@/components/ui/Button.vue';
 import { resolveConfirm, useConfirmState } from '@/composables/useConfirm';
 
-/** The one confirm dialog behind `confirmAction()`; mounted by the shell. */
+/**
+ * The one confirm dialog behind `confirmAction()`; mounted by the shell.
+ *
+ * The button that says yes is a plain button, not an AlertDialogAction:
+ * that wrapper's own click handler runs before the button's and closes
+ * the dialog, which reached onOpenChange() first and answered "no" to
+ * every question (nothing confirmed here was ever done, 2026-11-22).
+ * Closing any other way, by Escape or the Cancel button, is the "no".
+ */
 const { t } = useI18n();
 
 const state = useConfirmState();
@@ -50,17 +57,15 @@ function onOpenChange(open: boolean): void {
                 <div
                     class="mt-5 flex flex-col gap-2 sm:flex-row-reverse sm:justify-start"
                 >
-                    <AlertDialogAction as-child>
-                        <Button
-                            :variant="
-                                state.tone === 'primary' ? 'primary' : 'danger'
-                            "
-                            :icon="state.tone === 'primary' ? undefined : Trash"
-                            @click="resolveConfirm(true)"
-                        >
-                            {{ state.confirmLabel ?? t('common.delete') }}
-                        </Button>
-                    </AlertDialogAction>
+                    <Button
+                        :variant="
+                            state.tone === 'primary' ? 'primary' : 'danger'
+                        "
+                        :icon="state.tone === 'primary' ? undefined : Trash"
+                        @click="resolveConfirm(true)"
+                    >
+                        {{ state.confirmLabel ?? t('common.delete') }}
+                    </Button>
                     <AlertDialogCancel as-child>
                         <Button variant="ghost" @click="resolveConfirm(false)">
                             {{ state.cancelLabel ?? t('common.cancel') }}
