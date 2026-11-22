@@ -6,17 +6,12 @@ import {
     ChevronDown,
     ChevronLeft,
     Earth,
-    Ellipsis,
     Eye,
-    Flag,
     Lock,
     Maximize2,
     MapPin,
-    Pencil,
     Search,
     Share,
-    Trash,
-    UserPlus,
 } from '@lucide/vue';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -24,6 +19,7 @@ import AttendanceVisibilityDialog from '@/components/events/AttendanceVisibility
 import CommentThread from '@/components/events/CommentThread.vue';
 import type { EventCommentItem } from '@/components/events/CommentThread.vue';
 import EventMapCard from '@/components/events/EventMapCard.vue';
+import EventMenu from '@/components/events/EventMenu.vue';
 import GuestFaces from '@/components/events/GuestFaces.vue';
 import InviteDialog from '@/components/events/InviteDialog.vue';
 import RsvpControl from '@/components/events/RsvpControl.vue';
@@ -35,9 +31,6 @@ import Avatar from '@/components/ui/Avatar.vue';
 import DateBadge from '@/components/ui/DateBadge.vue';
 import DateLeaf from '@/components/ui/DateLeaf.vue';
 import IconButton from '@/components/ui/IconButton.vue';
-import Menu from '@/components/ui/Menu.vue';
-import MenuItem from '@/components/ui/MenuItem.vue';
-import MenuSeparator from '@/components/ui/MenuSeparator.vue';
 import Tag from '@/components/ui/Tag.vue';
 import { confirmAction } from '@/composables/useConfirm';
 import { report } from '@/composables/useReport';
@@ -56,7 +49,6 @@ import { useEventChannel } from '@/realtime';
 import {
     calendarFile,
     destroy as destroyEvent,
-    edit as editEvent,
     index as eventsIndex,
 } from '@/routes/events';
 import { store as makeSearchable } from '@/routes/events/searchable';
@@ -257,8 +249,26 @@ const hasMap = computed(
     () => props.event.latitude !== null && props.event.longitude !== null,
 );
 
-/** The map card shows for a pinned place with a name. */
-const hasMapCard = computed(() => hasMap.value && !!props.event.place);
+/**
+ * What the place is called: the name the host gave it, else the town the
+ * pin is in, else just that it is on the map. A pin without a name is a
+ * place all the same (the host searched for an address and typed nothing
+ * more), so it gets its line and its map too.
+ */
+const placeTitle = computed(() => {
+    if (props.event.place) {
+        return props.event.place;
+    }
+
+    if (!hasMap.value) {
+        return null;
+    }
+
+    return address.value || t('events.show.onTheMap');
+});
+
+/** The town under the name; not when the town is the name. */
+const placeAddress = computed(() => (props.event.place ? address.value : ''));
 
 const directionsUrl = computed(() =>
     hasMap.value
@@ -326,14 +336,6 @@ function searchable(): void {
         },
     );
 }
-
-const showMenu = computed(
-    () =>
-        props.event.is_owner ||
-        props.event.can_invite ||
-        props.event.can_delete ||
-        props.event.can_report,
-);
 </script>
 
 <template>
@@ -352,6 +354,13 @@ const showMenu = computed(
                 :icon="Share"
                 :label="t('events.show.share')"
                 @click="share"
+            />
+            <EventMenu
+                :event="props.event"
+                @invite="inviteOpen = true"
+                @searchable="searchable"
+                @report="report('event', props.event.id)"
+                @delete="deleteEvent"
             />
         </template>
     </PageHeader>
@@ -384,54 +393,13 @@ const showMenu = computed(
                             :label="t('events.show.share')"
                             @click="share"
                         />
-                        <Menu v-if="showMenu">
-                            <template #trigger>
-                                <IconButton
-                                    :icon="Ellipsis"
-                                    :label="t('events.show.more')"
-                                />
-                            </template>
-                            <MenuItem
-                                v-if="props.event.is_owner"
-                                :icon="Pencil"
-                                as-child
-                            >
-                                <Link :href="editEvent(props.event.id).url">{{
-                                    t('events.show.edit')
-                                }}</Link>
-                            </MenuItem>
-                            <MenuItem
-                                v-if="props.event.can_invite"
-                                :icon="UserPlus"
-                                @select="inviteOpen = true"
-                                >{{ t('events.show.invite') }}</MenuItem
-                            >
-                            <MenuItem
-                                v-if="
-                                    props.event.is_owner &&
-                                    props.event.visibility === 'public' &&
-                                    !props.event.is_searchable_paid
-                                "
-                                :icon="Search"
-                                @select="searchable"
-                                >{{ t('events.show.makeSearchable') }}</MenuItem
-                            >
-                            <MenuItem
-                                v-if="props.event.can_report"
-                                :icon="Flag"
-                                @select="report('event', props.event.id)"
-                                >{{ t('events.show.report') }}</MenuItem
-                            >
-                            <template v-if="props.event.can_delete">
-                                <MenuSeparator />
-                                <MenuItem
-                                    :icon="Trash"
-                                    danger
-                                    @select="deleteEvent"
-                                    >{{ t('events.show.delete') }}</MenuItem
-                                >
-                            </template>
-                        </Menu>
+                        <EventMenu
+                            :event="props.event"
+                            @invite="inviteOpen = true"
+                            @searchable="searchable"
+                            @report="report('event', props.event.id)"
+                            @delete="deleteEvent"
+                        />
                     </div>
                 </div>
 
@@ -496,46 +464,14 @@ const showMenu = computed(
                                 variant="floating"
                                 @click="share"
                             />
-                            <Menu v-if="showMenu">
-                                <template #trigger>
-                                    <IconButton
-                                        :icon="Ellipsis"
-                                        :label="t('events.show.more')"
-                                        variant="floating"
-                                    />
-                                </template>
-                                <MenuItem
-                                    v-if="props.event.is_owner"
-                                    :icon="Pencil"
-                                    as-child
-                                >
-                                    <Link
-                                        :href="editEvent(props.event.id).url"
-                                        >{{ t('events.show.edit') }}</Link
-                                    >
-                                </MenuItem>
-                                <MenuItem
-                                    v-if="props.event.can_invite"
-                                    :icon="UserPlus"
-                                    @select="inviteOpen = true"
-                                    >{{ t('events.show.invite') }}</MenuItem
-                                >
-                                <MenuItem
-                                    v-if="props.event.can_report"
-                                    :icon="Flag"
-                                    @select="report('event', props.event.id)"
-                                    >{{ t('events.show.report') }}</MenuItem
-                                >
-                                <template v-if="props.event.can_delete">
-                                    <MenuSeparator />
-                                    <MenuItem
-                                        :icon="Trash"
-                                        danger
-                                        @select="deleteEvent"
-                                        >{{ t('events.show.delete') }}</MenuItem
-                                    >
-                                </template>
-                            </Menu>
+                            <EventMenu
+                                :event="props.event"
+                                floating
+                                @invite="inviteOpen = true"
+                                @searchable="searchable"
+                                @report="report('event', props.event.id)"
+                                @delete="deleteEvent"
+                            />
                         </div>
                     </div>
                 </div>
@@ -621,7 +557,7 @@ const showMenu = computed(
                             </p>
                         </div>
                     </li>
-                    <li v-if="props.event.place" class="flex gap-3.5">
+                    <li v-if="placeTitle" class="flex gap-3.5">
                         <span
                             class="grid size-10 shrink-0 place-items-center rounded-full bg-surface-2 text-ink-muted"
                         >
@@ -633,13 +569,13 @@ const showMenu = computed(
                         </span>
                         <div class="min-w-0">
                             <p class="font-semibold text-ink">
-                                {{ props.event.place }}
+                                {{ placeTitle }}
                             </p>
                             <p class="text-meta text-ink-muted">
-                                <template v-if="address">{{
-                                    address
+                                <template v-if="placeAddress">{{
+                                    placeAddress
                                 }}</template>
-                                <template v-if="address && directionsUrl">
+                                <template v-if="placeAddress && directionsUrl">
                                     ·
                                 </template>
                                 <a
@@ -762,19 +698,19 @@ const showMenu = computed(
                         />
                     </div>
                     <EventMapCard
-                        v-if="hasMapCard"
+                        v-if="hasMap"
                         class="row-start-3 sm:row-start-2 md:col-start-2 md:row-start-1 xl:hidden"
                         :latitude="props.event.latitude!"
                         :longitude="props.event.longitude!"
-                        :place="props.event.place ?? ''"
-                        :address="address"
+                        :place="placeTitle ?? ''"
+                        :address="placeAddress"
                     />
 
                     <!-- About. -->
                     <section
                         class="md:col-span-2"
                         :class="
-                            hasMapCard
+                            hasMap
                                 ? 'row-start-2 sm:row-start-3 md:row-start-2'
                                 : ''
                         "
@@ -853,11 +789,11 @@ const showMenu = computed(
                         />
                     </div>
                     <EventMapCard
-                        v-if="hasMapCard"
+                        v-if="hasMap"
                         :latitude="props.event.latitude!"
                         :longitude="props.event.longitude!"
-                        :place="props.event.place ?? ''"
-                        :address="address"
+                        :place="placeTitle ?? ''"
+                        :address="placeAddress"
                     />
                 </div>
             </aside>
