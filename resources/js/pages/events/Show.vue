@@ -179,7 +179,7 @@ const answerState = computed(() => {
     }
 });
 
-// Beside the answer: who sees it ("Seen by guests"), which opens the choice.
+// Beside the answer: who sees it ("Seen by all"), which opens the choice.
 const visibilityLabels = computed(() => ({
     short: {
         everyone: t('events.rsvp.seenByEveryoneShort'),
