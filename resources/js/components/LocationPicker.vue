@@ -1,12 +1,20 @@
 <script setup lang="ts">
-import { LocateFixed, MapPin } from '@lucide/vue';
+import { LocateFixed, MapPin, MapPinned, Search } from '@lucide/vue';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import {
+    computed,
+    nextTick,
+    onUnmounted,
+    ref,
+    useTemplateRef,
+    watch,
+} from 'vue';
 import { useI18n } from 'vue-i18n';
+import TextField from '@/components/ui/TextField.vue';
 import {
     cityFromAddress,
     countryCodeFromAddress,
@@ -39,22 +47,31 @@ export interface LocationValue {
     country_code: string | null;
 }
 
+/**
+ * Where an event is: one field for what the place is called, and under it
+ * the ways to put it on the map. The two are separate things. The name is
+ * whatever the host types ("My place", a venue the map has never heard
+ * of) and is never replaced. The pin comes from one of three: finding the
+ * name on the map, searching for something else (usually the address), or
+ * marking the spot by hand. The map shows only once one of them has been
+ * asked for, and nothing typed is sent to the map's search until then.
+ *
+ * `v-model:name` is the name (submitted as `place`); the pin and the town
+ * found for it are submitted as hidden fields and reported by `change`.
+ */
 const props = withDefaults(
     defineProps<{
         initialValue?: LocationValue | null;
+        label: string;
+        placeholder?: string;
+        error?: string;
     }>(),
-    { initialValue: null },
+    { initialValue: null, placeholder: undefined, error: undefined },
 );
 
-/**
- * `change`: the pin and the place found for it, whenever either changes.
- * `picked`: what a chosen search result is called, for a form that wants
- * to name the place after it.
- */
-const emit = defineEmits<{
-    change: [value: LocationValue];
-    picked: [name: string];
-}>();
+const emit = defineEmits<{ change: [value: LocationValue] }>();
+
+const name = defineModel<string>('name', { default: '' });
 
 const { t, locale } = useI18n();
 const { cityAndCountry } = usePlaces();
@@ -66,7 +83,10 @@ const country = ref<string | null>(props.initialValue?.country ?? null);
 const countryCode = ref<string | null>(
     props.initialValue?.country_code ?? null,
 );
-const searchQuery = ref('');
+
+const hasPin = computed(
+    () => latitude.value !== null && longitude.value !== null,
+);
 
 watch([latitude, longitude, city, country, countryCode], () =>
     emit('change', {
@@ -77,15 +97,50 @@ watch([latitude, longitude, city, country, countryCode], () =>
         country_code: countryCode.value,
     }),
 );
-// True once a result has been picked: the field then holds the chosen
-// address, which is not an unanswered search.
-const picked = ref(false);
 
-const { results, searching, error, search, clearResults } = useNominatimSearch(
-    () => locale.value,
+// The search box for something other than the name (an address).
+const searchOpen = ref(false);
+const searchQuery = ref('');
+// What the results on show were found for, to say so when there are none.
+const searchedFor = ref('');
+const searchInput = useTemplateRef<HTMLInputElement>('searchInput');
+
+const {
+    results,
+    searching,
+    error: searchFailed,
+    search,
+    searchNow,
+    clearResults,
+} = useNominatimSearch(() => locale.value);
+
+const canFindName = computed(
+    () => name.value.trim().length >= MIN_QUERY_LENGTH,
 );
 
-const mapContainer = ref<HTMLDivElement | null>(null);
+function findName(): void {
+    searchOpen.value = false;
+    searchedFor.value = name.value.trim();
+    searchNow(searchedFor.value);
+}
+
+async function openSearch(): Promise<void> {
+    searchOpen.value = true;
+    clearResults();
+    searchedFor.value = '';
+    await nextTick();
+    searchInput.value?.focus();
+}
+
+function onSearchInput(event: Event): void {
+    searchQuery.value = (event.target as HTMLInputElement).value;
+    searchedFor.value = searchQuery.value.trim();
+    search(searchQuery.value);
+}
+
+// The map: there once a pin exists or the host asks to mark the spot.
+const mapOpen = ref(hasPin.value);
+const mapContainer = useTemplateRef<HTMLDivElement>('mapContainer');
 let map: L.Map | null = null;
 let marker: L.Marker | null = null;
 
@@ -142,6 +197,63 @@ function placeMarker(lat: number, lng: number): void {
     });
 }
 
+/** Starts the map in its box, which must be on the page (see the maps rule). */
+function startMap(): void {
+    if (map || !mapContainer.value) {
+        return;
+    }
+
+    const touchScreen = window.matchMedia('(pointer: coarse)').matches;
+
+    zoomKey.value = /Mac|iPhone|iPad/.test(navigator.userAgent) ? '⌘' : 'Ctrl';
+
+    // Zoom buttons and the credit in the user's language: Leaflet's own are
+    // English ("Zoom in", "A JavaScript library for interactive maps").
+    map = L.map(mapContainer.value, {
+        zoomControl: false,
+        // One finger is for the page; two fingers pinch and move the map.
+        dragging: !touchScreen,
+    }).setView(
+        hasPin.value ? [latitude.value!, longitude.value!] : DEFAULT_CENTER,
+        hasPin.value ? PIN_ZOOM : DEFAULT_ZOOM,
+    );
+    L.control
+        .zoom({
+            zoomInTitle: t('location.zoomIn'),
+            zoomOutTitle: t('location.zoomOut'),
+        })
+        .addTo(map);
+    map.attributionControl.setPrefix(
+        '<a href="https://leafletjs.com">Leaflet</a>',
+    );
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19,
+    }).addTo(map);
+
+    if (hasPin.value) {
+        placeMarker(latitude.value!, longitude.value!);
+    }
+
+    map.on('click', (event: L.LeafletMouseEvent) => {
+        void applyCoordinates(event.latlng.lat, event.latlng.lng);
+    });
+}
+
+// Once its box is on the page: at once for an event that has a pin, later
+// when the host asks for the map.
+watch(
+    mapOpen,
+    async (open) => {
+        if (open) {
+            await nextTick();
+            startMap();
+        }
+    },
+    { immediate: true, flush: 'post' },
+);
+
 async function applyCoordinates(lat: number, lng: number): Promise<void> {
     latitude.value = lat;
     longitude.value = lng;
@@ -161,7 +273,7 @@ async function applyCoordinates(lat: number, lng: number): Promise<void> {
     }
 }
 
-function selectResult(result: NominatimResult): void {
+async function selectResult(result: NominatimResult): Promise<void> {
     const lat = parseFloat(result.lat);
     const lng = parseFloat(result.lon);
 
@@ -170,20 +282,31 @@ function selectResult(result: NominatimResult): void {
     city.value = cityFromAddress(result.address);
     country.value = countryFromAddress(result.address);
     countryCode.value = countryCodeFromAddress(result.address);
-    searchQuery.value = result.display_name;
-    picked.value = true;
     clearResults();
-    emit('picked', result.name?.trim() || result.display_name.split(',')[0]);
+    searchedFor.value = '';
+    searchOpen.value = false;
+    searchQuery.value = '';
 
+    // A place found with nothing typed yet names itself; a name the host
+    // gave is theirs.
+    if (name.value.trim() === '') {
+        name.value = (
+            result.name?.trim() || result.display_name.split(',')[0]
+        ).slice(0, 255);
+    }
+
+    mapOpen.value = true;
+    await nextTick();
+    startMap();
     placeMarker(lat, lng);
     map?.setView([lat, lng], PIN_ZOOM);
 }
 
-function onSearchInput(event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
-    searchQuery.value = value;
-    picked.value = false;
-    search(value);
+function markByHand(): void {
+    searchOpen.value = false;
+    clearResults();
+    searchedFor.value = '';
+    mapOpen.value = true;
 }
 
 function clearLocation(): void {
@@ -192,60 +315,18 @@ function clearLocation(): void {
     city.value = null;
     country.value = null;
     countryCode.value = null;
-    searchQuery.value = '';
-    picked.value = false;
     clearResults();
+    searchedFor.value = '';
 
     if (marker) {
         marker.remove();
         marker = null;
     }
+
+    map?.remove();
+    map = null;
+    mapOpen.value = false;
 }
-
-onMounted(() => {
-    if (!mapContainer.value) {
-        return;
-    }
-
-    const hasInitialPin = latitude.value !== null && longitude.value !== null;
-
-    // Zoom buttons and the credit in the user's language: Leaflet's own are
-    // English ("Zoom in", "A JavaScript library for interactive maps").
-    const touchScreen = window.matchMedia('(pointer: coarse)').matches;
-
-    zoomKey.value = /Mac|iPhone|iPad/.test(navigator.userAgent) ? '⌘' : 'Ctrl';
-
-    map = L.map(mapContainer.value, {
-        zoomControl: false,
-        // One finger is for the page; two fingers pinch and move the map.
-        dragging: !touchScreen,
-    }).setView(
-        hasInitialPin ? [latitude.value!, longitude.value!] : DEFAULT_CENTER,
-        hasInitialPin ? PIN_ZOOM : DEFAULT_ZOOM,
-    );
-    L.control
-        .zoom({
-            zoomInTitle: t('location.zoomIn'),
-            zoomOutTitle: t('location.zoomOut'),
-        })
-        .addTo(map);
-    map.attributionControl.setPrefix(
-        '<a href="https://leafletjs.com">Leaflet</a>',
-    );
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors',
-        maxZoom: 19,
-    }).addTo(map);
-
-    if (hasInitialPin) {
-        placeMarker(latitude.value!, longitude.value!);
-    }
-
-    map.on('click', (event: L.LeafletMouseEvent) => {
-        void applyCoordinates(event.latlng.lat, event.latlng.lng);
-    });
-});
 
 onUnmounted(() => {
     clearTimeout(wheelHintTimer);
@@ -263,60 +344,118 @@ onUnmounted(() => {
         <input type="hidden" name="country" :value="country ?? ''" />
         <input type="hidden" name="country_code" :value="countryCode ?? ''" />
 
-        <div class="relative">
-            <MapPin
+        <TextField
+            v-model="name"
+            name="place"
+            :label="props.label"
+            :placeholder="props.placeholder"
+            :error="props.error"
+            optional
+            maxlength="255"
+        />
+
+        <!-- The ways to put it on the map (or to move the pin). -->
+        <div class="flex flex-wrap gap-x-5 gap-y-1 text-label">
+            <button
+                v-if="canFindName"
+                type="button"
+                class="inline-flex min-h-11 items-center gap-1.5 text-left font-semibold text-ink underline underline-offset-2"
+                @click="findName"
+            >
+                <MapPin
+                    :size="16"
+                    :stroke-width="2"
+                    class="shrink-0"
+                    aria-hidden="true"
+                />
+                <span class="line-clamp-1">{{
+                    t('location.findName', { name: name.trim() })
+                }}</span>
+            </button>
+            <button
+                type="button"
+                class="inline-flex min-h-11 items-center gap-1.5 font-semibold text-ink underline underline-offset-2"
+                @click="openSearch"
+            >
+                <Search
+                    :size="16"
+                    :stroke-width="2"
+                    class="shrink-0"
+                    aria-hidden="true"
+                />
+                {{ t('location.searchAddress') }}
+            </button>
+            <button
+                v-if="!mapOpen"
+                type="button"
+                class="inline-flex min-h-11 items-center gap-1.5 font-semibold text-ink underline underline-offset-2"
+                @click="markByHand"
+            >
+                <MapPinned
+                    :size="16"
+                    :stroke-width="2"
+                    class="shrink-0"
+                    aria-hidden="true"
+                />
+                {{ t('location.markByHand') }}
+            </button>
+        </div>
+
+        <div v-if="searchOpen" class="relative">
+            <Search
                 :size="18"
                 :stroke-width="1.9"
                 class="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-ink-muted"
                 aria-hidden="true"
             />
             <input
+                ref="searchInput"
                 type="search"
                 :value="searchQuery"
-                :aria-label="t('location.mapLocation')"
+                :aria-label="t('location.searchAddress')"
                 :placeholder="t('location.searchPlaceholder')"
                 class="h-12 w-full rounded-md bg-surface pr-3.5 pl-10 text-input text-ink ring-1 ring-control ring-inset hover:ring-ink-subtle focus:ring-2 focus:ring-ink focus:outline-none [&::-webkit-search-cancel-button]:hidden"
                 @input="onSearchInput"
                 @keydown.enter.prevent
             />
-            <!-- The map below is isolated, so its layers stay under this;
-                 z-40 clears the phone's top and submit bars (z-30) and
-                 stays under dialogs (z-50). -->
-            <ul
-                v-if="results.length"
-                class="absolute z-40 mt-1 w-full overflow-hidden rounded-md bg-surface shadow-lg ring-1 ring-line"
-            >
-                <li v-for="result in results" :key="result.display_name">
-                    <button
-                        type="button"
-                        class="flex min-h-11 w-full items-center px-3.5 py-2 text-left text-label hover:bg-surface-2"
-                        @click="selectResult(result)"
-                    >
-                        <span class="line-clamp-2">{{
-                            result.display_name
-                        }}</span>
-                    </button>
-                </li>
-            </ul>
-            <p v-else-if="searching" class="mt-1.5 text-meta text-ink-muted">
-                {{ t('location.searching') }}
-            </p>
-            <p v-else-if="error" class="mt-1.5 text-meta text-danger">
-                {{ t('location.searchError') }}
-            </p>
-            <p
-                v-else-if="
-                    !picked && searchQuery.trim().length >= MIN_QUERY_LENGTH
-                "
-                class="mt-1.5 text-meta text-ink-muted"
-            >
-                {{ t('location.noResults') }}
-            </p>
         </div>
+
+        <ul
+            v-if="results.length"
+            class="overflow-hidden rounded-md bg-surface ring-1 ring-line"
+        >
+            <li
+                v-for="result in results"
+                :key="result.display_name"
+                class="border-b border-line last:border-b-0"
+            >
+                <button
+                    type="button"
+                    class="flex min-h-11 w-full items-center px-3.5 py-2 text-left text-label hover:bg-surface-2"
+                    @click="selectResult(result)"
+                >
+                    <span class="line-clamp-2">{{ result.display_name }}</span>
+                </button>
+            </li>
+        </ul>
+        <p v-else-if="searching" class="text-meta text-ink-muted" role="status">
+            {{ t('location.searching') }}
+        </p>
+        <p v-else-if="searchFailed" class="text-meta text-danger" role="status">
+            {{ t('location.searchError') }}
+        </p>
+        <p
+            v-else-if="searchedFor.length >= MIN_QUERY_LENGTH"
+            class="text-meta text-ink-muted"
+            role="status"
+        >
+            {{ t('location.notFound', { name: searchedFor }) }}
+        </p>
 
         <!-- isolate: Leaflet's panes and controls (z-index up to 1000) stay
              inside the card instead of painting over the bars and sheets. -->
         <div
+            v-if="mapOpen"
             class="isolate overflow-hidden rounded-lg border border-line bg-surface"
         >
             <div class="relative" @wheel.capture="onWheel">
@@ -342,7 +481,7 @@ onUnmounted(() => {
                     aria-hidden="true"
                 />
                 <span class="min-w-0 flex-1">
-                    <template v-if="latitude !== null && longitude !== null">{{
+                    <template v-if="hasPin">{{
                         cityAndCountry(city, country, countryCode) ||
                         t('location.pinPlaced')
                     }}</template>
@@ -352,12 +491,11 @@ onUnmounted(() => {
                     </span>
                 </span>
                 <button
-                    v-if="latitude !== null || longitude !== null"
                     type="button"
-                    class="min-h-11 font-semibold text-ink underline underline-offset-2"
+                    class="min-h-11 shrink-0 font-semibold text-ink underline underline-offset-2"
                     @click="clearLocation"
                 >
-                    {{ t('location.clear') }}
+                    {{ hasPin ? t('location.clear') : t('location.hideMap') }}
                 </button>
             </div>
         </div>

@@ -20,7 +20,9 @@ import { useRsvp } from './useRsvp';
 /**
  * One event in a list. It lays itself out by the width of its container
  * (put `@container` on the list): stacked under 32rem, image beside the
- * text from there. A photo may be cropped; a poster is always shown whole;
+ * text from there. A photo may be cropped (the date tile sits on its
+ * corner, so the day is in the same place on every card when scanning a
+ * list); a poster is always shown whole, and nothing is laid over it;
  * without an image the date stands in. The action follows the viewer's
  * answer: the three pills until they have given one, their answer after;
  * the host answers like anyone, and has Invite beside it.
@@ -143,8 +145,14 @@ const layout = computed(
             <!-- Media: photo, poster or the date. -->
             <div
                 v-if="shape === 'photo'"
-                class="overflow-hidden bg-surface-2 @lg:row-span-2"
+                class="relative overflow-hidden bg-surface-2 @lg:row-span-2"
             >
+                <!-- The date where every card has it: its top left corner. -->
+                <DateBadge
+                    :date="props.event.starts_at"
+                    size="sm"
+                    class="absolute top-3 left-3 shadow-sm ring-1 ring-line"
+                />
                 <img
                     :src="props.event.cover!.url"
                     :width="props.event.cover!.width ?? undefined"

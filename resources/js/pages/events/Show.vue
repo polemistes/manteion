@@ -10,8 +10,10 @@ import {
     Lock,
     Maximize2,
     MapPin,
+    Pencil,
     Search,
     Share,
+    UserPlus,
 } from '@lucide/vue';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -28,6 +30,7 @@ import PageContainer from '@/components/shell/PageContainer.vue';
 import PageHeader from '@/components/shell/PageHeader.vue';
 import AppDialog from '@/components/ui/AppDialog.vue';
 import Avatar from '@/components/ui/Avatar.vue';
+import Button from '@/components/ui/Button.vue';
 import DateBadge from '@/components/ui/DateBadge.vue';
 import DateLeaf from '@/components/ui/DateLeaf.vue';
 import IconButton from '@/components/ui/IconButton.vue';
@@ -49,6 +52,7 @@ import { useEventChannel } from '@/realtime';
 import {
     calendarFile,
     destroy as destroyEvent,
+    edit as editEvent,
     index as eventsIndex,
 } from '@/routes/events';
 import { store as makeSearchable } from '@/routes/events/searchable';
@@ -197,11 +201,23 @@ const visibilityOpen = ref(false);
 const inviteOpen = ref(false);
 const posterOpen = ref(false);
 
-// "Invite" on a feed card lands here with #invite.
+// "Invite" on a feed card lands here with #invite, and so does the host
+// straight after creating the event. The mark is taken out of the address
+// once it has done its work, so a reload does not open the dialog again.
 onMounted(() => {
-    if (window.location.hash === '#invite' && props.event.can_invite) {
+    if (window.location.hash !== '#invite') {
+        return;
+    }
+
+    if (props.event.can_invite) {
         inviteOpen.value = true;
     }
+
+    window.history.replaceState(
+        window.history.state,
+        '',
+        window.location.pathname + window.location.search,
+    );
 });
 
 // Facts: when, where, who.
@@ -248,6 +264,11 @@ const address = computed(() =>
         props.event.country,
         props.event.country_code,
     ),
+);
+
+/** There is something to read under "About": words, or categories. */
+const hasAbout = computed(
+    () => props.event.description !== '' || props.event.tags.length > 0,
 );
 
 const hasMap = computed(
@@ -648,6 +669,29 @@ function searchable(): void {
                     </li>
                 </ul>
 
+                <!-- The host's own two actions, in plain sight (the rest are
+                     under "⋯"). -->
+                <div
+                    v-if="props.event.is_owner && !props.event.is_deleted"
+                    class="mt-6 flex flex-wrap gap-2"
+                >
+                    <Button
+                        v-if="props.event.can_invite && !isPast"
+                        :icon="UserPlus"
+                        @click="inviteOpen = true"
+                    >
+                        {{ t('events.show.invite') }}
+                    </Button>
+                    <Button
+                        :as="Link"
+                        :href="editEvent(props.event.id).url"
+                        :icon="Pencil"
+                        variant="ghost"
+                    >
+                        {{ t('events.show.editEvent') }}
+                    </Button>
+                </div>
+
                 <!-- Tablet and desktop: the answer as a card. -->
                 <section
                     v-if="canAnswer"
@@ -704,15 +748,20 @@ function searchable(): void {
                     </div>
                     <EventMapCard
                         v-if="hasMap"
-                        class="row-start-3 sm:row-start-2 md:col-start-2 md:row-start-1 xl:hidden"
+                        :class="[
+                            'md:col-start-2 md:row-start-1 xl:hidden',
+                            hasAbout ? 'row-start-3 sm:row-start-2' : '',
+                        ]"
                         :latitude="props.event.latitude!"
                         :longitude="props.event.longitude!"
                         :place="placeTitle ?? ''"
                         :address="placeAddress"
                     />
 
-                    <!-- About. -->
+                    <!-- About: what the host wrote, if anything, and the
+                         categories. -->
                     <section
+                        v-if="hasAbout"
                         class="md:col-span-2"
                         :class="
                             hasMap
@@ -720,17 +769,22 @@ function searchable(): void {
                                 : ''
                         "
                     >
-                        <h2 class="mb-2 text-kicker text-ink-muted uppercase">
-                            {{ t('events.show.about') }}
-                        </h2>
-                        <div
-                            class="max-w-reading font-display text-reading whitespace-pre-line text-ink"
-                        >
-                            {{ props.event.description }}
-                        </div>
+                        <template v-if="props.event.description">
+                            <h2
+                                class="mb-2 text-kicker text-ink-muted uppercase"
+                            >
+                                {{ t('events.show.about') }}
+                            </h2>
+                            <div
+                                class="max-w-reading font-display text-reading whitespace-pre-line text-ink"
+                            >
+                                {{ props.event.description }}
+                            </div>
+                        </template>
                         <div
                             v-if="props.event.tags.length"
-                            class="mt-5 flex flex-wrap gap-2"
+                            class="flex flex-wrap gap-2"
+                            :class="props.event.description ? 'mt-5' : ''"
                         >
                             <Tag
                                 v-for="tag in props.event.tags"

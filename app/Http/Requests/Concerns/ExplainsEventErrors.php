@@ -16,7 +16,6 @@ trait ExplainsEventErrors
     {
         return [
             'name.required' => __('messages.event.name_required'),
-            'description.required' => __('messages.event.description_required'),
             'starts_at.required' => __('messages.event.starts_required'),
             'starts_at.date' => __('messages.event.starts_required'),
             'ends_at.after' => __('messages.event.ends_after_start'),

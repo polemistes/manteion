@@ -39,7 +39,8 @@ class UpdateEventRequest extends FormRequest
             'city' => ['nullable', 'string', 'max:255'],
             'country' => ['nullable', 'string', 'max:255'],
             'country_code' => ['nullable', 'string', 'size:2', 'alpha:ascii'],
-            'description' => ['required', 'string', 'max:5000'],
+            // Optional: "Dinner at mine" needs no more words.
+            'description' => ['nullable', 'string', 'max:5000'],
             'starts_at' => ['required', 'date'],
             'ends_at' => ['nullable', 'date', 'after:starts_at'],
             'timezone' => ['nullable', 'required_if:timezone_mode,'.EventTimeZoneMode::Chosen->value, 'string', 'max:64', 'timezone:all_with_bc'],

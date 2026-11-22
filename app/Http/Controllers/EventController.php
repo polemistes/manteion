@@ -182,6 +182,7 @@ class EventController extends Controller
             ...$request->safe()->only([
                 'name', 'place', 'latitude', 'longitude', 'city', 'country', 'country_code', 'description', 'starts_at', 'ends_at', 'visibility', 'allow_invitee_invites', 'allow_invitee_comments',
             ]),
+            'description' => $request->validated('description') ?? '',
             'organizer_id' => $organizerId === null ? null : (int) $organizerId,
             ...$this->timeZoneFrom($request, null),
         ]);
@@ -200,7 +201,8 @@ class EventController extends Controller
             'starts' => $event->starts_at->timezone(config('app.display_timezone'))->format('Y-m-d H:i'),
         ], route('events.show', $event));
 
-        return redirect()->route('events.show', $event);
+        // Straight to inviting: the page opens its invite dialog for #invite.
+        return redirect()->to(route('events.show', $event).'#invite');
     }
 
     public function show(Request $request, Event $event): Response
@@ -367,6 +369,7 @@ class EventController extends Controller
 
         $event->update([
             ...$request->safe()->only(['name', 'place', 'latitude', 'longitude', 'city', 'country', 'country_code', 'description', 'starts_at', 'ends_at', 'allow_invitee_invites', 'allow_invitee_comments']),
+            'description' => $request->validated('description') ?? '',
             'visibility' => $visibility,
             ...$this->timeZoneFrom($request, $event),
         ]);

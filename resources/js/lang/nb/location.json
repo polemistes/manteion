@@ -1,14 +1,19 @@
 {
     "mapLocation": "Kartplassering (valgfritt)",
-    "searchPlaceholder": "Søk etter adresse eller sted",
+    "searchPlaceholder": "En gateadresse eller et sted",
     "searching": "Søker…",
     "noResults": "Ingen treff",
     "searchError": "Kunne ikke søke akkurat nå. Prøv igjen.",
-    "clear": "Fjern plassering",
+    "clear": "Fjern fra kartet",
     "pinPlaced": "Nålen står på kartet",
-    "tapToPlace": "Trykk på kartet for å plassere nålen, eller søk over.",
+    "tapToPlace": "Trykk på kartet der det er. Dra nålen for å justere.",
     "zoomIn": "Zoom inn",
     "zoomOut": "Zoom ut",
     "wheelHint": "Hold {key} og rull for å zoome kartet",
-    "twoFingers": "Flytt kartet med to fingre."
+    "twoFingers": "Flytt kartet med to fingre.",
+    "findName": "Finn «{name}» på kartet",
+    "searchAddress": "Søk etter en adresse",
+    "markByHand": "Merk det av på kartet",
+    "notFound": "Kartet kjenner ikke «{name}». Prøv adressen, eller merk av stedet selv.",
+    "hideMap": "Skjul kartet"
 }

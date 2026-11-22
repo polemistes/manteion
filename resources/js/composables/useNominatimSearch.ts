@@ -147,9 +147,20 @@ export function useNominatimSearch(language: () => string) {
         }, SEARCH_DEBOUNCE_MS);
     }
 
+    /** Searches at once, for a search that was asked for, not typed. */
+    function searchNow(term: string): void {
+        if (debounceTimer) {
+            clearTimeout(debounceTimer);
+        }
+
+        if (term.trim().length >= MIN_QUERY_LENGTH) {
+            void runSearch(term.trim());
+        }
+    }
+
     function clearResults(): void {
         results.value = [];
     }
 
-    return { results, searching, error, search, clearResults };
+    return { results, searching, error, search, searchNow, clearResults };
 }

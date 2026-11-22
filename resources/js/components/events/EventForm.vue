@@ -54,9 +54,10 @@ export interface EventFormValues {
 }
 
 /**
- * The event form shared by Create and Edit, in the order guests read an
- * event: cover, name, description, when, where, categories, who can see
- * it, what guests may do. On phones the submit button sits in a bar
+ * The event form shared by Create and Edit, in the order a host knows
+ * things: what it is called, when, where; then what is optional (a
+ * description, a cover picture, categories), who can see it and what
+ * guests may do. On phones the submit button sits in a bar
  * pinned to the bottom; from xl a preview of the event's card sits beside
  * the form. `processing` is true while it is being sent.
  *
@@ -198,13 +199,6 @@ async function findPlaceTimeZone(place: LocationValue): Promise<void> {
 function onLocationChange(next: LocationValue): void {
     location.value = next;
     void findPlaceTimeZone(next);
-}
-
-// A place found by searching names itself, unless the host already has.
-function onPlacePicked(found: string): void {
-    if (place.value.trim() === '') {
-        place.value = found.slice(0, 255);
-    }
 }
 
 // What the form holds, as it would be sent (a picture as its name and
@@ -416,39 +410,6 @@ const visibilityOptions = [
         @error="showFirstError"
     >
         <div class="flex min-w-0 flex-col gap-7">
-            <section class="flex flex-col gap-1.5">
-                <h2 class="text-label font-semibold text-ink">
-                    {{ t('events.form.coverImage') }}
-                    <span class="font-normal text-ink-muted"
-                        >({{ t('ui.optional') }})</span
-                    >
-                </h2>
-                <ImageCropper
-                    name="image"
-                    :aspect-ratio="1.5"
-                    :output-width="1200"
-                    :output-height="800"
-                    :existing-url="props.values.image?.url ?? null"
-                    :initial-file="props.initialImage"
-                    :initial-fit="
-                        props.values.image?.fit ??
-                        (props.values.image?.shape === 'poster'
-                            ? 'contain'
-                            : 'cover')
-                    "
-                    allow-whole
-                    :removable="props.values.image !== null"
-                    @remove="emit('removeImage')"
-                    @preview="cover = $event"
-                />
-                <p
-                    v-if="errors.image"
-                    class="text-meta font-medium text-danger"
-                >
-                    {{ errors.image }}
-                </p>
-            </section>
-
             <template v-if="props.isNew && props.organizers.length">
                 <input
                     type="hidden"
@@ -473,16 +434,6 @@ const visibilityOptions = [
                 headline
                 required
                 maxlength="255"
-            />
-
-            <TextArea
-                v-model="description"
-                name="description"
-                :label="t('events.form.description')"
-                :placeholder="t('events.form.descriptionPlaceholder')"
-                :error="errors.description"
-                required
-                maxlength="5000"
             />
 
             <div class="flex flex-col gap-5">
@@ -545,27 +496,63 @@ const visibilityOptions = [
                 </div>
             </div>
 
-            <section class="flex flex-col gap-3">
-                <TextField
-                    v-model="place"
-                    name="place"
-                    :label="t('events.form.place')"
-                    :placeholder="t('events.form.placeNamePlaceholder')"
-                    :error="errors.place"
-                    optional
-                    maxlength="255"
+            <LocationPicker
+                v-model:name="place"
+                :label="t('events.form.place')"
+                :placeholder="t('events.form.placeNamePlaceholder')"
+                :error="errors.place"
+                :initial-value="{
+                    latitude: props.values.latitude,
+                    longitude: props.values.longitude,
+                    city: props.values.city,
+                    country: props.values.country,
+                    country_code: props.values.country_code,
+                }"
+                @change="onLocationChange"
+            />
+
+            <TextArea
+                v-model="description"
+                name="description"
+                :label="t('events.form.description')"
+                :placeholder="t('events.form.descriptionPlaceholder')"
+                :error="errors.description"
+                optional
+                maxlength="5000"
+            />
+
+            <section class="flex flex-col gap-1.5">
+                <h2 class="text-label font-semibold text-ink">
+                    {{ t('events.form.coverImage') }}
+                    <span class="font-normal text-ink-muted"
+                        >({{ t('ui.optional') }})</span
+                    >
+                </h2>
+                <ImageCropper
+                    name="image"
+                    :aspect-ratio="1.5"
+                    :output-width="1200"
+                    :output-height="800"
+                    :existing-url="props.values.image?.url ?? null"
+                    :initial-file="props.initialImage"
+                    :initial-fit="
+                        props.values.image?.fit ??
+                        (props.values.image?.shape === 'poster'
+                            ? 'contain'
+                            : 'cover')
+                    "
+                    allow-whole
+                    compact
+                    :removable="props.values.image !== null"
+                    @remove="emit('removeImage')"
+                    @preview="cover = $event"
                 />
-                <LocationPicker
-                    :initial-value="{
-                        latitude: props.values.latitude,
-                        longitude: props.values.longitude,
-                        city: props.values.city,
-                        country: props.values.country,
-                        country_code: props.values.country_code,
-                    }"
-                    @change="onLocationChange"
-                    @picked="onPlacePicked"
-                />
+                <p
+                    v-if="errors.image"
+                    class="text-meta font-medium text-danger"
+                >
+                    {{ errors.image }}
+                </p>
             </section>
 
             <section>

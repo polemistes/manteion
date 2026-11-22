@@ -43,6 +43,8 @@ const props = withDefaults(
         initialFit?: 'cover' | 'contain' | null;
         round?: boolean;
         removable?: boolean;
+        /** A one-line place to pick a picture, instead of a frame-sized one. */
+        compact?: boolean;
     }>(),
     {
         existingUrl: null,
@@ -51,6 +53,7 @@ const props = withDefaults(
         initialFit: null,
         round: false,
         removable: false,
+        compact: false,
     },
 );
 
@@ -679,14 +682,16 @@ const fitSegments = computed(() => [
             <button
                 v-else
                 type="button"
-                class="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-line-strong bg-surface text-ink-muted transition-colors duration-120 hover:bg-surface-2 hover:text-ink"
+                class="flex items-center justify-center gap-2 border-2 border-dashed border-line-strong bg-surface text-ink-muted transition-colors duration-120 hover:bg-surface-2 hover:text-ink"
                 :class="
                     props.round
-                        ? 'size-28 rounded-full'
-                        : 'aspect-(--cover-ratio) rounded-lg py-8 sm:aspect-auto sm:h-44'
+                        ? 'size-28 flex-col rounded-full'
+                        : props.compact
+                          ? 'min-h-14 flex-row rounded-md px-4'
+                          : 'aspect-(--cover-ratio) flex-col rounded-lg py-8 sm:aspect-auto sm:h-44'
                 "
                 :style="
-                    props.round
+                    props.round || props.compact
                         ? undefined
                         : { '--cover-ratio': String(props.aspectRatio) }
                 "

@@ -1,14 +1,19 @@
 {
     "mapLocation": "Map location (optional)",
-    "searchPlaceholder": "Search for an address or place",
+    "searchPlaceholder": "A street address or a place",
     "searching": "Searching…",
     "noResults": "No results",
     "searchError": "Couldn't search right now. Try again.",
-    "clear": "Clear location",
+    "clear": "Remove from the map",
     "pinPlaced": "Pin placed on the map",
-    "tapToPlace": "Tap the map to place the pin, or search above.",
+    "tapToPlace": "Tap the map where it is. Drag the pin to adjust.",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
     "wheelHint": "Hold {key} and scroll to zoom the map",
-    "twoFingers": "Move the map with two fingers."
+    "twoFingers": "Move the map with two fingers.",
+    "findName": "Find “{name}” on the map",
+    "searchAddress": "Search for an address",
+    "markByHand": "Mark it on the map",
+    "notFound": "The map doesn’t know “{name}”. Try the address, or mark the spot yourself.",
+    "hideMap": "Hide the map"
 }

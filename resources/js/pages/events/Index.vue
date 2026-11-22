@@ -174,7 +174,8 @@ const asideState = computed({
     set: (next: EventFilterState) => visit(next),
 });
 
-// Sections: waiting for an answer, today, this week, then by month.
+// Sections: waiting for an answer, today, tomorrow, this week, next week,
+// then by month.
 const invitationIds = computed(
     () => new Set(props.invitations.map((event) => event.id)),
 );
@@ -215,6 +216,11 @@ const sections = computed<FeedSection[]>(() => {
         if (section === 'today') {
             key = 'today';
             title = t('events.index.today');
+            meta = dates.longDate(event.starts_at);
+        } else if (dates.daysFromToday(event.starts_at) === 1) {
+            // Its own heading: on a Sunday, tomorrow is already "next week".
+            key = 'tomorrow';
+            title = t('dates.tomorrow');
             meta = dates.longDate(event.starts_at);
         } else if (section === 'thisWeek') {
             key = 'week';

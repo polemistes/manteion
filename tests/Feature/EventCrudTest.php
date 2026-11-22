@@ -28,7 +28,7 @@ test('a user can create a private event with categories and images', function ()
     ]);
 
     $event = Event::query()->where('name', 'Board Game Night')->firstOrFail();
-    $response->assertRedirect("/events/{$event->id}");
+    $response->assertRedirect("/events/{$event->id}#invite");
 
     expect($event->user_id)->toBe($user->id);
     expect($event->visibility)->toBe(EventVisibility::Private);
@@ -83,7 +83,7 @@ test('a user can create an event with a map location', function () {
     ]);
 
     $event = Event::query()->where('name', 'Beach Cleanup')->firstOrFail();
-    $response->assertRedirect("/events/{$event->id}");
+    $response->assertRedirect("/events/{$event->id}#invite");
 
     expect($event->latitude)->toBe(59.9022);
     expect($event->longitude)->toBe(10.6802);
@@ -147,7 +147,7 @@ test('a user can create an event without a place or map location', function () {
     ]);
 
     $event = Event::query()->where('name', 'Online Meetup')->firstOrFail();
-    $response->assertRedirect("/events/{$event->id}");
+    $response->assertRedirect("/events/{$event->id}#invite");
 
     expect($event->place)->toBeNull();
     expect($event->latitude)->toBeNull();
@@ -280,3 +280,34 @@ test('what is wrong with an event is said in plain words, in the host\'s languag
     'English' => ['en', 'The event has to end after it starts.', 'Give the event a name.'],
     'Norwegian' => ['nb', 'Arrangementet må slutte etter at det starter.', 'Gi arrangementet et navn.'],
 ]);
+
+test('an event needs no description, and its host lands on inviting', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->post('/events', [
+        'name' => 'Dinner at mine',
+        'description' => '',
+        'starts_at' => now()->addWeek()->toDateTimeString(),
+        'visibility' => 'private',
+        'allow_invitee_invites' => false,
+        'allow_invitee_comments' => true,
+    ]);
+
+    $event = Event::query()->where('name', 'Dinner at mine')->firstOrFail();
+
+    $response->assertValid()->assertRedirect("/events/{$event->id}#invite");
+    expect($event->description)->toBe('');
+
+    // The words can be taken out of an event that had some, too.
+    $described = Event::factory()->for($user, 'owner')->create(['description' => 'Bring snacks.']);
+
+    $this->actingAs($user)->put("/events/{$described->id}", [
+        'name' => $described->name,
+        'starts_at' => $described->starts_at->toDateTimeString(),
+        'visibility' => 'private',
+        'allow_invitee_invites' => false,
+        'allow_invitee_comments' => true,
+    ])->assertValid()->assertRedirect("/events/{$described->id}");
+
+    expect($described->refresh()->description)->toBe('');
+});

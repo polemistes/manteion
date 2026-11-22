@@ -227,9 +227,15 @@ async function fetchDetails(): Promise<void> {
                 </Button>
             </div>
         </form>
-        <Button v-else size="sm" :icon="Link2" @click="open">
+        <button
+            v-else
+            type="button"
+            class="inline-flex min-h-11 items-center gap-1.5 text-label font-semibold text-ink-muted underline underline-offset-2 hover:text-ink"
+            @click="open"
+        >
+            <Link2 :size="16" :stroke-width="2" aria-hidden="true" />
             {{ t('events.import.open') }}
-        </Button>
+        </button>
         <p
             class="flex items-start gap-1.5 text-meta text-ink-muted"
             :class="done && !isOpen ? 'mt-2.5' : 'sr-only'"
