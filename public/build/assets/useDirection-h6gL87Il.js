@@ -1,0 +1,1 @@
+import{lr as e,st as t}from"./IconButton-Ck3PPYvx.js";import{r as n}from"./Collection-BalcoB0s.js";function r(r){let i=n({dir:e(`ltr`)});return t(()=>r?.value||i.dir?.value||`ltr`)}export{r as t};
