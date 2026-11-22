@@ -182,7 +182,7 @@ defineExpose({ focus: () => field.value?.focus() });
             @submit.prevent="submit"
         >
             <div
-                class="flex min-h-11 min-w-0 flex-1 items-end rounded-xl bg-surface px-0.5 ring-1 ring-inset ring-line-strong focus-within:ring-2 focus-within:ring-ink md:min-h-12"
+                class="flex min-h-11 min-w-0 flex-1 items-end rounded-xl bg-surface px-0.5 ring-1 ring-line-strong ring-inset focus-within:ring-2 focus-within:ring-ink md:min-h-12"
             >
                 <button
                     type="button"

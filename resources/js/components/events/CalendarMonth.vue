@@ -142,7 +142,7 @@ function discClass(day: string): string {
                             :key="day"
                             class="group relative h-16 border-t border-l border-line p-1 align-top @xl:h-[7.5rem] @xl:p-1.5"
                             :class="
-                                day.startsWith(props.month) ? '' : 'bg-inset'
+                                day.startsWith(props.month) ? '' : 'bg-recess'
                             "
                         >
                             <!-- The day's button covers the whole cell; chips sit above it. -->

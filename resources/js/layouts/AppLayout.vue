@@ -215,7 +215,7 @@ onIncomingMessage((message) => {
                         class="flex h-11 items-center gap-3 rounded-md pr-2.5 pl-2 transition-colors duration-120"
                         :class="
                             item.active
-                                ? 'bg-surface ring-1 ring-inset ring-line'
+                                ? 'bg-surface ring-1 ring-line ring-inset'
                                 : 'hover:bg-surface-2'
                         "
                     >
@@ -251,7 +251,7 @@ onIncomingMessage((message) => {
                         class="flex items-center gap-3 rounded-md px-2 py-2 transition-colors duration-120"
                         :class="
                             meItem.active
-                                ? 'bg-surface ring-1 ring-inset ring-line'
+                                ? 'bg-surface ring-1 ring-line ring-inset'
                                 : 'hover:bg-surface-2'
                         "
                     >

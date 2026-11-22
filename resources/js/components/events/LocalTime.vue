@@ -25,7 +25,7 @@ const text = computed(() =>
 <template>
     <span
         v-if="text"
-        class="inline-block rounded-xs bg-inset px-1.5 font-medium whitespace-nowrap text-ink-muted"
+        class="inline-block rounded-xs bg-recess px-1.5 font-medium whitespace-nowrap text-ink-muted"
         >{{ text }}</span
     >
 </template>

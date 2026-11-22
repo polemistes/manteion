@@ -124,9 +124,11 @@
     --color-surface: #fffdf9; /* cards, sheets, bars, inputs */
     --color-surface-2: #efe8de; /* tracks, date tiles, mats, hover, tag chips */
     --color-surface-3: #e6ddd0; /* pressed, neutral counts, monogram avatars */
-    --color-inset: var(
-        --color-canvas
-    ); /* recessed areas inside a surface: link previews, quotes, out-of-month days */
+    /* Recessed areas inside a surface: link previews, quotes, out-of-month
+       days. Never name a colour "inset": Tailwind then makes `ring-inset` a
+       colour too, and every inset ring is painted with it (tests/Unit/
+       DesignTokensTest.php). */
+    --color-recess: var(--color-canvas);
     --color-line: #e6ddd1; /* hairlines and card borders */
     --color-line-strong: #d5c9b9; /* outline buttons, chips, search ring */
     --color-control: #8e8378; /* field border, switch-off, checkbox ring (>= 3:1) */
@@ -337,7 +339,7 @@ html[data-skin='aegean'][data-mode='dark'] {
  * wall (cards, inputs, buttons, chips, tiles) is light ochre with dark
  * writing. The surface utilities carry that second set of tokens
  * themselves (`.bg-surface`, `.bg-surface-2`, `.bg-surface-3`,
- * `.bg-accent-soft`, `.bg-bubble-theirs`, `.bg-inset`), so a card and
+ * `.bg-accent-soft`, `.bg-bubble-theirs`, `.bg-recess`), so a card and
  * everything in it read
  * as paper without any component knowing. And the navigation is painted:
  * the rail, the sidebar and the phone's top bar carry `skin-nav`, the
@@ -356,7 +358,7 @@ html[data-skin='taverna'] {
     --color-surface: #e9c27e;
     --color-surface-2: #9f3f1c; /* hover on the wall */
     --color-surface-3: #8e3718;
-    --color-inset: #ddae60;
+    --color-recess: #ddae60;
     --color-line: #cd7f62;
     --color-line-strong: #e0a48c;
     --color-control: #f1c9b6;
@@ -411,12 +413,12 @@ html[data-skin='taverna']
         .bg-surface-3,
         .bg-accent-soft,
         .bg-bubble-theirs,
-        .bg-inset
+        .bg-recess
     ) {
     --color-surface: #e9c27e;
     --color-surface-2: #ddae60;
     --color-surface-3: #d5a552;
-    --color-inset: #ddae60;
+    --color-recess: #ddae60;
     --color-line: #d4a95e;
     --color-line-strong: #b88a3c;
     --color-control: #8a6220;
@@ -441,7 +443,7 @@ html[data-skin='taverna'][data-mode='dark'] {
     --color-surface: #553913;
     --color-surface-2: #4c2514;
     --color-surface-3: #5a2d18;
-    --color-inset: #684a19;
+    --color-recess: #684a19;
     --color-line: #6b3a25;
     --color-line-strong: #8a4f33;
     --color-control: #b9975a;
@@ -492,12 +494,12 @@ html[data-skin='taverna'][data-mode='dark']
         .bg-surface-3,
         .bg-accent-soft,
         .bg-bubble-theirs,
-        .bg-inset
+        .bg-recess
     ) {
     --color-surface: #553913;
     --color-surface-2: #684a19;
     --color-surface-3: #7a5a22;
-    --color-inset: #684a19;
+    --color-recess: #684a19;
     --color-line: #6d4f1d;
     --color-line-strong: #8a6a2c;
     --color-control: #b9975a;
@@ -615,7 +617,7 @@ html[data-skin='taverna'][data-mode='dark']
             .bg-surface-3,
             .bg-accent-soft,
             .bg-bubble-theirs,
-            .bg-inset
+            .bg-recess
         ) {
         color: var(--color-ink);
     }

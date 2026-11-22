@@ -963,7 +963,7 @@ async function leave(): Promise<void> {
                     >
                         <span v-if="isGroup" class="w-7 shrink-0" />
                         <div
-                            class="flex h-10 items-center gap-1 rounded-lg bg-bubble-theirs px-4 ring-1 ring-inset ring-line"
+                            class="flex h-10 items-center gap-1 rounded-lg bg-bubble-theirs px-4 ring-1 ring-line ring-inset"
                             aria-hidden="true"
                         >
                             <span
