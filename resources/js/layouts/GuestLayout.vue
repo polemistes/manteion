@@ -17,9 +17,9 @@ import { home } from '@/routes';
             <div class="flex items-center justify-between gap-3">
                 <Link
                     :href="home().url"
-                    class="flex shrink-0 items-center gap-2.5"
+                    class="flex shrink-0 items-end gap-2.5"
                 >
-                    <Mark class="h-[30px] w-5 text-mark" />
+                    <Mark class="h-14 w-auto" />
                     <span
                         class="font-display text-title-2 font-medium whitespace-nowrap"
                         >Manteion</span

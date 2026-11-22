@@ -127,9 +127,9 @@ onIncomingMessage((message) => {
                 <Link
                     :href="eventsIndex().url"
                     :aria-label="t('nav.home')"
-                    class="mb-5 grid size-11 place-items-center rounded-full"
+                    class="mb-4 grid h-14 w-11 place-items-center rounded-full"
                 >
-                    <Mark class="h-[30px] w-5 text-mark" />
+                    <Mark class="h-14 w-auto" />
                 </Link>
                 <div class="flex flex-col items-center gap-1">
                     <Link
@@ -199,9 +199,9 @@ onIncomingMessage((message) => {
                 <Link
                     :href="eventsIndex().url"
                     :aria-label="t('nav.home')"
-                    class="mb-6.5 flex items-center gap-2.5 px-2.5 py-0.5"
+                    class="mb-5 flex items-end gap-2.5 px-2.5"
                 >
-                    <Mark class="h-[30px] w-5 text-mark" />
+                    <Mark class="h-14 w-auto" />
                     <span class="font-display text-title-2 font-medium"
                         >Manteion</span
                     >

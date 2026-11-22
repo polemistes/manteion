@@ -49,12 +49,25 @@ const features = computed(() => [
             class="mx-auto flex min-h-dvh max-w-[1104px] flex-col px-4 pt-[calc(12px+env(safe-area-inset-top))] pb-[calc(24px+env(safe-area-inset-bottom))] sm:px-8"
         >
             <header class="flex items-center justify-between gap-3 py-2">
-                <span class="flex shrink-0 items-center gap-2.5">
-                    <Mark class="h-[30px] w-5 text-mark" />
+                <!-- Phone: the mark beside the name. -->
+                <span class="flex shrink-0 items-end gap-2.5 sm:hidden">
+                    <Mark class="h-14 w-auto" />
                     <span
                         class="font-display text-title-2 font-medium whitespace-nowrap"
                         >Manteion</span
                     >
+                </span>
+                <!-- From 640: the tripod is the M of the name, as wide as
+                     the letter would be. It stands in the line of text
+                     with its outer legs on the baseline; the middle one
+                     reaches below it (12.7% of the picture's height,
+                     hence the negative margin). -->
+                <span
+                    class="hidden shrink-0 font-display text-[3rem] leading-none font-medium whitespace-nowrap sm:inline-block"
+                >
+                    <span class="sr-only">Manteion</span>
+                    <Mark class="-mb-[0.254em] h-[2em] w-auto align-baseline" />
+                    <span aria-hidden="true">anteion</span>
                 </span>
                 <LanguageSwitcher />
             </header>

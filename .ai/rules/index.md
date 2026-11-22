@@ -25,3 +25,4 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/Services/EventFeedQuery.php, app/Services/ActivityFeed.php | .ai/rules/services.md |
 | resources/js/components/shell/PageContainer.vue | .ai/rules/shell.md |
 | tests/** | .ai/rules/tests.md |
+| resources/js/components/ui/Mark.vue | .ai/rules/ui.md |

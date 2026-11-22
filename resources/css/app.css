@@ -156,7 +156,6 @@
     --color-inverse: #241e1a; /* toasts */
     --color-on-inverse: #f7f3ec;
     --color-inverse-accent: #f0846f; /* toast icon and action */
-    --color-mark: #c23132; /* the tripod mark */
     --color-focus: #b02b2c; /* focus ring */
     --color-scrim: rgb(31 22 16 / 0.42);
     --color-stage: #15110f; /* the video call window, dark in both modes */
@@ -217,7 +216,6 @@ html[data-mode='dark'] {
     --color-inverse: #ede5da;
     --color-on-inverse: #1f1a17;
     --color-inverse-accent: #a82a2b;
-    --color-mark: #e0604b;
     --color-focus: #f0846f;
     --color-scrim: rgb(0 0 0 / 0.6);
     --shadow-tint: rgb(0 0 0 / 0.4);
@@ -281,7 +279,6 @@ html[data-skin='aegean'] {
     --color-inverse: #17395f;
     --color-on-inverse: #f3ece0;
     --color-inverse-accent: #e8b65a;
-    --color-mark: #1d5ea6;
     --color-focus: #1d5ea6;
     --color-scrim: rgb(28 24 14 / 0.46);
     --color-stage: #0f1720;
@@ -330,7 +327,6 @@ html[data-skin='aegean'][data-mode='dark'] {
     --color-inverse: #ece3d2;
     --color-on-inverse: #1f2a36;
     --color-inverse-accent: #a2491f;
-    --color-mark: #6aa5e0;
     --color-focus: #7fb2e6;
     --color-scrim: rgb(0 0 0 / 0.6);
     --shadow-tint: rgb(0 0 0 / 0.4);
@@ -398,7 +394,6 @@ html[data-skin='taverna'] {
     --color-inverse: #1f5fb5;
     --color-on-inverse: #f7f1e3;
     --color-inverse-accent: #ffd97a;
-    --color-mark: #f6c453;
     --color-focus: #ffe3a3;
     --color-scrim: rgb(60 20 5 / 0.55);
     --color-stage: #141a24;
@@ -483,7 +478,6 @@ html[data-skin='taverna'][data-mode='dark'] {
     --color-inverse: #f3e6cc;
     --color-on-inverse: #1a1104;
     --color-inverse-accent: #1f5fb5;
-    --color-mark: #f3ce74;
     --color-focus: #f6c453;
     --color-scrim: rgb(0 0 0 / 0.6);
     --shadow-tint: rgb(0 0 0 / 0.4);
@@ -554,7 +548,6 @@ html[data-skin='taverna']
     --color-on-accent: #1a1104;
     --color-accent-soft: #b34a23;
     --color-accent-ink: #f8f2e4;
-    --color-mark: #f6c453;
     --color-focus: #fff1c9;
     --texture-canvas: var(--texture-paint);
 }
@@ -596,7 +589,6 @@ html[data-skin='taverna'][data-mode='dark']
     --color-on-accent: #1a1104;
     --color-accent-soft: #b34a23;
     --color-accent-ink: #f8f2e4;
-    --color-mark: #f6c453;
     --color-focus: #fff1c9;
 }
 

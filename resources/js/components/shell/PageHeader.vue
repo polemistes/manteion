@@ -69,7 +69,9 @@ const { activity } = useNavigation();
             :class="props.root ? 'pr-2 pl-4' : 'px-1'"
         >
             <template v-if="props.root">
-                <Mark class="mr-2 h-[25px] w-[17px] shrink-0 text-mark" />
+                <!-- Tall beside the title: its legs reach down almost to
+                     the content under the bar. -->
+                <Mark class="mr-2.5 mb-0.5 h-[51px] w-auto shrink-0 self-end" />
                 <h1
                     class="min-w-0 flex-1 truncate font-display text-title-2 font-medium"
                 >
