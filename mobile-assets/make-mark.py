@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Make the mark and every web icon from the drawing of the tripod.
+"""Make the mark and every icon from the drawing of the tripod.
 
-    python3 mobile-assets/make-web-mark.py ~/manteion-logo/logo_bilde2.png
+    python3 mobile-assets/make-mark.py ~/manteion-logo/logo_bilde2.png
 
 The drawing is ink and paint on white paper (2368x3158 when this was
 written). It is cut out of the paper, and from the cut-out come:
@@ -11,10 +11,15 @@ written). It is cut out of the paper, and from the cut-out come:
     public/favicon.png, favicon.ico   the browser tab: the top of the tripod only
     public/icons/*.png                home-screen icons and the notification badge
     public/apple-touch-icon.png
-    public/offline.html               its inline logo
+    public/offline.html               its inline logo (and the app's own
+                                      offline page, resources/native-shell)
+    mobile-assets/logo.png            the cut-out itself, 1024 tall
+    android/app/src/main/res/         launcher icons, the status-bar icon, splash screens
+    ios/App/App/Assets.xcassets/      the app icon and splash screens
 
-Run `npm run build` afterwards. Needs Pillow, numpy and scipy. The Android
-and iOS app icons are not made here (see mobile-assets/logo.png).
+Run `npm run build` afterwards. Needs Pillow, numpy and scipy. New app
+icons reach phones only with a new app release (android/app/build.gradle,
+then a tag android-v<versionName>).
 """
 import base64
 import io
@@ -100,6 +105,69 @@ def on_square(image: Image.Image, size: int, background: tuple, fill: float) -> 
     return square
 
 
+def silhouette(image: Image.Image, size: int, fill: float, grow: int) -> Image.Image:
+    """The shape of the drawing in white on nothing, on a square: what a
+    status bar draws. `grow` thickens it first (in pixels of the full
+    drawing), or its legs would be thinner than a pixel."""
+    alpha = np.asarray(image.getchannel('A')) > 96
+    alpha = np.pad(alpha, grow)
+    alpha = ndi.binary_dilation(alpha, structure=ndi.generate_binary_structure(2, 1), iterations=grow)
+    shape = fit(Image.fromarray((alpha * 255).astype(np.uint8), 'L'), round(size * fill), round(size * fill))
+    square = np.zeros((size, size, 4), np.uint8)
+    square[..., :3] = 255
+    y, x = (size - shape.height) // 2, (size - shape.width) // 2
+    square[y:y + shape.height, x:x + shape.width, 3] = np.asarray(shape)
+
+    return Image.fromarray(square, 'RGBA')
+
+
+def splash(image: Image.Image, width: int, height: int) -> Image.Image:
+    """The drawing in the middle of a white screen."""
+    screen = Image.new('RGBA', (width, height), WHITE)
+    tall = round(min(0.2 * max(width, height), 0.36 * min(width, height)))
+    fitted = fit(image, tall, tall)
+    screen.alpha_composite(fitted, ((width - fitted.width) // 2, (height - fitted.height) // 2))
+
+    return screen
+
+
+def app_assets(master: Image.Image) -> None:
+    """The Android and iOS apps' pictures, in the sizes each already had."""
+    fit(master, 1024, 1024).save(ROOT / 'mobile-assets/logo.png', optimize=True)
+
+    res = ROOT / 'android/app/src/main/res'
+    for density, launcher in (('ldpi', 36), ('mdpi', 48), ('hdpi', 72), ('xhdpi', 96), ('xxhdpi', 144), ('xxxhdpi', 192)):
+        folder = res / f'mipmap-{density}'
+        on_square(master, launcher, WHITE, 0.82).save(folder / 'ic_launcher.png', optimize=True)
+        # The round icon: the same, inside a white disc.
+        big = launcher * 4
+        distance = np.hypot(*(np.mgrid[:big, :big] - (big - 1) / 2))
+        mask = Image.fromarray((distance <= big / 2).astype(np.uint8) * 255, 'L').resize((launcher, launcher), Image.LANCZOS)
+        round_icon = on_square(master, launcher, WHITE, 0.74)
+        round_icon.putalpha(mask)
+        round_icon.save(folder / 'ic_launcher_round.png', optimize=True)
+        # Adaptive icon (mipmap-anydpi-v26): a layer is one and a half
+        # times the icon, the launcher cuts its own shape out of the
+        # middle, and only the middle 61% is sure to survive every shape.
+        layer = launcher * 9 // 4
+        on_square(master, layer, (0, 0, 0, 0), 0.5).save(folder / 'ic_launcher_foreground.png', optimize=True)
+
+    for density, size in (('mdpi', 24), ('hdpi', 36), ('xhdpi', 48), ('xxhdpi', 72), ('xxxhdpi', 96)):
+        silhouette(master, size, 0.92, 26).save(res / f'drawable-{density}/ic_stat_manteion.png', optimize=True)
+
+    for path in sorted(res.glob('drawable*/splash.png')):
+        with Image.open(path) as old:
+            width, height = old.size
+        splash(master, width, height).save(path, optimize=True)
+
+    ios = ROOT / 'ios/App/App/Assets.xcassets'
+    on_square(master, 1024, WHITE, 0.8).convert('RGB').save(ios / 'AppIcon.appiconset/AppIcon-512@2x.png', optimize=True)
+    for path in sorted((ios / 'Splash.imageset').glob('*.png')):
+        with Image.open(path) as old:
+            width, height, mode = *old.size, old.mode
+        splash(master, width, height).convert(mode).save(path, optimize=True)
+
+
 def main(source: str) -> None:
     master = cut_out(source)
     images, public = ROOT / 'resources/images', ROOT / 'public'
@@ -136,17 +204,17 @@ def main(source: str) -> None:
     badge[y:y + shape.height, x:x + shape.width, 1] = np.asarray(shape.getchannel('A'))
     Image.fromarray(badge, 'LA').save(public / 'icons/badge-96.png', optimize=True)
 
-    # The offline page is cached alone, so its logo is inline.
+    # The offline pages (the site's, and the one built into the app) stand
+    # alone, so their logo is inline.
     buffer = io.BytesIO()
     master.resize((round(master.width * 288 / master.height), 288), Image.LANCZOS).save(buffer, 'PNG', optimize=True)
-    offline = public / 'offline.html'
-    html, replaced = re.subn(
-        r'src="data:image/png;base64,[^"]+"',
-        'src="data:image/png;base64,' + base64.b64encode(buffer.getvalue()).decode() + '"',
-        offline.read_text(),
-    )
-    assert replaced == 1, 'offline.html should hold exactly one inline picture'
-    offline.write_text(html)
+    inline = 'src="data:image/png;base64,' + base64.b64encode(buffer.getvalue()).decode() + '"'
+    for page in (public / 'offline.html', ROOT / 'resources/native-shell/index.html'):
+        html, replaced = re.subn(r'src="data:image/png;base64,[^"]+"', inline, page.read_text())
+        assert replaced == 1, f'{page.name} should hold exactly one inline picture'
+        page.write_text(html)
+
+    app_assets(master)
 
 
 if __name__ == '__main__':
